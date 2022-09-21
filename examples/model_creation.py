@@ -8,7 +8,7 @@ from bioNC import (
     C3dData,
     MarkerTemplate,
     SegmentTemplate,
-    NaturalSegmentCoordinateSystemTemplate,
+    NaturalSegmentTemplate,
 )
 import ezc3d
 
@@ -30,17 +30,16 @@ def model_creation_from_measured_data():
     # de_leva = DeLevaTable(total_mass=100, sex="female")
 
     model["THIGH"] = SegmentTemplate(
-        segment_coordinate_system=NaturalSegmentCoordinateSystemTemplate(
+        natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
                 start="HIP_CENTER",
                 # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
                 # lateral epicondyle
-                end=lambda m, bio: np.cross(m["HIP_CENTER"] - m["LFE"], m["HIP_CENTER"] - m["MFE"])
-                / np.linalg.norm(np.cross(m["HIP_CENTER"] - m["LFE"], m["HIP_CENTER"] - m["MFE"])),
+                end=lambda m, bio: MarkerTemplate.normal_to(m, bio, "HIP_CENTER", "LFE", "MFE"),
             ),
             proximal_point="HIP_CENTER",
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
-            distal_point=lambda m, bio: (m["MFE"] + m["LFE"]) / 2,
+            distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LFE", "MFE"),
             w_axis=AxisTemplate(start="MFE", end="LFE"),
         )
     )
@@ -49,37 +48,34 @@ def model_creation_from_measured_data():
     model["THIGH"].add_marker(MarkerTemplate("MFE", parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("LFE", parent_name="THIGH"))
     model["THIGH"].add_marker(
-        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: (m["MFE"] + m["LFE"]) / 2, parent_name="THIGH")
+        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "MFE", "LFE"), parent_name="THIGH")
     )
 
     model["SHANK"] = SegmentTemplate(
-        segment_coordinate_system=NaturalSegmentCoordinateSystemTemplate(
+        natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
                 start="KNEE_CENTER",
                 # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
                 # lateral epicondyle
-                end=lambda m, bio: (
-                    np.cross(m["KNEE_CENTER"] - m["LM"], m["KNEE_CENTER"] - m["MM"])
-                    / np.linalg.norm(np.cross(m["KNEE_CENTER"] - m["LM"], m["KNEE_CENTER"] - m["MM"]))
-                ),
+                end=lambda m, bio: MarkerTemplate.normal_to(m, bio, "KNEE_CENTER", "LM", "MM"),
             ),
             proximal_point="KNEE_CENTER",
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
-            distal_point=lambda m, bio: (m["LM"] + m["MM"]) / 2,
+            distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LM", "MM"),
             w_axis=AxisTemplate(start="LM", end="MM"),
         )
     )
     model["SHANK"].add_marker(
-        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: (m["MFE"] + m["LFE"]) / 2, parent_name="KNEE_JOINT")
+        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "MFE", "LFE"), parent_name="KNEE_JOINT")
     )
     model["SHANK"].add_marker(MarkerTemplate("LM", parent_name="SHANK"))
     model["SHANK"].add_marker(MarkerTemplate("MM", parent_name="SHANK"))
     model["SHANK"].add_marker(
-        MarkerTemplate("ANKLE_JOINT", function=lambda m, bio: (m["LM"] + m["MM"]) / 2, parent_name="SHANK")
+        MarkerTemplate("ANKLE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LM", "MM"), parent_name="SHANK")
     )
 
     model["FOOT"] = SegmentTemplate(
-        segment_coordinate_system=NaturalSegmentCoordinateSystemTemplate(
+        natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
                 start="ANKLE_JOINT",
                 # u_axis is defined from calcaneous (CAL) to the middle of M1 and M5
@@ -88,10 +84,15 @@ def model_creation_from_measured_data():
             ),
             proximal_point="ANKLE_JOINT",
             #  middle of M1 and M5
-            distal_point=lambda m, bio: (m["M1"] + m["M5"]) / 2,
+            distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "M1", "M5"),
             w_axis=AxisTemplate(start="M1", end="M5"),
         )
     )
+
+    model["FOOT"].add_marker(MarkerTemplate("CAL", parent_name="FOOT"))
+    model["FOOT"].add_marker(MarkerTemplate("M1", parent_name="FOOT"))
+    model["FOOT"].add_marker(MarkerTemplate("M5", parent_name="FOOT"))
+    model["FOOT"].add_marker(MarkerTemplate("ANKLE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LM", "MM"), parent_name="FOOT"))
 
     # Put the model together, print it and print it to a bioMod file
     natural_model = model.update(C3dData("my_file.c3d"))

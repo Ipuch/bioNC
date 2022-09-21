@@ -5,10 +5,10 @@ from .natural_axis_template import AxisTemplate
 from ..model_computations.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from ..model_computations.segment_coordinate_system import NaturalSegment
+from ..model_computations.natural_segment import NaturalSegment
 
 
-class NaturalSegmentCoordinateSystemTemplate:
+class NaturalSegmentTemplate:
     def __init__(
         self,
         u_axis: AxisTemplate,

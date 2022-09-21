@@ -5,5 +5,5 @@ from .biomechanical_model import BiomechanicalModel
 from .natural_axis import Axis
 from .marker import Marker
 from .segment import Segment
-from .segment_coordinate_system import NaturalSegment
+from .natural_segment import NaturalSegment
 from .inertia_parameters import InertiaParameters

@@ -4,7 +4,7 @@ import numpy as np
 
 from ..model_computations.inertia_parameters import InertiaParameters
 from ..model_computations.biomechanical_model import BiomechanicalModel
-from ..model_computations.segment_coordinate_system import NaturalSegment
+from ..model_computations.natural_segment import NaturalSegment
 from .protocols import Data
 
 

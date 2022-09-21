@@ -8,7 +8,7 @@ from .model_creation import (
     AxisTemplate,
     MarkerTemplate,
     SegmentTemplate,
-    NaturalSegmentCoordinateSystemTemplate,
+    NaturalSegmentTemplate,
     InertiaParametersTemplate,
     BiomechanicalModelTemplate,
     C3dData,

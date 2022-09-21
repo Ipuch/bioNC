@@ -1,7 +1,7 @@
 from .protocols import Data
 from ..model_computations.segment import Segment
 from .segment_template import SegmentTemplate
-from ..model_computations.segment_coordinate_system import NaturalSegment
+from ..model_computations.natural_segment import NaturalSegment
 from ..model_computations.biomechanical_model import BiomechanicalModel
 
 

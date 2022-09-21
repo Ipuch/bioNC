@@ -4,7 +4,7 @@ from ..model_computations.natural_axis import Axis
 from ..model_computations.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from ..model_computations.segment_coordinate_system import NaturalSegment
+from ..model_computations.natural_segment import NaturalSegment
 
 
 class AxisTemplate:

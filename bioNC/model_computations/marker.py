@@ -44,7 +44,7 @@ class Marker:
         function: Callable,
         parent_name: str,
         kinematic_chain: BiomechanicalModel,
-        parent_scs: "SegmentCoordinateSystemReal" = None,
+        parent_scs: "NaturalSegment" = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
     ):

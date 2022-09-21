@@ -1,13 +1,13 @@
 from .inertia_parameters_template import InertiaParametersTemplate
 from .marker_template import MarkerTemplate
-from .segment_coordinate_system_template import NaturalSegmentCoordinateSystemTemplate
+from .natural_segment_template import NaturalSegmentTemplate
 
 
 class SegmentTemplate:
     def __init__(
         self,
         name: str = None,
-        segment_coordinate_system: NaturalSegmentCoordinateSystemTemplate = None,
+        natural_segment: NaturalSegmentTemplate = None,
         inertia_parameters: InertiaParametersTemplate = None,
     ):
         """
@@ -17,7 +17,7 @@ class SegmentTemplate:
         ----------
         name
             The name of the segment
-        segment_coordinate_system
+        natural_segment
             The natural segment coordinate system
         inertia_parameters
             The inertia parameters of the segment
@@ -25,7 +25,7 @@ class SegmentTemplate:
 
         self.name = name
         self.markers = []
-        self.segment_coordinate_system = segment_coordinate_system
+        self.natural_segment = natural_segment
         self.inertia_parameters = inertia_parameters
 
     def add_marker(self, marker: MarkerTemplate):

@@ -6,7 +6,7 @@ from .natural_axis_template import AxisTemplate
 from .marker_template import MarkerTemplate
 from .protocols import Data, GenericDynamicModel
 from .segment_template import SegmentTemplate
-from .segment_coordinate_system_template import NaturalSegmentCoordinateSystemTemplate
+from .natural_segment_template import NaturalSegmentTemplate
 from .inertia_parameters_template import InertiaParametersTemplate
 
 # The accepted data formating

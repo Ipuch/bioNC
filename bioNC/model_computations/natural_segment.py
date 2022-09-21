@@ -1,5 +1,5 @@
 from copy import copy
-from typing import Union
+from typing import Union, Tuple
 
 import numpy as np
 from numpy import cos, sin, matmul, eye, zeros, sum, ones
@@ -7,7 +7,7 @@ from numpy.linalg import inv
 
 # from .HomogeneousMatrix import HomogeneousMatrix
 
-from bioNC import SegmentNaturalCoordinates, SegmentNaturalVelocities
+from bioNC import SegmentNaturalCoordinates, SegmentNaturalVelocities, SegmentNaturalAccelerations
 from ..model_computations.natural_axis import Axis
 from ..model_computations.marker import Marker
 
@@ -63,6 +63,9 @@ class NaturalSegment:
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
+
+        # todo: sanity check to make sure u, v or w are not colinear
+
         self._transformation_matrix = self._transformation_matrix()
 
         self.mass = mass
@@ -141,17 +144,37 @@ class NaturalSegment:
         )
 
     @staticmethod
-    def parameters_from_Q(Q: SegmentNaturalCoordinates):
-        length = np.sqrt(np.sum((Q.rp - Q.rd) ** 2, axis=0))
-        alpha = np.arccos(np.sum((Q.rp - Q.rd) * Q.w, axis=0) / length)
-        beta = np.arccos(np.sum(Q.u * Q.w, axis=0))
-        gamma = np.arccos(np.sum(Q.u * (Q.rp - Q.rd), axis=0) / length)
+    def parameters_from_Q(Q: SegmentNaturalCoordinates) -> tuple:
+        """
+        This function computes the parameters of the segment from the natural coordinates
+
+        Parameters
+        ----------
+        Q: SegmentNaturalCoordinates
+            The natural coordinates of the segment
+
+        Returns
+        -------
+        tuple
+            The parameters of the segment (alpha, beta, gamma, length)
+        """
+
+        if not isinstance(Q, SegmentNaturalCoordinates):
+            Q = SegmentNaturalCoordinates(Q)
+
+        u, rp, rd, w = Q.to_components()
+
+        length = np.sqrt(np.sum((rp - rd) ** 2, axis=0))
+        alpha = np.arccos(np.sum((rp - rd) * w, axis=0) / length)
+        beta = np.arccos(np.sum(u * w, axis=0))
+        gamma = np.arccos(np.sum(u * (rp - rd), axis=0) / length)
+
         return alpha, beta, gamma, length
 
     def __str__(self):
         print("to do")
 
-    def _transformation_matrix(self):
+    def _transformation_matrix(self) -> np.ndarray:
         """
         This function computes the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
@@ -179,7 +202,7 @@ class NaturalSegment:
         )
 
     @property
-    def transformation_matrix(self):
+    def transformation_matrix(self) -> np.ndarray:
         """
         This function returns the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
@@ -282,7 +305,7 @@ class NaturalSegment:
 
         return Kr_dot
 
-    def _pseudo_inertia_matrix(self):
+    def _pseudo_inertia_matrix(self) -> np.ndarray:
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
         It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
@@ -305,7 +328,7 @@ class NaturalSegment:
         return matmul(Binv, matmul(middle_block, Binv_transpose))
 
     @property
-    def pseudo_inertia_matrix(self):
+    def pseudo_inertia_matrix(self) -> np.ndarray:
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
         It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
@@ -317,7 +340,7 @@ class NaturalSegment:
         """
         return self._pseudo_inertia_matrix
 
-    def _center_of_mass_in_natural_coordinates_system(self):
+    def _center_of_mass_in_natural_coordinates_system(self) -> np.ndarray:
         """
         This function computes the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -330,7 +353,7 @@ class NaturalSegment:
         return matmul(inv(self.transformation_matrix), self.center_of_mass)
 
     @property
-    def center_of_mass_in_natural_coordinates_system(self):
+    def center_of_mass_in_natural_coordinates_system(self) -> np.ndarray:
         """
         This function returns the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -342,7 +365,7 @@ class NaturalSegment:
         """
         return self._center_of_mass_in_natural_coordinates_system
 
-    def _generalized_mass_matrix(self):
+    def _generalized_mass_matrix(self) -> np.ndarray:
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.
 
@@ -374,7 +397,7 @@ class NaturalSegment:
         return Gi
 
     @property
-    def generalized_mass_matrix(self):
+    def generalized_mass_matrix(self) -> np.ndarray:
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.
 
@@ -386,7 +409,7 @@ class NaturalSegment:
 
         return self._generalized_mass_matrix
 
-    def _interpolation_matrix_center_of_mass(self):
+    def _interpolation_matrix_center_of_mass(self) -> np.ndarray:
         """
         This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
         It allows to apply the gravity force at the center of mass of the segment.
@@ -407,7 +430,7 @@ class NaturalSegment:
         return interpolation_matrix
 
     @property
-    def interpolation_matrix_center_of_mass(self):
+    def interpolation_matrix_center_of_mass(self) -> np.ndarray:
         """
         This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
         It allows to apply the gravity force at the center of mass of the segment.
@@ -419,7 +442,7 @@ class NaturalSegment:
         """
         return self._interpolation_matrix_center_of_mass
 
-    def weight(self):
+    def weight(self) -> np.ndarray:
         """
         This function returns the weight applied on the segment through gravity force.
 
@@ -432,8 +455,10 @@ class NaturalSegment:
         return np.matmul(self.interpolation_matrix_center_of_mass * self.mass, np.array([0, 0, -9.81]))
 
     def differential_algebraic_equation(
-        self, Qi: Union[SegmentNaturalCoordinates, np.array], Qdoti: Union[SegmentNaturalCoordinates, np.array]
-    ):
+        self,
+            Qi: Union[SegmentNaturalCoordinates, np.ndarray],
+            Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
+    ) -> Tuple[SegmentNaturalAccelerations, np.ndarray]:
         """
         This function returns the differential algebraic equation of the segment
 
@@ -478,9 +503,9 @@ class NaturalSegment:
         x = np.linalg.solve(A, B)
         Qddoti = x[0:12]
         lambda_i = x[12:]
-        return Qddoti, lambda_i
+        return SegmentNaturalAccelerations(Qddoti), lambda_i
 
-    def location_from_homogenous_transform(self, T: np.ndarray):
+    def location_from_homogenous_transform(self, T: np.ndarray) -> np.ndarray:
         """
         This function returns the location of the segment in natural coordinate from its homogenous transform
 
@@ -497,7 +522,6 @@ class NaturalSegment:
         """
 
         u = self.transformation_matrix * T[0:3, 0]
-        # v = self.transformation_matrix() * T[0:3, 1]
         w = self.transformation_matrix * T[0:3, 2]
         rp = self.transformation_matrix * T[0:3, 4]
         rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3]

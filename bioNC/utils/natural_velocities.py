@@ -2,8 +2,22 @@ import numpy as np
 from typing import Union
 
 
-class SegmentNaturalVelocitiesCreator:
-    def __new__(
+class SegmentNaturalVelocities(np.ndarray):
+    """
+    This class is made to handle Generalized Coordinates of a Segment
+    """
+
+    def __new__(cls, input_array: Union[np.ndarray, list, tuple]):
+        """
+        Create a new instance of the class.
+        """
+
+        obj = np.asarray(input_array).view(cls)
+
+        return obj
+
+    @classmethod
+    def from_components(
         cls,
         udot: Union[np.ndarray, list] = None,
         rpdot: Union[np.ndarray, list] = None,
@@ -38,22 +52,7 @@ class SegmentNaturalVelocitiesCreator:
             raise ValueError("v must be a 3x1 numpy array")
 
         input_array = np.concatenate((udot, rpdot, rddot, wdot), axis=0)
-        return SegmentNaturalVelocities(input_array)
-
-
-class SegmentNaturalVelocities(np.ndarray):
-    """
-    This class is made to handle Generalized Coordinates of a Segment
-    """
-
-    def __new__(cls, input_array: Union[np.ndarray, list, tuple]):
-        """
-        Create a new instance of the class.
-        """
-
-        obj = np.asarray(input_array).view(cls)
-
-        return obj
+        return cls(input_array)
 
     def to_array(self):
         return np.array(self)
@@ -83,8 +82,16 @@ class SegmentNaturalVelocities(np.ndarray):
         return self.to_array()
 
 
-class NaturalVelocitiesCreator:
-    def __new__(cls, tuple_of_Q: tuple):
+class NaturalVelocities(np.ndarray):
+    def __new__(cls, input_array: np.ndarray):
+        """
+        Create a new instance of the class.
+        """
+
+        return np.asarray(input_array).view(cls)
+
+    @classmethod
+    def from_Qdoti(cls, tuple_of_Q: tuple):
         """
         Create a new instance of the class.
         """
@@ -97,15 +104,6 @@ class NaturalVelocitiesCreator:
 
         input_array = np.concatenate(tuple_of_Q, axis=0)
         return NaturalVelocities(input_array)
-
-
-class NaturalVelocities(np.ndarray):
-    def __new__(cls, input_array: np.ndarray):
-        """
-        Create a new instance of the class.
-        """
-
-        return np.asarray(input_array).view(cls)
 
     def nb_Qdoti(self):
         return self.shape[0] // 12

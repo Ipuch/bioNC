@@ -1,46 +1,6 @@
 import numpy as np
 from typing import Union
 
-
-class SegmentNaturalAccelerationsCreator:
-    def __new__(
-        cls,
-        uddot: Union[np.ndarray, list] = None,
-        rpddot: Union[np.ndarray, list] = None,
-        rdddot: Union[np.ndarray, list] = None,
-        wddot: Union[np.ndarray, list] = None,
-    ):
-        if uddot is None:
-            raise ValueError("u must be a numpy array (3x1) or a list of 3 elements")
-        if rpddot is None:
-            raise ValueError("rp must be a numpy array (3x1) or a list of 3 elements")
-        if rdddot is None:
-            raise ValueError("rd must be a numpy array (3x1) or a list of 3 elements")
-        if wddot is None:
-            raise ValueError("w must be a numpy array (3x1) or a list of 3 elements")
-
-        if not isinstance(uddot, np.ndarray):
-            uddot = np.array(uddot)
-        if not isinstance(rpddot, np.ndarray):
-            rpddot = np.array(rpddot)
-        if not isinstance(rdddot, np.ndarray):
-            rdddot = np.array(rdddot)
-        if not isinstance(wddot, np.ndarray):
-            wddot = np.array(wddot)
-
-        if uddot.shape[0] != 3:
-            raise ValueError("u must be a 3x1 numpy array")
-        if rpddot.shape[0] != 3:
-            raise ValueError("rp must be a 3x1 numpy array")
-        if rdddot.shape[0] != 3:
-            raise ValueError("rd must be a 3x1 numpy array")
-        if wddot.shape[0] != 3:
-            raise ValueError("v must be a 3x1 numpy array")
-
-        input_array = np.concatenate((uddot, rpddot, rdddot, wddot), axis=0)
-        return SegmentNaturalAccelerations(input_array)
-
-
 class SegmentNaturalAccelerations(np.ndarray):
     """
     This class is made to handle Generalized Coordinates of a Segment
@@ -54,6 +14,44 @@ class SegmentNaturalAccelerations(np.ndarray):
         obj = np.asarray(input_array).view(cls)
 
         return obj
+
+    @classmethod
+    def from_components(cls,
+        uddot: Union[np.ndarray, list] = None,
+        rpddot: Union[np.ndarray, list] = None,
+        rdddot: Union[np.ndarray, list] = None,
+        wddot: Union[np.ndarray, list] = None,
+    ):
+        if uddot is None:
+            raise ValueError("uddot must be a numpy array (3x1) or a list of 3 elements")
+        if rpddot is None:
+            raise ValueError("rpddot must be a numpy array (3x1) or a list of 3 elements")
+        if rdddot is None:
+            raise ValueError("rdddot must be a numpy array (3x1) or a list of 3 elements")
+        if wddot is None:
+            raise ValueError("wddot must be a numpy array (3x1) or a list of 3 elements")
+
+        if not isinstance(uddot, np.ndarray):
+            uddot = np.array(uddot)
+        if not isinstance(rpddot, np.ndarray):
+            rpddot = np.array(rpddot)
+        if not isinstance(rdddot, np.ndarray):
+            rdddot = np.array(rdddot)
+        if not isinstance(wddot, np.ndarray):
+            wddot = np.array(wddot)
+
+        if uddot.shape[0] != 3:
+            raise ValueError("uddot must be a 3x1 numpy array")
+        if rpddot.shape[0] != 3:
+            raise ValueError("rpddot must be a 3x1 numpy array")
+        if rdddot.shape[0] != 3:
+            raise ValueError("rdddot must be a 3x1 numpy array")
+        if wddot.shape[0] != 3:
+            raise ValueError("vddot must be a 3x1 numpy array")
+
+        input_array = np.concatenate((uddot, rpddot, rdddot, wddot), axis=0)
+
+        return cls(input_array)
 
     def to_array(self):
         return np.array(self)
@@ -83,10 +81,18 @@ class SegmentNaturalAccelerations(np.ndarray):
         return self.to_array()
 
 
-class NaturalAccelerationsCreator:
-    def __new__(cls, tuple_of_Q: tuple):
+class NaturalAccelerations(np.ndarray):
+    def __new__(cls, input_array: np.ndarray):
         """
         Create a new instance of the class.
+        """
+
+        return np.asarray(input_array).view(cls)
+
+    @classmethod
+    def from_Qddoti(cls, tuple_of_Q: tuple):
+        """
+        Constructor of the class
         """
         if not isinstance(tuple_of_Q, tuple):
             raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
@@ -96,16 +102,7 @@ class NaturalAccelerationsCreator:
                 raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
 
         input_array = np.concatenate(tuple_of_Q, axis=0)
-        return NaturalAccelerations(input_array)
-
-
-class NaturalAccelerations(np.ndarray):
-    def __new__(cls, input_array: np.ndarray):
-        """
-        Create a new instance of the class.
-        """
-
-        return np.asarray(input_array).view(cls)
+        return cls(input_array)
 
     def nb_Qddoti(self):
         return self.shape[0] // 12

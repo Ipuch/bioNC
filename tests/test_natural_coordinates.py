@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
-from Kinetics_LBMC import SegmentNaturalCoordinatesCreator, NaturalCoordinatesCreator
+from bioNC import NaturalCoordinates, SegmentNaturalCoordinates
 
 
 def test_SegmentNaturalCoordinatesCreator():
 
-    Qi = SegmentNaturalCoordinatesCreator(
+    Qi = SegmentNaturalCoordinates.from_components(
         u=np.array([0, 0, 0]), rp=np.array([4, 5, 6]), rd=np.array([7, 8, 9]), w=np.array([10, 11, 12])
     )
     np.testing.assert_equal(Qi.u, np.array([0, 0, 0]))
@@ -13,14 +13,14 @@ def test_SegmentNaturalCoordinatesCreator():
     np.testing.assert_equal(Qi.rd, np.array([7, 8, 9]))
     np.testing.assert_equal(Qi.w, np.array([10, 11, 12]))
     np.testing.assert_equal(Qi.v, np.array([7, 8, 9]) - np.array([4, 5, 6]))
-    np.testing.assert_equal(Qi.Q, Qi)
+    np.testing.assert_equal(Qi.vector, Qi)
 
 
 def test_concatenate():
-    Q1 = SegmentNaturalCoordinatesCreator(
+    Q1 = SegmentNaturalCoordinates.from_components(
         u=np.array([1, 2, 3]), rp=np.array([4, 5, 6]), rd=np.array([7, 8, 9]), w=np.array([10, 11, 12])
     )
-    Q2 = SegmentNaturalCoordinatesCreator(
+    Q2 = SegmentNaturalCoordinates.from_components(
         u=np.array([11, 22, 33]), rp=np.array([4, 5, 6]), rd=np.array([7, 8, 9]), w=np.array([10, 11, 12])
     )
 
@@ -34,23 +34,23 @@ def test_concatenate():
 
 # Build a class called GeneralizedCoordinates to handle the concatenation of SegmentGeneralizedCoordinates
 def test_NaturalCoordinatesCreator():
-    Q1 = SegmentNaturalCoordinatesCreator(
+    Q1 = SegmentNaturalCoordinates.from_components(
         u=np.array([1, 2, 3]), rp=np.array([4, 5, 6]), rd=np.array([7, 8, 9]), w=np.array([10, 11, 12])
     )
     print(Q1.v)
-    Q2 = SegmentNaturalCoordinatesCreator(
+    Q2 = SegmentNaturalCoordinates.from_components(
         u=np.array([11, 22, 33]), rp=np.array([4, 5, 6]), rd=np.array([7, 8, 9]), w=np.array([10, 11, 12])
     )
-    Q = NaturalCoordinatesCreator((Q1, Q2))
+    Q = NaturalCoordinates.from_Qi((Q1, Q2))
     np.testing.assert_equal(Q.u(0), np.array([1, 2, 3]))
     np.testing.assert_equal(Q.u(1), np.array([11, 22, 33]))
     np.testing.assert_equal(Q.v(0), np.array([7, 8, 9]) - np.array([4, 5, 6]))
     np.testing.assert_equal(Q.v(1), np.array([7, 8, 9]) - np.array([4, 5, 6]))
-    np.testing.assert_equal(Q.Q(0), Q1)
-    np.testing.assert_equal(Q.Q(1), Q2)
-    np.testing.assert_equal(Q.Q(0).u, np.array([1, 2, 3]))
-    np.testing.assert_equal(Q.Q(1).u, np.array([11, 22, 33]))
-    np.testing.assert_equal(Q.Q(0).v, np.array([7, 8, 9]) - np.array([4, 5, 6]))
-    np.testing.assert_equal(Q.Q(1).v, np.array([7, 8, 9]) - np.array([4, 5, 6]))
+    np.testing.assert_equal(Q.vector(0), Q1)
+    np.testing.assert_equal(Q.vector(1), Q2)
+    np.testing.assert_equal(Q.vector(0).u, np.array([1, 2, 3]))
+    np.testing.assert_equal(Q.vector(1).u, np.array([11, 22, 33]))
+    np.testing.assert_equal(Q.vector(0).v, np.array([7, 8, 9]) - np.array([4, 5, 6]))
+    np.testing.assert_equal(Q.vector(1).v, np.array([7, 8, 9]) - np.array([4, 5, 6]))
     np.testing.assert_equal(Q.nb_Qi(), 2)
 

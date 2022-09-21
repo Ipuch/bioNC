@@ -130,5 +130,3 @@ class NaturalVelocities(np.ndarray):
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
         return SegmentNaturalVelocities(self[array_idx].vector)
-
-

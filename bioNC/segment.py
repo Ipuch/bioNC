@@ -16,6 +16,7 @@ from .utils.natural_coordinates import SegmentNaturalCoordinates
 #
 # m, rCs, Is, Js_temp = dumas(weight, np.mean(self.length), sexe, segment_name_inertia)
 
+
 class NaturalSegment:
     class Generic(ABC):
         """
@@ -182,15 +183,15 @@ class NaturalSegment:
         """
 
         def __init__(
-                self,
-                segment_name: str,
-                alpha: float,
-                beta: float,
-                gamma: float,
-                length: float,
-                mass: float,
-                center_of_mass: np.ndarray,
-                inertia: np.ndarray,
+            self,
+            segment_name: str,
+            alpha: float,
+            beta: float,
+            gamma: float,
+            length: float,
+            mass: float,
+            center_of_mass: np.ndarray,
+            inertia: np.ndarray,
         ):
 
             self.segment_name = segment_name
@@ -268,12 +269,12 @@ class NaturalSegment:
                 Qi = SegmentNaturalCoordinates(Qi)
 
             phir = zeros(6)
-            phir[0] = sum(Qi.u ** 2, 0) - 1
+            phir[0] = sum(Qi.u**2, 0) - 1
             phir[1] = sum(Qi.u * (Qi.rp - Qi.rd), 0) - self.length * cos(self.gamma)
             phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-            phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length ** 2
+            phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length**2
             phir[4] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
-            phir[5] = sum(Qi.w ** 2, 0) - 1
+            phir[5] = sum(Qi.w**2, 0) - 1
 
             return phir
 
@@ -351,9 +352,9 @@ class NaturalSegment:
             """
             # todo: verify the formula
             middle_block = (
-                    self.inertia
-                    + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * eye(3)
-                    - np.dot(self.center_of_mass.T, self.center_of_mass)
+                self.inertia
+                + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * eye(3)
+                - np.dot(self.center_of_mass.T, self.center_of_mass)
             )
 
             Binv = inv(self.transformation_matrix)
@@ -486,12 +487,10 @@ class NaturalSegment:
                 Weight applied on the segment through gravity force [12 x 1]
             """
 
-            return np.matmul(self.interpolation_matrix_center_of_mass * self.mass,  np.array([0, 0, -9.81]))
+            return np.matmul(self.interpolation_matrix_center_of_mass * self.mass, np.array([0, 0, -9.81]))
 
         def differential_algebraic_equation(
-                self,
-                Qi: Union[SegmentNaturalCoordinates, np.array],
-                Qdoti: Union[SegmentNaturalCoordinates, np.array]
+            self, Qi: Union[SegmentNaturalCoordinates, np.array], Qdoti: Union[SegmentNaturalCoordinates, np.array]
         ):
             """
             This function returns the differential algebraic equation of the segment
@@ -558,7 +557,6 @@ class NaturalSegment:
 
             return SegmentNaturalCoordinates((u, rp, rd, w))
 
-
         # def generalizedInertiaMatrix(self):
         #
         #     return Gi
@@ -602,26 +600,26 @@ class NaturalSegment:
         """
 
         def __init__(
-                self,
-                segment_name: str,
-                gamma: float,
-                length: float,
-                mass: float,
-                center_of_mass: np.ndarray,
-                inertia: np.ndarray,
+            self,
+            segment_name: str,
+            gamma: float,
+            length: float,
+            mass: float,
+            center_of_mass: np.ndarray,
+            inertia: np.ndarray,
         ):
 
             self.segment_name = segment_name
 
             self.length = length
             self.gamma = gamma
-    #
+            #
             if inertia.shape[0] != 1:
                 raise ValueError("Inertia matrix must be 1x1")
             self.inertia = inertia
-    #
+            #
             self.mass = mass
-    #
+            #
             if center_of_mass.shape[0] != 2:
                 raise ValueError("Center of mass must be 3x1")
             self.center_of_mass = center_of_mass
@@ -654,10 +652,10 @@ class NaturalSegment:
                 Rigid body constraints of the segment [3 x 1 ]
             """
             phir = zeros((6, 1, Qi.shape[1]))
-            phir[0, :, :] = sum(Qi.u ** 2, 0) - ones((Qi.u.shape[1]))
+            phir[0, :, :] = sum(Qi.u**2, 0) - ones((Qi.u.shape[1]))
             phir[1, :, :] = sum(Qi.u * (Qi.rp - Qi.rd), 0) - self.length * cos(self.gamma)
             # phir[2, :, :] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-            phir[3, :, :] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length ** 2
+            phir[3, :, :] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length**2
             # phir[4, :, :] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
             # phir[5, :, :] = sum(Qi.w ** 2, 0) - ones(Qi.u.shape[1])
 
@@ -696,6 +694,7 @@ class NaturalSegment:
             Kr[5, 9:12, :] = 2 * Qi.w
 
             return Kr
+
     #
     #     @staticmethod
     #     def rigidBodyConstraintJacobianDerivative(Qdoti: SegmentNaturalCoordinates) -> np.ndarray:

@@ -46,15 +46,15 @@ class NaturalSegment:
     """
 
     def __init__(
-            self,
-            segment_name: str,
-            alpha: float = np.pi/2,
-            beta: float = np.pi/2,
-            gamma: float = np.pi/2,
-            length: float = None,
-            mass: float = None,
-            center_of_mass: np.ndarray = None,
-            inertia: np.ndarray = None,
+        self,
+        segment_name: str,
+        alpha: float = np.pi / 2,
+        beta: float = np.pi / 2,
+        gamma: float = np.pi / 2,
+        length: float = None,
+        mass: float = None,
+        center_of_mass: np.ndarray = None,
+        inertia: np.ndarray = None,
     ):
 
         self.segment_name = segment_name
@@ -127,9 +127,9 @@ class NaturalSegment:
             gamma = np.arccos(np.sum(Q.u * (Q.rp - Q.rd), axis=0) / length)
             return alpha, beta, gamma, length
 
-        for i, (u_axis_i, w_axis_i, proximal_point_i, distal_point_i) in enumerate(zip(
-            u_axis_vector.T, w_axis_vector.T, proximal_point_vector.T, distal_point_vector.T
-        )):
+        for i, (u_axis_i, w_axis_i, proximal_point_i, distal_point_i) in enumerate(
+            zip(u_axis_vector.T, w_axis_vector.T, proximal_point_vector.T, distal_point_vector.T)
+        ):
             alpha[i], beta[i], gamma[i], length[i] = parameters_from_Q(
                 SegmentNaturalCoordinates.from_components(
                     u=u_axis_i,
@@ -144,7 +144,7 @@ class NaturalSegment:
             alpha=np.mean(alpha, axis=0)[0],
             beta=np.mean(beta, axis=0)[0],
             gamma=np.mean(gamma, axis=0)[0],
-            length=np.mean(length, axis=0)[0]
+            length=np.mean(length, axis=0)[0],
         )
 
     @staticmethod
@@ -212,12 +212,12 @@ class NaturalSegment:
             Qi = SegmentNaturalCoordinates(Qi)
 
         phir = zeros(6)
-        phir[0] = sum(Qi.u ** 2, 0) - 1
+        phir[0] = sum(Qi.u**2, 0) - 1
         phir[1] = sum(Qi.u * (Qi.rp - Qi.rd), 0) - self.length * cos(self.gamma)
         phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-        phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length ** 2
+        phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length**2
         phir[4] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
-        phir[5] = sum(Qi.w ** 2, 0) - 1
+        phir[5] = sum(Qi.w**2, 0) - 1
 
         return phir
 
@@ -295,9 +295,9 @@ class NaturalSegment:
         """
         # todo: verify the formula
         middle_block = (
-                self.inertia
-                + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * eye(3)
-                - np.dot(self.center_of_mass.T, self.center_of_mass)
+            self.inertia
+            + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * eye(3)
+            - np.dot(self.center_of_mass.T, self.center_of_mass)
         )
 
         Binv = inv(self.transformation_matrix)
@@ -433,9 +433,7 @@ class NaturalSegment:
         return np.matmul(self.interpolation_matrix_center_of_mass * self.mass, np.array([0, 0, -9.81]))
 
     def differential_algebraic_equation(
-            self,
-            Qi: Union[SegmentNaturalCoordinates, np.array],
-            Qdoti: Union[SegmentNaturalCoordinates, np.array]
+        self, Qi: Union[SegmentNaturalCoordinates, np.array], Qdoti: Union[SegmentNaturalCoordinates, np.array]
     ):
         """
         This function returns the differential algebraic equation of the segment

@@ -23,4 +23,3 @@ from .model_computations import (
     InertiaParameters,
     BiomechanicalModel,
 )
-

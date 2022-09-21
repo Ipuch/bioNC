@@ -39,9 +39,7 @@ class MarkerTemplate:
         self.is_technical = is_technical
         self.is_anatomical = is_anatomical
 
-    def to_marker(
-        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None
-    ) -> Marker:
+    def to_marker(self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None) -> Marker:
         return Marker.from_data(
             data,
             self.name,

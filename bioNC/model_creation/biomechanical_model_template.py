@@ -63,4 +63,3 @@ class BiomechanicalModelTemplate:
                 model.segments[name].add_marker(marker.to_marker(data, model, scs))
 
         return model
-

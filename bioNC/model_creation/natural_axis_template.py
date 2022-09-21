@@ -22,9 +22,7 @@ class AxisTemplate:
         self.start = MarkerTemplate(function=start)
         self.end = MarkerTemplate(function=end)
 
-    def to_axis(
-        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None
-    ) -> Axis:
+    def to_axis(self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None) -> Axis:
         """
         Compute the axis from actual data
         Parameters

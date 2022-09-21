@@ -53,4 +53,3 @@ def test_NaturalCoordinatesCreator():
     np.testing.assert_equal(Q.vector(0).v, np.array([7, 8, 9]) - np.array([4, 5, 6]))
     np.testing.assert_equal(Q.vector(1).v, np.array([7, 8, 9]) - np.array([4, 5, 6]))
     np.testing.assert_equal(Q.nb_Qi(), 2)
-

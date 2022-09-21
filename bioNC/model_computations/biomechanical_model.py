@@ -1,6 +1,6 @@
 class BiomechanicalModel:
     def __init__(self):
-        from .segment import Segment # Imported here to prevent from circular imports
+        from .segment import Segment  # Imported here to prevent from circular imports
 
         self.segments: dict[str:Segment, ...] = {}
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new

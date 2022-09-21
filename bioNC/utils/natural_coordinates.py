@@ -23,7 +23,6 @@ class SegmentNaturalCoordinates(np.ndarray):
         rp: Union[np.ndarray, list] = None,
         rd: Union[np.ndarray, list] = None,
         w: Union[np.ndarray, list] = None,
-
     ):
         """
         Constructor of the class from the components of the natural coordinates
@@ -139,5 +138,3 @@ class NaturalCoordinates(np.ndarray):
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
         return SegmentNaturalCoordinates(self[array_idx].to_array())
-
-

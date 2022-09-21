@@ -35,26 +35,22 @@ def model_creation_from_measured_data():
                 start="HIP_CENTER",
                 # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
                 # lateral epicondyle
-                end=lambda m, bio: np.cross(m["HIP_CENTER"] - m["LFE"], m["HIP_CENTER"] - m["MFE"])/
-                                   np.linalg.norm(np.cross(m["HIP_CENTER"] - m["LFE"], m["HIP_CENTER"] - m["MFE"]))
+                end=lambda m, bio: np.cross(m["HIP_CENTER"] - m["LFE"], m["HIP_CENTER"] - m["MFE"])
+                / np.linalg.norm(np.cross(m["HIP_CENTER"] - m["LFE"], m["HIP_CENTER"] - m["MFE"])),
             ),
             proximal_point="HIP_CENTER",
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
-            distal_point=lambda m, bio: (m["MFE"] + m["LFE"])/2,
-            w_axis=AxisTemplate(
-                start="MFE",
-                end="LFE"
-            )
+            distal_point=lambda m, bio: (m["MFE"] + m["LFE"]) / 2,
+            w_axis=AxisTemplate(start="MFE", end="LFE"),
         )
     )
 
     model["THIGH"].add_marker(MarkerTemplate("HIP_CENTER", parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("MFE", parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("LFE", parent_name="THIGH"))
-    model["THIGH"].add_marker(MarkerTemplate(
-        "KNEE_JOINT",
-        function=lambda m, bio: (m["MFE"] + m["LFE"])/2,
-        parent_name="THIGH"))
+    model["THIGH"].add_marker(
+        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: (m["MFE"] + m["LFE"]) / 2, parent_name="THIGH")
+    )
 
     model["SHANK"] = SegmentTemplate(
         segment_coordinate_system=NaturalSegmentCoordinateSystemTemplate(
@@ -62,29 +58,24 @@ def model_creation_from_measured_data():
                 start="KNEE_CENTER",
                 # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
                 # lateral epicondyle
-                end=lambda m, bio: (np.cross(m["KNEE_CENTER"] - m["LM"], m["KNEE_CENTER"] - m["MM"])/
-                                      np.linalg.norm(np.cross(m["KNEE_CENTER"] - m["LM"], m["KNEE_CENTER"] - m["MM"])))
+                end=lambda m, bio: (
+                    np.cross(m["KNEE_CENTER"] - m["LM"], m["KNEE_CENTER"] - m["MM"])
+                    / np.linalg.norm(np.cross(m["KNEE_CENTER"] - m["LM"], m["KNEE_CENTER"] - m["MM"]))
+                ),
             ),
             proximal_point="KNEE_CENTER",
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
-            distal_point=lambda m, bio: (m["LM"] + m["MM"])/2,
-            w_axis=AxisTemplate(
-                start="LM",
-                end="MM"
-            )
+            distal_point=lambda m, bio: (m["LM"] + m["MM"]) / 2,
+            w_axis=AxisTemplate(start="LM", end="MM"),
         )
     )
-    model["SHANK"].add_marker(MarkerTemplate(
-        "KNEE_JOINT",
-        function=lambda m, bio: (m["MFE"] + m["LFE"]) / 2,
-        parent_name="KNEE_JOINT")
+    model["SHANK"].add_marker(
+        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: (m["MFE"] + m["LFE"]) / 2, parent_name="KNEE_JOINT")
     )
     model["SHANK"].add_marker(MarkerTemplate("LM", parent_name="SHANK"))
     model["SHANK"].add_marker(MarkerTemplate("MM", parent_name="SHANK"))
-    model["SHANK"].add_marker(MarkerTemplate(
-        "ANKLE_JOINT",
-        function=lambda m, bio: (m["LM"] + m["MM"]) / 2,
-        parent_name="SHANK")
+    model["SHANK"].add_marker(
+        MarkerTemplate("ANKLE_JOINT", function=lambda m, bio: (m["LM"] + m["MM"]) / 2, parent_name="SHANK")
     )
 
     model["FOOT"] = SegmentTemplate(
@@ -92,16 +83,13 @@ def model_creation_from_measured_data():
             u_axis=AxisTemplate(
                 start="ANKLE_JOINT",
                 # u_axis is defined from calcaneous (CAL) to the middle of M1 and M5
-                end=lambda m, bio: (m["CAL"] - (m["M1"] + m["M5"])/2)/
-                                     np.linalg.norm(m["CAL"] - (m["M1"] + m["M5"])/2)
+                end=lambda m, bio: (m["CAL"] - (m["M1"] + m["M5"]) / 2)
+                / np.linalg.norm(m["CAL"] - (m["M1"] + m["M5"]) / 2),
             ),
             proximal_point="ANKLE_JOINT",
             #  middle of M1 and M5
-            distal_point=lambda m, bio: (m["M1"] + m["M5"])/2,
-            w_axis=AxisTemplate(
-                start="M1",
-                end="M5"
-            )
+            distal_point=lambda m, bio: (m["M1"] + m["M5"]) / 2,
+            w_axis=AxisTemplate(start="M1", end="M5"),
         )
     )
 

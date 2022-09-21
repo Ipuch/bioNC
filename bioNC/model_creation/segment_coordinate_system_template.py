@@ -40,8 +40,7 @@ class NaturalSegmentCoordinateSystemTemplate:
         self.distal_point = MarkerTemplate(function=distal_point)
         self.w_axis = w_axis
 
-    def to_sncs(
-        self, data: Data, kinematic_chain: BiomechanicalModel) -> NaturalSegment:
+    def to_sncs(self, data: Data, kinematic_chain: BiomechanicalModel) -> NaturalSegment:
         """
         Collapse the generic SegmentCoordinateSystem to an actual SegmentCoordinateSystemReal with value
         based on the model and the data

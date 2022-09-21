@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Union
 
+
 class SegmentNaturalAccelerations(np.ndarray):
     """
     This class is made to handle Generalized Coordinates of a Segment
@@ -16,7 +17,8 @@ class SegmentNaturalAccelerations(np.ndarray):
         return obj
 
     @classmethod
-    def from_components(cls,
+    def from_components(
+        cls,
         uddot: Union[np.ndarray, list] = None,
         rpddot: Union[np.ndarray, list] = None,
         rdddot: Union[np.ndarray, list] = None,
@@ -129,5 +131,3 @@ class NaturalAccelerations(np.ndarray):
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
         return SegmentNaturalAccelerations(self[array_idx].vector)
-
-

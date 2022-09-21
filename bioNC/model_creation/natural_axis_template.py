@@ -4,7 +4,7 @@ from ..model_computations.natural_axis import Axis
 from ..model_computations.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
+from ..model_computations.segment_coordinate_system import NaturalSegment
 
 
 class AxisTemplate:
@@ -23,7 +23,7 @@ class AxisTemplate:
         self.end = MarkerTemplate(function=end)
 
     def to_axis(
-        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegmentCoordinateSystem = None
+        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None
     ) -> Axis:
         """
         Compute the axis from actual data

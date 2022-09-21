@@ -34,7 +34,7 @@ class InertiaParameters:
         center_of_mass: Callable,
         inertia: Callable,
         kinematic_chain: BiomechanicalModel,
-        parent_scs: "NaturalSegmentCoordinateSystem" = None,
+        parent_scs: "NaturalSegment" = None,
     ):
         """
         This is a constructor for the InertiaParameterReal class.

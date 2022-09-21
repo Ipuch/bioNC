@@ -5,7 +5,7 @@ from .natural_axis_template import AxisTemplate
 from ..model_computations.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
+from ..model_computations.segment_coordinate_system import NaturalSegment
 
 
 class NaturalSegmentCoordinateSystemTemplate:
@@ -35,13 +35,13 @@ class NaturalSegmentCoordinateSystemTemplate:
 
         """
 
-        self.rp = MarkerTemplate(function=proximal_point)
-        self.rd = MarkerTemplate(function=distal_point)
         self.u_axis = u_axis
+        self.proximal_point = MarkerTemplate(function=proximal_point)
+        self.distal_point = MarkerTemplate(function=distal_point)
         self.w_axis = w_axis
 
     def to_sncs(
-        self, data: Data, kinematic_chain: BiomechanicalModel) -> NaturalSegmentCoordinateSystem:
+        self, data: Data, kinematic_chain: BiomechanicalModel) -> NaturalSegment:
         """
         Collapse the generic SegmentCoordinateSystem to an actual SegmentCoordinateSystemReal with value
         based on the model and the data
@@ -60,9 +60,9 @@ class NaturalSegmentCoordinateSystemTemplate:
         The collapsed SegmentCoordinateSystemReal
         """
 
-        return NaturalSegmentCoordinateSystem.from_markers(
-            self.origin.to_marker(data, kinematic_chain),
-            self.first_axis.to_axis(data, kinematic_chain),
-            self.second_axis.to_axis(data, kinematic_chain),
-            self.axis_to_keep,
+        return NaturalSegment.from_markers(
+            self.u_axis.to_axis(data, kinematic_chain),
+            self.proximal_point,
+            self.distal_point,
+            self.w_axis.to_axis(data, kinematic_chain),
         )

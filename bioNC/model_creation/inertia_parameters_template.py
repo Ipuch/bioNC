@@ -4,7 +4,7 @@ import numpy as np
 
 from ..model_computations.inertia_parameters import InertiaParameters
 from ..model_computations.biomechanical_model import BiomechanicalModel
-from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
+from ..model_computations.segment_coordinate_system import NaturalSegment
 from .protocols import Data
 
 
@@ -34,7 +34,7 @@ class InertiaParametersTemplate:
         self.inertia = inertia
 
     def to_real(
-        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegmentCoordinateSystem = None
+        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None
     ) -> InertiaParameters:
         return InertiaParameters.from_data(
             data,

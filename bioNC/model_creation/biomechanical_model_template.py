@@ -1,7 +1,7 @@
 from .protocols import Data
 from ..model_computations.segment import Segment
 from .segment_template import SegmentTemplate
-from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
+from ..model_computations.segment_coordinate_system import NaturalSegment
 from ..model_computations.biomechanical_model import BiomechanicalModel
 
 
@@ -34,7 +34,7 @@ class BiomechanicalModelTemplate:
         for name in self.segments:
             s = self.segments[name]
 
-            scs = NaturalSegmentCoordinateSystem()
+            scs = NaturalSegment()
             if s.segment_coordinate_system is not None:
                 scs = s.segment_coordinate_system.to_scs(
                     data,

@@ -1,176 +1,503 @@
 from copy import copy
+from typing import Union
 
 import numpy as np
+from numpy import cos, sin, matmul, eye, zeros, sum, ones
+from numpy.linalg import inv
 
+# from .HomogeneousMatrix import HomogeneousMatrix
+
+from bioNC import SegmentNaturalCoordinates
 from ..model_computations.natural_axis import Axis
 from ..model_computations.marker import Marker
 
 
-class NaturalSegmentCoordinateSystem:
+class NaturalSegment:
+    """
+        Class used to define anatomical segment based on natural coordinate.
+
+    Methods
+    -------
+    transformation_matrix()
+        This function returns the transformation matrix, denoted Bi
+    rigidBodyConstraint()
+        This function returns the rigid body constraints of the segment, denoted phi_r
+    rigidBodyConstraintJacobian()
+        This function returns the jacobian of rigid body constraints of the segment, denoted K_r
+
+    Attributes
+    ----------
+    segment_name : str
+        name of the segment
+    length : float
+        length of the segment
+    alpha : float
+        angle between u and w
+    beta : float
+        angle between w and (rp-rd)
+    gamma : float
+        angle between (rp-rd) and u
+    mass : float
+        mass of the segment in Segment Coordinate System
+    center_of_mass : np.ndarray
+        center of mass of the segment in Segment Coordinate System
+    inertia: np.ndarray
+        inertia matrix of the segment in Segment Coordinate System
+    """
+
     def __init__(
-        self,
-        sncs: np.ndarray = np.identity(4),
-        is_scs_local: bool = False,
+            self,
+            segment_name: str,
+            alpha: float = np.pi/2,
+            beta: float = np.pi/2,
+            gamma: float = np.pi/2,
+            length: float = None,
+            mass: float = None,
+            center_of_mass: np.ndarray = None,
+            inertia: np.ndarray = None,
     ):
-        """
-        Parameters
-        ----------
-        sncs
-            The sncs of the SegmentNaturalCoordinateSystemReal
-        is_scs_local
-            If the scs is already in local reference frame
-        """
 
-        self.sncs = sncs
-        if len(self.scs.shape) == 2:
-            self.sncs = self.sncs[:, :, np.newaxis]
-        self.is_in_global = not is_scs_local
+        self.segment_name = segment_name
 
-    @staticmethod
-    def from_markers(
-        origin: Marker,
-        first_axis: Axis,
-        second_axis: Axis,
-        axis_to_keep: Axis.Name,
-        parent_scs: "NaturalSegmentCoordinateSystem" = None,
-    ) -> "NaturalSegmentCoordinateSystem":
-        """
-        Parameters
-        ----------
-        origin
-            The marker at the origin of the SegmentCoordinateSystemReal
-        first_axis
-            The first axis defining the segment_coordinate_system
-        second_axis
-            The second axis defining the segment_coordinate_system
-        axis_to_keep
-            The Axis.Name of the axis to keep while recomputing the reference frame. It must be the same as either
-            first_axis.name or second_axis.name
-        parent_scs
-            The scs of the parent (is used when printing the model so SegmentCoordinateSystemReal
-            is in parent's local reference frame
-        """
+        self.length = length
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self._transformation_matrix = self._transformation_matrix()
 
-        # Find the two adjacent axes and reorder accordingly (assuming right-hand RT)
-        if first_axis.name == second_axis.name:
-            raise ValueError("The two axes cannot be the same axis")
-
-        if first_axis.name == Axis.Name.X:
-            third_axis_name = Axis.Name.Y if second_axis.name == Axis.Name.Z else Axis.Name.Z
-            if second_axis.name == Axis.Name.Z:
-                first_axis, second_axis = second_axis, first_axis
-        elif first_axis.name == Axis.Name.Y:
-            third_axis_name = Axis.Name.Z if second_axis.name == Axis.Name.X else Axis.Name.X
-            if second_axis.name == Axis.Name.X:
-                first_axis, second_axis = second_axis, first_axis
-        elif first_axis.name == Axis.Name.Z:
-            third_axis_name = Axis.Name.X if second_axis.name == Axis.Name.Y else Axis.Name.Y
-            if second_axis.name == Axis.Name.Y:
-                first_axis, second_axis = second_axis, first_axis
+        self.mass = mass
+        if center_of_mass is None:
+            self.center_of_mass = center_of_mass
+            self._center_of_mass_in_natural_coordinates_system = None
+            self._interpolation_matrix_center_of_mass = None
         else:
-            raise ValueError("first_axis should be an X, Y or Z axis")
+            if center_of_mass.shape[0] != 3:
+                raise ValueError("Center of mass must be 3x1")
+            self.center_of_mass = center_of_mass
+            self._center_of_mass_in_natural_coordinates_system = self._center_of_mass_in_natural_coordinates_system()
+            self._interpolation_matrix_center_of_mass = self._interpolation_matrix_center_of_mass()
+
+        if inertia is None:
+            self.inertia = inertia
+            self._inertia_in_natural_coordinates_system = None
+            self._interpolation_matrix_inertia = None
+        else:
+            if inertia.shape != (3, 3):
+                raise ValueError("Inertia matrix must be 3x3")
+            self.inertia = inertia
+            self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
+            self._generalized_mass_matrix = self._generalized_mass_matrix()
+
+    @classmethod
+    def from_markers(
+        cls,
+        u_axis: Axis,
+        proximal_point: Marker,
+        distal_point: Marker,
+        w_axis: Axis = None,
+    ) -> "NaturalSegment":
+        """
+        Parameters
+        ----------
+        u_axis: Axis
+            The axis that defines the u vector
+        proximal_point: Marker
+            The proximal point of the segment, denoted by rp
+        distal_point: Marker
+            The distal point of the segment, denoted by rd
+        w_axis: Axis
+            The axis that defines the w vector
+        """
 
         # Compute the third axis and recompute one of the previous two
-        first_axis_vector = first_axis.axis()[:3, :]
-        second_axis_vector = second_axis.axis()[:3, :]
-        third_axis_vector = np.cross(first_axis_vector, second_axis_vector, axis=0)
-        if axis_to_keep == first_axis.name:
-            second_axis_vector = np.cross(third_axis_vector, first_axis_vector, axis=0)
-        elif axis_to_keep == second_axis.name:
-            first_axis_vector = np.cross(second_axis_vector, third_axis_vector, axis=0)
-        else:
-            raise ValueError("Name of axis to keep should be one of the two axes")
+        u_axis_vector = u_axis.axis()[:3, :]
+        w_axis_vector = w_axis.axis()[:3, :]
+        proximal_point_vector = proximal_point.position[:3, :]
+        distal_point_vector = distal_point.position[:3, :]
 
-        # Dispatch the result into a matrix
-        n_frames = first_axis_vector.shape[1]
-        rt = np.zeros((4, 4, n_frames))
-        rt[:3, first_axis.name, :] = first_axis_vector / np.linalg.norm(first_axis_vector, axis=0)
-        rt[:3, second_axis.name, :] = second_axis_vector / np.linalg.norm(second_axis_vector, axis=0)
-        rt[:3, third_axis_name, :] = third_axis_vector / np.linalg.norm(third_axis_vector, axis=0)
-        rt[:3, 3, :] = origin.position[:3, :]
-        rt[3, 3, :] = 1
+        alpha = np.zeros(proximal_point_vector.shape[1])
+        beta = np.zeros(proximal_point_vector.shape[1])
+        gamma = np.zeros(proximal_point_vector.shape[1])
+        length = np.zeros(proximal_point_vector.shape[1])
 
-        return NaturalSegmentCoordinateSystem(scs=rt, parent_scs=parent_scs)
+        def parameters_from_Q(Q: SegmentNaturalCoordinates):
+            length = np.sqrt(np.sum((Q.rp - Q.rd) ** 2, axis=0))
+            alpha = np.arccos(np.sum((Q.rp - Q.rd) * Q.w, axis=0) / length)
+            beta = np.arccos(np.sum(Q.u * Q.w, axis=0))
+            gamma = np.arccos(np.sum(Q.u * (Q.rp - Q.rd), axis=0) / length)
+            return alpha, beta, gamma, length
+
+        for i, (u_axis_i, w_axis_i, proximal_point_i, distal_point_i) in enumerate(zip(
+            u_axis_vector.T, w_axis_vector.T, proximal_point_vector.T, distal_point_vector.T
+        )):
+            alpha[i], beta[i], gamma[i], length[i] = parameters_from_Q(
+                SegmentNaturalCoordinates.from_components(
+                    u=u_axis_i,
+                    rp=proximal_point_i,
+                    rd=distal_point_i,
+                    w=w_axis_i,
+                )
+            )
+
+        return cls(
+            segment_name="name",
+            alpha=np.mean(alpha, axis=0)[0],
+            beta=np.mean(beta, axis=0)[0],
+            gamma=np.mean(gamma, axis=0)[0],
+            length=np.mean(length, axis=0)[0]
+        )
 
     @staticmethod
-    def from_euler_and_translation(
-        angles: tuple[float | int, ...],
-        angle_sequence: str,
-        translations: tuple[float | int, float | int, float | int],
-        parent_scs: "NaturalSegmentCoordinateSystem" = None,
-    ) -> "NaturalSegmentCoordinateSystem":
+    def parameters_from_Q(Q: SegmentNaturalCoordinates):
+        length = np.sqrt(np.sum((Q.rp - Q.rd) ** 2, axis=0))
+        alpha = np.arccos(np.sum((Q.rp - Q.rd) * Q.w, axis=0) / length)
+        beta = np.arccos(np.sum(Q.u * Q.w, axis=0))
+        gamma = np.arccos(np.sum(Q.u * (Q.rp - Q.rd), axis=0) / length)
+        return alpha, beta, gamma, length
+
+    def __str__(self):
+        print("to do")
+
+    def _transformation_matrix(self):
         """
-        Construct a SegmentCoordinateSystemReal from angles and translations
+        This function computes the transformation matrix, denoted Bi,
+        from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
+        Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
+
+        Returns
+        -------
+        np.ndarray
+            Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        """
+        return np.array(
+            [
+                [1, 0, 0],
+                [self.length * cos(self.gamma), self.length * sin(self.gamma), 0],
+                [
+                    cos(self.beta),
+                    (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta),
+                    np.sqrt(
+                        1
+                        - cos(self.beta) ** 2
+                        - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
+                    ),
+                ],
+            ]
+        )
+
+    @property
+    def transformation_matrix(self):
+        """
+        This function returns the transformation matrix, denoted Bi,
+        from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
+        Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
+
+        Returns
+        -------
+        np.ndarray
+            Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        """
+        return self._transformation_matrix
+
+    def rigidBodyConstraint(self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]) -> np.ndarray:
+        """
+        This function returns the rigid body constraints of the segment, denoted phi_r.
+
+        Returns
+        -------
+        np.ndarray
+            Rigid body constraints of the segment [6 x 1 x N_frame]
+        """
+        if not isinstance(Qi, SegmentNaturalCoordinates):
+            Qi = SegmentNaturalCoordinates(Qi)
+
+        phir = zeros(6)
+        phir[0] = sum(Qi.u ** 2, 0) - 1
+        phir[1] = sum(Qi.u * (Qi.rp - Qi.rd), 0) - self.length * cos(self.gamma)
+        phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
+        phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length ** 2
+        phir[4] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
+        phir[5] = sum(Qi.w ** 2, 0) - 1
+
+        return phir
+
+    @staticmethod
+    def rigidBodyConstraintJacobian(Qi: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the Jacobian matrix of the rigid body constraints denoted K_r
+
+        Returns
+        -------
+        Kr : np.ndarray
+            Jacobian matrix of the rigid body constraints denoted Kr [6 x 12 x N_frame]
+        """
+        # initialisation
+        Kr = zeros((6, 12))
+
+        Kr[0, 0:3] = 2 * Qi.u
+
+        Kr[1, 0:3] = Qi.rp - Qi.rd
+        Kr[1, 3:6] = Qi.u
+        Kr[1, 6:9] = -Qi.u
+
+        Kr[2, 0:3] = Qi.w
+        Kr[2, 9:12] = Qi.u
+
+        Kr[3, 3:6] = 2 * (Qi.rp - Qi.rd)
+        Kr[3, 6:9] = -2 * (Qi.rp - Qi.rd)
+
+        Kr[4, 3:6] = Qi.w
+        Kr[4, 6:9] = -Qi.w
+        Kr[4, 9:12] = Qi.rp - Qi.rd
+
+        Kr[5, 9:12] = 2 * Qi.w
+
+        return Kr
+
+    @staticmethod
+    def rigidBodyConstraintJacobianDerivative(Qdoti: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
+
+        Returns
+        -------
+        Kr_dot : np.ndarray
+            derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 ]
+        """
+        # initialisation
+        Kr_dot = zeros((6, 12))
+
+        Kr_dot[0, 0:3] = 2 * Qdoti.u
+        Kr_dot[1, 0:3] = Qdoti.rp - Qdoti.rd
+        Kr_dot[1, 3:6] = Qdoti.u
+        Kr_dot[1, 6:9] = -Qdoti.u
+        Kr_dot[2, 0:3] = Qdoti.w
+        Kr_dot[2, 9:12] = Qdoti.u
+
+        Kr_dot[3, 3:6] = 2 * (Qdoti.rp - Qdoti.rd)
+        Kr_dot[3, 6:9] = -2 * (Qdoti.rp - Qdoti.rd)
+        Kr_dot[4, 3:6] = Qdoti.w
+        Kr_dot[4, 6:9] = -Qdoti.w
+        Kr_dot[4, 9:12] = Qdoti.rp - Qdoti.rd
+        Kr_dot[5, 9:12] = 2 * Qdoti.w
+
+        return Kr_dot
+
+    def _pseudo_inertia_matrix(self):
+        """
+        This function returns the pseudo-inertia matrix of the segment, denoted J_i.
+        It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
+
+        Returns
+        -------
+        np.ndarray
+            Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
+        """
+        # todo: verify the formula
+        middle_block = (
+                self.inertia
+                + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * eye(3)
+                - np.dot(self.center_of_mass.T, self.center_of_mass)
+        )
+
+        Binv = inv(self.transformation_matrix)
+        Binv_transpose = np.transpose(Binv)
+
+        return matmul(Binv, matmul(middle_block, Binv_transpose))
+
+    @property
+    def pseudo_inertia_matrix(self):
+        """
+        This function returns the pseudo-inertia matrix of the segment, denoted J_i.
+        It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
+
+        Returns
+        -------
+        np.ndarray
+            Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
+        """
+        return self._pseudo_inertia_matrix
+
+    def _center_of_mass_in_natural_coordinates_system(self):
+        """
+        This function computes the center of mass of the segment in the natural coordinate system.
+        It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
+
+        Returns
+        -------
+        np.ndarray
+            Center of mass of the segment in the natural coordinate system [3x1]
+        """
+        return matmul(inv(self.transformation_matrix), self.center_of_mass)
+
+    @property
+    def center_of_mass_in_natural_coordinates_system(self):
+        """
+        This function returns the center of mass of the segment in the natural coordinate system.
+        It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
+
+        Returns
+        -------
+        np.ndarray
+            Center of mass of the segment in the natural coordinate system [3x1]
+        """
+        return self._center_of_mass_in_natural_coordinates_system
+
+    def _generalized_mass_matrix(self):
+        """
+        This function returns the generalized mass matrix of the segment, denoted G_i.
+
+        Returns
+        -------
+        np.ndarray
+            generalized mass matrix of the segment [12 x 12]
+        """
+
+        Ji = self.pseudo_inertia_matrix
+        n_ci = self.center_of_mass_in_natural_coordinates_system
+
+        Gi = zeros((12, 12))
+
+        Gi[0:3, 0:3] = Ji[0, 0] * eye(3)
+        Gi[0:3, 3:6] = (self.mass * n_ci[0] + Ji[0, 1]) * eye(3)
+        Gi[0:3, 6:9] = -Ji[0, 1] * eye(3)
+        Gi[0:3, 9:12] = -Ji[0, 2] * eye(3)
+        Gi[3:6, 3:6] = (self.mass + 2 * self.mass * n_ci[1] + Ji[1, 1]) * eye(3)
+        Gi[3:6, 6:9] = -(self.mass * n_ci[1] + Ji[1, 1]) * eye(3)
+        Gi[3:6, 9:12] = (self.mass * n_ci[2] + Ji[1, 2]) * eye(3)
+        Gi[6:9, 6:9] = Ji[1, 1] * eye(3)
+        Gi[6:9, 9:12] = -Ji[1, 2] * eye(3)
+        Gi[9:12, 9:12] = Ji[2, 2] * eye(3)
+
+        # symmetrize the matrix
+        Gi = np.tril(Gi) + np.tril(Gi, -1).T
+
+        return Gi
+
+    @property
+    def generalized_mass_matrix(self):
+        """
+        This function returns the generalized mass matrix of the segment, denoted G_i.
+
+        Returns
+        -------
+        np.ndarray
+            generalized mass matrix of the segment [12 x 12]
+        """
+
+        return self._generalized_mass_matrix
+
+    def _interpolation_matrix_center_of_mass(self):
+        """
+        This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
+        It allows to apply the gravity force at the center of mass of the segment.
+
+        Returns
+        -------
+        np.ndarray
+            Interpolation matrix for the center of mass of the segment in the natural coordinate system [12 x 3]
+        """
+        n_ci = self.center_of_mass_in_natural_coordinates_system
+
+        interpolation_matrix = np.zeros((12, 3))
+        interpolation_matrix[0:3, 0:3] = n_ci[0] * eye(3)
+        interpolation_matrix[3:6, 0:3] = (1 + n_ci[1]) * eye(3)
+        interpolation_matrix[6:9, 0:3] = -n_ci[1] * eye(3)
+        interpolation_matrix[9:12, 0:3] = n_ci[2] * eye(3)
+
+        return interpolation_matrix
+
+    @property
+    def interpolation_matrix_center_of_mass(self):
+        """
+        This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
+        It allows to apply the gravity force at the center of mass of the segment.
+
+        Returns
+        -------
+        np.ndarray
+            Interpolation matrix for the center of mass of the segment in the natural coordinate system [12 x 3]
+        """
+        return self._interpolation_matrix_center_of_mass
+
+    def weight(self):
+        """
+        This function returns the weight applied on the segment through gravity force.
+
+        Returns
+        -------
+        np.ndarray
+            Weight applied on the segment through gravity force [12 x 1]
+        """
+
+        return np.matmul(self.interpolation_matrix_center_of_mass * self.mass, np.array([0, 0, -9.81]))
+
+    def differential_algebraic_equation(
+            self,
+            Qi: Union[SegmentNaturalCoordinates, np.array],
+            Qdoti: Union[SegmentNaturalCoordinates, np.array]
+    ):
+        """
+        This function returns the differential algebraic equation of the segment
 
         Parameters
         ----------
-        angles
-            The actual angles
-        angle_sequence
-            The angle sequence of the angles
-        translations
-            The XYZ translations
-        parent_scs
-            The scs of the parent (is used when printing the model so SegmentCoordinateSystemReal
-            is in parent's local reference frame
+        Qi: SegmentNaturalCoordinates
+            Natural coordinates of the segment
+        Qdoti: SegmentNaturalCoordinates
+            Derivative of the natural coordinates of the segment
+
+        Returns
+        -------
+        np.ndarray
+            Differential algebraic equation of the segment [12 x 1]
         """
-        matrix = {
-            "x": lambda x: np.array(((1, 0, 0), (0, np.cos(x), -np.sin(x)), (0, np.sin(x), np.cos(x)))),
-            "y": lambda y: np.array(((np.cos(y), 0, np.sin(y)), (0, 1, 0), (-np.sin(y), 0, np.cos(y)))),
-            "z": lambda z: np.array(((np.cos(z), -np.sin(z), 0), (np.sin(z), np.cos(z), 0), (0, 0, 1))),
-        }
-        rt = np.identity(4)
-        for angle, axis in zip(angles, angle_sequence):
-            rt[:3, :3] = rt[:3, :3] @ matrix[axis](angle)
-        rt[:3, 3] = translations
-        return NaturalSegmentCoordinateSystem(scs=rt, parent_scs=parent_scs, is_scs_local=True)
 
-    def copy(self):
-        return NaturalSegmentCoordinateSystem(scs=copy(self.scs), parent_scs=self.parent_scs)
+        if not isinstance(Qi, SegmentNaturalCoordinates):
+            Qi = SegmentNaturalCoordinates(Qi)
+        if not isinstance(Qdoti, SegmentNaturalCoordinates):
+            Qdoti = SegmentNaturalCoordinates(Qdoti)
 
-    def __str__(self):
-        if self.is_in_global:
-            rt = self.parent_scs.transpose @ self.scs if self.parent_scs else np.identity(4)[:, :, np.newaxis]
-        else:
-            rt = self.scs
+        Gi = self.generalized_mass_matrix
+        Kr = self.rigidBodyConstraintJacobian(Qi)
+        Kr_transpose = np.transpose(Kr)
+        Krdot = self.rigidBodyConstraintJacobianDerivative(Qdoti)
+        biais = np.matmul(Krdot, Qdoti.vector)
 
-        tx = rt[0, 3, :]
-        ty = rt[1, 3, :]
-        tz = rt[2, 3, :]
+        A = zeros((18, 18))
+        A[0:12, 0:12] = Gi
+        A[12:, 0:12] = Kr
+        A[0:12, 12:] = Kr_transpose
+        A[12:, 12:] = np.zeros((6, 6))
 
-        rx = np.arctan2(-rt[1, 2, :], rt[2, 2, :])
-        ry = np.arcsin(rt[0, 2, :])
-        rz = np.arctan2(-rt[0, 1, :], rt[0, 0, :])
+        B = np.concatenate([self.weight(), biais], axis=0)
 
-        tx = np.nanmean(tx, axis=0)
-        ty = np.nanmean(ty, axis=0)
-        tz = np.nanmean(tz, axis=0)
-        rx = np.nanmean(rx, axis=0)
-        ry = np.nanmean(ry, axis=0)
-        rz = np.nanmean(rz, axis=0)
+        # solve the linear system Ax = B with numpy
+        x = np.linalg.solve(A, B)
+        Qddoti = x[0:12]
+        lambda_i = x[12:]
+        return Qddoti, lambda_i
 
-        return f"{rx:0.3f} {ry:0.3f} {rz:0.3f} xyz {tx:0.3f} {ty:0.3f} {tz:0.3f}"
+    def location_from_homogenous_transform(self, T: np.ndarray):
+        """
+        This function returns the location of the segment in natural coordinate from its homogenous transform
 
-    def __matmul__(self, other):
-        if isinstance(other, NaturalSegmentCoordinateSystem):
-            other = other.scs
+        Parameters
+        ----------
+        T: np.ndarray
+            Homogenous transform of the segment Ti which transforms from the local frame (Oi, Xi, Yi, Zi)
+            to the global frame (Xi, Yi, Zi)
 
-        if not isinstance(other, np.ndarray):
-            raise ValueError(
-                "SCS multiplication must be performed against np.narray or SegmentCoordinateSystemReal classes"
-            )
+        Returns
+        -------
+        np.ndarray
+            Location of the segment [3 x 1]
+        """
 
-        if len(other.shape) == 3:  # If it is a RT @ RT
-            return np.einsum("ijk,jlk->ilk", self.scs, other)
-        elif len(other.shape) == 2:  # if it is a RT @ vector
-            return np.einsum("ijk,jk->ik", self.scs, other)
-        else:
-            NotImplementedError("This multiplication is not implemented yet")
+        u = self.transformation_matrix * T[0:3, 0]
+        # v = self.transformation_matrix() * T[0:3, 1]
+        w = self.transformation_matrix * T[0:3, 2]
+        rp = self.transformation_matrix * T[0:3, 4]
+        rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3]
 
-    @property
-    def transpose(self):
-        out = self.copy()
-        out.scs = out.scs.transpose((1, 0, 2))
-        out.scs[:3, 3, :] = np.einsum("ijk,jk->ik", -out.scs[:3, :3, :], self.scs[:3, 3, :])
-        out.scs[3, :3, :] = 0
-        return out
+        return SegmentNaturalCoordinates((u, rp, rd, w))

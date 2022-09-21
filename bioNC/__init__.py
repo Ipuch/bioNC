@@ -1,8 +1,10 @@
-from utils.natural_coordinates import SegmentNaturalCoordinatesCreator, NaturalCoordinates, NaturalCoordinatesCreator
-from utils.natural_velocities import SegmentNaturalVelocitiesCreator, NaturalVelocities, NaturalVelocitiesCreator
-from utils.natural_accelerations import SegmentNaturalAccelerationsCreator, NaturalAccelerations, NaturalAccelerationsCreator
+from .utils.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from .utils.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from .utils.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+
+
 from .segment import NaturalSegment
-from model_creation import (
+from .model_creation import (
     AxisTemplate,
     MarkerTemplate,
     SegmentTemplate,
@@ -13,11 +15,11 @@ from model_creation import (
     Data,
     GenericDynamicModel,
 )
-from model_computations import (
+from .model_computations import (
     Axis,
     Marker,
     Segment,
-    NaturalSegmentCoordinateSystem,
+    NaturalSegment,
     InertiaParameters,
     BiomechanicalModel,
 )

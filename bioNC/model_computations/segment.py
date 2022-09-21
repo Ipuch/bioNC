@@ -1,6 +1,6 @@
 from ..model_computations.inertia_parameters import InertiaParameters
 from ..model_computations.marker import Marker
-from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
+from ..model_computations.segment_coordinate_system import NaturalSegment
 
 
 class Segment:
@@ -8,7 +8,7 @@ class Segment:
         self,
         name: str = None,
         parent_name: str = "",
-        segment_coordinate_system: NaturalSegmentCoordinateSystem = None,
+        segment_coordinate_system: NaturalSegment = None,
         translations: str = "",
         rotations: str = "",
         inertia_parameters: InertiaParameters = None,

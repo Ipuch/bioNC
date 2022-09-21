@@ -24,9 +24,6 @@ class SegmentTemplate:
         """
 
         self.name = name
-        self.parent_name = parent_name
-        self.translations = translations
-        self.rotations = rotations
         self.markers = []
         self.segment_coordinate_system = segment_coordinate_system
         self.inertia_parameters = inertia_parameters

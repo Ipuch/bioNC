@@ -76,11 +76,15 @@ class SegmentNaturalAccelerations(np.ndarray):
 
     @property
     def vddot(self):
-        return self.rd.to_array() - self.rp.to_array()
+        return self.rdddot - self.rpddot
 
     @property
     def vector(self):
         return self.to_array()
+
+    @property
+    def to_components(self):
+        return self.uddot, self.rpddot, self.rdddot, self.wddot
 
 
 class NaturalAccelerations(np.ndarray):

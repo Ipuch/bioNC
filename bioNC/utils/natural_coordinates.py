@@ -86,6 +86,10 @@ class SegmentNaturalCoordinates(np.ndarray):
     def vector(self):
         return self.to_array()
 
+    @property
+    def to_components(self):
+        return self.u, self.rp, self.rd, self.w
+
 
 class NaturalCoordinates(np.ndarray):
     def __new__(cls, input_array: np.ndarray):

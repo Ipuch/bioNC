@@ -75,11 +75,15 @@ class SegmentNaturalVelocities(np.ndarray):
 
     @property
     def vdot(self):
-        return self.rd.to_array() - self.rp.to_array()
+        return self.rddot - self.rpdot
 
     @property
     def vector(self):
         return self.to_array()
+
+    @property
+    def to_components(self):
+        return self.udot, self.rpdot, self.rddot, self.wdot
 
 
 class NaturalVelocities(np.ndarray):

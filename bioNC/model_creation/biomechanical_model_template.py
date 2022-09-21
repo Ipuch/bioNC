@@ -20,7 +20,7 @@ class BiomechanicalModelTemplate:
         segment.name = name  # Make sure the name of the segment fits the internal one
         self.segments[name] = segment
 
-    def to_real(self, data: Data) -> BiomechanicalModel:
+    def update(self, data: Data) -> BiomechanicalModel:
         """
         Collapse the model to an actual personalized biomechanical model based on the generic model and the data
         file (usually a static trial)
@@ -64,17 +64,3 @@ class BiomechanicalModelTemplate:
 
         return model
 
-    def write(self, save_path: str, data: Data):
-        """
-        Collapse the model to an actual personalized biomechanical model based on the generic model and the data
-        file (usually a static trial)
-
-        Parameters
-        ----------
-        save_path
-            The path to save the bioMod
-        data
-            The data to collapse the model from
-        """
-        model = self.to_real(data)
-        model.write(save_path)

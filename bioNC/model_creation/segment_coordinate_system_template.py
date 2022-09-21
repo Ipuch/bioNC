@@ -1,7 +1,7 @@
 from typing import Callable
 
-from ..model_computations.natural_axis import NaturalAxis
-from .natural_axis_template import NaturalAxisTemplate
+from ..model_computations.natural_axis import Axis
+from .natural_axis_template import AxisTemplate
 from ..model_computations.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
 from .protocols import Data
@@ -11,10 +11,10 @@ from ..model_computations.segment_coordinate_system import NaturalSegmentCoordin
 class NaturalSegmentCoordinateSystemTemplate:
     def __init__(
         self,
-        u_axis: NaturalAxisTemplate,
-        rp: Callable | str,
-        rd: Callable | str,
-        w_axis: NaturalAxisTemplate,
+        u_axis: AxisTemplate,
+        proximal_point: Callable | str,
+        distal_point: Callable | str,
+        w_axis: AxisTemplate,
     ):
         """
         Set the SegmentCoordinateSystemReal matrix of the segment. To compute the third axis, a first cross product of
@@ -25,18 +25,18 @@ class NaturalSegmentCoordinateSystemTemplate:
         Parameters
         ----------
         u_axis
-            The first axis of the segment
-        rp
-            The function to compute the origin of the segment, proximal location of the segment
-        rd
-            The function to compute the distal end of the segment, distal location of the segment
+            The first axis of the segment, denoted u
+        proximal_point
+            The function to compute the origin of the segment, proximal location of the segment, denoted rp
+        distal_point
+            The function to compute the distal end of the segment, distal location of the segment, denoted rd
         w_axis
-            The third axis of the segment
+            The third axis of the segment, denoted w
 
         """
 
-        self.rp = MarkerTemplate(function=rp)
-        self.rd = MarkerTemplate(function=rd)
+        self.rp = MarkerTemplate(function=proximal_point)
+        self.rd = MarkerTemplate(function=distal_point)
         self.u_axis = u_axis
         self.w_axis = w_axis
 

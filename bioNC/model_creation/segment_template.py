@@ -7,9 +7,6 @@ class SegmentTemplate:
     def __init__(
         self,
         name: str = None,
-        parent_name: str = "",
-        translations: str = "",
-        rotations: str = "",
         segment_coordinate_system: NaturalSegmentCoordinateSystemTemplate = None,
         inertia_parameters: InertiaParametersTemplate = None,
     ):
@@ -20,12 +17,8 @@ class SegmentTemplate:
         ----------
         name
             The name of the segment
-        parent_name
-            The name of the segment the current segment is attached to
-        translations
-            The sequence of translation
-        rotations
-            The sequence of rotation
+        segment_coordinate_system
+            The natural segment coordinate system
         inertia_parameters
             The inertia parameters of the segment
         """

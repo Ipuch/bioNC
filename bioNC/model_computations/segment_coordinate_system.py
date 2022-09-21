@@ -2,7 +2,7 @@ from copy import copy
 
 import numpy as np
 
-from ..model_computations.natural_axis import NaturalAxis
+from ..model_computations.natural_axis import Axis
 from ..model_computations.marker import Marker
 
 
@@ -29,9 +29,9 @@ class NaturalSegmentCoordinateSystem:
     @staticmethod
     def from_markers(
         origin: Marker,
-        first_axis: NaturalAxis,
-        second_axis: NaturalAxis,
-        axis_to_keep: NaturalAxis.Name,
+        first_axis: Axis,
+        second_axis: Axis,
+        axis_to_keep: Axis.Name,
         parent_scs: "NaturalSegmentCoordinateSystem" = None,
     ) -> "NaturalSegmentCoordinateSystem":
         """
@@ -55,17 +55,17 @@ class NaturalSegmentCoordinateSystem:
         if first_axis.name == second_axis.name:
             raise ValueError("The two axes cannot be the same axis")
 
-        if first_axis.name == NaturalAxis.Name.X:
-            third_axis_name = NaturalAxis.Name.Y if second_axis.name == NaturalAxis.Name.Z else NaturalAxis.Name.Z
-            if second_axis.name == NaturalAxis.Name.Z:
+        if first_axis.name == Axis.Name.X:
+            third_axis_name = Axis.Name.Y if second_axis.name == Axis.Name.Z else Axis.Name.Z
+            if second_axis.name == Axis.Name.Z:
                 first_axis, second_axis = second_axis, first_axis
-        elif first_axis.name == NaturalAxis.Name.Y:
-            third_axis_name = NaturalAxis.Name.Z if second_axis.name == NaturalAxis.Name.X else NaturalAxis.Name.X
-            if second_axis.name == NaturalAxis.Name.X:
+        elif first_axis.name == Axis.Name.Y:
+            third_axis_name = Axis.Name.Z if second_axis.name == Axis.Name.X else Axis.Name.X
+            if second_axis.name == Axis.Name.X:
                 first_axis, second_axis = second_axis, first_axis
-        elif first_axis.name == NaturalAxis.Name.Z:
-            third_axis_name = NaturalAxis.Name.X if second_axis.name == NaturalAxis.Name.Y else NaturalAxis.Name.Y
-            if second_axis.name == NaturalAxis.Name.Y:
+        elif first_axis.name == Axis.Name.Z:
+            third_axis_name = Axis.Name.X if second_axis.name == Axis.Name.Y else Axis.Name.Y
+            if second_axis.name == Axis.Name.Y:
                 first_axis, second_axis = second_axis, first_axis
         else:
             raise ValueError("first_axis should be an X, Y or Z axis")

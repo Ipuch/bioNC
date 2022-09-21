@@ -3,7 +3,7 @@ from utils.natural_velocities import SegmentNaturalVelocitiesCreator, NaturalVel
 from utils.natural_accelerations import SegmentNaturalAccelerationsCreator, NaturalAccelerations, NaturalAccelerationsCreator
 from .segment import NaturalSegment
 from model_creation import (
-    NaturalAxisTemplate,
+    AxisTemplate,
     MarkerTemplate,
     SegmentTemplate,
     NaturalSegmentCoordinateSystemTemplate,
@@ -14,7 +14,7 @@ from model_creation import (
     GenericDynamicModel,
 )
 from model_computations import (
-    NaturalAxis,
+    Axis,
     Marker,
     Segment,
     NaturalSegmentCoordinateSystem,

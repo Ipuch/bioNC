@@ -32,8 +32,8 @@ class NaturalSegmentCoordinateSystem:
         first_axis: NaturalAxis,
         second_axis: NaturalAxis,
         axis_to_keep: NaturalAxis.Name,
-        parent_scs: "SegmentCoordinateSystemReal" = None,
-    ) -> "SegmentCoordinateSystemReal":
+        parent_scs: "NaturalSegmentCoordinateSystem" = None,
+    ) -> "NaturalSegmentCoordinateSystem":
         """
         Parameters
         ----------
@@ -97,8 +97,8 @@ class NaturalSegmentCoordinateSystem:
         angles: tuple[float | int, ...],
         angle_sequence: str,
         translations: tuple[float | int, float | int, float | int],
-        parent_scs: "SegmentCoordinateSystemReal" = None,
-    ) -> "SegmentCoordinateSystemReal":
+        parent_scs: "NaturalSegmentCoordinateSystem" = None,
+    ) -> "NaturalSegmentCoordinateSystem":
         """
         Construct a SegmentCoordinateSystemReal from angles and translations
 
@@ -152,7 +152,7 @@ class NaturalSegmentCoordinateSystem:
         return f"{rx:0.3f} {ry:0.3f} {rz:0.3f} xyz {tx:0.3f} {ty:0.3f} {tz:0.3f}"
 
     def __matmul__(self, other):
-        if isinstance(other, SegmentCoordinateSystemReal):
+        if isinstance(other, NaturalSegmentCoordinateSystem):
             other = other.scs
 
         if not isinstance(other, np.ndarray):

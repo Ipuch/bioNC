@@ -1,7 +1,6 @@
-from .inertia_parameters import InertiaParametersTemplate
-from .marker import MarkerTemplate
-from .mesh import Mesh
-from .segment_coordinate_system import SegmentCoordinateSystem
+from .inertia_parameters_template import InertiaParametersTemplate
+from .marker_template import MarkerTemplate
+from .segment_coordinate_system_template import NaturalSegmentCoordinateSystemTemplate
 
 
 class SegmentTemplate:
@@ -11,9 +10,8 @@ class SegmentTemplate:
         parent_name: str = "",
         translations: str = "",
         rotations: str = "",
-        segment_coordinate_system: SegmentCoordinateSystem = None,
+        segment_coordinate_system: NaturalSegmentCoordinateSystemTemplate = None,
         inertia_parameters: InertiaParametersTemplate = None,
-        mesh: Mesh = None,
     ):
         """
         Create a new generic segment.
@@ -30,8 +28,6 @@ class SegmentTemplate:
             The sequence of rotation
         inertia_parameters
             The inertia parameters of the segment
-        mesh
-            The mesh points of the segment
         """
 
         self.name = name
@@ -41,7 +37,6 @@ class SegmentTemplate:
         self.markers = []
         self.segment_coordinate_system = segment_coordinate_system
         self.inertia_parameters = inertia_parameters
-        self.mesh = mesh
 
     def add_marker(self, marker: MarkerTemplate):
         """

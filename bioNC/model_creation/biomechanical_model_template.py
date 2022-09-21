@@ -1,8 +1,8 @@
 from .protocols import Data
-from .segment_real import Segment
-from .segment import Segment
-from .segment_coordinate_system_real import SegmentCoordinateSystemReal
-from .biomechanical_model import BiomechanicalModel
+from ..model_computations.segment import Segment
+from .segment_template import SegmentTemplate
+from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
+from ..model_computations.biomechanical_model import BiomechanicalModel
 
 
 class BiomechanicalModelTemplate:
@@ -12,7 +12,7 @@ class BiomechanicalModelTemplate:
     def __getitem__(self, name: str):
         return self.segments[name]
 
-    def __setitem__(self, name: str, segment: Segment):
+    def __setitem__(self, name: str, segment: SegmentTemplate):
         if segment.name is not None and segment.name != name:
             raise ValueError(
                 "The segment name should be the same as the 'key'. Alternatively, segment.name can be left undefined"
@@ -34,7 +34,7 @@ class BiomechanicalModelTemplate:
         for name in self.segments:
             s = self.segments[name]
 
-            scs = SegmentCoordinateSystemReal()
+            scs = NaturalSegmentCoordinateSystem()
             if s.segment_coordinate_system is not None:
                 scs = s.segment_coordinate_system.to_scs(
                     data,
@@ -57,7 +57,6 @@ class BiomechanicalModelTemplate:
                 translations=s.translations,
                 rotations=s.rotations,
                 inertia_parameters=inertia_parameters,
-                mesh=mesh,
             )
 
             for marker in s.markers:

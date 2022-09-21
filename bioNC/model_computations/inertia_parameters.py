@@ -2,8 +2,8 @@ from typing import Callable
 
 import numpy as np
 
-from .biomechanical_model_real import BiomechanicalModelReal
-from .protocols import Data
+from .biomechanical_model import BiomechanicalModel
+from ..model_creation.protocols import Data
 
 
 class InertiaParameters:
@@ -33,8 +33,8 @@ class InertiaParameters:
         relative_mass: Callable,
         center_of_mass: Callable,
         inertia: Callable,
-        kinematic_chain: BiomechanicalModelReal,
-        parent_scs: "SegmentCoordinateSystemReal" = None,
+        kinematic_chain: BiomechanicalModel,
+        parent_scs: "NaturalSegmentCoordinateSystem" = None,
     ):
         """
         This is a constructor for the InertiaParameterReal class.

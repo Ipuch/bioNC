@@ -1,20 +1,20 @@
 from typing import Callable
 
-from .axis_real import NaturalAxis
-from .axis import AxisTemplate
-from .biomechanical_model_real import BiomechanicalModelReal
-from .marker import MarkerTemplate
+from ..model_computations.natural_axis import NaturalAxis
+from .natural_axis_template import NaturalAxisTemplate
+from ..model_computations.biomechanical_model import BiomechanicalModel
+from .marker_template import MarkerTemplate
 from .protocols import Data
-from .segment_coordinate_system_real import SegmentCoordinateSystemReal
+from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
 
 
-class SegmentNaturalCoordinateSystemTemplate:
+class NaturalSegmentCoordinateSystemTemplate:
     def __init__(
         self,
-        u_axis: AxisTemplate,
+        u_axis: NaturalAxisTemplate,
         rp: Callable | str,
         rd: Callable | str,
-        w_axis: AxisTemplate,
+        w_axis: NaturalAxisTemplate,
     ):
         """
         Set the SegmentCoordinateSystemReal matrix of the segment. To compute the third axis, a first cross product of
@@ -41,7 +41,7 @@ class SegmentNaturalCoordinateSystemTemplate:
         self.w_axis = w_axis
 
     def to_sncs(
-        self, data: Data, kinematic_chain: BiomechanicalModelReal) -> SegmentCoordinateSystemReal:
+        self, data: Data, kinematic_chain: BiomechanicalModel) -> NaturalSegmentCoordinateSystem:
         """
         Collapse the generic SegmentCoordinateSystem to an actual SegmentCoordinateSystemReal with value
         based on the model and the data
@@ -60,10 +60,9 @@ class SegmentNaturalCoordinateSystemTemplate:
         The collapsed SegmentCoordinateSystemReal
         """
 
-        return SegmentCoordinateSystemReal.from_markers(
+        return NaturalSegmentCoordinateSystem.from_markers(
             self.origin.to_marker(data, kinematic_chain),
             self.first_axis.to_axis(data, kinematic_chain),
             self.second_axis.to_axis(data, kinematic_chain),
             self.axis_to_keep,
-            parent_scs,
         )

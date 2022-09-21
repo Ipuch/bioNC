@@ -1,9 +1,9 @@
 from typing import Callable
 
-from .biomechanical_model_real import BiomechanicalModelReal
-from .marker import Marker
+from ..model_computations.biomechanical_model import BiomechanicalModel
+from ..model_computations.marker import Marker
 from .protocols import Data
-from .segment_coordinate_system_real import SegmentNaturalCoordinateSystem
+from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
 
 
 class MarkerTemplate:
@@ -40,7 +40,7 @@ class MarkerTemplate:
         self.is_anatomical = is_anatomical
 
     def to_marker(
-        self, data: Data, kinematic_chain: BiomechanicalModelReal, parent_scs: SegmentNaturalCoordinateSystem = None
+        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegmentCoordinateSystem = None
     ) -> Marker:
         return Marker.from_data(
             data,

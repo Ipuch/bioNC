@@ -1,10 +1,10 @@
 from typing import Callable
 
-from .natural_axis import NaturalAxis
-from .biomechanical_model_real import BiomechanicalModelReal
+from ..model_computations.natural_axis import NaturalAxis
+from ..model_computations.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from .segment_coordinate_system_real import SegmentNaturalCoordinateSystem
+from ..model_computations.segment_coordinate_system import NaturalSegmentCoordinateSystem
 
 
 class NaturalAxisTemplate:
@@ -33,7 +33,7 @@ class NaturalAxisTemplate:
         self.end = MarkerTemplate(function=end)
 
     def to_axis(
-        self, data: Data, kinematic_chain: BiomechanicalModelReal, parent_scs: SegmentNaturalCoordinateSystem = None
+        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegmentCoordinateSystem = None
     ) -> NaturalAxis:
         """
         Compute the axis from actual data

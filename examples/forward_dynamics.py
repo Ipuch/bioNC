@@ -1,10 +1,10 @@
 import numpy as np
 
-from bioNC import NaturalSegment, NaturalCoordinates, SegmentNaturalCoordinatesCreator, NaturalCoordinatesCreator
+from bioNC import NaturalSegment, NaturalCoordinates, SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities
 from ode_solvers import RK4
 
 # Let's create a segment
-my_segment = NaturalSegment.XYZ(
+my_segment = NaturalSegment(
     "box",
     alpha=np.pi / 2,
     beta=np.pi / 2,
@@ -27,27 +27,27 @@ print(my_segment.interpolation_matrix_center_of_mass)
 print(my_segment.generalized_mass_matrix)
 
 # Let's create natural coordinates
-Qi = SegmentNaturalCoordinatesCreator(
+Qi = SegmentNaturalCoordinates.from_components(
     u=np.array([1, 0, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 1, 0]), w=np.array([0, 0, 1])
 )
 
 print(my_segment.rigidBodyConstraint(Qi))
 print(my_segment.rigidBodyConstraintJacobian(Qi))
-print(my_segment.rigidBodyConstraintJacobianDerivative(Qi))
+print(my_segment.rigidBodyConstraintJacobianDerivative(Qi.vector))
 
-Qi = SegmentNaturalCoordinatesCreator(
+Qi = SegmentNaturalCoordinates.from_components(
     u=np.array([1, 2, 3]), rp=np.array([2, 2, 3]), rd=np.array([1, 5, 3]), w=np.array([4, 2, 3])
 )
 print(my_segment.rigidBodyConstraint(Qi))
 print(my_segment.rigidBodyConstraintJacobian(Qi))
-print(my_segment.rigidBodyConstraintJacobianDerivative(Qi))
+print(my_segment.rigidBodyConstraintJacobianDerivative(Qi.vector))
 
 # Let's create a motion now
-Qi = SegmentNaturalCoordinatesCreator(
+Qi = SegmentNaturalCoordinates.from_components(
     u=np.array([1, 0, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 1, 0]), w=np.array([0, 0, 1])
 )
-Qidot = SegmentNaturalCoordinatesCreator(
-    u=np.array([0, 0, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 0, 0]), w=np.array([0, 0, 0])
+Qidot = SegmentNaturalVelocities.from_components(
+    udot=np.array([0, 0, 0]), rpdot=np.array([0, 0, 0]), rddot=np.array([0, 0, 0]), wdot=np.array([0, 0, 0])
 )
 
 my_segment.differential_algebraic_equation(Qi, Qidot)

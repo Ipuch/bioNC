@@ -7,7 +7,7 @@ from numpy.linalg import inv
 
 # from .HomogeneousMatrix import HomogeneousMatrix
 
-from bioNC import SegmentNaturalCoordinates
+from bioNC import SegmentNaturalCoordinates, SegmentNaturalVelocities
 from ..model_computations.natural_axis import Axis
 from ..model_computations.marker import Marker
 
@@ -120,17 +120,10 @@ class NaturalSegment:
         gamma = np.zeros(proximal_point_vector.shape[1])
         length = np.zeros(proximal_point_vector.shape[1])
 
-        def parameters_from_Q(Q: SegmentNaturalCoordinates):
-            length = np.sqrt(np.sum((Q.rp - Q.rd) ** 2, axis=0))
-            alpha = np.arccos(np.sum((Q.rp - Q.rd) * Q.w, axis=0) / length)
-            beta = np.arccos(np.sum(Q.u * Q.w, axis=0))
-            gamma = np.arccos(np.sum(Q.u * (Q.rp - Q.rd), axis=0) / length)
-            return alpha, beta, gamma, length
-
         for i, (u_axis_i, w_axis_i, proximal_point_i, distal_point_i) in enumerate(
             zip(u_axis_vector.T, w_axis_vector.T, proximal_point_vector.T, distal_point_vector.T)
         ):
-            alpha[i], beta[i], gamma[i], length[i] = parameters_from_Q(
+            alpha[i], beta[i], gamma[i], length[i] = cls.parameters_from_Q(
                 SegmentNaturalCoordinates.from_components(
                     u=u_axis_i,
                     rp=proximal_point_i,
@@ -255,7 +248,7 @@ class NaturalSegment:
         return Kr
 
     @staticmethod
-    def rigidBodyConstraintJacobianDerivative(Qdoti: SegmentNaturalCoordinates) -> np.ndarray:
+    def rigidBodyConstraintJacobianDerivative(Qdoti: SegmentNaturalVelocities) -> np.ndarray:
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
 
@@ -264,22 +257,28 @@ class NaturalSegment:
         Kr_dot : np.ndarray
             derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 ]
         """
+        if isinstance(Qdoti, SegmentNaturalCoordinates):
+            raise TypeError("Qdoti should be a SegmentNaturalVelocities object")
+            # not able to check if Qdoti is a SegmentNaturalVelocities if Qdoti is a np.ndarray
+        if not isinstance(Qdoti, SegmentNaturalVelocities):
+            Qdoti = SegmentNaturalVelocities(Qdoti)
+
         # initialisation
         Kr_dot = zeros((6, 12))
 
-        Kr_dot[0, 0:3] = 2 * Qdoti.u
-        Kr_dot[1, 0:3] = Qdoti.rp - Qdoti.rd
-        Kr_dot[1, 3:6] = Qdoti.u
-        Kr_dot[1, 6:9] = -Qdoti.u
-        Kr_dot[2, 0:3] = Qdoti.w
-        Kr_dot[2, 9:12] = Qdoti.u
+        Kr_dot[0, 0:3] = 2 * Qdoti.udot
+        Kr_dot[1, 0:3] = Qdoti.rpdot - Qdoti.rddot
+        Kr_dot[1, 3:6] = Qdoti.udot
+        Kr_dot[1, 6:9] = -Qdoti.udot
+        Kr_dot[2, 0:3] = Qdoti.wdot
+        Kr_dot[2, 9:12] = Qdoti.udot
 
-        Kr_dot[3, 3:6] = 2 * (Qdoti.rp - Qdoti.rd)
-        Kr_dot[3, 6:9] = -2 * (Qdoti.rp - Qdoti.rd)
-        Kr_dot[4, 3:6] = Qdoti.w
-        Kr_dot[4, 6:9] = -Qdoti.w
-        Kr_dot[4, 9:12] = Qdoti.rp - Qdoti.rd
-        Kr_dot[5, 9:12] = 2 * Qdoti.w
+        Kr_dot[3, 3:6] = 2 * (Qdoti.rpdot - Qdoti.rddot)
+        Kr_dot[3, 6:9] = -2 * (Qdoti.rpdot - Qdoti.rddot)
+        Kr_dot[4, 3:6] = Qdoti.wdot
+        Kr_dot[4, 6:9] = -Qdoti.wdot
+        Kr_dot[4, 9:12] = Qdoti.rpdot - Qdoti.rddot
+        Kr_dot[5, 9:12] = 2 * Qdoti.wdot
 
         return Kr_dot
 
@@ -450,11 +449,16 @@ class NaturalSegment:
         np.ndarray
             Differential algebraic equation of the segment [12 x 1]
         """
+        if isinstance(Qi, SegmentNaturalVelocities):
+            raise TypeError("Qi should be of type SegmentNaturalCoordinates")
+        if isinstance(Qdoti, SegmentNaturalCoordinates):
+            raise TypeError("Qdoti should be of type SegmentNaturalVelocities")
 
+        # not able to verify if the types of Qi and Qdoti are np.ndarray
         if not isinstance(Qi, SegmentNaturalCoordinates):
             Qi = SegmentNaturalCoordinates(Qi)
-        if not isinstance(Qdoti, SegmentNaturalCoordinates):
-            Qdoti = SegmentNaturalCoordinates(Qdoti)
+        if not isinstance(Qdoti, SegmentNaturalVelocities):
+            Qdoti = SegmentNaturalVelocities(Qdoti)
 
         Gi = self.generalized_mass_matrix
         Kr = self.rigidBodyConstraintJacobian(Qi)

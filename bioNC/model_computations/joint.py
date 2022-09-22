@@ -46,6 +46,18 @@ class JointBase(ABC):
             Constraints of the joint
         """
 
+    @abstractmethod
+    def constraintJacobians(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the constraint Jacobians of the joint, denoted K_k
+        as a function of the natural coordinates Q_parent and Q_child.
+
+        Returns
+        -------
+        np.ndarray
+            Constraint Jacobians of the joint [3, 2 * nbQ]
+        """
+
 
 class Joint:
     """

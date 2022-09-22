@@ -4,7 +4,7 @@ import numpy as np
 
 from ..model_computations.biomechanical_model import BiomechanicalModel
 from ..model_computations.marker import Marker
-from .biomechanical_model_template import BiomechanicalModelTemplate
+# from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
 from ..model_computations.natural_segment import NaturalSegment
 
@@ -55,9 +55,9 @@ class MarkerTemplate:
         )
 
     @staticmethod
-    def normal_to(m, bio: BiomechanicalModelTemplate, m1: str, m2: str, m3: str):
+    def normal_to(m, bio, m1: str, m2: str, m3: str):
         return np.cross(m[m1] - m[m2], m[m1] - m[m3]) / np.linalg.norm(np.cross(m[m1] - m[m2], m[m1] - m[m3]))
 
     @staticmethod
-    def middle_of(m, bio: BiomechanicalModelTemplate, m1: str, m2: str):
+    def middle_of(m, bio, m1: str, m2: str):
         return (m[m1] + m[m2]) / 2

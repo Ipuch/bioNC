@@ -100,7 +100,19 @@ fig = go.Figure(
             name="w",
         ),
     ],
-    layout=go.Layout(updatemenus=[dict(type="buttons", buttons=[dict(label="Play", method="animate", args=[None])])]),
+    layout=go.Layout(
+        updatemenus=[dict(type="buttons", buttons=[dict(label="Play", method="animate", args=[None])])],
+        transition={"duration": 0},
+        # sliders=[dict(active=1, transition={"duration": 0.01}, currentvalue={"prefix": "Time: "})],
+        # x, y and z axis limits are set to the same value for the sake of the animation
+        scene=dict(
+            xaxis=dict(range=[-2, 2], autorange=False),
+            yaxis=dict(range=[-2, 2], autorange=False),
+            zaxis=dict(range=[-2, 2], autorange=False),
+        ),
+        # put a slider to control the time of each frame
+        sliders=[dict(steps=[dict(method="animate", args=[[f"frame_{i}"], dict(mode="immediate")])])],
+        ),
     frames=[
         go.Frame(
             data=[

@@ -91,6 +91,8 @@ class NaturalSegment:
             self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
             self._generalized_mass_matrix = self._generalized_mass_matrix()
 
+        self.markers = []
+
     @classmethod
     def from_markers(
         cls,
@@ -546,3 +548,7 @@ class NaturalSegment:
         rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3]
 
         return SegmentNaturalCoordinates((u, rp, rd, w))
+
+    def add_marker(self, marker: Marker):
+        self.markers.append(marker)
+

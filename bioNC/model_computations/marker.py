@@ -6,6 +6,8 @@ from .biomechanical_model import BiomechanicalModel
 from ..model_creation.protocols import Data
 
 
+# todo: need a list of markers MarkerList
+
 class Marker:
     def __init__(
         self,
@@ -23,7 +25,7 @@ class Marker:
         parent_name
             The name of the parent the marker is attached to
         position
-            The 3d position of the marker
+            The 3d position of the marker in the segment coordinate system
         is_technical
             If the marker should be flagged as a technical marker
         is_anatomical
@@ -36,6 +38,10 @@ class Marker:
         self.position = position if isinstance(position, np.ndarray) else np.array(position)
         self.is_technical = is_technical
         self.is_anatomical = is_anatomical
+
+        # natural coordinates features
+        self.position_in_nscs = None
+        self.interpolation_matrix = None
 
     @staticmethod
     def from_data(

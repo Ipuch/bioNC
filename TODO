@@ -1,24 +1,14 @@
 Todo list for the development of the project bioNC
 
-NaturalSegmentCoordinates would be better
-same for NaturalSegment
-
 The template would be great to build generic biomechanical models based on experimental data.
-
-segment.py need to be merge into one file
-
-Does the natural axis and classic axis XYZ need to live together ?
 
 InertiaParameters need to be generated in SCS or in NSCS ? it can be both...
 
-model creat
+model creation - on the way
+- from experimental data ? (see the template)
+- from biomod ?
+- from opensim ?
 
-verify some axis or not colinear for given alpha beta gamma in segment.
-
-add a class to add kinematic constraints / joints between segments
-
-add a class to add muscles
-
-add a class to add ligaments
-
-modify to_real() by update() it writes the model accordingly to the data.
+add a methode to add joints to the model
+add a class to add muscles to the model
+add a class to add ligaments to the model

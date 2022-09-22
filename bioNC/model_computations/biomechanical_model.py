@@ -8,8 +8,10 @@ from ..utils.natural_accelerations import NaturalAccelerations
 class BiomechanicalModel:
     def __init__(self):
         from .segment import Segment  # Imported here to prevent from circular imports
+        from .joint import Joint  # Imported here to prevent from circular imports
 
         self.segments: dict[str:Segment, ...] = {}
+        self.joints: dict[str:Joint, ...] = {}
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # .bioMod file, the order of the segment matters
         self._generalized_mass_matrix = self._generalized_mass_matrix()

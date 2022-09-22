@@ -64,7 +64,7 @@ class NaturalSegment:
         self.beta = beta
         self.gamma = gamma
 
-        # todo: sanity check to make sure u, v or w are not colinear
+        # todo: sanity check to make sure u, v or w are not collinear
 
         self._transformation_matrix = self._transformation_matrix()
 

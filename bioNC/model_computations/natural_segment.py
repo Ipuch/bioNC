@@ -409,6 +409,32 @@ class NaturalSegment:
 
         return self._generalized_mass_matrix
 
+    @staticmethod
+    def interpolate(vector: np.ndarray) -> np.ndarray:
+        """
+        This function interpolates the vector to get the interpolation matrix, denoted Ni
+        such as:
+        Ni * Qi = location in the global frame
+
+        Parameters
+        ----------
+        vector : np.ndarray
+            Vector in the natural coordinate system to interpolate (P, u, v, w)
+
+        Returns
+        -------
+        np.ndarray
+            Interpolation [3, 12]
+        """
+
+        interpolation_matrix = np.zeros((3, 12))
+        interpolation_matrix[0:3, 0:3] = vector[0] * eye(3)
+        interpolation_matrix[0:3, 3:6] = (1 + vector[1]) * eye(3)
+        interpolation_matrix[0:3, 6:9] = -vector[1] * eye(3)
+        interpolation_matrix[0:3, 9:12] = vector[2] * eye(3)
+
+        return interpolation_matrix
+
     def _interpolation_matrix_center_of_mass(self) -> np.ndarray:
         """
         This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
@@ -420,14 +446,7 @@ class NaturalSegment:
             Interpolation matrix for the center of mass of the segment in the natural coordinate system [12 x 3]
         """
         n_ci = self.center_of_mass_in_natural_coordinates_system
-
-        interpolation_matrix = np.zeros((12, 3))
-        interpolation_matrix[0:3, 0:3] = n_ci[0] * eye(3)
-        interpolation_matrix[3:6, 0:3] = (1 + n_ci[1]) * eye(3)
-        interpolation_matrix[6:9, 0:3] = -n_ci[1] * eye(3)
-        interpolation_matrix[9:12, 0:3] = n_ci[2] * eye(3)
-
-        return interpolation_matrix
+        return self.interpolate(n_ci)
 
     @property
     def interpolation_matrix_center_of_mass(self) -> np.ndarray:
@@ -452,7 +471,7 @@ class NaturalSegment:
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return np.matmul(self.interpolation_matrix_center_of_mass * self.mass, np.array([0, 0, -9.81]))
+        return np.matmul(self.interpolation_matrix_center_of_mass.T * self.mass, np.array([0, 0, -9.81]))
 
     def differential_algebraic_equation(
         self,

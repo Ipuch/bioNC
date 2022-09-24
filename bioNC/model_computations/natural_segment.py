@@ -588,14 +588,13 @@ class NaturalSegment:
 
         Gi = self.generalized_mass_matrix
         Kr = self.rigidBodyConstraintJacobian(Qi)
-        Kr_transpose = np.transpose(Kr)
         Krdot = self.rigidBodyConstraintJacobianDerivative(Qdoti)
         biais = np.matmul(Krdot, Qdoti.vector)
 
         A = zeros((18, 18))
         A[0:12, 0:12] = Gi
         A[12:, 0:12] = Kr
-        A[0:12, 12:] = Kr_transpose
+        A[0:12, 12:] = Kr.T
         A[12:, 12:] = np.zeros((6, 6))
 
         B = np.concatenate([self.weight(), biais], axis=0)

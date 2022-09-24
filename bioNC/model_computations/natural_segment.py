@@ -250,6 +250,51 @@ class NaturalSegment:
         """
         return self._transformation_matrix
 
+    def segment_coordinates_system(self, Q: SegmentNaturalCoordinates) -> HomogeneousTransform:
+        """
+        This function computes the segment coordinates from the natural coordinates
+
+        Parameters
+        ----------
+        Q: SegmentNaturalCoordinates
+            The natural coordinates of the segment
+
+        Returns
+        -------
+        SegmentCoordinates
+            The segment coordinates
+        """
+        if not isinstance(Q, SegmentNaturalCoordinates):
+            Q = SegmentNaturalCoordinates(Q)
+
+        return HomogeneousTransform.from_rt(
+            rotation=self._transformation_matrix @ np.concatenate((Q.u, Q.v, Q.w), axis=1),
+            translation=Q.rp,
+        )
+
+    def location_from_homogenous_transform(self, T: Union[np.ndarray, HomogeneousTransform]) -> SegmentNaturalCoordinates:
+        """
+        This function returns the location of the segment in natural coordinate from its homogenous transform
+
+        Parameters
+        ----------
+        T: np.ndarray or HomogeneousTransform
+            Homogenous transform of the segment Ti which transforms from the local frame (Oi, Xi, Yi, Zi)
+            to the global frame (Xi, Yi, Zi)
+
+        Returns
+        -------
+        np.ndarray
+            Location of the segment [3 x 1]
+        """
+
+        u = self.transformation_matrix * T[0:3, 0]
+        w = self.transformation_matrix * T[0:3, 2]
+        rp = self.transformation_matrix * T[0:3, 4]
+        rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3] # not sure of this line.
+
+        return SegmentNaturalCoordinates((u, rp, rd, w))
+
     def rigidBodyConstraint(self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]) -> np.ndarray:
         """
         This function returns the rigid body constraints of the segment, denoted phi_r.
@@ -454,12 +499,13 @@ class NaturalSegment:
         Parameters
         ----------
         vector : np.ndarray
-            Vector in the natural coordinate system to interpolate (P, u, v, w)
+            Vector in the natural coordinate system to interpolate (Pi, ui, vi, wi)
 
         Returns
         -------
-        np.ndarray
-            Interpolation [3, 12]
+        interpolation_matrix: np.ndarray
+            Interpolation  matrix [3 x 12], denoted Ni to get the location of the vector as linear combination of Q.
+            vector in global frame = Ni * Qi
         """
 
         interpolation_matrix = np.zeros((3, 12))
@@ -558,29 +604,6 @@ class NaturalSegment:
         Qddoti = x[0:12]
         lambda_i = x[12:]
         return SegmentNaturalAccelerations(Qddoti), lambda_i
-
-    def location_from_homogenous_transform(self, T: np.ndarray) -> np.ndarray:
-        """
-        This function returns the location of the segment in natural coordinate from its homogenous transform
-
-        Parameters
-        ----------
-        T: np.ndarray
-            Homogenous transform of the segment Ti which transforms from the local frame (Oi, Xi, Yi, Zi)
-            to the global frame (Xi, Yi, Zi)
-
-        Returns
-        -------
-        np.ndarray
-            Location of the segment [3 x 1]
-        """
-
-        u = self.transformation_matrix * T[0:3, 0]
-        w = self.transformation_matrix * T[0:3, 2]
-        rp = self.transformation_matrix * T[0:3, 4]
-        rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3]
-
-        return SegmentNaturalCoordinates((u, rp, rd, w))
 
     def add_marker(self, marker: Marker):
         self.markers.append(marker)

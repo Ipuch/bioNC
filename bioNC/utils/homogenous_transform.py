@@ -134,7 +134,7 @@ def test_homogenous_transform():
 
     # test from_rt
     r = np.eye(3)
-    t = np.zeros((3,1))
+    t = np.zeros((3, 1))
     ht = HomogeneousTransform.from_rt(r, t)
     assert np.allclose(ht.rot, np.eye(3))
     assert np.allclose(ht.translation, np.zeros(3))
@@ -146,8 +146,8 @@ def test_homogenous_transform():
 
     # test inv
     x = np.array([[1], [0], [0]])
-    y = np.array([[0], [np.sqrt(2)/2], [-np.sqrt(2)/2]])
-    z = np.array([[0], [np.sqrt(2)/2], [np.sqrt(2)/2]])
+    y = np.array([[0], [np.sqrt(2) / 2], [-np.sqrt(2) / 2]])
+    z = np.array([[0], [np.sqrt(2) / 2], [np.sqrt(2) / 2]])
     t = np.array([[2], [3], [1]])
     ht = HomogeneousTransform.from_components(x, y, z, t)
     ht_inv = ht.inv()
@@ -200,4 +200,3 @@ def test_homogenous_transform():
     assert np.allclose(ht3[1, 1], 1)
     assert np.allclose(ht3[2, 2], 1)
     assert np.allclose(ht3[3, 3], 1)
-

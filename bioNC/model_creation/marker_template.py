@@ -4,6 +4,7 @@ import numpy as np
 
 from ..model_computations.biomechanical_model import BiomechanicalModel
 from ..model_computations.marker import Marker
+
 # from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
 from ..model_computations.natural_segment import NaturalSegment

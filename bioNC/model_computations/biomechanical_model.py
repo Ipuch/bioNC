@@ -141,11 +141,12 @@ class BiomechanicalModel:
         """
         return self._generalized_mass_matrix
 
- # def kinematicConstraints(self, Q):
- #     # Method to calculate the kinematic constraints
 
- # def forwardDynamics(self, Q, Qdot):
- #
- #     return Qddot, lambdas
+# def kinematicConstraints(self, Q):
+#     # Method to calculate the kinematic constraints
 
- # def inverseDynamics(self):
+# def forwardDynamics(self, Q, Qdot):
+#
+#     return Qddot, lambdas
+
+# def inverseDynamics(self):

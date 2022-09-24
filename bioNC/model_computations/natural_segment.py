@@ -208,7 +208,6 @@ class NaturalSegment:
     def inertia(self):
         return self._inertia
 
-
     def _transformation_matrix(self) -> np.ndarray:
         """
         This function computes the transformation matrix, denoted Bi,
@@ -272,7 +271,9 @@ class NaturalSegment:
             translation=Q.rp,
         )
 
-    def location_from_homogenous_transform(self, T: Union[np.ndarray, HomogeneousTransform]) -> SegmentNaturalCoordinates:
+    def location_from_homogenous_transform(
+        self, T: Union[np.ndarray, HomogeneousTransform]
+    ) -> SegmentNaturalCoordinates:
         """
         This function returns the location of the segment in natural coordinate from its homogenous transform
 
@@ -291,7 +292,7 @@ class NaturalSegment:
         u = self.transformation_matrix * T[0:3, 0]
         w = self.transformation_matrix * T[0:3, 2]
         rp = self.transformation_matrix * T[0:3, 4]
-        rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3] # not sure of this line.
+        rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3]  # not sure of this line.
 
         return SegmentNaturalCoordinates((u, rp, rd, w))
 
@@ -556,8 +557,8 @@ class NaturalSegment:
 
     def differential_algebraic_equation(
         self,
-            Qi: Union[SegmentNaturalCoordinates, np.ndarray],
-            Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
+        Qi: Union[SegmentNaturalCoordinates, np.ndarray],
+        Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
     ) -> Tuple[SegmentNaturalAccelerations, np.ndarray]:
         """
         This function returns the differential algebraic equation of the segment
@@ -607,4 +608,3 @@ class NaturalSegment:
 
     def add_marker(self, marker: Marker):
         self.markers.append(marker)
-

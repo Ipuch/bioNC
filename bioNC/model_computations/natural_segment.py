@@ -27,27 +27,27 @@ class NaturalSegment:
 
     Attributes
     ----------
-    segment_name : str
+    _name : str
         name of the segment
-    length : float
+    _length : float
         length of the segment
-    alpha : float
+    _alpha : float
         angle between u and w
-    beta : float
+    _beta : float
         angle between w and (rp-rd)
-    gamma : float
+    _gamma : float
         angle between (rp-rd) and u
-    mass : float
+    _mass : float
         mass of the segment in Segment Coordinate System
-    center_of_mass : np.ndarray
+    _center_of_mass : np.ndarray
         center of mass of the segment in Segment Coordinate System
-    inertia: np.ndarray
+    _inertia: np.ndarray
         inertia matrix of the segment in Segment Coordinate System
     """
 
     def __init__(
         self,
-        segment_name: str,
+        name: str,
         alpha: float = np.pi / 2,
         beta: float = np.pi / 2,
         gamma: float = np.pi / 2,
@@ -57,37 +57,37 @@ class NaturalSegment:
         inertia: np.ndarray = None,
     ):
 
-        self.segment_name = segment_name
+        self._name = name
 
-        self.length = length
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
+        self._length = length
+        self._alpha = alpha
+        self._beta = beta
+        self._gamma = gamma
 
         # todo: sanity check to make sure u, v or w are not collinear
 
         self._transformation_matrix = self._transformation_matrix()
 
-        self.mass = mass
+        self._mass = mass
         if center_of_mass is None:
-            self.center_of_mass = center_of_mass
+            self._center_of_mass = center_of_mass
             self._center_of_mass_in_natural_coordinates_system = None
             self._interpolation_matrix_center_of_mass = None
         else:
             if center_of_mass.shape[0] != 3:
                 raise ValueError("Center of mass must be 3x1")
-            self.center_of_mass = center_of_mass
+            self._center_of_mass = center_of_mass
             self._center_of_mass_in_natural_coordinates_system = self._center_of_mass_in_natural_coordinates_system()
             self._interpolation_matrix_center_of_mass = self._interpolation_matrix_center_of_mass()
 
         if inertia is None:
-            self.inertia = inertia
+            self._inertia = inertia
             self._inertia_in_natural_coordinates_system = None
             self._interpolation_matrix_inertia = None
         else:
             if inertia.shape != (3, 3):
                 raise ValueError("Inertia matrix must be 3x3")
-            self.inertia = inertia
+            self._inertia = inertia
             self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
             self._generalized_mass_matrix = self._generalized_mass_matrix()
 
@@ -175,6 +175,39 @@ class NaturalSegment:
 
     def __str__(self):
         print("to do")
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def length(self):
+        return self._length
+
+    @property
+    def alpha(self):
+        return self._alpha
+
+    @property
+    def beta(self):
+        return self._beta
+
+    @property
+    def gamma(self):
+        return self._gamma
+
+    @property
+    def mass(self):
+        return self._mass
+
+    @property
+    def center_of_mass(self):
+        return self._center_of_mass
+
+    @property
+    def inertia(self):
+        return self._inertia
+
 
     def _transformation_matrix(self) -> np.ndarray:
         """

@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
-from bioNC import NaturalCoordinates, SegmentNaturalCoordinates, NaturalVelocities, SegmentNaturalVelocities, NaturalAccelerations, SegmentNaturalAccelerations
+from bioNC import NaturalCoordinates, SegmentNaturalCoordinates, \
+    NaturalVelocities, SegmentNaturalVelocities,\
+    NaturalAccelerations, SegmentNaturalAccelerations
 
 
 def test_SegmentNaturalCoordinatesCreator():

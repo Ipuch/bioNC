@@ -7,7 +7,7 @@ from numpy.linalg import inv
 
 # from .HomogeneousMatrix import HomogeneousMatrix
 
-from bioNC import SegmentNaturalCoordinates, SegmentNaturalVelocities, SegmentNaturalAccelerations
+from bioNC import SegmentNaturalCoordinates, SegmentNaturalVelocities, SegmentNaturalAccelerations, HomogeneousTransform
 from ..model_computations.natural_axis import Axis
 from ..model_computations.marker import Marker
 
@@ -138,7 +138,7 @@ class NaturalSegment:
             )
 
         return cls(
-            segment_name="name",
+            name="name",
             alpha=np.mean(alpha, axis=0)[0],
             beta=np.mean(beta, axis=0)[0],
             gamma=np.mean(gamma, axis=0)[0],
@@ -173,8 +173,8 @@ class NaturalSegment:
 
         return alpha, beta, gamma, length
 
-    def __str__(self):
-        print("to do")
+    # def __str__(self):
+    #     print("to do")
 
     @property
     def name(self):

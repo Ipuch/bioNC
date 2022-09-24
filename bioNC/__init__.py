@@ -1,6 +1,7 @@
 from .utils.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from .utils.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
 from .utils.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from .utils.homogenous_transform import HomogeneousTransform
 
 
 from .segment import NaturalSegment

@@ -109,28 +109,31 @@ class NaturalVelocities(np.ndarray):
         input_array = np.concatenate(tuple_of_Q, axis=0)
         return NaturalVelocities(input_array)
 
+    def to_array(self):
+        return np.array(self)
+
     def nb_Qdoti(self):
         return self.shape[0] // 12
 
     def udot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[0:3]
-        return self[array_idx]
+        return self[array_idx].to_array()
 
     def rpdot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[3:6]
-        return self[array_idx]
+        return self[array_idx].to_array()
 
     def rddot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[6:9]
-        return self[array_idx]
+        return self[array_idx].to_array()
 
     def wdot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[9:12]
-        return self[array_idx]
+        return self[array_idx].to_array()
 
     def vdot(self, segment_idx: int):
         return self.rddot(segment_idx) - self.rpdot(segment_idx)
 
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
-        return SegmentNaturalVelocities(self[array_idx].vector)
+        return SegmentNaturalVelocities(self[array_idx].to_array())

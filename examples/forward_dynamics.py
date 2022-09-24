@@ -5,7 +5,7 @@ from ode_solvers import RK4
 
 # Let's create a segment
 my_segment = NaturalSegment(
-    "box",
+    name="box",
     alpha=np.pi / 2,
     beta=np.pi / 2,
     gamma=np.pi / 2,
@@ -14,26 +14,6 @@ my_segment = NaturalSegment(
     center_of_mass=np.array([0, 0, 0]),
     inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
 )
-
-print(my_segment.alpha)
-print(my_segment.beta)
-print(my_segment.gamma)
-print(my_segment.length)
-print(my_segment.mass)
-print(my_segment.center_of_mass)
-print(my_segment.inertia)
-# other prop
-print(my_segment.interpolation_matrix_center_of_mass)
-print(my_segment.generalized_mass_matrix)
-
-# Let's create natural coordinates
-Qi = SegmentNaturalCoordinates.from_components(
-    u=np.array([1, 0, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 1, 0]), w=np.array([0, 0, 1])
-)
-
-print(my_segment.rigidBodyConstraint(Qi))
-print(my_segment.rigidBodyConstraintJacobian(Qi))
-print(my_segment.rigidBodyConstraintJacobianDerivative(Qi.vector))
 
 Qi = SegmentNaturalCoordinates.from_components(
     u=np.array([1, 2, 3]), rp=np.array([2, 2, 3]), rd=np.array([1, 5, 3]), w=np.array([4, 2, 3])
@@ -52,8 +32,8 @@ Qidot = SegmentNaturalVelocities.from_components(
 
 my_segment.differential_algebraic_equation(Qi, Qidot)
 
-t_final = 1  # [s]
-time_steps = np.linspace(0, t_final, 101)
+t_final = 0.2  # [s]
+time_steps = np.linspace(0, t_final, 21)
 states_0 = np.concatenate((Qi.vector, Qidot.vector), axis=0)
 all_states = np.zeros((24, len(time_steps)))
 
@@ -74,12 +54,12 @@ import plotly.graph_objects as go
 
 fig = go.Figure()
 # display defects in time
-fig.add_trace(go.Scatter(x=time_steps, y=defects[0, :], name="defects[0]"))
-fig.add_trace(go.Scatter(x=time_steps, y=defects[1, :], name="defects[1]"))
-fig.add_trace(go.Scatter(x=time_steps, y=defects[2, :], name="defects[2]"))
-fig.add_trace(go.Scatter(x=time_steps, y=defects[3, :], name="defects[3]"))
-fig.add_trace(go.Scatter(x=time_steps, y=defects[4, :], name="defects[4]"))
-fig.add_trace(go.Scatter(x=time_steps, y=defects[5, :], name="defects[5]"))
+fig.add_trace(go.Scatter(x=time_steps, y=defects[0, :], name="defects[0]", mode="lines+markers"))
+fig.add_trace(go.Scatter(x=time_steps, y=defects[1, :], name="defects[1]", mode="lines+markers"))
+fig.add_trace(go.Scatter(x=time_steps, y=defects[2, :], name="defects[2]", mode="lines+markers"))
+fig.add_trace(go.Scatter(x=time_steps, y=defects[3, :], name="defects[3]", mode="lines+markers"))
+fig.add_trace(go.Scatter(x=time_steps, y=defects[4, :], name="defects[4]", mode="lines+markers"))
+fig.add_trace(go.Scatter(x=time_steps, y=defects[5, :], name="defects[5]", mode="lines+markers"))
 fig.show()
 
 

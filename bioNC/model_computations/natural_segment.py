@@ -5,9 +5,10 @@ import numpy as np
 from numpy import cos, sin, matmul, eye, zeros, sum, ones
 from numpy.linalg import inv
 
-# from .HomogeneousMatrix import HomogeneousMatrix
-
-from bioNC import SegmentNaturalCoordinates, SegmentNaturalVelocities, SegmentNaturalAccelerations, HomogeneousTransform
+from ..utils.natural_coordinates import SegmentNaturalCoordinates
+from ..utils.natural_velocities import SegmentNaturalVelocities
+from ..utils.natural_accelerations import SegmentNaturalAccelerations
+from ..utils.homogenous_transform import HomogeneousTransform
 from ..model_computations.natural_axis import Axis
 from ..model_computations.marker import Marker
 

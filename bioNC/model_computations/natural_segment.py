@@ -290,9 +290,9 @@ class NaturalSegment:
             Location of the segment [3 x 1]
         """
 
-        u = self.transformation_matrix * T[0:3, 0]
-        w = self.transformation_matrix * T[0:3, 2]
-        rp = self.transformation_matrix * T[0:3, 4]
+        u = self.transformation_matrix @ T[0:3, 0]
+        w = self.transformation_matrix @ T[0:3, 2]
+        rp = self.transformation_matrix @ T[0:3, 4]
         rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3]  # not sure of this line.
 
         return SegmentNaturalCoordinates((u, rp, rd, w))

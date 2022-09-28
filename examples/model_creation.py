@@ -18,6 +18,76 @@ import ezc3d
 #     1. Create a model from scratch using a template with marker names (model_creation_from_data)
 
 #
+def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSIS: np.ndarray) -> tuple:
+    """
+    This function computes the hip joint center from the RASIS, LASIS, RPSIS and LPSIS markers
+    RASIS: RASIS marker
+
+    Parameters
+    ----------
+    RASIS: np.ndarray
+        RASIS marker location in meters
+    LASIS: np.ndarray
+        LASIS marker location in meters
+    RPSIS: np.ndarray
+        RPSIS marker location in meters
+    LPSIS: np.ndarray
+        LPSIS marker location in meters
+
+    Returns
+    -------
+    tuple(np.ndarray, np.ndarray)
+        The right and left hip joint center in global coordinates system in meters
+    """
+    # convert inputs in millimeters
+    RASIS *= 1000
+    LASIS *= 1000
+    RPSIS *= 1000
+    LPSIS *= 1000
+
+    # Right-handed Pelvis reference system definition
+    Sacrum = (RPSIS + LPSIS) / 2
+    # Global Pelvis center position
+    OP = (RASIS + LASIS) / 2
+
+    provv = (RASIS - Sacrum)/np.linalg.norm(RASIS - Sacrum)
+    ib = (RASIS - LASIS)/np.linalg.norm(RASIS - LASIS)
+
+    kb = np.cross(ib, provv)/np.linalg.norm(np.cross(ib, provv))
+    jb = np.cross(kb, ib)/np.linalg.norm(np.cross(kb, ib))
+
+    OB = OP
+    # Rotation + translation in homogenous matrix
+    Pelvis = np.array([
+        [ib[0], jb[0], kb[0], OB[0]],
+        [ib[1], jb[1], kb[1], OB[1]],
+        [ib[2], jb[2], kb[2], OB[2]],
+        [0, 0, 0, 1]])
+
+    # Transformation from global to pelvis reference system
+    OPB = np.linalg.inv(Pelvis) @ np.array([OB, 1])
+
+    PW = np.linalg.norm(RASIS - LASIS)  # PW: width of pelvis (distance among ASIS)
+    PD = np.linalg.norm(Sacrum - OP)  # PD: pelvis depth = distance between mid points joining PSIS and ASIS
+
+    # Harrington formula
+    diff_ap = -0.24 * PD - 9.9
+    diff_v = -0.3 * PW - 10.9
+    diff_ml = 0.33 * PW + 7.3
+
+    # vector that must be subtract to OP to obtain hjc in pelvis CS
+    vett_diff_pelvis_sx = np.array([-diff_ml, diff_ap, diff_v, 1])
+    vett_diff_pelvis_dx = np.array([diff_ml, diff_ap, diff_v, 1])
+
+    # hjc in pelvis CS (4x4)
+    rhjc_pelvis = OPB + vett_diff_pelvis_dx
+    lhjc_pelvis = OPB + vett_diff_pelvis_sx
+
+    # transformation from pelvis to global CS
+    rhjc_global = Pelvis[:3, :3] @ rhjc_pelvis + OB
+    lhjc_global = Pelvis[:3, :3] @ lhjc_pelvis + OB
+
+    return rhjc_global/1000, lhjc_global/1000
 
 
 def model_creation_from_measured_data():
@@ -29,10 +99,29 @@ def model_creation_from_measured_data():
     model = BiomechanicalModelTemplate()
     # de_leva = DeLevaTable(total_mass=100, sex="female")
 
+    model["PELVIS"] = SegmentTemplate(
+        natural_segment=NaturalSegmentTemplate(
+            u_axis=AxisTemplate(
+                # from the middle of posterior illiac spine to the middle of anterior illiac spine
+                start=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RPSIS", "LPSIS"),
+                end=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RASIS", "LASIS"),
+            ),
+            proximal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RPSIS", "LPSIS"),
+            # Hip joint center projected in the sagittal plane of the pelvis
+            # todo: how to compute the sagittal plane of the pelvis?
+            distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LFE", "MFE"),
+            # normal to the sagittal plane of the pelvis
+            # todo
+            w_axis=AxisTemplate(start="MFE", end="LFE"),
+        )
+    )
+
+    right_hip_joint = lambda m, bio: harrington2007(m["RASIS"], m["LASIS"], m["RPSIS"], m["LPSIS"])[0]
+
     model["THIGH"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
-                start="HIP_CENTER",
+                start=right_hip_joint,
                 # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
                 # lateral epicondyle
                 end=lambda m, bio: MarkerTemplate.normal_to(m, bio, "HIP_CENTER", "LFE", "MFE"),
@@ -44,7 +133,7 @@ def model_creation_from_measured_data():
         )
     )
 
-    model["THIGH"].add_marker(MarkerTemplate("HIP_CENTER", parent_name="THIGH"))
+    model["THIGH"].add_marker(MarkerTemplate("HIP_CENTER",function=right_hip_joint, parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("MFE", parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("LFE", parent_name="THIGH"))
     model["THIGH"].add_marker(
@@ -66,7 +155,7 @@ def model_creation_from_measured_data():
         )
     )
     model["SHANK"].add_marker(
-        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "MFE", "LFE"), parent_name="KNEE_JOINT")
+        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "MFE", "LFE"), parent_name="SHANK")
     )
     model["SHANK"].add_marker(MarkerTemplate("LM", parent_name="SHANK"))
     model["SHANK"].add_marker(MarkerTemplate("MM", parent_name="SHANK"))

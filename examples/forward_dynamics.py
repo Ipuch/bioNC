@@ -24,16 +24,16 @@ print(my_segment.rigidBodyConstraintJacobianDerivative(Qi.vector))
 
 # Let's create a motion now
 # u as x axis, w as z axis - this doesn't work
-# Qi = SegmentNaturalCoordinates.from_components(
-#     u=np.array([1, 0, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 1, 0]), w=np.array([0, 0, 1])
-# )
+Qi = SegmentNaturalCoordinates.from_components(
+    u=np.array([1, 0, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 1, 0]), w=np.array([0, 0, 1])
+)
 # u as y axis - this works fine
 Qi = SegmentNaturalCoordinates.from_components(
     u=np.array([0, 1, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 0, 1]), w=np.array([1, 0, 0])
 )
 # u as z axis - this doesn't work
-# Qi = SegmentNaturalCoordinates.from_components(
-#     u=np.array([0, 0, 1]), rp=np.array([0, 0, 0]), rd=np.array([1, 0, 0]), w=np.array([0, 1, 0]))
+Qi = SegmentNaturalCoordinates.from_components(
+    u=np.array([0, 0, 1]), rp=np.array([0, 0, 0]), rd=np.array([1, 0, 0]), w=np.array([0, 1, 0]))
 
 Qidot = SegmentNaturalVelocities.from_components(
     udot=np.array([0, 0, 0]), rpdot=np.array([0, 0, 0]), rddot=np.array([0, 0, 0]), wdot=np.array([0, 0, 0])
@@ -181,3 +181,7 @@ fig.update_layout(
 
 fig.show()
 
+# verifier la jacobian des contraintes de corps rigide.
+# normaliser les contraintes ?
+# tester les dae solvers ?
+# stabilization de la contrainte ?

@@ -66,7 +66,7 @@ class NaturalSegment:
         self._gamma = gamma
 
         # todo: sanity check to make sure u, v or w are not collinear
-
+        # todo: implement all the transformations matrix according the Ph.D thesis of Alexandre Naaim
         self._transformation_matrix = self._transformation_matrix()
 
         self._mass = mass
@@ -293,7 +293,7 @@ class NaturalSegment:
         u = self.transformation_matrix @ T[0:3, 0]
         w = self.transformation_matrix @ T[0:3, 2]
         rp = self.transformation_matrix @ T[0:3, 4]
-        rd = np.matmul(T, np.array([0, self.length, 0, 1]))[0:3]  # not sure of this line.
+        rd = (T @ np.array([0, self.length, 0, 1]))[0:3]  # not sure of this line.
 
         return SegmentNaturalCoordinates((u, rp, rd, w))
 
@@ -310,12 +310,19 @@ class NaturalSegment:
             Qi = SegmentNaturalCoordinates(Qi)
 
         phir = zeros(6)
-        phir[0] = sum(Qi.u**2, 0) - 1
-        phir[1] = sum(Qi.u * (Qi.rp - Qi.rd), 0) - self.length * cos(self.gamma)
+        # phir[0] = sum(Qi.u**2, 0) - 1
+        # phir[1] = sum(Qi.u * (Qi.rp - Qi.rd), 0) - self.length * cos(self.gamma)
+        # phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
+        # phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length**2
+        # phir[4] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
+        # phir[5] = sum(Qi.w**2, 0) - 1
+
+        phir[0] = sum(Qi.u ** 2, 0) - 1
+        phir[1] = sum(Qi.u * Qi.v, 0) - self.length * cos(self.gamma)
         phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-        phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length**2
-        phir[4] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
-        phir[5] = sum(Qi.w**2, 0) - 1
+        phir[3] = sum(Qi.v ** 2, 0) - self.length ** 2
+        phir[4] = sum(Qi.v * Qi.w, 0) - self.length * cos(self.alpha)
+        phir[5] = sum(Qi.w ** 2, 0) - 1
 
         return phir
 
@@ -334,19 +341,19 @@ class NaturalSegment:
 
         Kr[0, 0:3] = 2 * Qi.u
 
-        Kr[1, 0:3] = Qi.rp - Qi.rd
+        Kr[1, 0:3] = Qi.v
         Kr[1, 3:6] = Qi.u
         Kr[1, 6:9] = -Qi.u
 
         Kr[2, 0:3] = Qi.w
         Kr[2, 9:12] = Qi.u
 
-        Kr[3, 3:6] = 2 * (Qi.rp - Qi.rd)
-        Kr[3, 6:9] = -2 * (Qi.rp - Qi.rd)
+        Kr[3, 3:6] = 2 * Qi.v
+        Kr[3, 6:9] = -2 * Qi.v
 
         Kr[4, 3:6] = Qi.w
         Kr[4, 6:9] = -Qi.w
-        Kr[4, 9:12] = Qi.rp - Qi.rd
+        Kr[4, 9:12] = Qi.v
 
         Kr[5, 9:12] = 2 * Qi.w
 
@@ -372,17 +379,21 @@ class NaturalSegment:
         Kr_dot = zeros((6, 12))
 
         Kr_dot[0, 0:3] = 2 * Qdoti.udot
-        Kr_dot[1, 0:3] = Qdoti.rpdot - Qdoti.rddot
+
+        Kr_dot[1, 0:3] = Qdoti.vdot
         Kr_dot[1, 3:6] = Qdoti.udot
         Kr_dot[1, 6:9] = -Qdoti.udot
+
         Kr_dot[2, 0:3] = Qdoti.wdot
         Kr_dot[2, 9:12] = Qdoti.udot
 
-        Kr_dot[3, 3:6] = 2 * (Qdoti.rpdot - Qdoti.rddot)
-        Kr_dot[3, 6:9] = -2 * (Qdoti.rpdot - Qdoti.rddot)
+        Kr_dot[3, 3:6] = 2 * Qdoti.vdot
+        Kr_dot[3, 6:9] = -2 * Qdoti.vdot
+
         Kr_dot[4, 3:6] = Qdoti.wdot
         Kr_dot[4, 6:9] = -Qdoti.wdot
-        Kr_dot[4, 9:12] = Qdoti.rpdot - Qdoti.rddot
+        Kr_dot[4, 9:12] = Qdoti.vdot
+
         Kr_dot[5, 9:12] = 2 * Qdoti.wdot
 
         return Kr_dot
@@ -594,9 +605,9 @@ class NaturalSegment:
 
         A = zeros((18, 18))
         A[0:12, 0:12] = Gi
-        A[12:, 0:12] = Kr
-        A[0:12, 12:] = Kr.T
-        A[12:, 12:] = np.zeros((6, 6))
+        A[12:18, 0:12] = Kr
+        A[0:12, 12:18] = Kr.T
+        A[12:, 12:18] = np.zeros((6, 6))
 
         B = np.concatenate([self.weight(), biais], axis=0)
 

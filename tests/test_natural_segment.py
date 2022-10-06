@@ -1,22 +1,8 @@
-import numpy as np
-
 from bionc import (
     NaturalSegment,
-    NaturalCoordinates,
-    SegmentNaturalCoordinates,
-    NaturalCoordinates,
-    SegmentNaturalVelocities,
 )
 import numpy as np
 import pytest
-from bionc import (
-    NaturalCoordinates,
-    SegmentNaturalCoordinates,
-    NaturalVelocities,
-    SegmentNaturalVelocities,
-    NaturalAccelerations,
-    SegmentNaturalAccelerations,
-)
 
 
 def test_natural_segment():
@@ -31,6 +17,8 @@ def test_natural_segment():
         center_of_mass=np.array([0, 0.01, 0]),
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
     )
+    # test the name of the segment
+    assert my_segment.name == "box"
     np.testing.assert_equal(my_segment.alpha, np.pi / 2)
     np.testing.assert_equal(my_segment.beta, np.pi / 2)
     np.testing.assert_equal(my_segment.gamma, np.pi / 2)

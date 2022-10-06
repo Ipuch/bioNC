@@ -9,4 +9,5 @@ dependencies:
 - numpy
 - packaging
 - casadi
+- ezc3d
 

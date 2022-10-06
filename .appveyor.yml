@@ -45,6 +45,7 @@ test_script:
   - python setup.py install
   - sh: cd
   - cmd: cd C:/
+  - conda list
   - python -c "import numpy"
   - python -c "import bionc"
   - sh: cd BIONC_FOLDER

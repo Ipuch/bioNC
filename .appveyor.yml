@@ -2,6 +2,8 @@
 #    environment configuration    #
 #---------------------------------#
 
+skip_branch_with_pr: true
+
 # Build worker image (VM template)
 image:
   - Ubuntu2004

@@ -317,12 +317,12 @@ class NaturalSegment:
         # phir[4] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
         # phir[5] = sum(Qi.w**2, 0) - 1
 
-        phir[0] = sum(Qi.u ** 2, 0) - 1
+        phir[0] = sum(Qi.u**2, 0) - 1
         phir[1] = sum(Qi.u * Qi.v, 0) - self.length * cos(self.gamma)
         phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-        phir[3] = sum(Qi.v ** 2, 0) - self.length ** 2
+        phir[3] = sum(Qi.v**2, 0) - self.length**2
         phir[4] = sum(Qi.v * Qi.w, 0) - self.length * cos(self.alpha)
-        phir[5] = sum(Qi.w ** 2, 0) - 1
+        phir[5] = sum(Qi.w**2, 0) - 1
 
         return phir
 

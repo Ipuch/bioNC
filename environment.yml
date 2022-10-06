@@ -1,0 +1,14 @@
+# create a dev conda environment with: `make create_env` or `conda env create -f environment.yml`
+name: bionc
+channels:
+- conda-forge
+- default
+dependencies:
+- python >=3.10
+- scipy
+- numpy
+- packaging
+- casadi
+- ezc3d
+- plotly
+

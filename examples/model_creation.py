@@ -2,7 +2,7 @@ import os
 
 import numpy as np
 import biorbd
-from bioNC import (
+from bionc import (
     AxisTemplate,
     BiomechanicalModelTemplate,
     C3dData,

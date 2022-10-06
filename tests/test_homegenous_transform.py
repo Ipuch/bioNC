@@ -1,6 +1,6 @@
 import numpy as np
 
-from bioNC import HomogeneousTransform
+from bionc import HomogeneousTransform
 
 
 # generate tests for the class to be use with pytest

@@ -1,6 +1,6 @@
 import numpy as np
 
-from bioNC import NaturalSegment, NaturalCoordinates, SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities
+from bionc import NaturalSegment, NaturalCoordinates, SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities
 from ode_solvers import RK4, RK8, IRK
 
 # Let's create a segment

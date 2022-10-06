@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from bioNC import NaturalCoordinates, SegmentNaturalCoordinates, \
+from bionc import NaturalCoordinates, SegmentNaturalCoordinates, \
     NaturalVelocities, SegmentNaturalVelocities,\
     NaturalAccelerations, SegmentNaturalAccelerations
 

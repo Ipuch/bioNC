@@ -1,9 +1,9 @@
 import numpy as np
 
-from bioNC import NaturalSegment, NaturalCoordinates, SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities
+from bionc import NaturalSegment, NaturalCoordinates, SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities
 import numpy as np
 import pytest
-from bioNC import NaturalCoordinates, SegmentNaturalCoordinates, \
+from bionc import NaturalCoordinates, SegmentNaturalCoordinates, \
     NaturalVelocities, SegmentNaturalVelocities,\
     NaturalAccelerations, SegmentNaturalAccelerations
 

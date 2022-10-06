@@ -26,7 +26,6 @@ install:
   - cmd: conda init cmd.exe
   - conda config --set always_yes yes --set changeps1 no
   - conda config --set auto_update_conda no
-  - cmd: conda update conda
   
   # Set environment variables  
   - sh: BIONC_FOLDER=`pwd`
@@ -34,7 +33,7 @@ install:
   
   # Setup the conda environment
   - conda env update -f environment.yml -n base
-  - conda install pytest-cov black pytest pytest-cov codecov -cconda-forge
+  - conda install pytest-cov black pytest codecov -cconda-forge
   - conda list
   - sh: if [[ $CI_LINUX == true ]]; then black . -l120 --exclude "external/*" --check; fi
 
@@ -50,7 +49,7 @@ test_script:
   # print the environment variables from which python is called
   - python -c "import os; print(os.environ)"
   - python -c "import bionc"
-  - sh: cd BIONC_FOLDER
+  - sh: cd $BIONC_FOLDER
   - cmd: cd %BIONC_FOLDER%
 
 

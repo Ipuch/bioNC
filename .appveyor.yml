@@ -43,8 +43,8 @@ install:
 test_script:
   - pytest -v --color=yes --cov-report term-missing --cov=bionc tests
   - python setup.py install
-  - sh: cd
-  - cmd: cd C:/
+#  - sh: cd
+#  - cmd: cd C:/
   - conda list
   - python -c "import numpy"
   - python -c "import bionc"

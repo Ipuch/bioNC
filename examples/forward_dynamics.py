@@ -1,6 +1,12 @@
 import numpy as np
 
-from bionc import NaturalSegment, NaturalCoordinates, SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities
+from bionc import (
+    NaturalSegment,
+    NaturalCoordinates,
+    SegmentNaturalCoordinates,
+    NaturalCoordinates,
+    SegmentNaturalVelocities,
+)
 from ode_solvers import RK4, RK8, IRK
 
 # Let's create a segment
@@ -33,7 +39,8 @@ Qi = SegmentNaturalCoordinates.from_components(
 )
 # u as z axis - this doesn't work
 Qi = SegmentNaturalCoordinates.from_components(
-    u=np.array([0, 0, 1]), rp=np.array([0, 0, 0]), rd=np.array([1, 0, 0]), w=np.array([0, 1, 0]))
+    u=np.array([0, 0, 1]), rp=np.array([0, 0, 0]), rd=np.array([1, 0, 0]), w=np.array([0, 1, 0])
+)
 
 Qidot = SegmentNaturalVelocities.from_components(
     udot=np.array([0, 0, 0]), rpdot=np.array([0, 0, 0]), rddot=np.array([0, 0, 0]), wdot=np.array([0, 0, 0])
@@ -47,9 +54,11 @@ states_0 = np.concatenate((Qi.vector, Qidot.vector), axis=0)
 all_states = np.zeros((24, len(time_steps)))
 all_lambdas = np.zeros((6, len(time_steps)))
 
+
 def dynamics(t, states):
     qddot, lambdas = my_segment.differential_algebraic_equation(states[0:12], states[12:24])
     return np.concatenate((states[12:24], qddot), axis=0), lambdas
+
 
 all_states = RK4(time_steps, lambda t, states: dynamics(t, states)[0], states_0)
 
@@ -81,14 +90,14 @@ fig.add_trace(go.Scatter(x=time_steps, y=all_lambdas[5, :], name="lambda[5]", mo
 fig.show()
 
 
-
 def frame_args(duration):
     return {
-            "frame": {"duration": duration},
-            "mode": "immediate",
-            "fromcurrent": True,
-            "transition": {"duration": duration, "easing": "linear"},
-        }
+        "frame": {"duration": duration},
+        "mode": "immediate",
+        "fromcurrent": True,
+        "transition": {"duration": duration, "easing": "linear"},
+    }
+
 
 fig = go.Figure(
     data=[
@@ -113,7 +122,7 @@ fig = go.Figure(
             yaxis=dict(range=[-2, 2], autorange=False),
             zaxis=dict(range=[-2, 2], autorange=False),
         ),
-        ),
+    ),
     frames=[
         go.Frame(
             data=[
@@ -139,44 +148,47 @@ fig = go.Figure(
 
 
 sliders = [
+    {
+        "pad": {"b": 1, "t": t_final},
+        "len": 0.9,
+        "x": 1,
+        "y": 0,
+        "steps": [
             {
-                "pad": {"b": 1, "t": t_final},
-                "len": 0.9,
-                "x": 1,
-                "y": 0,
-                "steps": [
-                    {
-                        "args": [[f.name], frame_args(0)],
-                        "label": str(k),
-                        "method": "animate",
-                    }
-                    for k, f in enumerate(fig.frames)
-                ],
+                "args": [[f.name], frame_args(0)],
+                "label": str(k),
+                "method": "animate",
             }
-        ]
+            for k, f in enumerate(fig.frames)
+        ],
+    }
+]
 
 # Layout
 fig.update_layout(
     sliders=sliders,
     title="Animation of the segment",
-    updatemenus=[{"buttons": [
-                    {
-                        "args": [None, frame_args(time_steps[1] - time_steps[0])],
-                        "label": "&#9654;", # play symbol
-                        "method": "animate",
-                    },
-                    {
-                        "args": [[None], frame_args(0)],
-                        "label": "&#9724;", # pause symbol
-                        "method": "animate",
-                    },
-                ],
-                "direction": "left",
-                "pad": {"r": 1, "t": t_final},
-                "type": "buttons",
-                "x": 0.1,
-                "y": 0,
-            }]
+    updatemenus=[
+        {
+            "buttons": [
+                {
+                    "args": [None, frame_args(time_steps[1] - time_steps[0])],
+                    "label": "&#9654;",  # play symbol
+                    "method": "animate",
+                },
+                {
+                    "args": [[None], frame_args(0)],
+                    "label": "&#9724;",  # pause symbol
+                    "method": "animate",
+                },
+            ],
+            "direction": "left",
+            "pad": {"r": 1, "t": t_final},
+            "type": "buttons",
+            "x": 0.1,
+            "y": 0,
+        }
+    ],
 )
 
 fig.show()

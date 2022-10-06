@@ -50,19 +50,17 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
     # Global Pelvis center position
     OP = (RASIS + LASIS) / 2
 
-    provv = (RASIS - Sacrum)/np.linalg.norm(RASIS - Sacrum)
-    ib = (RASIS - LASIS)/np.linalg.norm(RASIS - LASIS)
+    provv = (RASIS - Sacrum) / np.linalg.norm(RASIS - Sacrum)
+    ib = (RASIS - LASIS) / np.linalg.norm(RASIS - LASIS)
 
-    kb = np.cross(ib, provv)/np.linalg.norm(np.cross(ib, provv))
-    jb = np.cross(kb, ib)/np.linalg.norm(np.cross(kb, ib))
+    kb = np.cross(ib, provv) / np.linalg.norm(np.cross(ib, provv))
+    jb = np.cross(kb, ib) / np.linalg.norm(np.cross(kb, ib))
 
     OB = OP
     # Rotation + translation in homogenous matrix
-    Pelvis = np.array([
-        [ib[0], jb[0], kb[0], OB[0]],
-        [ib[1], jb[1], kb[1], OB[1]],
-        [ib[2], jb[2], kb[2], OB[2]],
-        [0, 0, 0, 1]])
+    Pelvis = np.array(
+        [[ib[0], jb[0], kb[0], OB[0]], [ib[1], jb[1], kb[1], OB[1]], [ib[2], jb[2], kb[2], OB[2]], [0, 0, 0, 1]]
+    )
 
     # Transformation from global to pelvis reference system
     OPB = np.linalg.inv(Pelvis) @ np.array([OB, 1])
@@ -87,7 +85,7 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
     rhjc_global = Pelvis[:3, :3] @ rhjc_pelvis + OB
     lhjc_global = Pelvis[:3, :3] @ lhjc_pelvis + OB
 
-    return rhjc_global/1000, lhjc_global/1000
+    return rhjc_global / 1000, lhjc_global / 1000
 
 
 def model_creation_from_measured_data():
@@ -133,11 +131,13 @@ def model_creation_from_measured_data():
         )
     )
 
-    model["THIGH"].add_marker(MarkerTemplate("HIP_CENTER",function=right_hip_joint, parent_name="THIGH"))
+    model["THIGH"].add_marker(MarkerTemplate("HIP_CENTER", function=right_hip_joint, parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("MFE", parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("LFE", parent_name="THIGH"))
     model["THIGH"].add_marker(
-        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "MFE", "LFE"), parent_name="THIGH")
+        MarkerTemplate(
+            "KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "MFE", "LFE"), parent_name="THIGH"
+        )
     )
 
     model["SHANK"] = SegmentTemplate(
@@ -155,12 +155,16 @@ def model_creation_from_measured_data():
         )
     )
     model["SHANK"].add_marker(
-        MarkerTemplate("KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "MFE", "LFE"), parent_name="SHANK")
+        MarkerTemplate(
+            "KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "MFE", "LFE"), parent_name="SHANK"
+        )
     )
     model["SHANK"].add_marker(MarkerTemplate("LM", parent_name="SHANK"))
     model["SHANK"].add_marker(MarkerTemplate("MM", parent_name="SHANK"))
     model["SHANK"].add_marker(
-        MarkerTemplate("ANKLE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LM", "MM"), parent_name="SHANK")
+        MarkerTemplate(
+            "ANKLE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LM", "MM"), parent_name="SHANK"
+        )
     )
 
     model["FOOT"] = SegmentTemplate(
@@ -181,7 +185,11 @@ def model_creation_from_measured_data():
     model["FOOT"].add_marker(MarkerTemplate("CAL", parent_name="FOOT"))
     model["FOOT"].add_marker(MarkerTemplate("M1", parent_name="FOOT"))
     model["FOOT"].add_marker(MarkerTemplate("M5", parent_name="FOOT"))
-    model["FOOT"].add_marker(MarkerTemplate("ANKLE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LM", "MM"), parent_name="FOOT"))
+    model["FOOT"].add_marker(
+        MarkerTemplate(
+            "ANKLE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LM", "MM"), parent_name="FOOT"
+        )
+    )
 
     # Put the model together, print it and print it to a bioMod file
     natural_model = model.update(C3dData("my_file.c3d"))

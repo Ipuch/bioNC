@@ -1,8 +1,13 @@
 import numpy as np
 import pytest
-from bionc import NaturalCoordinates, SegmentNaturalCoordinates, \
-    NaturalVelocities, SegmentNaturalVelocities,\
-    NaturalAccelerations, SegmentNaturalAccelerations
+from bionc import (
+    NaturalCoordinates,
+    SegmentNaturalCoordinates,
+    NaturalVelocities,
+    SegmentNaturalVelocities,
+    NaturalAccelerations,
+    SegmentNaturalAccelerations,
+)
 
 
 def test_SegmentNaturalCoordinatesCreator():
@@ -41,6 +46,7 @@ def test_NaturalAccelerationsCreator():
     np.testing.assert_equal(Qddot1.rpddot, np.array([10, 11, 12]))
     np.testing.assert_equal(Qddot1.vector, Qddot1)
 
+
 def test_concatenate():
     Q1 = SegmentNaturalCoordinates.from_components(
         u=np.array([1, 2, 3]), rp=np.array([4, 5, 6]), rd=np.array([7, 8, 9]), w=np.array([10, 11, 12])
@@ -56,6 +62,7 @@ def test_concatenate():
     with pytest.raises(AttributeError, match="'numpy.ndarray' object has no attribute 'u'"):
         Q.u
 
+
 def test_concatenate_velocities():
     Qdot1 = SegmentNaturalVelocities.from_components(
         udot=np.array([1, 2, 3]), wdot=np.array([4, 5, 6]), rddot=np.array([7, 8, 9]), rpdot=np.array([10, 11, 12])
@@ -67,12 +74,16 @@ def test_concatenate_velocities():
     with pytest.raises(AttributeError, match="'numpy.ndarray' object has no attribute 'udot'"):
         Qdot.udot
 
+
 def test_concatenate_accelerations():
     Qddot1 = SegmentNaturalAccelerations.from_components(
         uddot=np.array([1, 2, 3]), wddot=np.array([4, 5, 6]), rdddot=np.array([7, 8, 9]), rpddot=np.array([10, 11, 12])
     )
     Qddot2 = SegmentNaturalAccelerations.from_components(
-        uddot=np.array([11, 22, 33]), wddot=np.array([4, 5, 6]), rdddot=np.array([7, 82, 9]), rpddot=np.array([110, 11, 12])
+        uddot=np.array([11, 22, 33]),
+        wddot=np.array([4, 5, 6]),
+        rdddot=np.array([7, 82, 9]),
+        rpddot=np.array([110, 11, 12]),
     )
     Qddot = np.concatenate((Qddot1, Qddot2), axis=0)
     with pytest.raises(AttributeError, match="'numpy.ndarray' object has no attribute 'uddot'"):
@@ -126,7 +137,10 @@ def test_NaturalAccelerationsConstructor():
         uddot=np.array([1, 2, 3]), wddot=np.array([4, 5, 6]), rdddot=np.array([7, 8, 9]), rpddot=np.array([10, 11, 12])
     )
     Qddot2 = SegmentNaturalAccelerations.from_components(
-        uddot=np.array([11, 22, 33]), wddot=np.array([4, 5, 6]), rdddot=np.array([7, 82, 9]), rpddot=np.array([110, 11, 12])
+        uddot=np.array([11, 22, 33]),
+        wddot=np.array([4, 5, 6]),
+        rdddot=np.array([7, 82, 9]),
+        rpddot=np.array([110, 11, 12]),
     )
     Qddot = NaturalAccelerations.from_Qddoti((Qddot1, Qddot2))
     np.testing.assert_equal(Qddot.uddot(0), np.array([1, 2, 3]))
@@ -136,4 +150,3 @@ def test_NaturalAccelerationsConstructor():
     np.testing.assert_equal(Qddot.vector(0).uddot, np.array([1, 2, 3]))
     np.testing.assert_equal(Qddot.vector(1).uddot, np.array([11, 22, 33]))
     np.testing.assert_equal(Qddot.nb_Qddoti(), 2)
-

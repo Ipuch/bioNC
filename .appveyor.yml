@@ -26,15 +26,14 @@ install:
   - cmd: conda init cmd.exe
   - conda config --set always_yes yes --set changeps1 no
   - conda config --set auto_update_conda no
-  - conda update -q conda
+  - cmd: conda update conda
   
   # Set environment variables  
   - sh: BIONC_FOLDER=`pwd`
   - cmd: SET BIONC_FOLDER=%cd%
   
   # Setup the conda environment
-  - conda env update -n bionc -f environment.yml
-  - conda activate bionc
+  - conda env update -f environment.yml -n base
   - conda install pytest-cov black pytest pytest-cov codecov -cconda-forge
   - conda list
   - sh: if [[ $CI_LINUX == true ]]; then black . -l120 --exclude "external/*" --check; fi
@@ -43,8 +42,8 @@ install:
 test_script:
   - pytest -v --color=yes --cov-report term-missing --cov=bionc tests
   - python setup.py install
-#  - sh: cd
-#  - cmd: cd C:/
+  - sh: cd
+  - cmd: cd C:/
   - conda list
   # python version check
   - python --version

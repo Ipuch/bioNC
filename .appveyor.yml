@@ -45,7 +45,7 @@ test_script:
   - python setup.py install
   - sh: cd
   - cmd: cd C:/
-  - python -c "import bioptim"
+  - python -c "import bionc"
   - sh: cd BIONC_FOLDER
   - cmd: cd %BIONC_FOLDER%
 

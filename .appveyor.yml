@@ -46,7 +46,10 @@ test_script:
 #  - sh: cd
 #  - cmd: cd C:/
   - conda list
-  - python -c "import numpy"
+  # python version check
+  - python --version
+  # print the environment variables from which python is called
+  - python -c "import os; print(os.environ)"
   - python -c "import bionc"
   - sh: cd BIONC_FOLDER
   - cmd: cd %BIONC_FOLDER%

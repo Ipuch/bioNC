@@ -10,4 +10,5 @@ dependencies:
 - packaging
 - casadi
 - ezc3d
+- plotly
 

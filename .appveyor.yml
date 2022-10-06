@@ -7,7 +7,6 @@ skip_branch_with_pr: true
 # Build worker image (VM template)
 image:
   - Ubuntu2004
-  - Visual Studio 2019
   - macos
 
 # set clone depth

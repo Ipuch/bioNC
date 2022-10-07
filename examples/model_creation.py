@@ -63,17 +63,16 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
         OB = OP[:3, i]
         # Rotation + translation in homogenous matrix
         Pelvis = np.array(
-            [[ib[0], jb[0], kb[0], OB[0]],
-             [ib[1], jb[1], kb[1], OB[1]],
-             [ib[2], jb[2], kb[2], OB[2]],
-             [0, 0, 0, 1]]
+            [[ib[0], jb[0], kb[0], OB[0]], [ib[1], jb[1], kb[1], OB[1]], [ib[2], jb[2], kb[2], OB[2]], [0, 0, 0, 1]]
         )
 
         # Transformation from global to pelvis reference system
         OPB = np.linalg.inv(Pelvis) @ np.hstack((OB, 1))
 
         PW = np.linalg.norm(RASIS[:3, i] - LASIS[:3, i])  # PW: width of pelvis (distance among ASIS)
-        PD = np.linalg.norm(Sacrum[:3, i] - OP[:3, i])  # PD: pelvis depth = distance between mid points joining PSIS and ASIS
+        PD = np.linalg.norm(
+            Sacrum[:3, i] - OP[:3, i]
+        )  # PD: pelvis depth = distance between mid points joining PSIS and ASIS
 
         # Harrington formula
         diff_ap = -0.24 * PD - 9.9

@@ -48,12 +48,12 @@ class NaturalSegment:
 
     def __init__(
         self,
-        name: str,
-        alpha: float = np.pi / 2,
-        beta: float = np.pi / 2,
-        gamma: float = np.pi / 2,
-        length: float = None,
-        mass: float = None,
+        name: str = None,
+        alpha: Union[float, np.float64] = np.pi / 2,
+        beta: Union[float, np.float64] = np.pi / 2,
+        gamma: Union[float, np.float64] = np.pi / 2,
+        length: Union[float, np.float64] = None,
+        mass: Union[float, np.float64] = None,
         center_of_mass: np.ndarray = None,
         inertia: np.ndarray = None,
     ):
@@ -93,6 +93,17 @@ class NaturalSegment:
             self._generalized_mass_matrix = self._generalized_mass_matrix()
 
         self.markers = []
+
+    def set_name(self, name: str):
+        """
+        This function sets the name of the segment
+
+        Parameters
+        ----------
+        name : str
+            Name of the segment
+        """
+        self._name = name
 
     @classmethod
     def from_markers(
@@ -139,11 +150,10 @@ class NaturalSegment:
             )
 
         return cls(
-            name="name",
-            alpha=np.mean(alpha, axis=0)[0],
-            beta=np.mean(beta, axis=0)[0],
-            gamma=np.mean(gamma, axis=0)[0],
-            length=np.mean(length, axis=0)[0],
+            alpha=np.mean(alpha, axis=0),
+            beta=np.mean(beta, axis=0),
+            gamma=np.mean(gamma, axis=0),
+            length=np.mean(length, axis=0),
         )
 
     @staticmethod
@@ -165,7 +175,7 @@ class NaturalSegment:
         if not isinstance(Q, SegmentNaturalCoordinates):
             Q = SegmentNaturalCoordinates(Q)
 
-        u, rp, rd, w = Q.to_components()
+        u, rp, rd, w = Q.to_components
 
         length = np.sqrt(np.sum((rp - rd) ** 2, axis=0))
         alpha = np.arccos(np.sum((rp - rd) * w, axis=0) / length)

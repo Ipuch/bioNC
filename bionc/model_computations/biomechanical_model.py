@@ -20,8 +20,10 @@ class BiomechanicalModel:
         return self.segments[name]
 
     def __setitem__(self, name: str, segment: "SegmentReal"):
-        segment.name = name  # Make sure the name of the segment fits the internal one
-        self.segments[name] = segment
+        if segment.name == name:  # Make sure the name of the segment fits the internal one
+            self.segments[name] = segment
+        else:
+            raise ValueError("The name of the segment does not match the name of the segment")
 
     def __str__(self):
         out_string = "version 4\n\n"

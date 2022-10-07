@@ -51,7 +51,7 @@ class Marker:
         function: Callable,
         parent_name: str,
         kinematic_chain: BiomechanicalModel,
-        parent_scs: "NaturalSegment" = None,
+        natural_segment: "NaturalSegment" = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
     ):
@@ -72,8 +72,8 @@ class Marker:
         kinematic_chain
             The model as it is constructed at that particular time. It is useful if some values must be obtained from
             previously computed values
-        parent_scs
-            The segment coordinate system of the parent to transform the marker from global to local
+        natural_segment
+            The natural segment the marker is attached to
         is_technical
             If the marker should be flagged as a technical marker
         is_anatomical
@@ -91,7 +91,12 @@ class Marker:
             raise RuntimeError(f"The function {function} must return a np.ndarray of dimension 4xT (XYZ1 x time)")
 
         p[3, :] = 1  # Do not trust user and make sure the last value is a perfect one
-        projected_p = (parent_scs.transpose if parent_scs is not None else np.identity(4)) @ p
+        raise NotImplementedError("This is not implemented yet, todo")
+        # projected_p = (natural_segment.transpose if natural_segment is not None else np.identity(4)) @ p
+        # todo: add a marker in a natural segment with interpolation matrix etc...
+        # this has to be done with the developpement of natural segments
+        # natural_segment.to_non_orthogonal_ccordinate_system(p)
+        # last question: does it has to be the mean position in the local coordinate system ?
         if np.isnan(projected_p).all():
             raise RuntimeError(f"All the values for {function} returned nan which is not permitted")
         return Marker(name, parent_name, projected_p, is_technical=is_technical, is_anatomical=is_anatomical)

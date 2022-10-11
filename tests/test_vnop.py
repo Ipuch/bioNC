@@ -44,6 +44,3 @@ def test_vnop():
     e3 = np.array([3, 2, -7])
     with pytest.raises(ValueError):
         vnop = vnop_array(V, e1, e2, e3)
-
-
-

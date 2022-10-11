@@ -40,5 +40,3 @@ def vnop_array(V: np.ndarray, e1: np.ndarray, e2: np.ndarray, e3: np.ndarray) ->
     vnop[2] = np.sum(np.cross(e1, e2, axis=0) * V, 0) / np.sum(np.cross(e1, e2, axis=0) * e3, 0)
 
     return vnop
-
-

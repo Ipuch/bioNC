@@ -27,6 +27,7 @@ class Marker:
             The name of the parent the marker is attached to
         position
             The 3d position of the marker in the segment coordinate system
+            # todo: should it be directly in the natural coordinate system?
         is_technical
             If the marker should be flagged as a technical marker
         is_anatomical
@@ -44,8 +45,9 @@ class Marker:
         self.position_in_nscs = None
         self.interpolation_matrix = None
 
-    @staticmethod
+    @classmethod
     def from_data(
+        cls,
         data: Data,
         name: str,
         function: Callable,
@@ -99,7 +101,13 @@ class Marker:
         # last question: does it has to be the mean position in the local coordinate system ?
         if np.isnan(projected_p).all():
             raise RuntimeError(f"All the values for {function} returned nan which is not permitted")
-        return Marker(name, parent_name, projected_p, is_technical=is_technical, is_anatomical=is_anatomical)
+        return cls(
+            name,
+            parent_name,
+            projected_p,
+            is_technical=is_technical,
+            is_anatomical=is_anatomical,
+        )
 
     def __str__(self):
         # Define the print function, so it automatically formats things in the file properly

@@ -1,10 +1,10 @@
 import numpy as np
 
-from .natural_marker import NaturalMarker
+from .natural_marker import Marker
 
 
 class Axis:
-    def __init__(self, start: NaturalMarker, end: NaturalMarker):
+    def __init__(self, start: Marker, end: Marker):
         """
         Parameters
         ----------

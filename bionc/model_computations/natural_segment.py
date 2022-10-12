@@ -10,7 +10,7 @@ from ..utils.natural_velocities import SegmentNaturalVelocities
 from ..utils.natural_accelerations import SegmentNaturalAccelerations
 from ..utils.homogenous_transform import HomogeneousTransform
 from ..model_computations.natural_axis import Axis
-from ..model_computations.natural_marker import NaturalMarker
+from ..model_computations.natural_marker import NaturalMarker, Marker
 
 
 class NaturalSegment:
@@ -109,45 +109,38 @@ class NaturalSegment:
     def from_markers(
         cls,
         u_axis: Axis,
-        proximal_point: NaturalMarker,
-        distal_point: NaturalMarker,
-        w_axis: Axis = None,
+        proximal_point: Marker,
+        distal_point: Marker,
+        w_axis: Axis,
     ) -> "NaturalSegment":
         """
         Parameters
         ----------
         u_axis: Axis
-            The axis that defines the u vector
+            The axis that defines the u vector (XYZ1 x time)
         proximal_point: NaturalMarker
-            The proximal point of the segment, denoted by rp
+            The proximal point of the segment, denoted by rp (XYZ1 x time)
         distal_point: NaturalMarker
-            The distal point of the segment, denoted by rd
+            The distal point of the segment, denoted by rd (XYZ1 x time)
         w_axis: Axis
-            The axis that defines the w vector
+            The axis that defines the w vector (XYZ1 x time)
         """
 
         # Compute the third axis and recompute one of the previous two
-        u_axis_vector = u_axis.axis()[:3, :]
-        w_axis_vector = w_axis.axis()[:3, :]
-        proximal_point_vector = proximal_point.position[:3, :]
-        distal_point_vector = distal_point.position[:3, :]
-
-        alpha = np.zeros(proximal_point_vector.shape[1])
-        beta = np.zeros(proximal_point_vector.shape[1])
-        gamma = np.zeros(proximal_point_vector.shape[1])
-        length = np.zeros(proximal_point_vector.shape[1])
-
-        for i, (u_axis_i, w_axis_i, proximal_point_i, distal_point_i) in enumerate(
-            zip(u_axis_vector.T, w_axis_vector.T, proximal_point_vector.T, distal_point_vector.T)
-        ):
-            alpha[i], beta[i], gamma[i], length[i] = cls.parameters_from_Q(
-                SegmentNaturalCoordinates.from_components(
-                    u=u_axis_i,
-                    rp=proximal_point_i,
-                    rd=distal_point_i,
-                    w=w_axis_i,
+        Qi = SegmentNaturalCoordinates.from_components(
+                    u=u_axis.axis()[:3, :],
+                    rp=proximal_point.position[:3, :],
+                    rd=distal_point.position[:3, :],
+                    w=w_axis.axis()[:3, :],
                 )
-            )
+
+        alpha = np.zeros(Qi.shape[1])
+        beta = np.zeros(Qi.shape[1])
+        gamma = np.zeros(Qi.shape[1])
+        length = np.zeros(Qi.shape[1])
+
+        for i, Qif in enumerate(Qi.vector.T):
+            alpha[i], beta[i], gamma[i], length[i] = cls.parameters_from_Q(Qif)
 
         return cls(
             alpha=np.mean(alpha, axis=0),

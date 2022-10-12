@@ -16,6 +16,9 @@ class SegmentNaturalCoordinates(np.ndarray):
 
         obj = np.asarray(input_array).view(cls)
 
+        if obj.shape.__len__() == 1:
+            obj = obj[:, np.newaxis]
+
         return obj
 
     @classmethod
@@ -59,6 +62,9 @@ class SegmentNaturalCoordinates(np.ndarray):
 
         input_array = np.concatenate((u, rp, rd, w), axis=0)
 
+        if input_array.shape.__len__() == 1:
+            input_array = input_array[:, np.newaxis]
+
         return cls(input_array)
 
     def to_array(self):
@@ -66,19 +72,19 @@ class SegmentNaturalCoordinates(np.ndarray):
 
     @property
     def u(self):
-        return self[0:3].to_array()
+        return self[0:3, :].to_array()
 
     @property
     def rp(self):
-        return self[3:6].to_array()
+        return self[3:6, :].to_array()
 
     @property
     def rd(self):
-        return self[6:9].to_array()
+        return self[6:9, :].to_array()
 
     @property
     def w(self):
-        return self[9:12].to_array()
+        return self[9:12, :].to_array()
 
     @property
     def v(self):
@@ -160,23 +166,23 @@ class NaturalCoordinates(np.ndarray):
 
     def u(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[0:3]
-        return self[array_idx].to_array()
+        return self[array_idx, :].to_array()
 
     def rp(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[3:6]
-        return self[array_idx].to_array()
+        return self[array_idx, :].to_array()
 
     def rd(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[6:9]
-        return self[array_idx].to_array()
+        return self[array_idx, :].to_array()
 
     def w(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[9:12]
-        return self[array_idx].to_array()
+        return self[array_idx, :].to_array()
 
     def v(self, segment_idx: int):
         return self.rp(segment_idx) - self.rd(segment_idx)
 
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
-        return SegmentNaturalCoordinates(self[array_idx].to_array())
+        return SegmentNaturalCoordinates(self[array_idx, :].to_array())

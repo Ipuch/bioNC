@@ -3,7 +3,7 @@ from typing import Callable, Union
 import numpy as np
 
 from ..model_computations.biomechanical_model import BiomechanicalModel
-from ..model_computations.natural_marker import NaturalMarker
+from ..model_computations.natural_marker import NaturalMarker, Marker
 
 # from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
@@ -18,6 +18,7 @@ class MarkerTemplate:
         parent_name: str = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
+        marker_type: str = "NaturalMarker",
     ):
         """
         This is a pre-constructor for the NaturalMarker class. It allows to create a generic model by marker names
@@ -42,20 +43,35 @@ class MarkerTemplate:
         self.parent_name = parent_name
         self.is_technical = is_technical
         self.is_anatomical = is_anatomical
+        self.marker_type = marker_type
 
     def to_marker(
         self, data: Data, kinematic_chain: BiomechanicalModel, natural_segment: NaturalSegment = None
-    ) -> NaturalMarker:
-        return NaturalMarker.from_data(
-            data,
-            self.name,
-            self.function,
-            self.parent_name,
-            kinematic_chain,
-            natural_segment,
-            is_technical=self.is_technical,
-            is_anatomical=self.is_anatomical,
-        )
+    ) -> Union[NaturalMarker, Marker]:
+        if self.marker_type == "NaturalMarker":
+            return NaturalMarker.from_data(
+                data,
+                self.name,
+                self.function,
+                self.parent_name,
+                kinematic_chain,
+                natural_segment,
+                is_technical=self.is_technical,
+                is_anatomical=self.is_anatomical,
+            )
+        elif self.marker_type == "Marker":
+            return Marker.from_data(
+                data,
+                self.name,
+                self.function,
+                self.parent_name,
+                kinematic_chain,
+                natural_segment,
+                is_technical=self.is_technical,
+                is_anatomical=self.is_anatomical,
+            )
+        else:
+            raise ValueError(f"Unknown marker type: {self.marker_type}")
 
     @staticmethod
     def normal_to(m, bio, mk1: np.ndarray | str, mk2: np.ndarray | str, mk3: np.ndarray | str) -> np.ndarray:

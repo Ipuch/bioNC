@@ -36,8 +36,8 @@ class NaturalSegmentTemplate:
         """
 
         self.u_axis = u_axis
-        self.proximal_point = MarkerTemplate(function=proximal_point)
-        self.distal_point = MarkerTemplate(function=distal_point)
+        self.proximal_point = MarkerTemplate(function=proximal_point, marker_type="Marker")
+        self.distal_point = MarkerTemplate(function=distal_point, marker_type="Marker")
         self.w_axis = w_axis
 
     def update(self, data: Data, kinematic_chain: BiomechanicalModel) -> NaturalSegment:

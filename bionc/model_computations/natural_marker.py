@@ -171,7 +171,6 @@ class Marker:
     def __init__(
         self,
         name: str,
-        parent_name: str,
         position: tuple[int | float, int | float, int | float] | np.ndarray = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
@@ -181,8 +180,6 @@ class Marker:
         ----------
         name
             The name of the new marker
-        parent_name
-            The name of the parent the marker is attached to, if None, it is attached to the global coordinate system
         position
             The 3d position of the marker in the orhtogonal coordinate system (XYZ1 x time)) that defines the marker
         is_technical
@@ -191,7 +188,6 @@ class Marker:
             If the marker should be flagged as an anatomical marker
         """
         self.name = name
-        self.parent_name = parent_name
 
         if position is None:
             raise ValueError("A position must be provided")
@@ -212,9 +208,7 @@ class Marker:
         data: Data,
         name: str,
         function: Callable,
-        parent_name: str,
         kinematic_chain: BiomechanicalModel,
-        natural_segment: "NaturalSegment" = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
     ):
@@ -230,13 +224,9 @@ class Marker:
             The name of the new marker
         function
             The function (f(m) -> np.ndarray, where m is a dict of markers (XYZ1 x time)) that defines the marker
-        parent_name
-            The name of the parent the marker is attached to
         kinematic_chain
             The model as it is constructed at that particular time. It is useful if some values must be obtained from
             previously computed values
-        natural_segment
-            The natural segment the marker is attached to
         is_technical
             If the marker should be flagged as a technical marker
         is_anatomical
@@ -244,28 +234,22 @@ class Marker:
         """
 
         # Get the position of the markers and do some sanity checks
-        p: np.ndarray = function(data.values, kinematic_chain)
-        if not isinstance(p, np.ndarray):
+        position: np.ndarray = function(data.values, kinematic_chain)
+        if not isinstance(position, np.ndarray):
             raise RuntimeError(f"The function {function} must return a np.ndarray of dimension 4xT (XYZ1 x time)")
-        if len(p.shape) == 1:
-            p = p[:, np.newaxis]
+        if len(position.shape) == 1:
+            position = position[:, np.newaxis]
 
-        if len(p.shape) != 2 or p.shape[0] != 4:
+        if len(position.shape) != 2 or position.shape[0] != 4:
             raise RuntimeError(f"The function {function} must return a np.ndarray of dimension 4xT (XYZ1 x time)")
 
-        p[3, :] = 1  # Do not trust user and make sure the last value is a perfect one
-
-        if natural_segment is None:
-            position = p
-        else:
-            position = natural_segment.transpose @ p
+        position[3, :] = 1  # Do not trust user and make sure the last value is a perfect one
 
         if np.isnan(position).all():
             raise RuntimeError(f"All the values for {function} returned nan which is not permitted")
 
         return cls(
             name,
-            parent_name,
             position,
             is_technical=is_technical,
             is_anatomical=is_anatomical,
@@ -274,7 +258,6 @@ class Marker:
     def __str__(self):
         # Define the print function, so it automatically formats things in the file properly
         out_string = f"marker {self.name}\n"
-        out_string += f"\tparent {self.parent_name}\n"
 
         p = np.array(self.position)
         p = p if len(p.shape) == 1 else np.nanmean(p, axis=1)
@@ -290,9 +273,9 @@ class Marker:
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position + other)
-        elif isinstance(other, NaturalMarker):
-            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position + other.position)
+            return Marker(name=self.name, position=self.position + other)
+        elif isinstance(other, Marker):
+            return Marker(name=self.name, position=self.position + other.position)
         else:
             raise NotImplementedError(f"The addition for {type(other)} is not implemented")
 
@@ -301,8 +284,8 @@ class Marker:
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position - other)
-        elif isinstance(other, NaturalMarker):
-            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
+            return Marker(name=self.name, position=self.position - other)
+        elif isinstance(other, Marker):
+            return Marker(name=self.name, position=self.position - other.position)
         else:
             raise NotImplementedError(f"The subtraction for {type(other)} is not implemented")

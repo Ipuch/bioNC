@@ -61,12 +61,10 @@ class MarkerTemplate:
             )
         elif self.marker_type == "Marker":
             return Marker.from_data(
-                data,
-                self.name,
-                self.function,
-                self.parent_name,
-                kinematic_chain,
-                natural_segment,
+                data=data,
+                name=self.name,
+                function=self.function,
+                kinematic_chain=kinematic_chain,
                 is_technical=self.is_technical,
                 is_anatomical=self.is_anatomical,
             )

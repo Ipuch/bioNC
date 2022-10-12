@@ -48,6 +48,8 @@ class BiomechanicalModelTemplate:
             model[s.name] = natural_segment
 
             for marker in s.markers:
-                model.segments[name].add_marker(marker.to_marker(data, model, natural_segment))
+                # todo: this is not working yet
+                print("todo: this is not working yet")
+                # model.segments[name].add_marker(marker.to_marker(data, model, natural_segment))
 
         return model

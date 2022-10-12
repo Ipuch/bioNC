@@ -92,7 +92,8 @@ class NaturalSegment:
             self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
             self._generalized_mass_matrix = self._generalized_mass_matrix()
 
-        self.markers = []
+        # list of markers embedded in the segment
+        self._markers = []
 
     def set_name(self, name: str):
         """
@@ -621,4 +622,18 @@ class NaturalSegment:
         return SegmentNaturalAccelerations(Qddoti), lambda_i
 
     def add_marker(self, marker: NaturalMarker):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        marker
+            The marker to add
+        """
+        if marker.parent_name is not None and marker.parent_name != self.name:
+            raise ValueError(
+                "The marker name should be the same as the 'key'. Alternatively, marker.name can be left undefined"
+            )
+
+        marker.parent_name = self.name
         self.markers.append(marker)

@@ -3,7 +3,7 @@ from typing import Callable, Union
 import numpy as np
 
 from ..model_computations.biomechanical_model import BiomechanicalModel
-from ..model_computations.marker import Marker
+from ..model_computations.natural_marker import NaturalMarker
 
 # from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
@@ -20,7 +20,7 @@ class MarkerTemplate:
         is_anatomical: bool = False,
     ):
         """
-        This is a pre-constructor for the Marker class. It allows to create a generic model by marker names
+        This is a pre-constructor for the NaturalMarker class. It allows to create a generic model by marker names
 
         Parameters
         ----------
@@ -45,8 +45,8 @@ class MarkerTemplate:
 
     def to_marker(
         self, data: Data, kinematic_chain: BiomechanicalModel, natural_segment: NaturalSegment = None
-    ) -> Marker:
-        return Marker.from_data(
+    ) -> NaturalMarker:
+        return NaturalMarker.from_data(
             data,
             self.name,
             self.function,

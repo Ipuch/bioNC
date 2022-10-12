@@ -1,5 +1,5 @@
 from ..model_computations.inertia_parameters import InertiaParameters
-from ..model_computations.marker import Marker
+from ..model_computations.natural_marker import NaturalMarker
 from ..model_computations.natural_segment import NaturalSegment
 
 
@@ -21,7 +21,7 @@ class Segment:
         self.segment_coordinate_system = segment_coordinate_system
         self.inertia_parameters = inertia_parameters
 
-    def add_marker(self, marker: Marker):
+    def add_marker(self, marker: NaturalMarker):
         self.markers.append(marker)
 
     def __str__(self):

@@ -9,12 +9,13 @@ from ..model_creation.protocols import Data
 # todo: need a list of markers MarkerList
 
 
-class Marker:
+class NaturalMarker:
     def __init__(
         self,
         name: str,
         parent_name: str,
         position: tuple[int | float, int | float, int | float] | np.ndarray = None,
+        interpolation_matrix: np.ndarray = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
     ):
@@ -26,8 +27,9 @@ class Marker:
         parent_name
             The name of the parent the marker is attached to
         position
-            The 3d position of the marker in the segment coordinate system
-            # todo: should it be directly in the natural coordinate system?
+            The 3d position of the marker in the non orthogonal segment coordinate system
+        interpolation_matrix
+            The interpolation matrix to use for the marker
         is_technical
             If the marker should be flagged as a technical marker
         is_anatomical
@@ -35,15 +37,20 @@ class Marker:
         """
         self.name = name
         self.parent_name = parent_name
-        if position is None:
-            position = np.array((0, 0, 0, 1))
-        self.position = position if isinstance(position, np.ndarray) else np.array(position)
+
+        if position is None and interpolation_matrix is None:
+            raise ValueError("Either a position or an interpolation matrix must be provided")
+        elif position is not None and interpolation_matrix is not None:
+            self.position = position if isinstance(position, np.ndarray) else np.array(position)
+            # todo compute the interpolation matrix from the position
+        elif position is None and interpolation_matrix is not None:
+            self.interpolation_matrix = interpolation_matrix
+            # todo compute the position from the interpolation matrix
+        else:
+            raise ValueError("position and interpolation matrix cannot both be provided")
+
         self.is_technical = is_technical
         self.is_anatomical = is_anatomical
-
-        # natural coordinates features
-        self.position_in_nscs = None
-        self.interpolation_matrix = None
 
     @classmethod
     def from_data(
@@ -128,9 +135,9 @@ class Marker:
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return Marker(name=self.name, parent_name=self.parent_name, position=self.position + other)
-        elif isinstance(other, Marker):
-            return Marker(name=self.name, parent_name=self.parent_name, position=self.position + other.position)
+            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position + other)
+        elif isinstance(other, NaturalMarker):
+            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position + other.position)
         else:
             raise NotImplementedError(f"The addition for {type(other)} is not implemented")
 
@@ -139,8 +146,8 @@ class Marker:
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return Marker(name=self.name, parent_name=self.parent_name, position=self.position - other)
-        elif isinstance(other, Marker):
-            return Marker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
+            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position - other)
+        elif isinstance(other, NaturalMarker):
+            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
         else:
             raise NotImplementedError(f"The subtraction for {type(other)} is not implemented")

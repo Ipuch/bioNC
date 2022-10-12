@@ -1,17 +1,17 @@
 import numpy as np
 
-from .marker import Marker
+from .natural_marker import NaturalMarker
 
 
 class Axis:
-    def __init__(self, start: Marker, end: Marker):
+    def __init__(self, start: NaturalMarker, end: NaturalMarker):
         """
         Parameters
         ----------
         start:
-            The initial Marker
+            The initial NaturalMarker
         end:
-            The final Marker
+            The final NaturalMarker
         """
         self.start_point = start
         self.end_point = end

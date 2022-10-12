@@ -10,7 +10,7 @@ from ..utils.natural_velocities import SegmentNaturalVelocities
 from ..utils.natural_accelerations import SegmentNaturalAccelerations
 from ..utils.homogenous_transform import HomogeneousTransform
 from ..model_computations.natural_axis import Axis
-from ..model_computations.marker import Marker
+from ..model_computations.natural_marker import NaturalMarker
 
 
 class NaturalSegment:
@@ -109,8 +109,8 @@ class NaturalSegment:
     def from_markers(
         cls,
         u_axis: Axis,
-        proximal_point: Marker,
-        distal_point: Marker,
+        proximal_point: NaturalMarker,
+        distal_point: NaturalMarker,
         w_axis: Axis = None,
     ) -> "NaturalSegment":
         """
@@ -118,9 +118,9 @@ class NaturalSegment:
         ----------
         u_axis: Axis
             The axis that defines the u vector
-        proximal_point: Marker
+        proximal_point: NaturalMarker
             The proximal point of the segment, denoted by rp
-        distal_point: Marker
+        distal_point: NaturalMarker
             The distal point of the segment, denoted by rd
         w_axis: Axis
             The axis that defines the w vector
@@ -627,5 +627,5 @@ class NaturalSegment:
         lambda_i = x[12:]
         return SegmentNaturalAccelerations(Qddoti), lambda_i
 
-    def add_marker(self, marker: Marker):
+    def add_marker(self, marker: NaturalMarker):
         self.markers.append(marker)

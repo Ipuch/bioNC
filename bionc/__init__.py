@@ -16,7 +16,7 @@ from .model_creation import (
 )
 from .model_computations import (
     Axis,
-    Marker,
+    NaturalMarker,
     Segment,
     NaturalSegment,
     InertiaParameters,

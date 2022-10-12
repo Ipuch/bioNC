@@ -40,22 +40,22 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
         The right and left hip joint center in global coordinates system in meters
     """
     # convert inputs in millimeters
-    RASIS[:3, :] *= 1000
-    LASIS[:3, :] *= 1000
-    RPSIS[:3, :] *= 1000
-    LPSIS[:3, :] *= 1000
+    rasis = RASIS[:3, :] * 1000
+    lasis = LASIS[:3, :] * 1000
+    rpsis = RPSIS[:3, :] * 1000
+    lpsis = LPSIS[:3, :] * 1000
 
     # Right-handed Pelvis reference system definition
-    Sacrum = (RPSIS + LPSIS) / 2
+    Sacrum = (rpsis + lpsis) / 2
     # Global Pelvis center position
-    OP = (RASIS + LASIS) / 2
+    OP = (rasis + lasis) / 2
 
-    rhjc_global = np.zeros((4, RASIS.shape[1]))
-    lhjc_global = np.zeros((4, RASIS.shape[1]))
+    rhjc_global = np.zeros((4, rasis.shape[1]))
+    lhjc_global = np.zeros((4, rasis.shape[1]))
 
-    for i in range(RASIS.shape[1]):
-        provv = (RASIS[:3, i] - Sacrum[:3, i]) / np.linalg.norm(RASIS[:3, i] - Sacrum[:3, i])
-        ib = (RASIS[:3, i] - LASIS[:3, i]) / np.linalg.norm(RASIS[:3, i] - LASIS[:3, i])
+    for i in range(rasis.shape[1]):
+        provv = (rasis[:3, i] - Sacrum[:3, i]) / np.linalg.norm(rasis[:3, i] - Sacrum[:3, i])
+        ib = (rasis[:3, i] - lasis[:3, i]) / np.linalg.norm(rasis[:3, i] - lasis[:3, i])
 
         kb = np.cross(ib, provv) / np.linalg.norm(np.cross(ib, provv))
         jb = np.cross(kb, ib) / np.linalg.norm(np.cross(kb, ib))
@@ -69,12 +69,12 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
         # Transformation from global to pelvis reference system
         OPB = np.linalg.inv(Pelvis) @ np.hstack((OB, 1))
 
-        PW = np.linalg.norm(RASIS[:3, i] - LASIS[:3, i])  # PW: width of pelvis (distance among ASIS)
+        PW = np.linalg.norm(rasis[:3, i] - lasis[:3, i])  # PW: width of pelvis (distance among ASIS)
         PD = np.linalg.norm(
             Sacrum[:3, i] - OP[:3, i]
         )  # PD: pelvis depth = distance between mid points joining PSIS and ASIS
 
-        # Harrington formula
+        # Harrington formula in mm
         diff_ap = -0.24 * PD - 9.9
         diff_v = -0.3 * PW - 10.9
         diff_ml = 0.33 * PW + 7.3
@@ -90,10 +90,13 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
         # transformation from pelvis to global CS
         rhjc_global[:3, i] = Pelvis[:3, :3] @ rhjc_pelvis + OB
         lhjc_global[:3, i] = Pelvis[:3, :3] @ lhjc_pelvis + OB
-        rhjc_global[-1, i] = 1
-        lhjc_global[-1, i] = 1
 
-    return rhjc_global / 1000, lhjc_global / 1000
+    rhjc_global[:3, :] /= 1000
+    lhjc_global[:3, :] /= 1000
+    rhjc_global[-1, :] = 1
+    lhjc_global[-1, :] = 1
+
+    return rhjc_global, lhjc_global
 
 
 def model_creation_from_measured_data():

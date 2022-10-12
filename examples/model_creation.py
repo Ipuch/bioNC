@@ -149,11 +149,7 @@ def model_creation_from_measured_data():
     model["THIGH"].add_marker(MarkerTemplate(name="HIP_CENTER", function=right_hip_joint, parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("RKNI", parent_name="THIGH"))
     model["THIGH"].add_marker(MarkerTemplate("RKNE", parent_name="THIGH"))
-    model["THIGH"].add_marker(
-        MarkerTemplate(
-            "KNEE_JOINT", function=right_knee_joint, parent_name="THIGH"
-        )
-    )
+    model["THIGH"].add_marker(MarkerTemplate("KNEE_JOINT", function=right_knee_joint, parent_name="THIGH"))
 
     model["SHANK"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
@@ -169,18 +165,10 @@ def model_creation_from_measured_data():
             w_axis=AxisTemplate(start="RANE", end="RANI"),
         )
     )
-    model["SHANK"].add_marker(
-        MarkerTemplate(
-            "KNEE_JOINT", right_knee_joint, parent_name="SHANK"
-        )
-    )
+    model["SHANK"].add_marker(MarkerTemplate("KNEE_JOINT", right_knee_joint, parent_name="SHANK"))
     model["SHANK"].add_marker(MarkerTemplate("RANE", parent_name="SHANK"))
     model["SHANK"].add_marker(MarkerTemplate("RANI", parent_name="SHANK"))
-    model["SHANK"].add_marker(
-        MarkerTemplate(
-            "ANKLE_JOINT", function=right_ankle_joint, parent_name="SHANK"
-        )
-    )
+    model["SHANK"].add_marker(MarkerTemplate("ANKLE_JOINT", function=right_ankle_joint, parent_name="SHANK"))
 
     model["FOOT"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
@@ -200,11 +188,7 @@ def model_creation_from_measured_data():
     model["FOOT"].add_marker(MarkerTemplate("RHEE", parent_name="FOOT"))
     model["FOOT"].add_marker(MarkerTemplate("RTARI", parent_name="FOOT"))
     model["FOOT"].add_marker(MarkerTemplate("RTAR", parent_name="FOOT"))
-    model["FOOT"].add_marker(
-        MarkerTemplate(
-            "ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT"
-        )
-    )
+    model["FOOT"].add_marker(MarkerTemplate("ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT"))
 
     # Put the model together, print it and print it to a bioMod file
     natural_model = model.update(C3dData("StatRef0001.c3d"))

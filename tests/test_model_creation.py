@@ -19,7 +19,7 @@ def test_segment_template():
                 start=right_ankle_joint,
                 # u_axis is defined from calcaneous (CAL) to the middle of M1 and M5
                 end=lambda m, bio: (m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2)
-                                   / np.linalg.norm(m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2),
+                / np.linalg.norm(m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2),
             ),
             proximal_point=right_ankle_joint,
             #  middle of M1 and M5

@@ -49,9 +49,16 @@ def test_vnop():
 def test_interpolate_natural_vector():
     vector = np.array([1, 2, 3])
     interpolation_matrix = interpolate_natural_vector(vector)
-    np.testing.assert_allclose(interpolation_matrix, np.array([[1., 0., 0., 3., 0., 0., -2., -0., -0., 3., 0., 0.],
-                                                               [0., 1., 0., 0., 3., 0., -0., -2., -0., 0., 3., 0.],
-                                                               [0., 0., 1., 0., 0., 3., -0., -0., -2., 0., 0., 3.]]))
+    np.testing.assert_allclose(
+        interpolation_matrix,
+        np.array(
+            [
+                [1.0, 0.0, 0.0, 3.0, 0.0, 0.0, -2.0, -0.0, -0.0, 3.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0, 3.0, 0.0, -0.0, -2.0, -0.0, 0.0, 3.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0, 0.0, 3.0, -0.0, -0.0, -2.0, 0.0, 0.0, 3.0],
+            ]
+        ),
+    )
 
     vector_2 = to_natural_vector(interpolation_matrix)
     np.testing.assert_allclose(vector, vector_2)
@@ -60,5 +67,11 @@ def test_interpolate_natural_vector():
     with pytest.raises(ValueError, match="Vector must be 3x1"):
         interpolate_natural_vector(np.array([1, 2, 3, 4]))
     with pytest.raises(ValueError, match="Interpolation matrix must be 3x12"):
-        to_natural_vector(np.array([[1., 0., 0., 3., 0., 0., -2., -0., -0., 3., 0., 0.],
-                                    [0., 1., 0., 0., 3., 0., -0., -2., -0., 0., 3., 0.]]))
+        to_natural_vector(
+            np.array(
+                [
+                    [1.0, 0.0, 0.0, 3.0, 0.0, 0.0, -2.0, -0.0, -0.0, 3.0, 0.0, 0.0],
+                    [0.0, 1.0, 0.0, 0.0, 3.0, 0.0, -0.0, -2.0, -0.0, 0.0, 3.0, 0.0],
+                ]
+            )
+        )

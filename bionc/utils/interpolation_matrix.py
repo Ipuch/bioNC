@@ -60,6 +60,5 @@ def to_natural_vector(interpolation_matrix: np.ndarray) -> np.ndarray:
 
     return vector
 
+
 # test these two functions with pytest
-
-

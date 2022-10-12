@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Union
+from bionc.utils.vnop_array import vnop_array
 
 
 class SegmentNaturalCoordinates(np.ndarray):
@@ -89,6 +90,24 @@ class SegmentNaturalCoordinates(np.ndarray):
     @property
     def to_components(self):
         return self.u, self.rp, self.rd, self.w
+
+    def to_non_orthogonal_basis(self, vector: np.ndarray) -> np.ndarray:
+        """
+        This function converts a vector expressed in the global coordinate system
+        to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
+
+        Parameters
+        ----------
+        vector: np.ndarray
+            The vector expressed in the global coordinate system
+
+        Returns
+        -------
+        np.ndarray
+            The vector expressed in the non-orthogonal coordinate system
+
+        """
+        return vnop_array(vector - self.rp, self.u, self.v, self.w)
 
 
 class NaturalCoordinates(np.ndarray):

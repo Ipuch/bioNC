@@ -76,7 +76,7 @@ class SegmentNaturalAccelerations(np.ndarray):
 
     @property
     def vddot(self):
-        return self.rdddot - self.rpddot
+        return self.rpddot - self.rdddot
 
     @property
     def vector(self):
@@ -133,7 +133,7 @@ class NaturalAccelerations(np.ndarray):
         return self[array_idx].to_array()
 
     def vddot(self, segment_idx: int):
-        return self.rdddot(segment_idx) - self.rpddot(segment_idx)
+        return self.rpddot(segment_idx) - self.rdddot(segment_idx)
 
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)

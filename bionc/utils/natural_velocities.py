@@ -75,7 +75,7 @@ class SegmentNaturalVelocities(np.ndarray):
 
     @property
     def vdot(self):
-        return self.rddot - self.rpdot
+        return self.rpdot - self.rddot
 
     @property
     def vector(self):
@@ -132,7 +132,7 @@ class NaturalVelocities(np.ndarray):
         return self[array_idx].to_array()
 
     def vdot(self, segment_idx: int):
-        return self.rddot(segment_idx) - self.rpdot(segment_idx)
+        return self.rpdot(segment_idx) - self.rddot(segment_idx)
 
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)

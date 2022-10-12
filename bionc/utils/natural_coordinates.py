@@ -80,7 +80,7 @@ class SegmentNaturalCoordinates(np.ndarray):
 
     @property
     def v(self):
-        return self.rd - self.rp
+        return self.rp - self.rd
 
     @property
     def vector(self):
@@ -137,7 +137,7 @@ class NaturalCoordinates(np.ndarray):
         return self[array_idx].to_array()
 
     def v(self, segment_idx: int):
-        return self.rd(segment_idx) - self.rp(segment_idx)
+        return self.rp(segment_idx) - self.rd(segment_idx)
 
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)

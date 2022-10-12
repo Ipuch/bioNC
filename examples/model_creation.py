@@ -17,7 +17,7 @@ import ezc3d
 # This examples shows how to
 #     1. Create a model from scratch using a template with marker names (model_creation_from_data)
 
-#
+
 def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSIS: np.ndarray) -> tuple:
     """
     This function computes the hip joint center from the RASIS, LASIS, RPSIS and LPSIS markers

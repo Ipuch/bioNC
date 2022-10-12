@@ -169,12 +169,12 @@ class NaturalMarker:
 
 class Marker:
     def __init__(
-            self,
-            name: str,
-            parent_name: str,
-            position: tuple[int | float, int | float, int | float] | np.ndarray = None,
-            is_technical: bool = True,
-            is_anatomical: bool = False,
+        self,
+        name: str,
+        parent_name: str,
+        position: tuple[int | float, int | float, int | float] | np.ndarray = None,
+        is_technical: bool = True,
+        is_anatomical: bool = False,
     ):
         """
         Parameters
@@ -208,15 +208,15 @@ class Marker:
 
     @classmethod
     def from_data(
-            cls,
-            data: Data,
-            name: str,
-            function: Callable,
-            parent_name: str,
-            kinematic_chain: BiomechanicalModel,
-            natural_segment: "NaturalSegment" = None,
-            is_technical: bool = True,
-            is_anatomical: bool = False,
+        cls,
+        data: Data,
+        name: str,
+        function: Callable,
+        parent_name: str,
+        kinematic_chain: BiomechanicalModel,
+        natural_segment: "NaturalSegment" = None,
+        is_technical: bool = True,
+        is_anatomical: bool = False,
     ):
         """
         This is a constructor for the MarkerReal class. It evaluates the function that defines the marker to get an

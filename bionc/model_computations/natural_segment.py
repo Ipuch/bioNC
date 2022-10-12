@@ -128,11 +128,11 @@ class NaturalSegment:
 
         # Compute the third axis and recompute one of the previous two
         Qi = SegmentNaturalCoordinates.from_components(
-                    u=u_axis.axis()[:3, :],
-                    rp=proximal_point.position[:3, :],
-                    rd=distal_point.position[:3, :],
-                    w=w_axis.axis()[:3, :],
-                )
+            u=u_axis.axis()[:3, :],
+            rp=proximal_point.position[:3, :],
+            rd=distal_point.position[:3, :],
+            w=w_axis.axis()[:3, :],
+        )
 
         alpha = np.zeros(Qi.shape[1])
         beta = np.zeros(Qi.shape[1])

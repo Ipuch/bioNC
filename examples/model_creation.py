@@ -109,6 +109,8 @@ def model_creation_from_measured_data():
     # de_leva = DeLevaTable(total_mass=100, sex="female")
 
     right_hip_joint = lambda m, bio: harrington2007(m["RFWT"], m["LFWT"], m["RBWT"], m["LBWT"])[0]
+    right_knee_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RKNI", "RKNE")
+    right_ankle_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI")
 
     # model["PELVIS"] = SegmentTemplate(
     #     natural_segment=NaturalSegmentTemplate(
@@ -149,19 +151,19 @@ def model_creation_from_measured_data():
     model["THIGH"].add_marker(MarkerTemplate("RKNE", parent_name="THIGH"))
     model["THIGH"].add_marker(
         MarkerTemplate(
-            "KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RKNI", "RKNE"), parent_name="THIGH"
+            "KNEE_JOINT", function=right_knee_joint, parent_name="THIGH"
         )
     )
 
     model["SHANK"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
-                start="KNEE_CENTER",
+                start=right_knee_joint,
                 # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
                 # lateral epicondyle
-                end=lambda m, bio: MarkerTemplate.normal_to(m, bio, "KNEE_CENTER", "RANE", "RANI"),
+                end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI"),
             ),
-            proximal_point="KNEE_CENTER",
+            proximal_point=right_knee_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI"),
             w_axis=AxisTemplate(start="RANE", end="RANI"),
@@ -169,26 +171,26 @@ def model_creation_from_measured_data():
     )
     model["SHANK"].add_marker(
         MarkerTemplate(
-            "KNEE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RKNI", "RKNE"), parent_name="SHANK"
+            "KNEE_JOINT", right_knee_joint, parent_name="SHANK"
         )
     )
     model["SHANK"].add_marker(MarkerTemplate("RANE", parent_name="SHANK"))
     model["SHANK"].add_marker(MarkerTemplate("RANI", parent_name="SHANK"))
     model["SHANK"].add_marker(
         MarkerTemplate(
-            "ANKLE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI"), parent_name="SHANK"
+            "ANKLE_JOINT", function=right_ankle_joint, parent_name="SHANK"
         )
     )
 
     model["FOOT"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
-                start="ANKLE_JOINT",
+                start=right_ankle_joint,
                 # u_axis is defined from calcaneous (CAL) to the middle of M1 and M5
                 end=lambda m, bio: (m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2)
                 / np.linalg.norm(m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2),
             ),
-            proximal_point="ANKLE_JOINT",
+            proximal_point=right_ankle_joint,
             #  middle of M1 and M5
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RTARI", "RTAR"),
             w_axis=AxisTemplate(start="RTARI", end="RTAR"),
@@ -200,7 +202,7 @@ def model_creation_from_measured_data():
     model["FOOT"].add_marker(MarkerTemplate("RTAR", parent_name="FOOT"))
     model["FOOT"].add_marker(
         MarkerTemplate(
-            "ANKLE_JOINT", function=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI"), parent_name="FOOT"
+            "ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT"
         )
     )
 

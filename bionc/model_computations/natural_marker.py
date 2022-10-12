@@ -4,7 +4,7 @@ import numpy as np
 
 from .biomechanical_model import BiomechanicalModel
 from ..model_creation.protocols import Data
-from ..utils.interpolation_matrix import interpolate_natural_vector
+from ..utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 
 
 # todo: need a list of markers MarkerList
@@ -41,12 +41,15 @@ class NaturalMarker:
 
         if position is None and interpolation_matrix is None:
             raise ValueError("Either a position or an interpolation matrix must be provided")
+
         elif position is not None and interpolation_matrix is not None:
             self.position = position if isinstance(position, np.ndarray) else np.array(position)
             self.interpolation_matrix = interpolate_natural_vector(self.position)
+
         elif position is None and interpolation_matrix is not None:
             self.interpolation_matrix = interpolation_matrix
-            # todo compute the position from the interpolation matrix
+            self.position = to_natural_vector(self.interpolation_matrix)
+
         else:
             raise ValueError("position and interpolation matrix cannot both be provided")
 

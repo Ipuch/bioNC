@@ -526,7 +526,7 @@ class NaturalSegment:
 
         Returns
         -------
-        interpolation_matrix: np.ndarray
+        interpolate_natural_vector: np.ndarray
             Interpolation  matrix [3 x 12], denoted Ni to get the location of the vector as linear combination of Q.
             vector in global frame = Ni * Qi
         """

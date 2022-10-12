@@ -2,6 +2,8 @@ from .utils.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordin
 from .utils.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
 from .utils.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
 from .utils.homogenous_transform import HomogeneousTransform
+from .utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from .utils.natural_coordinates import vnop_array
 
 from .model_creation import (
     AxisTemplate,

@@ -28,7 +28,6 @@ def test_segment_template():
         )
     )
 
-    print("he")
     # verify stuff in model
     assert model["FOOT"].name == "FOOT"
 

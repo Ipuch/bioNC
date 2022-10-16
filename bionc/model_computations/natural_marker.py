@@ -5,12 +5,13 @@ import numpy as np
 from .biomechanical_model import BiomechanicalModel
 from ..model_creation.protocols import Data
 from ..utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from ..utils.natural_coordinates import SegmentNaturalCoordinates
 
 
 # todo: need a list of markers MarkerList
 
 
-class NaturalMarker:
+class SegmentMarker:
     def __init__(
         self,
         name: str,
@@ -70,7 +71,7 @@ class NaturalMarker:
         function: Callable,
         parent_name: str,
         kinematic_chain: BiomechanicalModel,
-        natural_segment: "NaturalSegment" = None,
+        Q_xp: SegmentNaturalCoordinates = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
     ):
@@ -91,8 +92,8 @@ class NaturalMarker:
         kinematic_chain
             The model as it is constructed at that particular time. It is useful if some values must be obtained from
             previously computed values
-        natural_segment
-            The natural segment the marker is attached to
+        Q_xp: SegmentNaturalCoordinates
+            The segment natural coordinates identified from data
         is_technical
             If the marker should be flagged as a technical marker
         is_anatomical
@@ -109,23 +110,16 @@ class NaturalMarker:
         if len(p.shape) != 2 or p.shape[0] != 4:
             raise RuntimeError(f"The function {function} must return a np.ndarray of dimension 4xT (XYZ1 x time)")
 
-        p[3, :] = 1  # Do not trust user and make sure the last value is a perfect one
-        raise NotImplementedError("This is not implemented yet, todo")
+        natural_positions = Q_xp.to_non_orthogonal_basis(vector=p[:3, :])
+        # mean
+        natural_position = natural_positions.mean(axis=1)
 
-        if natural_segment is None:
-            position = p
-
-        # projected_p = (natural_segment.transpose if natural_segment is not None else np.identity(4)) @ p
-        # todo: add a marker in a natural segment with interpolation matrix etc...
-        # this has to be done with the developpement of natural segments
-        # natural_segment.to_non_orthogonal_ccordinate_system(p)
-        # last question: does it has to be the mean position in the local coordinate system ?
-        if np.isnan(projected_p).all():
+        if np.isnan(natural_position).all():
             raise RuntimeError(f"All the values for {function} returned nan which is not permitted")
         return cls(
             name,
             parent_name,
-            projected_p,
+            position=natural_position,
             is_technical=is_technical,
             is_anatomical=is_anatomical,
         )
@@ -149,9 +143,9 @@ class NaturalMarker:
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position + other)
-        elif isinstance(other, NaturalMarker):
-            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position + other.position)
+            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position + other)
+        elif isinstance(other, SegmentMarker):
+            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position + other.position)
         else:
             raise NotImplementedError(f"The addition for {type(other)} is not implemented")
 
@@ -160,9 +154,9 @@ class NaturalMarker:
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position - other)
-        elif isinstance(other, NaturalMarker):
-            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
+            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position - other)
+        elif isinstance(other, SegmentMarker):
+            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
         else:
             raise NotImplementedError(f"The subtraction for {type(other)} is not implemented")
 

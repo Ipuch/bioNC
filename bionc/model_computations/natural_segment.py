@@ -623,4 +623,4 @@ class NaturalSegment:
             )
 
         marker.parent_name = self.name
-        self.markers.append(marker)
+        self._markers.append(marker)

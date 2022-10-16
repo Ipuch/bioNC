@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 from bionc import (
@@ -6,6 +8,7 @@ from bionc import (
     NaturalSegmentTemplate,
     MarkerTemplate,
     BiomechanicalModelTemplate,
+    NaturalSegment,
 )
 
 
@@ -63,3 +66,24 @@ def test_segment_template():
 
     assert model["FOOT"].inertia_parameters is None
     assert model["FOOT"].markers == []
+
+
+def test_model_creation():
+    from examples.model_creation import model_creation_from_measured_data
+
+    model = model_creation_from_measured_data()
+
+    assert isinstance(model.segments, dict)
+    assert len(model.segments) == 3
+    assert model.segments["FOOT"].name == "FOOT"
+    assert model.segments["SHANK"].name == "SHANK"
+    assert model.segments["THIGH"].name == "THIGH"
+
+    # verify segments values are NaturalSegment objects
+    for s in model.segments.values():
+        assert isinstance(s, NaturalSegment)
+
+    # todo: test the markers and global matrices of the model
+    # rigidbody constraints
+    # joint constraints
+    # markers constraints

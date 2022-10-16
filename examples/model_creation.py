@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import numpy as np
 import biorbd
@@ -190,8 +191,10 @@ def model_creation_from_measured_data():
     model["FOOT"].add_marker(MarkerTemplate("RTAR", parent_name="FOOT"))
     model["FOOT"].add_marker(MarkerTemplate("ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT"))
 
+    c3d_data = C3dData(f"{Path(__file__).parent.resolve()}/StatRef0001.c3d")  # todo: replace this by fake c3d file built within the code
+
     # Put the model together, print it and print it to a bioMod file
-    natural_model = model.update(C3dData("StatRef0001.c3d"))
+    natural_model = model.update(c3d_data)
 
     return natural_model
 

@@ -16,7 +16,7 @@ def test_vnop():
     e3 = np.array([3, 2, -7])
     V = np.array([-1, 3, 5])
     vnop = vnop_array(V, e1, e2, e3)
-    np.testing.assert_allclose(vnop, np.array([0.752475, -0.267327, -0.405941]), rtol=1e-6)
+    np.testing.assert_allclose(vnop, np.array([0.752475, -0.267327, -0.405941])[:, np.newaxis], rtol=1e-6)
 
     # tests errors with wrong shape
     e1 = np.array([1, 4, 5, 6])
@@ -44,6 +44,15 @@ def test_vnop():
     e3 = np.array([3, 2, -7])
     with pytest.raises(ValueError):
         vnop_array(V, e1, e2, e3)
+
+    e1 = np.array([[1, 4, 5], [0.5, 5, 6]]).T
+    e2 = np.array([[2, -3, 6], [2, -2.3, 7]]).T
+    e3 = np.array([[3, 2, -7], [1, 1.9, -8]]).T
+    V = np.array([[-1, 3, 5], [-0.5, 3, 6]]).T
+    vnop = vnop_array(V, e1, e2, e3)
+    np.testing.assert_allclose(vnop, np.array([[0.752475, -0.267327, -0.405941],
+                                                  [0.668505, -0.203698, -0.426857]]).T, rtol=1e-5)
+
 
 
 def test_interpolate_natural_vector():

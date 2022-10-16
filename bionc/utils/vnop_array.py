@@ -31,10 +31,16 @@ def vnop_array(V: np.ndarray, e1: np.ndarray, e2: np.ndarray, e3: np.ndarray) ->
 
     if e1.shape[0] != 3:
         raise ValueError("The first vector of the non-orthogonal coordinate system must be expressed in 3D.")
+    if len(e1.shape) == 1:
+        e1 = e1[:, np.newaxis]
     if e2.shape[0] != 3:
         raise ValueError("The second vector of the non-orthogonal coordinate system must be expressed in 3D.")
+    if len(e2.shape) == 1:
+        e2 = e2[:, np.newaxis]
     if e3.shape[0] != 3:
         raise ValueError("The third vector of the non-orthogonal coordinate system must be expressed in 3D.")
+    if len(e3.shape) == 1:
+        e3 = e3[:, np.newaxis]
 
     vnop = np.zeros(V.shape)
 

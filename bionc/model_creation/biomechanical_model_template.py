@@ -34,10 +34,13 @@ class BiomechanicalModelTemplate:
         for name in self.segments:
             s = self.segments[name]
 
-            natural_segment = s.natural_segment.update(
+            Q_xp = s.natural_segment.experimental_Q(data, model)
+
+            natural_segment,  = s.natural_segment.update(
                 data,
                 model,
             )
+
             natural_segment.set_name(name)
 
             # inertia_parameters = None
@@ -49,6 +52,7 @@ class BiomechanicalModelTemplate:
 
             for marker in s.markers:
                 # todo: this is not working yet
+                # Q_xp
                 print("todo: this is not working yet")
                 # model.segments[name].add_marker(marker.to_marker(data, model, natural_segment))
 

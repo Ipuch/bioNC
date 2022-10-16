@@ -3,6 +3,7 @@ from typing import Callable
 from ..model_computations.natural_axis import Axis
 from .natural_axis_template import AxisTemplate
 from ..model_computations.biomechanical_model import BiomechanicalModel
+from ..utils.natural_coordinates import SegmentNaturalCoordinates
 from .marker_template import MarkerTemplate
 from .protocols import Data
 from ..model_computations.natural_segment import NaturalSegment
@@ -40,7 +41,7 @@ class NaturalSegmentTemplate:
         self.distal_point = MarkerTemplate(function=distal_point, marker_type="Marker")
         self.w_axis = w_axis
 
-    def update(self, data: Data, kinematic_chain: BiomechanicalModel) -> NaturalSegment:
+    def experimental_Q(self, data: Data, kinematic_chain: BiomechanicalModel) -> SegmentNaturalCoordinates:
         """
         Collapse the generic SegmentCoordinateSystem to an actual SegmentCoordinateSystemReal with value
         based on the model and the data
@@ -52,16 +53,35 @@ class NaturalSegmentTemplate:
         kinematic_chain
             The model as it is constructed at that particular time. It is useful if some values must be obtained from
             previously computed values
-        parent_scs
-            The SegmentCoordinateSystemReal of the parent to compute the local transformation
+
         Returns
         -------
+        SegmentNaturalCoordinates
+        The Segment Natural Coordinates Q (12 x n_frames)
+        """
+
+        self.Q = SegmentNaturalCoordinates.from_components(
+            u=self.u_axis.to_axis(data, kinematic_chain)[:3, :],
+            rp=self.proximal_point.to_marker(data, kinematic_chain)[:3, :],
+            rd=self.distal_point.to_marker(data, kinematic_chain)[:3, :],
+            w=self.w_axis.to_axis(data, kinematic_chain)[:3, :],
+        )
+        return self.Q
+
+    def update(self) -> NaturalSegment:
+        """
+        Collapse the generic SegmentCoordinateSystem to an actual SegmentCoordinateSystemReal with value
+        based on the model and the data
+
+        Parameters
+        ----------
+        Q: SegmentNaturalCoordinates
+            The experimental data of Q coordinates
+
+        Returns
+        -------
+        NaturalSegment
         The collapsed SegmentCoordinateSystemReal
         """
 
-        return NaturalSegment.from_markers(
-            u_axis=self.u_axis.to_axis(data, kinematic_chain),
-            proximal_point=self.proximal_point.to_marker(data, kinematic_chain),
-            distal_point=self.distal_point.to_marker(data, kinematic_chain),
-            w_axis=self.w_axis.to_axis(data, kinematic_chain),
-        )
+        return NaturalSegment.from_experimental_Q(self.Q)

@@ -98,6 +98,10 @@ class SegmentNaturalCoordinates(np.ndarray):
     def to_components(self):
         return self.u, self.rp, self.rd, self.w
 
+    @property
+    def to_uvw(self):
+        return self.u, self.v, self.w
+
     def to_non_orthogonal_basis(self, vector: np.ndarray) -> np.ndarray:
         """
         This function converts a vector expressed in the global coordinate system

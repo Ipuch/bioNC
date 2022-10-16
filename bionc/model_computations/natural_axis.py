@@ -9,9 +9,9 @@ class Axis:
         Parameters
         ----------
         start:
-            The initial NaturalMarker
+            The initial SegmentMarker
         end:
-            The final NaturalMarker
+            The final SegmentMarker
         """
         self.start_point = start
         self.end_point = end

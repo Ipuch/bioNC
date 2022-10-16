@@ -10,7 +10,7 @@ from ..utils.natural_velocities import SegmentNaturalVelocities
 from ..utils.natural_accelerations import SegmentNaturalAccelerations
 from ..utils.homogenous_transform import HomogeneousTransform
 from ..model_computations.natural_axis import Axis
-from ..model_computations.natural_marker import NaturalMarker, Marker
+from ..model_computations.natural_marker import SegmentMarker, Marker
 
 
 class NaturalSegment:
@@ -608,7 +608,7 @@ class NaturalSegment:
         lambda_i = x[12:]
         return SegmentNaturalAccelerations(Qddoti), lambda_i
 
-    def add_marker(self, marker: NaturalMarker):
+    def add_marker(self, marker: SegmentMarker):
         """
         Add a new marker to the segment
 

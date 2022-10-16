@@ -36,7 +36,7 @@ class BiomechanicalModelTemplate:
 
             Q_xp = s.natural_segment.experimental_Q(data, model)
 
-            natural_segment,  = s.natural_segment.update(
+            (natural_segment,) = s.natural_segment.update(
                 data,
                 model,
             )

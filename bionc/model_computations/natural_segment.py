@@ -107,33 +107,20 @@ class NaturalSegment:
         self._name = name
 
     @classmethod
-    def from_markers(
+    def from_experimental_Q(
         cls,
-        u_axis: Axis,
-        proximal_point: Marker,
-        distal_point: Marker,
-        w_axis: Axis,
+        Qi: SegmentNaturalCoordinates,
     ) -> "NaturalSegment":
         """
         Parameters
         ----------
-        u_axis: Axis
-            The axis that defines the u vector (XYZ1 x time)
-        proximal_point: NaturalMarker
-            The proximal point of the segment, denoted by rp (XYZ1 x time)
-        distal_point: NaturalMarker
-            The distal point of the segment, denoted by rd (XYZ1 x time)
-        w_axis: Axis
-            The axis that defines the w vector (XYZ1 x time)
-        """
+        Qi : SegmentNaturalCoordinates
+            Experimental segment natural coordinates (12 x n_frames)
 
-        # Compute the third axis and recompute one of the previous two
-        Qi = SegmentNaturalCoordinates.from_components(
-            u=u_axis.axis()[:3, :],
-            rp=proximal_point.position[:3, :],
-            rd=distal_point.position[:3, :],
-            w=w_axis.axis()[:3, :],
-        )
+        Returns
+        -------
+        NaturalSegment
+        """
 
         alpha = np.zeros(Qi.shape[1])
         beta = np.zeros(Qi.shape[1])
@@ -171,7 +158,7 @@ class NaturalSegment:
 
         u, rp, rd, w = Q.to_components
 
-        length = np.sqrt(np.sum((rp - rd) ** 2, axis=0))
+        length = np.linalg.norm(rp - rd, axis=0)
         alpha = np.arccos(np.sum((rp - rd) * w, axis=0) / length)
         beta = np.arccos(np.sum(u * w, axis=0))
         gamma = np.arccos(np.sum(u * (rp - rd), axis=0) / length)

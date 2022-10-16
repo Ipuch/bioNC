@@ -61,10 +61,10 @@ class NaturalSegmentTemplate:
         """
 
         self.Q = SegmentNaturalCoordinates.from_components(
-            u=self.u_axis.to_axis(data, kinematic_chain)[:3, :],
-            rp=self.proximal_point.to_marker(data, kinematic_chain)[:3, :],
-            rd=self.distal_point.to_marker(data, kinematic_chain)[:3, :],
-            w=self.w_axis.to_axis(data, kinematic_chain)[:3, :],
+            u=self.u_axis.to_axis(data, kinematic_chain).axis()[:3, :],
+            rp=self.proximal_point.to_marker(data, kinematic_chain).position[:3, :],
+            rd=self.distal_point.to_marker(data, kinematic_chain).position[:3, :],
+            w=self.w_axis.to_axis(data, kinematic_chain).axis()[:3, :],
         )
         return self.Q
 

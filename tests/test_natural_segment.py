@@ -26,3 +26,5 @@ def test_natural_segment():
     np.testing.assert_equal(my_segment.mass, 1)
     np.testing.assert_equal(my_segment.center_of_mass, np.array([0, 0.01, 0]))
     np.testing.assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+
+    # todo: test marker constraints

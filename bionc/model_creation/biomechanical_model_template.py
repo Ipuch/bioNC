@@ -34,32 +34,19 @@ class BiomechanicalModelTemplate:
         for name in self.segments:
             s = self.segments[name]
 
-            scs = NaturalSegment()
-            if s.segment_coordinate_system is not None:
-                scs = s.segment_coordinate_system.to_scs(
-                    data,
-                    model,
-                    model.segments[s.parent_name].segment_coordinate_system if s.parent_name else None,
-                )
+            Q_xp = s.natural_segment.experimental_Q(data, model)
 
-            inertia_parameters = None
-            if s.inertia_parameters is not None:
-                inertia_parameters = s.inertia_parameters.to_real(data, model, scs)
+            natural_segment = s.natural_segment.update()
+            natural_segment.set_name(name)
 
-            mesh = None
-            if s.mesh is not None:
-                mesh = s.mesh.to_mesh(data, model, scs)
+            # inertia_parameters = None
+            # if s.inertia_parameters is not None:
+            # todo: this is not working yet
+            # natural_segment.set_inertia_parameters(s.inertia_parameters)
 
-            model[s.name] = Segment(
-                name=s.name,
-                parent_name=s.parent_name,
-                segment_coordinate_system=scs,
-                translations=s.translations,
-                rotations=s.rotations,
-                inertia_parameters=inertia_parameters,
-            )
+            model[s.name] = natural_segment
 
             for marker in s.markers:
-                model.segments[name].add_marker(marker.to_marker(data, model, scs))
+                model.segments[name].add_marker(marker.to_segment_marker(data, model, Q_xp))
 
         return model

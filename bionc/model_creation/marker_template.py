@@ -1,13 +1,14 @@
-from typing import Callable
+from typing import Callable, Union
 
 import numpy as np
 
 from ..model_computations.biomechanical_model import BiomechanicalModel
-from ..model_computations.marker import Marker
+from ..model_computations.natural_marker import SegmentMarker, Marker
 
 # from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
 from ..model_computations.natural_segment import NaturalSegment
+from ..utils.natural_coordinates import SegmentNaturalCoordinates
 
 
 class MarkerTemplate:
@@ -18,9 +19,10 @@ class MarkerTemplate:
         parent_name: str = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
+        marker_type: str = "SegmentMarker",
     ):
         """
-        This is a pre-constructor for the Marker class. It allows to create a generic model by marker names
+        This is a pre-constructor for the SegmentMarker class. It allows to create a generic model by marker names
 
         Parameters
         ----------
@@ -42,22 +44,51 @@ class MarkerTemplate:
         self.parent_name = parent_name
         self.is_technical = is_technical
         self.is_anatomical = is_anatomical
+        self.marker_type = marker_type
 
-    def to_marker(self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None) -> Marker:
+    def to_marker(
+        self, data: Data, kinematic_chain: BiomechanicalModel, natural_segment: NaturalSegment = None
+    ) -> Union[SegmentMarker, Marker]:
         return Marker.from_data(
+            data=data,
+            name=self.name,
+            function=self.function,
+            kinematic_chain=kinematic_chain,
+            is_technical=self.is_technical,
+            is_anatomical=self.is_anatomical,
+        )
+
+    def to_segment_marker(
+        self, data: Data, kinematic_chain: BiomechanicalModel, Q_xp: SegmentNaturalCoordinates = None
+    ) -> Union[SegmentMarker, Marker]:
+        return SegmentMarker.from_data(
             data,
             self.name,
             self.function,
             self.parent_name,
             kinematic_chain,
-            parent_scs,
+            Q_xp=Q_xp,
             is_technical=self.is_technical,
             is_anatomical=self.is_anatomical,
         )
 
     @staticmethod
-    def normal_to(m, bio, m1: str, m2: str, m3: str):
-        return np.cross(m[m1] - m[m2], m[m1] - m[m3]) / np.linalg.norm(np.cross(m[m1] - m[m2], m[m1] - m[m3]))
+    def normal_to(m, bio, mk1: np.ndarray | str, mk2: np.ndarray | str, mk3: np.ndarray | str) -> np.ndarray:
+
+        if isinstance(mk1, str):
+            mk1 = m[mk1]
+        if isinstance(mk2, str):
+            mk2 = m[mk2]
+        if isinstance(mk3, str):
+            mk3 = m[mk3]
+
+        v = np.ones((4, mk1.shape[1]))
+        for i, (mk1i, mk2i, mk3i) in enumerate(zip(mk1.T, mk2.T, mk3.T)):
+            v1 = mk2i[:3] - mk1i[:3]
+            v2 = mk3i[:3] - mk1i[:3]
+            v[:3, i] = np.cross(v1, v2) / np.linalg.norm(np.cross(v1, v2))
+
+        return v
 
     @staticmethod
     def middle_of(m, bio, m1: str, m2: str):

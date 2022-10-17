@@ -1,5 +1,7 @@
 import numpy as np
 from typing import Union
+from bionc.utils.vnop_array import vnop_array
+from bionc.utils.interpolation_matrix import interpolate_natural_vector
 
 
 class SegmentNaturalCoordinates(np.ndarray):
@@ -13,6 +15,9 @@ class SegmentNaturalCoordinates(np.ndarray):
         """
 
         obj = np.asarray(input_array).view(cls)
+
+        if obj.shape.__len__() == 1:
+            obj = obj[:, np.newaxis]
 
         return obj
 
@@ -57,6 +62,9 @@ class SegmentNaturalCoordinates(np.ndarray):
 
         input_array = np.concatenate((u, rp, rd, w), axis=0)
 
+        if input_array.shape.__len__() == 1:
+            input_array = input_array[:, np.newaxis]
+
         return cls(input_array)
 
     def to_array(self):
@@ -64,19 +72,19 @@ class SegmentNaturalCoordinates(np.ndarray):
 
     @property
     def u(self):
-        return self[0:3].to_array()
+        return self[0:3, :].to_array()
 
     @property
     def rp(self):
-        return self[3:6].to_array()
+        return self[3:6, :].to_array()
 
     @property
     def rd(self):
-        return self[6:9].to_array()
+        return self[6:9, :].to_array()
 
     @property
     def w(self):
-        return self[9:12].to_array()
+        return self[9:12, :].to_array()
 
     @property
     def v(self):
@@ -89,6 +97,46 @@ class SegmentNaturalCoordinates(np.ndarray):
     @property
     def to_components(self):
         return self.u, self.rp, self.rd, self.w
+
+    @property
+    def to_uvw(self):
+        return self.u, self.v, self.w
+
+    def to_non_orthogonal_basis(self, vector: np.ndarray) -> np.ndarray:
+        """
+        This function converts a vector expressed in the global coordinate system
+        to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
+
+        Parameters
+        ----------
+        vector: np.ndarray
+            The vector expressed in the global coordinate system
+
+        Returns
+        -------
+        np.ndarray
+            The vector expressed in the non-orthogonal coordinate system
+
+        """
+        return vnop_array(vector - self.rp, self.u, self.v, self.w)
+
+    def to_interpolation_matrix(self, vector: np.ndarray) -> np.ndarray:
+        """
+        This function converts a vector expressed in the global coordinate system
+        to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
+
+        Parameters
+        ----------
+        vector: np.ndarray
+            The vector expressed in the global coordinate system
+
+        Returns
+        -------
+        np.ndarray
+            The vector expressed in the non-orthogonal coordinate system
+
+        """
+        return interpolate_natural_vector(vnop_array(vector - self.rp, self.u, self.v, self.w))
 
 
 class NaturalCoordinates(np.ndarray):
@@ -122,23 +170,23 @@ class NaturalCoordinates(np.ndarray):
 
     def u(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[0:3]
-        return self[array_idx].to_array()
+        return self[array_idx, :].to_array()
 
     def rp(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[3:6]
-        return self[array_idx].to_array()
+        return self[array_idx, :].to_array()
 
     def rd(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[6:9]
-        return self[array_idx].to_array()
+        return self[array_idx, :].to_array()
 
     def w(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[9:12]
-        return self[array_idx].to_array()
+        return self[array_idx, :].to_array()
 
     def v(self, segment_idx: int):
         return self.rp(segment_idx) - self.rd(segment_idx)
 
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
-        return SegmentNaturalCoordinates(self[array_idx].to_array())
+        return SegmentNaturalCoordinates(self[array_idx, :].to_array())

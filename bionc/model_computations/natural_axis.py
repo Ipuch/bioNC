@@ -1,6 +1,6 @@
 import numpy as np
 
-from .marker import Marker
+from .natural_marker import Marker
 
 
 class Axis:
@@ -9,9 +9,9 @@ class Axis:
         Parameters
         ----------
         start:
-            The initial Marker
+            The initial SegmentMarker
         end:
-            The final Marker
+            The final SegmentMarker
         """
         self.start_point = start
         self.end_point = end

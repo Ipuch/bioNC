@@ -19,8 +19,8 @@ class AxisTemplate:
             The function (f(m) -> np.ndarray, where m is a dict of markers) that defines the end point of the axis.
             If a str is provided, the position of the corresponding marker is used
         """
-        self.start = MarkerTemplate(function=start)
-        self.end = MarkerTemplate(function=end)
+        self.start = MarkerTemplate(function=start, marker_type="Marker")
+        self.end = MarkerTemplate(function=end, marker_type="Marker")
 
     def to_axis(self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None) -> Axis:
         """

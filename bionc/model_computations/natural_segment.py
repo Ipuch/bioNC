@@ -10,7 +10,7 @@ from ..utils.natural_velocities import SegmentNaturalVelocities
 from ..utils.natural_accelerations import SegmentNaturalAccelerations
 from ..utils.homogenous_transform import HomogeneousTransform
 from ..model_computations.natural_axis import Axis
-from ..model_computations.marker import Marker
+from ..model_computations.natural_marker import SegmentMarker, Marker
 
 
 class NaturalSegment:
@@ -48,12 +48,12 @@ class NaturalSegment:
 
     def __init__(
         self,
-        name: str,
-        alpha: float = np.pi / 2,
-        beta: float = np.pi / 2,
-        gamma: float = np.pi / 2,
-        length: float = None,
-        mass: float = None,
+        name: str = None,
+        alpha: Union[float, np.float64] = np.pi / 2,
+        beta: Union[float, np.float64] = np.pi / 2,
+        gamma: Union[float, np.float64] = np.pi / 2,
+        length: Union[float, np.float64] = None,
+        mass: Union[float, np.float64] = None,
         center_of_mass: np.ndarray = None,
         inertia: np.ndarray = None,
     ):
@@ -92,58 +92,49 @@ class NaturalSegment:
             self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
             self._generalized_mass_matrix = self._generalized_mass_matrix()
 
-        self.markers = []
+        # list of markers embedded in the segment
+        self._markers = []
+
+    def set_name(self, name: str):
+        """
+        This function sets the name of the segment
+
+        Parameters
+        ----------
+        name : str
+            Name of the segment
+        """
+        self._name = name
 
     @classmethod
-    def from_markers(
+    def from_experimental_Q(
         cls,
-        u_axis: Axis,
-        proximal_point: Marker,
-        distal_point: Marker,
-        w_axis: Axis = None,
+        Qi: SegmentNaturalCoordinates,
     ) -> "NaturalSegment":
         """
         Parameters
         ----------
-        u_axis: Axis
-            The axis that defines the u vector
-        proximal_point: Marker
-            The proximal point of the segment, denoted by rp
-        distal_point: Marker
-            The distal point of the segment, denoted by rd
-        w_axis: Axis
-            The axis that defines the w vector
+        Qi : SegmentNaturalCoordinates
+            Experimental segment natural coordinates (12 x n_frames)
+
+        Returns
+        -------
+        NaturalSegment
         """
 
-        # Compute the third axis and recompute one of the previous two
-        u_axis_vector = u_axis.axis()[:3, :]
-        w_axis_vector = w_axis.axis()[:3, :]
-        proximal_point_vector = proximal_point.position[:3, :]
-        distal_point_vector = distal_point.position[:3, :]
+        alpha = np.zeros(Qi.shape[1])
+        beta = np.zeros(Qi.shape[1])
+        gamma = np.zeros(Qi.shape[1])
+        length = np.zeros(Qi.shape[1])
 
-        alpha = np.zeros(proximal_point_vector.shape[1])
-        beta = np.zeros(proximal_point_vector.shape[1])
-        gamma = np.zeros(proximal_point_vector.shape[1])
-        length = np.zeros(proximal_point_vector.shape[1])
-
-        for i, (u_axis_i, w_axis_i, proximal_point_i, distal_point_i) in enumerate(
-            zip(u_axis_vector.T, w_axis_vector.T, proximal_point_vector.T, distal_point_vector.T)
-        ):
-            alpha[i], beta[i], gamma[i], length[i] = cls.parameters_from_Q(
-                SegmentNaturalCoordinates.from_components(
-                    u=u_axis_i,
-                    rp=proximal_point_i,
-                    rd=distal_point_i,
-                    w=w_axis_i,
-                )
-            )
+        for i, Qif in enumerate(Qi.vector.T):
+            alpha[i], beta[i], gamma[i], length[i] = cls.parameters_from_Q(Qif)
 
         return cls(
-            name="name",
-            alpha=np.mean(alpha, axis=0)[0],
-            beta=np.mean(beta, axis=0)[0],
-            gamma=np.mean(gamma, axis=0)[0],
-            length=np.mean(length, axis=0)[0],
+            alpha=np.mean(alpha, axis=0),
+            beta=np.mean(beta, axis=0),
+            gamma=np.mean(gamma, axis=0),
+            length=np.mean(length, axis=0),
         )
 
     @staticmethod
@@ -165,9 +156,9 @@ class NaturalSegment:
         if not isinstance(Q, SegmentNaturalCoordinates):
             Q = SegmentNaturalCoordinates(Q)
 
-        u, rp, rd, w = Q.to_components()
+        u, rp, rd, w = Q.to_components
 
-        length = np.sqrt(np.sum((rp - rd) ** 2, axis=0))
+        length = np.linalg.norm(rp - rd, axis=0)
         alpha = np.arccos(np.sum((rp - rd) * w, axis=0) / length)
         beta = np.arccos(np.sum(u * w, axis=0))
         gamma = np.arccos(np.sum(u * (rp - rd), axis=0) / length)
@@ -516,7 +507,7 @@ class NaturalSegment:
 
         Returns
         -------
-        interpolation_matrix: np.ndarray
+        interpolate_natural_vector: np.ndarray
             Interpolation  matrix [3 x 12], denoted Ni to get the location of the vector as linear combination of Q.
             vector in global frame = Ni * Qi
         """
@@ -617,5 +608,19 @@ class NaturalSegment:
         lambda_i = x[12:]
         return SegmentNaturalAccelerations(Qddoti), lambda_i
 
-    def add_marker(self, marker: Marker):
-        self.markers.append(marker)
+    def add_marker(self, marker: SegmentMarker):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        marker
+            The marker to add
+        """
+        if marker.parent_name is not None and marker.parent_name != self.name:
+            raise ValueError(
+                "The marker name should be the same as the 'key'. Alternatively, marker.name can be left undefined"
+            )
+
+        marker.parent_name = self.name
+        self._markers.append(marker)

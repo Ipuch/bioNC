@@ -98,10 +98,10 @@ def test_model_creation():
     for s, key in zip(model.segments.values(), model.segments.keys()):
         assert isinstance(s, NaturalSegment)
 
-        assert s.length == prop[key]["length"]
-        assert s.gamma == prop[key]["gamma"]
-        assert s.beta == prop[key]["beta"]
-        assert s.alpha == prop[key]["alpha"]
+        np.testing.assert_almost_equal(s.length, prop[key]["length"])
+        np.testing.assert_almost_equal(s.gamma, prop[key]["gamma"])
+        np.testing.assert_almost_equal(s.beta, prop[key]["beta"])
+        np.testing.assert_almost_equal(s.alpha, prop[key]["alpha"])
 
     # todo: test the markers and global matrices of the model
     # rigidbody constraints

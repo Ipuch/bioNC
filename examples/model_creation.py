@@ -2,14 +2,15 @@ import os
 from pathlib import Path
 
 import numpy as np
-import biorbd
+
 from bionc import (
     AxisTemplate,
     BiomechanicalModelTemplate,
-    C3dData,
     MarkerTemplate,
     SegmentTemplate,
     NaturalSegmentTemplate,
+    C3dData,
+    BiomechanicalModel,
 )
 import ezc3d
 
@@ -100,7 +101,7 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
     return rhjc_global, lhjc_global
 
 
-def model_creation_from_measured_data():
+def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> BiomechanicalModel:
     """
     Create a model from a data file and we build the biomechanical model as a template using the marker names
     """
@@ -191,9 +192,7 @@ def model_creation_from_measured_data():
     model["FOOT"].add_marker(MarkerTemplate("RTAR", parent_name="FOOT"))
     model["FOOT"].add_marker(MarkerTemplate("ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT"))
 
-    c3d_data = C3dData(
-        f"{Path(__file__).parent.resolve()}/StatRef0001.c3d"
-    )  # todo: replace this by fake c3d file built within the code
+    c3d_data = C3dData(f"{c3d_filename}")
 
     # Put the model together, print it and print it to a bioMod file
     natural_model = model.update(c3d_data)
@@ -201,9 +200,89 @@ def model_creation_from_measured_data():
     return natural_model
 
 
+def generate_c3d_file():
+
+    # Load an empty c3d structure
+    c3d = ezc3d.c3d()
+
+    marker_tuple = ("RFWT", "LFWT", "RBWT", "LBWT", "RKNE", "RKNI", "RANE", "RANI", "RHEE", "RTARI", "RTAR")
+
+    # Fill it with random data
+    c3d["parameters"]["POINT"]["RATE"]["value"] = [100]
+    c3d["parameters"]["POINT"]["LABELS"]["value"] = marker_tuple
+
+    c3d["data"]["points"] = np.ones((4, len(marker_tuple), 2))
+    c3d["data"]["points"][:3, 0, :] = np.array(
+        [[0.18416385, 0.19876392],
+         [1.33434277, 1.338479],
+         [0.91699817, 0.91824384]]
+    )
+    c3d["data"]["points"][:3, 1, :] = np.array(
+        [[0.18485233, 0.1985842],
+         [1.1036825, 1.10781494],
+         [0.91453168, 0.91681091]],
+    )
+    c3d["data"]["points"][:3, 2, :] = np.array(
+        [[0.38178949, 0.39600946],
+         [1.28057019, 1.2837561],
+         [0.9454278, 0.94480548]],
+    )
+    c3d["data"]["points"][:3, 3, :] = np.array(
+        [[0.38251419, 0.39637326],
+         [1.18559143, 1.18885852],
+         [0.94143542, 0.94134717]]
+    )
+    c3d["data"]["points"][:3, 4, :] = np.array(
+        [[0.28976505, 0.29850735],
+         [1.40114758, 1.40165784],
+         [0.47594894, 0.47537778]],
+    )
+    c3d["data"]["points"][:3, 5, :] = np.array(
+        [[0.28883856, 0.29766995],
+         [1.29643408, 1.29758105],
+         [0.43036957, 0.43072437]],
+    )
+    c3d["data"]["points"][:3, 6, :] = np.array(
+        [[0.35603992, 0.3566329],
+         [1.44538721, 1.44557263],
+         [0.10275449, 0.10202186]],
+    )
+    c3d["data"]["points"][:3, 7, :] = np.array(
+        [[0.32703876, 0.32869626],
+         [1.3525918, 1.35138013],
+         [0.1117594, 0.11084975]]
+    )
+    c3d["data"]["points"][:3, 8, :] = np.array(
+        [[0.41810855, 0.41600098],
+         [1.3925741, 1.39322546],
+         [0.07911389, 0.07784219]],
+    )
+    c3d["data"]["points"][:3, 9, :] = np.array(
+        [[0.22581064, 0.22588875],
+         [1.36999072, 1.37007214],
+         [0.03077233, 0.03103891]],
+    )
+    c3d["data"]["points"][:3, 10, :] = np.array(
+        [[0.23365552, 0.23372018],
+         [1.49159607, 1.49141943],
+         [0.03238689, 0.03257346]],
+    )
+
+    # Write the c3d file
+    filename = f"{Path(__file__).parent.resolve()}/statref.c3d"
+    c3d.write(filename)
+
+    return filename
+
+
 def main():
-    # Create the model from a data file and markers as template
-    model_creation_from_measured_data()
+    # create a c3d file with data
+    filename = generate_c3d_file()
+    # Create the model from a c3d file and markers as template
+    model = model_creation_from_measured_data(filename)
+    # remove the c3d file
+    os.remove(filename)
+
 
 
 if __name__ == "__main__":

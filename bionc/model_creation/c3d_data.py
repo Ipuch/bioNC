@@ -7,13 +7,10 @@ class C3dData:
     Implementation of the `Data` protocol from model_creation
     """
 
-    def __init__(self, c3d_path, first_frame: int = 0, last_frame: int = -1):
-        self.first_frame = first_frame
-        self.last_frame = last_frame
+    def __init__(self, c3d_path, first_frame: int = 0, last_frame: int = None):
         self.ezc3d_data = ezc3d.c3d(c3d_path)
-
-        if self.ezc3d_data["data"]["points"].shape[2] == 1 and self.last_frame == -1:
-            self.last_frame = 2  # This is a bug otherwise since data[:, :, 0:-1] returns nothing
+        self.first_frame = first_frame
+        self.last_frame = last_frame if last_frame is not None else self.ezc3d_data["data"]["points"].shape[2]
 
         self.values = {}
         for marker_name in self.ezc3d_data["parameters"]["POINT"]["LABELS"]["value"]:

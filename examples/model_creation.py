@@ -192,7 +192,6 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     model["FOOT"].add_marker(MarkerTemplate("RTAR", parent_name="FOOT"))
     model["FOOT"].add_marker(MarkerTemplate("ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT"))
 
-
     # todo: add the joints
 
     c3d_data = C3dData(f"{c3d_filename}")

@@ -7,10 +7,10 @@ from ..utils.natural_accelerations import NaturalAccelerations
 
 class BiomechanicalModel:
     def __init__(self):
-        from .segment import Segment  # Imported here to prevent from circular imports
+        from .natural_segment import NaturalSegment  # Imported here to prevent from circular imports
         from .joint import Joint  # Imported here to prevent from circular imports
 
-        self.segments: dict[str:Segment, ...] = {}
+        self.segments: dict[str:NaturalSegment, ...] = {}
         self.joints: dict[str:Joint, ...] = {}
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # .bioMod file, the order of the segment matters
@@ -19,7 +19,7 @@ class BiomechanicalModel:
     def __getitem__(self, name: str):
         return self.segments[name]
 
-    def __setitem__(self, name: str, segment: "SegmentReal"):
+    def __setitem__(self, name: str, segment: "NaturalSegment"):
         if segment.name == name:  # Make sure the name of the segment fits the internal one
             self.segments[name] = segment
         else:

@@ -3,6 +3,7 @@ import numpy as np
 
 from bionc import SegmentMarker, Marker
 
+
 def test_natural_marker():
 
     with pytest.raises(ValueError, match="Either a position or an interpolation matrix must be provided"):
@@ -30,7 +31,7 @@ def test_natural_marker():
             name="my_marker",
             parent_name="Thigh",
             position=None,
-            interpolation_matrix=np.zeros((1,2)),
+            interpolation_matrix=np.zeros((1, 2)),
             is_technical=True,
             is_anatomical=False,
         )
@@ -40,10 +41,7 @@ def test_natural_marker():
             name="my_marker",
             parent_name="Thigh",
             position=np.zeros(3),
-            interpolation_matrix=np.zeros((1,2)),
+            interpolation_matrix=np.zeros((1, 2)),
             is_technical=True,
             is_anatomical=False,
         )
-
-
-

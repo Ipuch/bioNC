@@ -13,70 +13,43 @@ def test_natural_velocities():
     # Test wrong entry
     # ------------------------------------------------------------------------------------------------------------------
     # test None udot
-    with pytest.raises(
-        ValueError, match="u must be a numpy array .* or a list of 3 elements"
-    ):
-        SegmentNaturalVelocities.from_components(
-            None, correct_vector, correct_vector, correct_vector
-        )
+    with pytest.raises(ValueError, match="u must be a numpy array .* or a list of 3 elements"):
+        SegmentNaturalVelocities.from_components(None, correct_vector, correct_vector, correct_vector)
 
     # test wrong vector udot
     with pytest.raises(ValueError, match="u must be a 3x1 numpy array"):
-        toto = SegmentNaturalVelocities.from_components(
-            wrong_vector, correct_vector, correct_vector, correct_vector
-        )
+        toto = SegmentNaturalVelocities.from_components(wrong_vector, correct_vector, correct_vector, correct_vector)
 
     # test None rpdot
-    with pytest.raises(
-        ValueError, match="rp must be a numpy array .* or a list of 3 elements"
-    ):
-        SegmentNaturalVelocities.from_components(
-            correct_vector, None, correct_vector, correct_vector
-        )
+    with pytest.raises(ValueError, match="rp must be a numpy array .* or a list of 3 elements"):
+        SegmentNaturalVelocities.from_components(correct_vector, None, correct_vector, correct_vector)
 
     # test wrong vector rpdot
     with pytest.raises(ValueError, match="rp must be a 3x1 numpy array"):
-        SegmentNaturalVelocities.from_components(
-            correct_vector, wrong_vector, correct_vector, correct_vector
-        )
+        SegmentNaturalVelocities.from_components(correct_vector, wrong_vector, correct_vector, correct_vector)
 
     # test None rddot
-    with pytest.raises(
-        ValueError, match="rd must be a numpy array .* or a list of 3 elements"
-    ):
-        SegmentNaturalVelocities.from_components(
-            correct_vector, correct_vector, None, correct_vector
-        )
+    with pytest.raises(ValueError, match="rd must be a numpy array .* or a list of 3 elements"):
+        SegmentNaturalVelocities.from_components(correct_vector, correct_vector, None, correct_vector)
 
     # test wrong vector rddot
     with pytest.raises(ValueError, match="rd must be a 3x1 numpy array"):
-        SegmentNaturalVelocities.from_components(
-            correct_vector, correct_vector, wrong_vector, correct_vector
-        )
+        SegmentNaturalVelocities.from_components(correct_vector, correct_vector, wrong_vector, correct_vector)
 
     # test None wdot
-    with pytest.raises(
-        ValueError, match="w must be a numpy array .* or a list of 3 elements"
-    ):
-        SegmentNaturalVelocities.from_components(
-            correct_vector, correct_vector, correct_vector, None
-        )
+    with pytest.raises(ValueError, match="w must be a numpy array .* or a list of 3 elements"):
+        SegmentNaturalVelocities.from_components(correct_vector, correct_vector, correct_vector, None)
 
     # test wrong vector wdot
     with pytest.raises(ValueError, match="v must be a 3x1 numpy array"):
-        SegmentNaturalVelocities.from_components(
-            correct_vector, correct_vector, correct_vector, wrong_vector
-        )
+        SegmentNaturalVelocities.from_components(correct_vector, correct_vector, correct_vector, wrong_vector)
 
     # Test concatenate + parameters
     segment_natural_velocities_test = SegmentNaturalVelocities.from_components(
         [1, 0, 0], [2, 0, 0], [3, 0, 0], [4, 0, 0]
     )
 
-    assert np.all(
-        segment_natural_velocities_test
-        == np.array([1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0])
-    )
+    assert np.all(segment_natural_velocities_test == np.array([1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0]))
     assert np.all(segment_natural_velocities_test.udot == np.array([1, 0, 0]))
     assert np.all(segment_natural_velocities_test.rpdot == np.array([2, 0, 0]))
     assert np.all(segment_natural_velocities_test.rddot == np.array([3, 0, 0]))
@@ -85,10 +58,7 @@ def test_natural_velocities():
     assert np.all(segment_natural_velocities_test.vdot == np.array([-1, 0, 0]))
 
     # vectors
-    assert np.all(
-        segment_natural_velocities_test.vector
-        == np.array([1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0])
-    )
+    assert np.all(segment_natural_velocities_test.vector == np.array([1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0]))
 
     for ind, component in enumerate(segment_natural_velocities_test.to_components):
         assert np.all(component == np.array([ind + 1, 0, 0]))
@@ -110,15 +80,11 @@ def test_natural_velocities():
     )
 
     # Wrong entry
-    with pytest.raises(
-        ValueError, match="tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates"
-    ):
+    with pytest.raises(ValueError, match="tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates"):
         NaturalVelocities.from_Qdoti(1)
 
     # One wrong entry in the list
-    with pytest.raises(
-        ValueError, match="tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates"
-    ):
+    with pytest.raises(ValueError, match="tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates"):
         NaturalVelocities.from_Qdoti((qdot1, qdot2, [0, 0]))
 
     qdot = NaturalVelocities.from_Qdoti((qdot1, qdot2))

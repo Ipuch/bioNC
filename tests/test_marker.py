@@ -77,10 +77,10 @@ def test_segment_marker():
     )
 
     constraint = segment_marker.constraint(marker_location=marker_location, Qi=Qi)
-    np.testing.assert_array_equal(constraint.squeeze(), np.array([-1, 2, -5]))
+    np.testing.assert_array_equal(constraint, np.array([-1, 2, -5]))
 
     constraint = segment_marker.constraint(marker_location=marker_location[:, np.newaxis], Qi=Qi)
-    np.testing.assert_array_equal(constraint.squeeze(), np.array([-1, 2, -5]))
+    np.testing.assert_array_equal(constraint, np.array([-1, 2, -5]))
 
     with pytest.raises(ValueError, match="The marker location must be a 3d vector"):
         segment_marker.constraint(marker_location=np.zeros(2), Qi=Qi)

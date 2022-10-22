@@ -124,6 +124,23 @@ class SegmentMarker:
             is_anatomical=is_anatomical,
         )
 
+    def constraint(self, marker_location: np.ndarray, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function computes the constraint for the marker
+
+        Parameters
+        ----------
+        marker_location: np.ndarray
+            The location of the marker in the global/inertial coordinate system
+        Qi
+            The segment natural coordinates
+
+        Returns
+        -------
+        The constraint for the marker
+        """
+        return marker_location - self.interpolation_matrix @ Qi.vector
+
     def __str__(self):
         # Define the print function, so it automatically formats things in the file properly
         out_string = f"marker {self.name}\n"

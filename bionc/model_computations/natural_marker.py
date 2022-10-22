@@ -143,6 +143,8 @@ class SegmentMarker:
             raise ValueError("The marker location must be a 3d vector")
         if marker_location.shape.__len__() != 2:
             marker_location = marker_location[:, np.newaxis]
+        if marker_location.shape[1] != 1:
+            raise ValueError("The marker location must be a 3d vector with only one column")
 
         return marker_location - self.interpolation_matrix @ Qi.vector
 

@@ -84,3 +84,6 @@ def test_segment_marker():
 
     with pytest.raises(ValueError, match="The marker location must be a 3d vector"):
         segment_marker.constraint(marker_location=np.zeros(2), Qi=Qi)
+
+    with pytest.raises(ValueError, match="The marker location must be a 3d vector with only one column"):
+        segment_marker.constraint(marker_location=np.zeros((3, 2)), Qi=Qi)

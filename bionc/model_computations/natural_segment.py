@@ -94,12 +94,13 @@ class NaturalSegment:
             self._inertia = inertia
             self._inertia_in_natural_coordinates_system = None
             self._interpolation_matrix_inertia = None
+            self._mass_matrix = None
         else:
             if inertia.shape != (3, 3):
                 raise ValueError("Inertia matrix must be 3x3")
             self._inertia = inertia
             self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
-            self._generalized_mass_matrix = self._generalized_mass_matrix()
+            self._mass_matrix = self._update_mass_matrix()
 
         # list of markers embedded in the segment
         self._markers = []
@@ -165,7 +166,7 @@ class NaturalSegment:
         if not isinstance(Q, SegmentNaturalCoordinates):
             Q = SegmentNaturalCoordinates(Q)
 
-        u, rp, rd, w = Q.to_components
+        u, rp, rd, w = Q.to_components()
 
         length = np.linalg.norm(rp - rd, axis=0)
         alpha = np.arccos(np.sum((rp - rd) * w, axis=0) / length)
@@ -339,23 +340,25 @@ class NaturalSegment:
         # initialisation
         Kr = zeros((6, 12))
 
-        Kr[0, 0:3] = 2 * Qi.u
+        u, v, w = Qi.to_uvw()
 
-        Kr[1, 0:3] = Qi.v
-        Kr[1, 3:6] = Qi.u
-        Kr[1, 6:9] = -Qi.u
+        Kr[0, 0:3] = 2 * u
 
-        Kr[2, 0:3] = Qi.w
-        Kr[2, 9:12] = Qi.u
+        Kr[1, 0:3] = v
+        Kr[1, 3:6] = u
+        Kr[1, 6:9] = -u
 
-        Kr[3, 3:6] = 2 * Qi.v
-        Kr[3, 6:9] = -2 * Qi.v
+        Kr[2, 0:3] = w
+        Kr[2, 9:12] = u
 
-        Kr[4, 3:6] = Qi.w
-        Kr[4, 6:9] = -Qi.w
-        Kr[4, 9:12] = Qi.v
+        Kr[3, 3:6] = 2 * v
+        Kr[3, 6:9] = -2 * v
 
-        Kr[5, 9:12] = 2 * Qi.w
+        Kr[4, 3:6] = w
+        Kr[4, 6:9] = -w
+        Kr[4, 9:12] = v
+
+        Kr[5, 9:12] = 2 * w
 
         return Kr
 
@@ -458,14 +461,14 @@ class NaturalSegment:
         """
         return self._center_of_mass_in_natural_coordinates_system
 
-    def _generalized_mass_matrix(self) -> np.ndarray:
+    def _update_mass_matrix(self) -> np.ndarray:
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.
 
         Returns
         -------
         np.ndarray
-            generalized mass matrix of the segment [12 x 12]
+            mass matrix of the segment [12 x 12]
         """
 
         Ji = self.pseudo_inertia_matrix
@@ -490,17 +493,17 @@ class NaturalSegment:
         return Gi
 
     @property
-    def generalized_mass_matrix(self) -> np.ndarray:
+    def mass_matrix(self) -> np.ndarray:
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.
 
         Returns
         -------
         np.ndarray
-            generalized mass matrix of the segment [12 x 12]
+            mass matrix of the segment [12 x 12]
         """
 
-        return self._generalized_mass_matrix
+        return self._mass_matrix
 
     @staticmethod
     def interpolate(vector: np.ndarray) -> np.ndarray:
@@ -598,7 +601,7 @@ class NaturalSegment:
         if not isinstance(Qdoti, SegmentNaturalVelocities):
             Qdoti = SegmentNaturalVelocities(Qdoti)
 
-        Gi = self.generalized_mass_matrix
+        Gi = self.mass_matrix
         Kr = self.rigidBodyConstraintJacobian(Qi)
         Krdot = self.rigidBodyConstraintJacobianDerivative(Qdoti)
         biais = np.matmul(Krdot, Qdoti.vector)

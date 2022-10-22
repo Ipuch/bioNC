@@ -12,6 +12,32 @@ from ..utils.natural_coordinates import SegmentNaturalCoordinates
 
 
 class SegmentMarker:
+    """
+    Class used to create a segment markers for the natural segments
+
+    Methods
+    -------
+    from_data()
+        Creates a segment marker from the data
+    constraint()
+        Computes the constraint for the marker given the segment natural coordinates and experimental marker location
+
+    Attributes
+    ----------
+    name: str
+        The name of the marker
+    parent_name: str
+        The name of the parent segment on which the marker is attached
+    position: np.ndarray
+        The 3d position of the marker in the non orthogonal segment coordinate system
+    interpolation_matrix: np.ndarray
+        The interpolation matrix to use for the marker
+    is_technical: bool
+        If the marker should be flagged as a technical marker
+    is_anatomical: bool
+        If the marker should be flagged as an anatomical landmark
+    """
+
     def __init__(
         self,
         name: str,

@@ -139,6 +139,11 @@ class SegmentMarker:
         -------
         The constraint for the marker
         """
+        if marker_location.shape[0] != 3:
+            raise ValueError("The marker location must be a 3d vector")
+        if marker_location.shape.__len__() != 2:
+            marker_location = marker_location[:, np.newaxis]
+
         return marker_location - self.interpolation_matrix @ Qi.vector
 
     def __str__(self):

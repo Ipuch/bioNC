@@ -1,5 +1,7 @@
 from bionc import (
     NaturalSegment,
+    SegmentMarker,
+    SegmentNaturalCoordinates,
 )
 import numpy as np
 import pytest
@@ -27,4 +29,59 @@ def test_natural_segment():
     np.testing.assert_equal(my_segment.center_of_mass, np.array([0, 0.01, 0]))
     np.testing.assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
 
-    # todo: test marker constraints
+
+def test_marker_features():
+    # Let's create a segment
+    my_segment = NaturalSegment(
+        name="Thigh",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([0, 0.01, 0]),
+        inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+    )
+
+    # Let's add a marker
+    marker1 = SegmentMarker(
+        name="my_marker1",
+        parent_name="Thigh",
+        position=np.eye(3),
+        is_technical=True,
+        is_anatomical=False,
+    )
+    marker2 = SegmentMarker(
+        name="my_marker2",
+        parent_name="Thigh",
+        position=np.array([0, 1, 2]),
+        is_technical=True,
+        is_anatomical=False,
+    )
+    my_segment.add_marker(marker1)
+    my_segment.add_marker(marker2)
+
+    Qi = SegmentNaturalCoordinates.from_components(
+        u=[1, 2, 3],
+        rp=[1, 1, 3],
+        rd=[1, 2, 4],
+        w=[1, 2, 5],
+    )
+
+    np.testing.assert_array_equal(my_segment.nb_markers(), 2)
+    np.testing.assert_array_equal(
+        my_segment.marker_constraints(
+            marker_locations=np.array([[1, 2, 3], [1, 2, 3]]).T,
+            Qi=Qi,
+        ),
+        np.array([[-1, 2, -5], [-2, -2, -9]]).T,
+    )
+
+    with pytest.raises(
+        ValueError,
+        # match=f"marker_locations should be of shape (3, {my_segment.nb_markers()})"  # don't know why this doesn't work
+    ):
+        my_segment.marker_constraints(
+            marker_locations=np.array([[1, 2, 3]]).T,
+            Qi=Qi,
+        )

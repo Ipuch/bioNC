@@ -26,6 +26,15 @@ class NaturalSegment:
     rigidBodyConstraintJacobian()
         This function returns the jacobian of rigid body constraints of the segment, denoted K_r
 
+    add_marker()
+        This function adds a marker to the segment
+    nb_markers()
+        This function returns the number of markers in the segment
+    marker_constraints()
+        This function returns the defects of the marker constraints of the segment, denoted Phi_m
+    marker_jacobian()
+        This function returns the jacobian of the marker constraints of the segment, denoted K_m
+
     Attributes
     ----------
     _name : str
@@ -624,3 +633,51 @@ class NaturalSegment:
 
         marker.parent_name = self.name
         self._markers.append(marker)
+
+    def nb_markers(self) -> int:
+        """
+        Returns the number of markers of the natural segment
+
+        Returns
+        -------
+        int
+            Number of markers of the segment
+        """
+        return len(self._markers)
+
+    def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the marker constraints of the segment
+
+        Parameters
+        ----------
+        marker_locations: np.ndarray
+            Marker locations in the global/inertial coordinate system (3 x N_markers)
+        Qi: SegmentNaturalCoordinates
+            Natural coordinates of the segment
+
+        Returns
+        -------
+        np.ndarray
+            The defects of the marker constraints of the segment (3 x N_markers)
+        """
+        if marker_locations.shape != (3, self.nb_markers()):
+            raise ValueError(f"marker_locations should be of shape (3, {self.nb_markers()})")
+
+        defects = np.zeros((3, self.nb_markers()))
+
+        for i, marker in enumerate(self._markers):
+            defects[:, i] = marker.constraint(marker_location=marker_locations[:, i], Qi=Qi)
+
+        return defects
+
+    def marker_jacobian(self):
+        """
+        This function returns the marker jacobian of the segment
+
+        Returns
+        -------
+        np.ndarray
+            The jacobian of the marker constraints of the segment (3 x N_markers)
+        """
+        return np.vstack([-marker.interpolation_matrix for marker in self._markers])

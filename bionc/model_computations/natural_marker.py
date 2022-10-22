@@ -146,7 +146,7 @@ class SegmentMarker:
         if marker_location.shape[1] != 1:
             raise ValueError("The marker location must be a 3d vector with only one column")
 
-        return marker_location - self.interpolation_matrix @ Qi.vector
+        return (marker_location - self.interpolation_matrix @ Qi.vector).squeeze()
 
     def __str__(self):
         # Define the print function, so it automatically formats things in the file properly

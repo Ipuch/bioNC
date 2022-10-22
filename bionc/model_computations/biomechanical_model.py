@@ -13,8 +13,8 @@ class BiomechanicalModel:
         self.segments: dict[str:NaturalSegment, ...] = {}
         self.joints: dict[str:Joint, ...] = {}
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
-        # .bioMod file, the order of the segment matters
-        self._generalized_mass_matrix = self._generalized_mass_matrix()
+        # the order of the segment matters
+        self._mass_matrix = self._update_mass_matrix()
 
     def __getitem__(self, name: str):
         return self.segments[name]
@@ -22,6 +22,7 @@ class BiomechanicalModel:
     def __setitem__(self, name: str, segment: "NaturalSegment"):
         if segment.name == name:  # Make sure the name of the segment fits the internal one
             self.segments[name] = segment
+            self._update_mass_matrix()  # Update the generalized mass matrix
         else:
             raise ValueError("The name of the segment does not match the name of the segment")
 
@@ -32,21 +33,26 @@ class BiomechanicalModel:
             out_string += "\n\n\n"  # Give some space between segments
         return out_string
 
-    def nbSegments(self):
+    def nb_segments(self):
         return len(self.segments)
 
-    def nbMarkers(self):
-        nbMarkers = 0
-        for segment in self.segments:
-            nbMarkers += len(self.segments[segment].markers)
-        return nbMarkers
+    def nb_markers(self):
+        nb_markers = 0
+        for key in self.segments:
+            nb_markers += self.segments[key].nb_markers()
+        return nb_markers
 
-    def nbJoints(self):
-        nbJoints = 0
-        for segment in self.segments:
-            if self.segments[segment].parent_name:
-                nbJoints += 1
-        return nbJoints
+    def nb_joints(self):
+        return len(self.joints)
+
+    def nb_Q(self):
+        return 12 * self.nb_segments()
+
+    def nb_Qdot(self):
+        return 12 * self.nb_segments()
+
+    def nb_Qddot(self):
+        return 12 * self.nb_segments()
 
     def rigidBodyConstraints(self, Q: NaturalCoordinates) -> np.ndarray:
         """
@@ -56,16 +62,16 @@ class BiomechanicalModel:
         Returns
         -------
         np.ndarray
-            Rigid body constraints of the segment [6 * nbSegments, 1]
+            Rigid body constraints of the segment [6 * nb_segments, 1]
         """
 
         if not isinstance(Q, NaturalCoordinates):
             Q = NaturalCoordinates(Q)
 
-        Phi_r = np.zeros(6 * self.nbSegments())
-        for i, segment in enumerate(self.segments):
+        Phi_r = np.zeros(6 * self.nb_segments())
+        for i, segment_name in enumerate(self.segments):
             idx = slice(6 * i, 6 * (i + 1))
-            Phi_r[idx] = self.segments[segment].rigidBodyConstraints(Q.vector(i))
+            Phi_r[idx] = self.segments[segment_name].rigidBodyConstraint(Q.vector(i))
 
         return Phi_r
 
@@ -77,15 +83,16 @@ class BiomechanicalModel:
         Returns
         -------
         np.ndarray
-            Rigid body constraints of the segment [6 * nbSegments, nbQ]
+            Rigid body constraints of the segment [6 * nb_segments, nbQ]
         """
         if not isinstance(Q, NaturalCoordinates):
             Q = NaturalCoordinates(Q)
 
-        K_r = np.zeros((6 * self.nbSegments(), Q.shape[0]))
-        for i, segment in enumerate(self.segments):
-            idx = slice(6 * i, 6 * (i + 1))
-            K_r[idx, idx] = self.segments[segment].rigidBodyConstraintsJacobian(Q.vector(i))
+        K_r = np.zeros((6 * self.nb_segments(), Q.shape[0]))
+        for i, segment_name in enumerate(self.segments):
+            idx_row = slice(6 * i, 6 * (i + 1))
+            idx_col = slice(12 * i, 12 * (i + 1))
+            K_r[idx_row, idx_col] = self.segments[segment_name].rigidBodyConstraintJacobian(Q.vector(i))
 
         return K_r
 
@@ -107,14 +114,15 @@ class BiomechanicalModel:
         if not isinstance(Qdot, NaturalVelocities):
             Qdot = NaturalVelocities(Qdot)
 
-        Kr_dot = np.zeros((6 * self.nbSegments(), Qdot.shape[0]))
-        for i, segment in enumerate(self.segments):
-            idx = slice(6 * i, 6 * (i + 1))
-            Kr_dot[idx, idx] = self.segments[segment].rigidBodyConstraintJacobianDerivative(Qdot.vector(i))
+        Kr_dot = np.zeros((6 * self.nb_segments(), Qdot.shape[0]))
+        for i, segment_name in enumerate(self.segments):
+            idx_row = slice(6 * i, 6 * (i + 1))
+            idx_col = slice(12 * i, 12 * (i + 1))
+            Kr_dot[idx_row, idx_col] = self.segments[segment_name].rigidBodyConstraintJacobianDerivative(Qdot.vector(i))
 
-        return np.zeros((6, 12))
+        return Kr_dot
 
-    def _generalized_mass_matrix(self):
+    def _update_mass_matrix(self):
         """
         This function computes the generalized mass matrix of the system, denoted G
 
@@ -123,15 +131,20 @@ class BiomechanicalModel:
         np.ndarray
             generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
         """
-        G = np.zeros((12 * self.nbSegments(), 12 * self.nbSegments()))
-        for i, segment in enumerate(self.segments):
+        G = np.zeros((12 * self.nb_segments(), 12 * self.nb_segments()))
+        for i, segment_name in enumerate(self.segments):
+            Gi = self.segments[segment_name].mass_matrix
+            if Gi is None:
+                # mass matrix is None if one the segment doesn't have any inertial properties
+                self._mass_matrix = None
+                return
             idx = slice(12 * i, 12 * (i + 1))
-            G[idx, idx] = self.segments[segment].generalized_mass_matrix
+            G[idx, idx] = self.segments[segment_name].mass_matrix
 
-        return G
+        self._mass_matrix = G
 
     @property
-    def generalized_mass_matrix(self):
+    def mass_matrix(self):
         """
         This function returns the generalized mass matrix of the system, denoted G
 
@@ -141,7 +154,7 @@ class BiomechanicalModel:
             generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
 
         """
-        return self._generalized_mass_matrix
+        return self._mass_matrix
 
 
 # def kinematicConstraints(self, Q):

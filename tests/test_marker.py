@@ -57,9 +57,13 @@ def test_segment_marker():
     np.testing.assert_array_equal(segment_marker.position, np.eye(3))
     np.testing.assert_array_equal(
         segment_marker.interpolation_matrix,
-        np.array([[ 1.,  0.,  0.,  1.,  0.,  0., -0., -0., -0.,  0.,  0.,  0.],
-              [ 0.,  0.,  0.,  0.,  2.,  0., -0., -1., -0.,  0.,  0.,  0.],
-              [ 0.,  0.,  0.,  0.,  0.,  1., -0., -0., -0.,  0.,  0.,  1.]])
+        np.array(
+            [
+                [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, -0.0, -0.0, -0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 2.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0, 0.0, 1.0, -0.0, -0.0, -0.0, 0.0, 0.0, 1.0],
+            ]
+        ),
     )
     assert segment_marker.is_technical
     assert not segment_marker.is_anatomical
@@ -71,7 +75,7 @@ def test_segment_marker():
         rd=[1, 2, 4],
         w=[1, 2, 5],
     )
-    
+
     constraint = segment_marker.constraint(marker_location=marker_location, Qi=Qi)
     np.testing.assert_array_equal(constraint.squeeze(), np.array([-1, 2, -5]))
 
@@ -80,4 +84,3 @@ def test_segment_marker():
 
     with pytest.raises(ValueError, match="The marker location must be a 3d vector"):
         segment_marker.constraint(marker_location=np.zeros(2), Qi=Qi)
-

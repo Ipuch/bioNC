@@ -18,7 +18,7 @@ def test_natural_velocities():
 
     # test wrong vector udot
     with pytest.raises(ValueError, match="u must be a 3x1 numpy array"):
-        toto = SegmentNaturalVelocities.from_components(wrong_vector, correct_vector, correct_vector, correct_vector)
+        SegmentNaturalVelocities.from_components(wrong_vector, correct_vector, correct_vector, correct_vector)
 
     # test None rpdot
     with pytest.raises(ValueError, match="rp must be a numpy array .* or a list of 3 elements"):
@@ -96,7 +96,8 @@ def test_natural_velocities():
     # test nb_Qdoti
     np.testing.assert_equal(qdot.nb_Qdoti(), 2)
 
-    # test vector
+    # test of the different component of vector
+    np.testing.assert_equal(qdot1.vector, qdot1)
     np.testing.assert_equal(qdot.vector(0), qdot1)
     np.testing.assert_equal(qdot.vector(1), qdot2)
     np.testing.assert_equal(qdot.vector(0).udot, np.array([1, 2, 3]))
@@ -109,3 +110,9 @@ def test_natural_velocities():
     np.testing.assert_equal(qdot.vector(1).rpdot, np.array([110, 11, 12]))
     np.testing.assert_equal(qdot.vector(0).vdot, np.array([3, 3, 3]))
     np.testing.assert_equal(qdot.vector(1).vdot, np.array([103, -71, 3]))
+
+
+    # test concatenate
+    qdot = np.concatenate((qdot1, qdot2), axis=0)
+    with pytest.raises(AttributeError, match="'numpy.ndarray' object has no attribute 'udot'"):
+        qdot.udot

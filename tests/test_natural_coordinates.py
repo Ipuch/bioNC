@@ -157,11 +157,11 @@ def test_NaturalAccelerationsConstructor():
         rdddot=np.array([7, 82, 9]),
         rpddot=np.array([110, 11, 12]),
     )
-    Qddot = NaturalAccelerations.from_Qddoti((Qddot1, Qddot2))
+    Qddot = NaturalAccelerations.from_qddoti((Qddot1, Qddot2))
     np.testing.assert_equal(Qddot.uddot(0), np.array([1, 2, 3]))
     np.testing.assert_equal(Qddot.uddot(1), np.array([11, 22, 33]))
     np.testing.assert_equal(Qddot.vector(0), Qddot1)
     np.testing.assert_equal(Qddot.vector(1), Qddot2)
     np.testing.assert_equal(Qddot.vector(0).uddot, np.array([1, 2, 3]))
     np.testing.assert_equal(Qddot.vector(1).uddot, np.array([11, 22, 33]))
-    np.testing.assert_equal(Qddot.nb_Qddoti(), 2)
+    np.testing.assert_equal(Qddot.nb_qddoti(), 2)

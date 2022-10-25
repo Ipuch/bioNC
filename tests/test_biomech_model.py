@@ -789,7 +789,7 @@ def test_biomech_model():
         rddot=[2.1, 2, 4.3],
         wdot=[2.2, 2, 5.3],
     )
-    Qdot = NaturalVelocities.from_Qdoti((Qdot1, Qdot2, Qdot3))
+    Qdot = NaturalVelocities.from_qdoti((Qdot1, Qdot2, Qdot3))
 
     np.testing.assert_array_almost_equal(
         natural_model.rigid_body_constraint_jacobian_derivative(Qdot),

@@ -69,7 +69,10 @@ def test_segment_template():
 
 
 def test_model_creation():
-    from examples.model_creation import model_creation_from_measured_data, generate_c3d_file
+    from examples.model_creation import (
+        model_creation_from_measured_data,
+        generate_c3d_file,
+    )
 
     # create a c3d file with data
     filename = generate_c3d_file()
@@ -84,13 +87,22 @@ def test_model_creation():
 
     prop = dict(
         FOOT=dict(
-            length=0.13890177648456653, gamma=0.8567148572956443, beta=1.7556031976569564, alpha=1.591624071977332
+            length=0.13890177648456653,
+            gamma=0.8567148572956443,
+            beta=1.7556031976569564,
+            alpha=1.591624071977332,
         ),
         SHANK=dict(
-            length=0.3531381284447682, gamma=1.7873340587846938, beta=1.4399616784423517, alpha=1.54503182793888
+            length=0.3531381284447682,
+            gamma=1.7873340587846938,
+            beta=1.4399616784423517,
+            alpha=1.54503182793888,
         ),
         THIGH=dict(
-            length=0.39649708859834826, gamma=2.3049927484597585, beta=1.7463313954337523, alpha=1.5377930856781998
+            length=0.39649708859834826,
+            gamma=2.3049927484597585,
+            beta=1.7463313954337523,
+            alpha=1.5377930856781998,
         ),
     )
 

@@ -47,7 +47,10 @@ class MarkerTemplate:
         self.marker_type = marker_type
 
     def to_marker(
-        self, data: Data, kinematic_chain: BiomechanicalModel, natural_segment: NaturalSegment = None
+        self,
+        data: Data,
+        kinematic_chain: BiomechanicalModel,
+        natural_segment: NaturalSegment = None,
     ) -> Union[SegmentMarker, Marker]:
         return Marker.from_data(
             data=data,
@@ -59,7 +62,10 @@ class MarkerTemplate:
         )
 
     def to_segment_marker(
-        self, data: Data, kinematic_chain: BiomechanicalModel, Q_xp: SegmentNaturalCoordinates = None
+        self,
+        data: Data,
+        kinematic_chain: BiomechanicalModel,
+        Q_xp: SegmentNaturalCoordinates = None,
     ) -> Union[SegmentMarker, Marker]:
         return SegmentMarker.from_data(
             data,

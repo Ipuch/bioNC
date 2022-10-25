@@ -7,7 +7,9 @@ from ..utils.natural_accelerations import NaturalAccelerations
 
 class BiomechanicalModel:
     def __init__(self):
-        from .natural_segment import NaturalSegment  # Imported here to prevent from circular imports
+        from .natural_segment import (
+            NaturalSegment,
+        )  # Imported here to prevent from circular imports
         from .joint import Joint  # Imported here to prevent from circular imports
 
         self.segments: dict[str:NaturalSegment, ...] = {}
@@ -118,7 +120,9 @@ class BiomechanicalModel:
         for i, segment_name in enumerate(self.segments):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
-            Kr_dot[idx_row, idx_col] = self.segments[segment_name].rigid_body_constraint_jacobian_derivative(Qdot.vector(i))
+            Kr_dot[idx_row, idx_col] = self.segments[segment_name].rigid_body_constraint_jacobian_derivative(
+                Qdot.vector(i)
+            )
 
         return Kr_dot
 

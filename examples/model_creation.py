@@ -65,7 +65,12 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
         OB = OP[:3, i]
         # Rotation + translation in homogenous matrix
         Pelvis = np.array(
-            [[ib[0], jb[0], kb[0], OB[0]], [ib[1], jb[1], kb[1], OB[1]], [ib[2], jb[2], kb[2], OB[2]], [0, 0, 0, 1]]
+            [
+                [ib[0], jb[0], kb[0], OB[0]],
+                [ib[1], jb[1], kb[1], OB[1]],
+                [ib[2], jb[2], kb[2], OB[2]],
+                [0, 0, 0, 1],
+            ]
         )
 
         # Transformation from global to pelvis reference system
@@ -101,7 +106,9 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
     return rhjc_global, lhjc_global
 
 
-def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> BiomechanicalModel:
+def model_creation_from_measured_data(
+    c3d_filename: str = "statref.c3d",
+) -> BiomechanicalModel:
     """
     Create a model from a data file and we build the biomechanical model as a template using the marker names
     """
@@ -207,7 +214,19 @@ def generate_c3d_file():
     # Load an empty c3d structure
     c3d = ezc3d.c3d()
 
-    marker_tuple = ("RFWT", "LFWT", "RBWT", "LBWT", "RKNE", "RKNI", "RANE", "RANI", "RHEE", "RTARI", "RTAR")
+    marker_tuple = (
+        "RFWT",
+        "LFWT",
+        "RBWT",
+        "LBWT",
+        "RKNE",
+        "RKNI",
+        "RANE",
+        "RANI",
+        "RHEE",
+        "RTARI",
+        "RTAR",
+    )
 
     # Fill it with random data
     c3d["parameters"]["POINT"]["RATE"]["value"] = [100]

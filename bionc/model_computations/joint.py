@@ -87,7 +87,11 @@ class Joint:
             self.theta_1 = theta_1
             self.theta_2 = theta_2
 
-        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        def constraint(
+            self,
+            Q_parent: SegmentNaturalCoordinates,
+            Q_child: SegmentNaturalCoordinates,
+        ) -> np.ndarray:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k
             as a function of the natural coordinates Q_parent and Q_child.
@@ -118,7 +122,11 @@ class Joint:
             super(Joint.Universal, self).__init__(joint_name, segment_parent, segment_child)
             self.theta = theta
 
-        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        def constraint(
+            self,
+            Q_parent: SegmentNaturalCoordinates,
+            Q_child: SegmentNaturalCoordinates,
+        ) -> np.ndarray:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k
             as a function of the natural coordinates Q_parent and Q_child.
@@ -150,7 +158,11 @@ class Joint:
             # this thing is not none if the joint is not located at rp nor at rd and it needs to be used
             self.point_interpolation_matrix_in_child = point_interpolation_matrix_in_child
 
-        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        def constraint(
+            self,
+            Q_parent: SegmentNaturalCoordinates,
+            Q_child: SegmentNaturalCoordinates,
+        ) -> np.ndarray:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k
             as a function of the natural coordinates Q_parent and Q_child.

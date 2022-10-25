@@ -3,11 +3,19 @@ import numpy as np
 
 
 from .utils import TestUtils
-from bionc import SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities, NaturalVelocities
+from bionc import (
+    SegmentNaturalCoordinates,
+    NaturalCoordinates,
+    SegmentNaturalVelocities,
+    NaturalVelocities,
+)
 
 
 def test_biomech_model():
-    from examples.model_creation import generate_c3d_file, model_creation_from_measured_data
+    from examples.model_creation import (
+        generate_c3d_file,
+        model_creation_from_measured_data,
+    )
 
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation.py")

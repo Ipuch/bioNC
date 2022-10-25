@@ -24,7 +24,11 @@ class C3dData:
 
     def _get_position(self, marker_names: tuple[str, ...]):
         return self._to_meter(
-            self.ezc3d_data["data"]["points"][:, self._indices_in_c3d(marker_names), self.first_frame : self.last_frame]
+            self.ezc3d_data["data"]["points"][
+                :,
+                self._indices_in_c3d(marker_names),
+                self.first_frame : self.last_frame,
+            ]
         )
 
     def _to_meter(self, data: np.array) -> np.array:

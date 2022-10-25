@@ -363,7 +363,9 @@ class NaturalSegment:
         return Kr
 
     @staticmethod
-    def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> np.ndarray:
+    def rigid_body_constraint_jacobian_derivative(
+        Qdoti: SegmentNaturalVelocities,
+    ) -> np.ndarray:
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
 
@@ -568,7 +570,10 @@ class NaturalSegment:
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return np.matmul(self.interpolation_matrix_center_of_mass.T * self.mass, np.array([0, 0, -9.81]))
+        return np.matmul(
+            self.interpolation_matrix_center_of_mass.T * self.mass,
+            np.array([0, 0, -9.81]),
+        )
 
     def differential_algebraic_equation(
         self,

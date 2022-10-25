@@ -34,7 +34,10 @@ class InertiaParametersTemplate:
         self.inertia = inertia
 
     def to_real(
-        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None
+        self,
+        data: Data,
+        kinematic_chain: BiomechanicalModel,
+        parent_scs: NaturalSegment = None,
     ) -> InertiaParameters:
         return InertiaParameters.from_data(
             data,
@@ -47,7 +50,10 @@ class InertiaParametersTemplate:
 
     @staticmethod
     def radii_of_gyration_to_inertia(
-        mass: float, coef: tuple[float, float, float], start: np.ndarray, end: np.ndarray
+        mass: float,
+        coef: tuple[float, float, float],
+        start: np.ndarray,
+        end: np.ndarray,
     ) -> np.ndarray:
         """
         Computes the xx, yy and zz values of the matrix of inertia from the segment length. The radii of gyration used are

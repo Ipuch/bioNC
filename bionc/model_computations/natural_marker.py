@@ -194,9 +194,17 @@ class SegmentMarker:
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position + other)
+            return SegmentMarker(
+                name=self.name,
+                parent_name=self.parent_name,
+                position=self.position + other,
+            )
         elif isinstance(other, SegmentMarker):
-            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position + other.position)
+            return SegmentMarker(
+                name=self.name,
+                parent_name=self.parent_name,
+                position=self.position + other.position,
+            )
         else:
             raise NotImplementedError(f"The addition for {type(other)} is not implemented")
 
@@ -205,9 +213,17 @@ class SegmentMarker:
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position - other)
+            return SegmentMarker(
+                name=self.name,
+                parent_name=self.parent_name,
+                position=self.position - other,
+            )
         elif isinstance(other, SegmentMarker):
-            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
+            return SegmentMarker(
+                name=self.name,
+                parent_name=self.parent_name,
+                position=self.position - other.position,
+            )
         else:
             raise NotImplementedError(f"The subtraction for {type(other)} is not implemented")
 

@@ -22,7 +22,10 @@ my_segment = NaturalSegment(
 )
 
 Qi = SegmentNaturalCoordinates.from_components(
-    u=np.array([1, 2, 3]), rp=np.array([2, 2, 3]), rd=np.array([1, 5, 3]), w=np.array([4, 2, 3])
+    u=np.array([1, 2, 3]),
+    rp=np.array([2, 2, 3]),
+    rd=np.array([1, 5, 3]),
+    w=np.array([4, 2, 3]),
 )
 print(my_segment.rigid_body_constraint(Qi))
 print(my_segment.rigid_body_constraint_jacobian(Qi))
@@ -31,19 +34,31 @@ print(my_segment.rigid_body_constraint_jacobian_derivative(Qi.vector))
 # Let's create a motion now
 # u as x axis, w as z axis - this doesn't work
 Qi = SegmentNaturalCoordinates.from_components(
-    u=np.array([1, 0, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 1, 0]), w=np.array([0, 0, 1])
+    u=np.array([1, 0, 0]),
+    rp=np.array([0, 0, 0]),
+    rd=np.array([0, 1, 0]),
+    w=np.array([0, 0, 1]),
 )
 # u as y axis - this works fine
 Qi = SegmentNaturalCoordinates.from_components(
-    u=np.array([0, 1, 0]), rp=np.array([0, 0, 0]), rd=np.array([0, 0, 1]), w=np.array([1, 0, 0])
+    u=np.array([0, 1, 0]),
+    rp=np.array([0, 0, 0]),
+    rd=np.array([0, 0, 1]),
+    w=np.array([1, 0, 0]),
 )
 # u as z axis - this doesn't work
 Qi = SegmentNaturalCoordinates.from_components(
-    u=np.array([0, 0, 1]), rp=np.array([0, 0, 0]), rd=np.array([1, 0, 0]), w=np.array([0, 1, 0])
+    u=np.array([0, 0, 1]),
+    rp=np.array([0, 0, 0]),
+    rd=np.array([1, 0, 0]),
+    w=np.array([0, 1, 0]),
 )
 
 Qidot = SegmentNaturalVelocities.from_components(
-    udot=np.array([0, 0, 0]), rpdot=np.array([0, 0, 0]), rddot=np.array([0, 0, 0]), wdot=np.array([0, 0, 0])
+    udot=np.array([0, 0, 0]),
+    rpdot=np.array([0, 0, 0]),
+    rddot=np.array([0, 0, 0]),
+    wdot=np.array([0, 0, 0]),
 )
 
 my_segment.differential_algebraic_equation(Qi, Qidot)
@@ -132,8 +147,16 @@ fig = go.Figure(
                     z=all_states[2, i : i + 1] + all_states[5, i : i + 1],
                     name="u",
                 ),
-                go.Scatter3d(x=all_states[3, i : i + 1], y=all_states[4, i : i + 1], z=all_states[5, i : i + 1]),
-                go.Scatter3d(x=all_states[6, i : i + 1], y=all_states[7, i : i + 1], z=all_states[8, i : i + 1]),
+                go.Scatter3d(
+                    x=all_states[3, i : i + 1],
+                    y=all_states[4, i : i + 1],
+                    z=all_states[5, i : i + 1],
+                ),
+                go.Scatter3d(
+                    x=all_states[6, i : i + 1],
+                    y=all_states[7, i : i + 1],
+                    z=all_states[8, i : i + 1],
+                ),
                 go.Scatter3d(
                     x=all_states[3, i : i + 1] + all_states[9, i : i + 1],
                     y=all_states[4, i : i + 1] + all_states[10, i : i + 1],

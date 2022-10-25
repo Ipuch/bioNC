@@ -78,7 +78,7 @@ def test_biomech_model():
     )
 
     np.testing.assert_array_almost_equal(
-        natural_model.rigid_body_constraints_Jacobian(Q),
+        natural_model.rigid_body_constraints_jacobian(Q),
         np.array(
             [
                 [

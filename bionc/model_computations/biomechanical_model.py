@@ -75,7 +75,7 @@ class BiomechanicalModel:
 
         return Phi_r
 
-    def rigid_body_constraints_Jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
+    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
         """
         This function returns the rigid body constraints of all segments, denoted K_r
         as a function of the natural coordinates Q.

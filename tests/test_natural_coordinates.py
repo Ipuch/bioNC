@@ -18,12 +18,12 @@ def test_SegmentNaturalCoordinatesCreator():
         rd=np.array([7, 8, 9]),
         w=np.array([10, 11, 12]),
     )
-    np.testing.assert_equal(Qi.u, np.array([[0, 0, 0]]).T)
-    np.testing.assert_equal(Qi.rp, np.array([[4, 5, 6]]).T)
-    np.testing.assert_equal(Qi.rd, np.array([[7, 8, 9]]).T)
-    np.testing.assert_equal(Qi.w, np.array([[10, 11, 12]]).T)
-    np.testing.assert_equal(Qi.v, -np.array([[7, 8, 9]]).T + np.array([[4, 5, 6]]).T)
-    np.testing.assert_equal(Qi.vector, Qi)
+    np.testing.assert_equal(Qi.u, np.array([0, 0, 0]))
+    np.testing.assert_equal(Qi.rp, np.array([4, 5, 6]))
+    np.testing.assert_equal(Qi.rd, np.array([7, 8, 9]))
+    np.testing.assert_equal(Qi.w, np.array([10, 11, 12]))
+    np.testing.assert_equal(Qi.v, -np.array([7, 8, 9]) + np.array([4, 5, 6]))
+    np.testing.assert_equal(Qi.vector[:, np.newaxis], Qi)
 
 
 # do the for SegmentNaturalVelocities
@@ -130,16 +130,16 @@ def test_NaturalCoordinatesConstructor():
         w=np.array([10, 11, 12]),
     )
     Q = NaturalCoordinates.from_Qi((Q1, Q2))
-    np.testing.assert_equal(Q.u(0), np.array([[1, 2, 3]]).T)
-    np.testing.assert_equal(Q.u(1), np.array([[11, 22, 33]]).T)
-    np.testing.assert_equal(Q.v(0), -np.array([[7, 8, 9]]).T + np.array([[4, 5, 6]]).T)
-    np.testing.assert_equal(Q.v(1), -np.array([[7, 8, 9]]).T + np.array([[4, 5, 6]]).T)
+    np.testing.assert_equal(Q.u(0), np.array([1, 2, 3]))
+    np.testing.assert_equal(Q.u(1), np.array([11, 22, 33]))
+    np.testing.assert_equal(Q.v(0), -np.array([7, 8, 9]) + np.array([4, 5, 6]))
+    np.testing.assert_equal(Q.v(1), -np.array([7, 8, 9]) + np.array([4, 5, 6]))
     np.testing.assert_equal(Q.vector(0), Q1)
     np.testing.assert_equal(Q.vector(1), Q2)
-    np.testing.assert_equal(Q.vector(0).u, np.array([[1, 2, 3]]).T)
-    np.testing.assert_equal(Q.vector(1).u, np.array([[11, 22, 33]]).T)
-    np.testing.assert_equal(Q.vector(0).v, -np.array([[7, 8, 9]]).T + np.array([[4, 5, 6]]).T)
-    np.testing.assert_equal(Q.vector(1).v, -np.array([[7, 8, 9]]).T + np.array([[4, 5, 6]]).T)
+    np.testing.assert_equal(Q.vector(0).u, np.array([1, 2, 3]))
+    np.testing.assert_equal(Q.vector(1).u, np.array([11, 22, 33]))
+    np.testing.assert_equal(Q.vector(0).v, -np.array([7, 8, 9]) + np.array([4, 5, 6]))
+    np.testing.assert_equal(Q.vector(1).v, -np.array([7, 8, 9]) + np.array([4, 5, 6]))
     np.testing.assert_equal(Q.nb_Qi(), 2)
 
 

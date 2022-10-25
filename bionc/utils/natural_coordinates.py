@@ -68,7 +68,7 @@ class SegmentNaturalCoordinates(np.ndarray):
         return cls(input_array)
 
     def to_array(self):
-        return np.array(self)
+        return np.array(self).squeeze()
 
     @property
     def u(self):
@@ -94,11 +94,9 @@ class SegmentNaturalCoordinates(np.ndarray):
     def vector(self):
         return self.to_array()
 
-    @property
     def to_components(self):
         return self.u, self.rp, self.rd, self.w
 
-    @property
     def to_uvw(self):
         return self.u, self.v, self.w
 
@@ -163,7 +161,7 @@ class NaturalCoordinates(np.ndarray):
         return cls(input_array)
 
     def to_array(self):
-        return np.array(self)
+        return np.array(self).squeeze()
 
     def nb_Qi(self):
         return self.shape[0] // 12

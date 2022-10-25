@@ -51,7 +51,7 @@ def test_biomech_model():
     Q = NaturalCoordinates.from_Qi((Q1, Q2, Q3))
 
     np.testing.assert_array_almost_equal(
-        natural_model.rigidBodyConstraints(Q),
+        natural_model.rigid_body_constraints(Q),
         np.array(
             [
                 13.3025,
@@ -78,7 +78,7 @@ def test_biomech_model():
     )
 
     np.testing.assert_array_almost_equal(
-        natural_model.rigidBodyConstraintsJacobian(Q),
+        natural_model.rigid_body_constraints_Jacobian(Q),
         np.array(
             [
                 [
@@ -792,7 +792,7 @@ def test_biomech_model():
     Qdot = NaturalVelocities.from_Qdoti((Qdot1, Qdot2, Qdot3))
 
     np.testing.assert_array_almost_equal(
-        natural_model.rigidBodyConstraintJacobianDerivative(Qdot),
+        natural_model.rigid_body_constraint_jacobian_derivative(Qdot),
         np.array(
             [
                 [

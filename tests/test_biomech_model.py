@@ -48,7 +48,7 @@ def test_biomech_model():
         w=[2.2, 2, 5.3],
     )
 
-    Q = NaturalCoordinates.from_Qi((Q1, Q2, Q3))
+    Q = NaturalCoordinates.from_qi((Q1, Q2, Q3))
 
     np.testing.assert_array_almost_equal(
         natural_model.rigid_body_constraints(Q),

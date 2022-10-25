@@ -129,7 +129,7 @@ def test_NaturalCoordinatesConstructor():
         rd=np.array([7, 8, 9]),
         w=np.array([10, 11, 12]),
     )
-    Q = NaturalCoordinates.from_Qi((Q1, Q2))
+    Q = NaturalCoordinates.from_qi((Q1, Q2))
     np.testing.assert_equal(Q.u(0), np.array([1, 2, 3]))
     np.testing.assert_equal(Q.u(1), np.array([11, 22, 33]))
     np.testing.assert_equal(Q.v(0), -np.array([7, 8, 9]) + np.array([4, 5, 6]))
@@ -140,7 +140,7 @@ def test_NaturalCoordinatesConstructor():
     np.testing.assert_equal(Q.vector(1).u, np.array([11, 22, 33]))
     np.testing.assert_equal(Q.vector(0).v, -np.array([7, 8, 9]) + np.array([4, 5, 6]))
     np.testing.assert_equal(Q.vector(1).v, -np.array([7, 8, 9]) + np.array([4, 5, 6]))
-    np.testing.assert_equal(Q.nb_Qi(), 2)
+    np.testing.assert_equal(Q.nb_qi(), 2)
 
 
 # do the same tests for NaturalAccelerations and SegmentNaturalAccelerations

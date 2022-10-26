@@ -45,22 +45,26 @@ def test_natural_velocities():
         SegmentNaturalVelocities.from_components(correct_vector, correct_vector, correct_vector, wrong_vector)
 
     # Test concatenate + parameters
-    segment_natural_velocities_test = SegmentNaturalVelocities.from_components(
-        [1, 0, 0], [2, 0, 0], [3, 0, 0], [4, 0, 0]
+    qdot_test = SegmentNaturalVelocities.from_components(
+        udot=[1, 0, 0],
+        rpdot=[2, 0, 0],
+        rddot=[3, 0, 0],
+        wdot=[4, 0, 0],
     )
 
-    assert np.all(segment_natural_velocities_test == np.array([1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0]))
-    assert np.all(segment_natural_velocities_test.udot == np.array([1, 0, 0]))
-    assert np.all(segment_natural_velocities_test.rpdot == np.array([2, 0, 0]))
-    assert np.all(segment_natural_velocities_test.rddot == np.array([3, 0, 0]))
-    assert np.all(segment_natural_velocities_test.wdot == np.array([4, 0, 0]))
-    # v = rp-rd
-    assert np.all(segment_natural_velocities_test.vdot == np.array([-1, 0, 0]))
+    assert np.all(qdot_test == np.array([1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0]))
+    assert np.all(qdot_test.udot == np.array([1, 0, 0]))
+    assert np.all(qdot_test.rpdot == np.array([2, 0, 0]))
+    assert np.all(qdot_test.rddot == np.array([3, 0, 0]))
+    assert np.all(qdot_test.wdot == np.array([4, 0, 0]))
+
+    # vdot = rpdot - rddot
+    assert np.all(qdot_test.vdot == np.array([-1, 0, 0]))
 
     # vectors
-    assert np.all(segment_natural_velocities_test.vector == np.array([1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0]))
+    assert np.all(qdot_test.vector == np.array([1, 0, 0, 2, 0, 0, 3, 0, 0, 4, 0, 0]))
 
-    for ind, component in enumerate(segment_natural_velocities_test.to_components):
+    for ind, component in enumerate(qdot_test.to_components):
         assert np.all(component == np.array([ind + 1, 0, 0]))
 
     # -------------------------------------------------------------------------------------------------------------------

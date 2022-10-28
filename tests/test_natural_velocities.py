@@ -85,20 +85,20 @@ def test_natural_velocities():
 
     # Wrong entry
     with pytest.raises(ValueError, match="tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates"):
-        NaturalVelocities.from_Qdoti(1)
+        NaturalVelocities.from_qdoti(1)
 
     # One wrong entry in the list
     with pytest.raises(ValueError, match="tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates"):
-        NaturalVelocities.from_Qdoti((qdot1, qdot2, [0, 0]))
+        NaturalVelocities.from_qdoti((qdot1, qdot2, [0, 0]))
 
-    qdot = NaturalVelocities.from_Qdoti((qdot1, qdot2))
+    qdot = NaturalVelocities.from_qdoti((qdot1, qdot2))
 
     #
     np.testing.assert_equal(qdot.udot(0), np.array([1, 2, 3]))
     np.testing.assert_equal(qdot.udot(1), np.array([11, 22, 33]))
 
-    # test nb_Qdoti
-    np.testing.assert_equal(qdot.nb_Qdoti(), 2)
+    # test nb_qdoti
+    np.testing.assert_equal(qdot.nb_qdoti(), 2)
 
     # test of the different component of vector
     np.testing.assert_equal(qdot1.vector, qdot1)

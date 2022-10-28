@@ -21,9 +21,9 @@ class NaturalSegment:
     -------
     transformation_matrix()
         This function returns the transformation matrix, denoted Bi
-    rigidBodyConstraint()
+    rigid_body_constraint()
         This function returns the rigid body constraints of the segment, denoted phi_r
-    rigidBodyConstraintJacobian()
+    rigid_body_constraint_jacobian()
         This function returns the jacobian of rigid body constraints of the segment, denoted K_r
 
     add_marker()
@@ -298,7 +298,7 @@ class NaturalSegment:
 
         return SegmentNaturalCoordinates((u, rp, rd, w))
 
-    def rigidBodyConstraint(self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]) -> np.ndarray:
+    def rigid_body_constraint(self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]) -> np.ndarray:
         """
         This function returns the rigid body constraints of the segment, denoted phi_r.
 
@@ -328,7 +328,7 @@ class NaturalSegment:
         return phir
 
     @staticmethod
-    def rigidBodyConstraintJacobian(Qi: SegmentNaturalCoordinates) -> np.ndarray:
+    def rigid_body_constraint_jacobian(Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
         This function returns the Jacobian matrix of the rigid body constraints denoted K_r
 
@@ -363,7 +363,7 @@ class NaturalSegment:
         return Kr
 
     @staticmethod
-    def rigidBodyConstraintJacobianDerivative(Qdoti: SegmentNaturalVelocities) -> np.ndarray:
+    def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> np.ndarray:
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
 
@@ -602,8 +602,8 @@ class NaturalSegment:
             Qdoti = SegmentNaturalVelocities(Qdoti)
 
         Gi = self.mass_matrix
-        Kr = self.rigidBodyConstraintJacobian(Qi)
-        Krdot = self.rigidBodyConstraintJacobianDerivative(Qdoti)
+        Kr = self.rigid_body_constraint_jacobian(Qi)
+        Krdot = self.rigid_body_constraint_jacobian_derivative(Qdoti)
         biais = np.matmul(Krdot, Qdoti.vector)
 
         A = zeros((18, 18))

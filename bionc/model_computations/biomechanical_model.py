@@ -54,7 +54,7 @@ class BiomechanicalModel:
     def nb_Qddot(self):
         return 12 * self.nb_segments()
 
-    def rigidBodyConstraints(self, Q: NaturalCoordinates) -> np.ndarray:
+    def rigid_body_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
         """
         This function returns the rigid body constraints of all segments, denoted Phi_r
         as a function of the natural coordinates Q.
@@ -71,11 +71,11 @@ class BiomechanicalModel:
         Phi_r = np.zeros(6 * self.nb_segments())
         for i, segment_name in enumerate(self.segments):
             idx = slice(6 * i, 6 * (i + 1))
-            Phi_r[idx] = self.segments[segment_name].rigidBodyConstraint(Q.vector(i))
+            Phi_r[idx] = self.segments[segment_name].rigid_body_constraint(Q.vector(i))
 
         return Phi_r
 
-    def rigidBodyConstraintsJacobian(self, Q: NaturalCoordinates) -> np.ndarray:
+    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
         """
         This function returns the rigid body constraints of all segments, denoted K_r
         as a function of the natural coordinates Q.
@@ -92,11 +92,11 @@ class BiomechanicalModel:
         for i, segment_name in enumerate(self.segments):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
-            K_r[idx_row, idx_col] = self.segments[segment_name].rigidBodyConstraintJacobian(Q.vector(i))
+            K_r[idx_row, idx_col] = self.segments[segment_name].rigid_body_constraint_jacobian(Q.vector(i))
 
         return K_r
 
-    def rigidBodyConstraintJacobianDerivative(self, Qdot: NaturalVelocities) -> np.ndarray:
+    def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot
 
@@ -118,7 +118,9 @@ class BiomechanicalModel:
         for i, segment_name in enumerate(self.segments):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
-            Kr_dot[idx_row, idx_col] = self.segments[segment_name].rigidBodyConstraintJacobianDerivative(Qdot.vector(i))
+            Kr_dot[idx_row, idx_col] = self.segments[segment_name].rigid_body_constraint_jacobian_derivative(
+                Qdot.vector(i)
+            )
 
         return Kr_dot
 

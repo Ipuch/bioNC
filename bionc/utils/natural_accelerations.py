@@ -96,7 +96,7 @@ class NaturalAccelerations(np.ndarray):
         return np.asarray(input_array).view(cls)
 
     @classmethod
-    def from_Qddoti(cls, tuple_of_Q: tuple):
+    def from_qddoti(cls, tuple_of_Q: tuple):
         """
         Constructor of the class
         """
@@ -113,7 +113,7 @@ class NaturalAccelerations(np.ndarray):
     def to_array(self):
         return np.array(self)
 
-    def nb_Qddoti(self):
+    def nb_qddoti(self):
         return self.shape[0] // 12
 
     def uddot(self, segment_idx: int):

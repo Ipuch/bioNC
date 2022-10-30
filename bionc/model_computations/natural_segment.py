@@ -579,12 +579,13 @@ class NaturalSegment:
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return np.matmul(self.interpolation_matrix_center_of_mass.T * self.mass, np.array([0, 0, -9.81]))
+        return self.interpolation_matrix_center_of_mass.T * self.mass @ np.array([0, 0, -9.81])
 
     def differential_algebraic_equation(
         self,
         Qi: Union[SegmentNaturalCoordinates, np.ndarray],
         Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
+        stabilization: dict = None,
     ) -> Tuple[SegmentNaturalAccelerations, np.ndarray]:
         """
         This function returns the differential algebraic equation of the segment

@@ -235,7 +235,7 @@ class NaturalSegment:
                     ),
                 ],
             ]
-        )
+        ).T
 
     @property
     def transformation_matrix(self) -> np.ndarray:
@@ -432,7 +432,7 @@ class NaturalSegment:
         Binv = inv(self.transformation_matrix)
         Binv_transpose = np.transpose(Binv)
 
-        return matmul(Binv, matmul(middle_block, Binv_transpose))
+        return Binv @ (middle_block @ Binv_transpose)
 
     @property
     def pseudo_inertia_matrix(self) -> np.ndarray:
@@ -457,7 +457,7 @@ class NaturalSegment:
         np.ndarray
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return matmul(inv(self.transformation_matrix), self.center_of_mass)
+        return inv(self.transformation_matrix) @ self.center_of_mass
 
     @property
     def center_of_mass_in_natural_coordinates_system(self) -> np.ndarray:

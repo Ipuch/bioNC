@@ -311,19 +311,14 @@ class NaturalSegment:
             Qi = SegmentNaturalCoordinates(Qi)
 
         phir = zeros(6)
-        # phir[0] = sum(Qi.u**2, 0) - 1
-        # phir[1] = sum(Qi.u * (Qi.rp - Qi.rd), 0) - self.length * cos(self.gamma)
-        # phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-        # phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length**2
-        # phir[4] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
-        # phir[5] = sum(Qi.w**2, 0) - 1
+        u, v, w = Qi.to_uvw()
 
-        phir[0] = sum(Qi.u**2, 0) - 1
-        phir[1] = sum(Qi.u * Qi.v, 0) - self.length * cos(self.gamma)
-        phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-        phir[3] = sum(Qi.v**2, 0) - self.length**2
-        phir[4] = sum(Qi.v * Qi.w, 0) - self.length * cos(self.alpha)
-        phir[5] = sum(Qi.w**2, 0) - 1
+        phir[0] = sum(u**2, 0) - 1
+        phir[1] = sum(u * v, 0) - self.length * cos(self.gamma)
+        phir[2] = sum(u * Qi.w, 0) - cos(self.beta)
+        phir[3] = sum(v**2, 0) - self.length**2
+        phir[4] = sum(v * w, 0) - self.length * cos(self.alpha)
+        phir[5] = sum(w**2, 0) - 1
 
         return phir
 

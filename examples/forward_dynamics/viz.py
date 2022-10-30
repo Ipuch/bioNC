@@ -1,15 +1,15 @@
 import plotly.graph_objects as go
 
 
-def plot_series(time_steps, defects):
+def plot_series(time_steps, defects, legend=None):
     fig = go.Figure()
     # display defects in time
-    fig.add_trace(go.Scatter(x=time_steps, y=defects[0, :], name="defects[0]", mode="lines+markers"))
-    fig.add_trace(go.Scatter(x=time_steps, y=defects[1, :], name="defects[1]", mode="lines+markers"))
-    fig.add_trace(go.Scatter(x=time_steps, y=defects[2, :], name="defects[2]", mode="lines+markers"))
-    fig.add_trace(go.Scatter(x=time_steps, y=defects[3, :], name="defects[3]", mode="lines+markers"))
-    fig.add_trace(go.Scatter(x=time_steps, y=defects[4, :], name="defects[4]", mode="lines+markers"))
-    fig.add_trace(go.Scatter(x=time_steps, y=defects[5, :], name="defects[5]", mode="lines+markers"))
+    fig.add_trace(go.Scatter(x=time_steps, y=defects[0, :], name=f"{legend}[0]", mode="lines+markers"))
+    fig.add_trace(go.Scatter(x=time_steps, y=defects[1, :], name=f"{legend}[1]", mode="lines+markers"))
+    fig.add_trace(go.Scatter(x=time_steps, y=defects[2, :], name=f"{legend}[2]", mode="lines+markers"))
+    fig.add_trace(go.Scatter(x=time_steps, y=defects[3, :], name=f"{legend}[3]", mode="lines+markers"))
+    fig.add_trace(go.Scatter(x=time_steps, y=defects[4, :], name=f"{legend}[4]", mode="lines+markers"))
+    fig.add_trace(go.Scatter(x=time_steps, y=defects[5, :], name=f"{legend}[5]", mode="lines+markers"))
     fig.show()
 
 
@@ -32,6 +32,12 @@ def animate_natural_segment(time_steps, all_states, center_of_mass, t_final):
             ),
             go.Scatter3d(x=all_states[3, :], y=all_states[4, :], z=all_states[5, :], name="rp"),
             go.Scatter3d(x=all_states[6, :], y=all_states[7, :], z=all_states[8, :], name="rd"),
+            go.Scatter3d(
+                x=2 * all_states[3, :] - all_states[6, :],
+                y=2 * all_states[3, :] - all_states[7, :],
+                z=2 * all_states[3, :] - all_states[8, :],
+                name="v",
+            ),
             go.Scatter3d(
                 x=all_states[3, :] + all_states[9, :],
                 y=all_states[4, :] + all_states[10, :],
@@ -63,6 +69,12 @@ def animate_natural_segment(time_steps, all_states, center_of_mass, t_final):
                     ),
                     go.Scatter3d(x=all_states[3, i : i + 1], y=all_states[4, i : i + 1], z=all_states[5, i : i + 1]),
                     go.Scatter3d(x=all_states[6, i : i + 1], y=all_states[7, i : i + 1], z=all_states[8, i : i + 1]),
+                    go.Scatter3d(
+                        x=2 * all_states[3, i : i + 1] - all_states[6, i : i + 1],
+                        y=2 * all_states[4, i : i + 1] - all_states[7, i : i + 1],
+                        z=2 * all_states[5, i : i + 1] - all_states[8, i : i + 1],
+                        name="v",
+                    ),
                     go.Scatter3d(
                         x=all_states[3, i : i + 1] + all_states[9, i : i + 1],
                         y=all_states[4, i : i + 1] + all_states[10, i : i + 1],
@@ -124,5 +136,7 @@ def animate_natural_segment(time_steps, all_states, center_of_mass, t_final):
             }
         ],
     )
+    # axis equal during all the animation
+    fig.update_layout(scene_aspectmode="manual", scene_aspectratio=dict(x=1, y=1, z=1))
 
     fig.show()

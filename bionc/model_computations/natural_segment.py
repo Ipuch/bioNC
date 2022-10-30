@@ -596,6 +596,12 @@ class NaturalSegment:
             Natural coordinates of the segment
         Qdoti: SegmentNaturalCoordinates
             Derivative of the natural coordinates of the segment
+        stabilization: dict
+            Dictionary containing the Baumgarte's stabilization parameters:
+            * alpha: float
+                Stabilization parameter for the constraint
+            * beta: float
+                Stabilization parameter for the constraint derivative
 
         Returns
         -------
@@ -616,7 +622,12 @@ class NaturalSegment:
         Gi = self.mass_matrix
         Kr = self.rigid_body_constraint_jacobian(Qi)
         Krdot = self.rigid_body_constraint_jacobian_derivative(Qdoti)
-        biais = np.matmul(Krdot, Qdoti.vector)
+        biais = -Krdot @ Qdoti.vector
+
+        if stabilization is not None:
+            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+                "beta"
+            ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
         A = zeros((18, 18))
         A[0:12, 0:12] = Gi

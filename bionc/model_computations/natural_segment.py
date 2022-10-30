@@ -357,6 +357,20 @@ class NaturalSegment:
 
         return Kr
 
+    def rigid_body_constraint_derivative(
+        self, Qi: SegmentNaturalCoordinates, Qdoti: SegmentNaturalVelocities
+    ) -> np.ndarray:
+        """
+        This function returns the derivative of the rigid body constraints denoted Phi_r_dot
+
+        Returns
+        -------
+        np.ndarray
+            Derivative of the rigid body constraints [6 x 1 x N_frame]
+        """
+
+        return self.rigid_body_constraint_jacobian(Qi) @ np.array(Qdoti)
+
     @staticmethod
     def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> np.ndarray:
         """

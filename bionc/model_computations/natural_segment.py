@@ -335,6 +335,8 @@ class NaturalSegment:
         # initialisation
         Kr = zeros((6, 12))
 
+        if not isinstance(Qi, SegmentNaturalCoordinates):
+            Qi = SegmentNaturalCoordinates(Qi)
         u, v, w = Qi.to_uvw()
 
         Kr[0, 0:3] = 2 * u

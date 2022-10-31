@@ -53,9 +53,9 @@ def animate_natural_segment(time_steps, all_states, center_of_mass, t_final):
         ],
         layout=go.Layout(
             scene=dict(
-                xaxis=dict(range=[-2, 2], autorange=False),
-                yaxis=dict(range=[-2, 2], autorange=False),
-                zaxis=dict(range=[all_states.min().max(), all_states.max().max()], autorange=False),
+                xaxis=dict(range=[all_states[0::3, :].min().min(), all_states[0::3, :].max().max()], autorange=False),
+                yaxis=dict(range=[all_states[1::3].min().min(), all_states[1::3].max().max()], autorange=False),
+                zaxis=dict(range=[all_states.min().min(), all_states.max().max()], autorange=False),
             ),
         ),
         frames=[

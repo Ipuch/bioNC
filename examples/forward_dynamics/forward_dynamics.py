@@ -39,6 +39,11 @@ Qidot = SegmentNaturalVelocities.from_components(
     udot=np.array([0, 0, 0]), rpdot=np.array([0, 0, 0]), rddot=np.array([0, 0, 0]), wdot=np.array([0, 0, 0])
 )
 
+
+if (my_segment.rigid_body_constraint(Qi) > 1e-6).any():
+    print(my_segment.rigid_body_constraint(Qi))
+    raise ValueError("The segment natural coordinates don't satisfy the rigid body constraint")
+
 t_final = 2  # [s]
 steps_per_second = 50
 time_steps = np.linspace(0, t_final, steps_per_second * t_final + 1)

@@ -425,12 +425,12 @@ class NaturalSegment:
         # todo: verify the formula
         middle_block = (
             self.inertia
-            + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * eye(3)
-            - np.dot(self.center_of_mass.T, self.center_of_mass)
+            + self.mass * (self.center_of_mass.T @ self.center_of_mass * eye(3)
+            - self.center_of_mass[:, np.newaxis] @ self.center_of_mass[:, np.newaxis].T)
         )
 
         Binv = inv(self.transformation_matrix)
-        Binv_transpose = np.transpose(Binv)
+        Binv_transpose = Binv.T
 
         return Binv @ (middle_block @ Binv_transpose)
 

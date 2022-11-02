@@ -77,10 +77,11 @@ def test_model_creation():
     model = model_creation_from_measured_data(filename)
 
     assert isinstance(model.segments, dict)
-    assert len(model.segments) == 3
+    assert len(model.segments) == 4
     assert model.segments["FOOT"].name == "FOOT"
     assert model.segments["SHANK"].name == "SHANK"
     assert model.segments["THIGH"].name == "THIGH"
+    assert model.segments["PELVIS"].name == "PELVIS"
 
     prop = dict(
         FOOT=dict(
@@ -91,6 +92,8 @@ def test_model_creation():
         ),
         THIGH=dict(
             length=0.39649708859834826, gamma=2.3049927484597585, beta=1.7463313954337523, alpha=1.5377930856781998
+        ),
+        PELVIS=dict(length=0.1769530640303529, gamma=1.7254699225736285, beta=1.5730692288960397, alpha= 1.6366548320164234
         ),
     )
 

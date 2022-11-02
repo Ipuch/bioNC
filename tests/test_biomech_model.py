@@ -20,13 +20,13 @@ def test_biomech_model():
     os.remove(filename)
 
     # Test model
-    assert natural_model.nb_segments() == 3
+    assert natural_model.nb_segments() == 4
     assert natural_model.nb_markers() == 12
     assert natural_model.nb_joints() == 0
 
-    assert natural_model.nb_Q() == 36
-    assert natural_model.nb_Qdot() == 36
-    assert natural_model.nb_Qddot() == 36
+    assert natural_model.nb_Q() == 48
+    assert natural_model.nb_Qdot() == 48
+    assert natural_model.nb_Qddot() == 48
 
     # Test rigid body constraints
     Q1 = SegmentNaturalCoordinates.from_components(

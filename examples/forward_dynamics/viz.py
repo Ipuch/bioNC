@@ -136,7 +136,7 @@ def animate_natural_segment(time_steps, all_states, center_of_mass, t_final):
             }
         ],
     )
-    # axis equal during all the animation
+    # axis equal for each frame
     fig.update_layout(scene_aspectmode="manual", scene_aspectratio=dict(x=1, y=1, z=1))
 
     fig.show()

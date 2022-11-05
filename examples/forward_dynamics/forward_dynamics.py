@@ -18,8 +18,8 @@ my_segment = NaturalSegment(
     gamma=np.pi / 2,
     length=1,
     mass=1,
-    center_of_mass=np.array([0, 0, 0]),
-    inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+    center_of_mass=np.array([0, 0, 0]),  # scs
+    inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # scs
 )
 
 # Let's create a motion now
@@ -39,6 +39,8 @@ Qidot = SegmentNaturalVelocities.from_components(
     udot=np.array([0, 0, 0]), rpdot=np.array([0, 0, 0]), rddot=np.array([0, 0, 0]), wdot=np.array([0, 0, 0])
 )
 
+print(my_segment.rigid_body_constraint(Qi))
+print(my_segment.rigid_body_constraint_derivative(Qi, Qidot))
 
 if (my_segment.rigid_body_constraint(Qi) > 1e-6).any():
     print(my_segment.rigid_body_constraint(Qi))

@@ -1,4 +1,7 @@
-from .utils.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from .utils.natural_coordinates import (
+    # SegmentNaturalCoordinates,
+    NaturalCoordinates,
+)
 from .utils.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
 from .utils.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
 from .utils.homogenous_transform import HomogeneousTransform
@@ -25,3 +28,28 @@ from .model_computations import (
     InertiaParameters,
     BiomechanicalModel,
 )
+
+from .math_interface.math_interface import (
+    zeros,
+    eye,
+    array,
+    symmetrize_upp,
+    vertcat,
+    horzcat,
+)
+
+
+from .math_interface import internal
+from .math_interface import using_casadi as bionc_casadi
+from .math_interface import using_numpy as bionc_numpy
+
+# I don't know if it's useful to import the following yet
+from .math_interface.internal import SegmentNaturalCoordinates
+
+from casadi.casadi import MX as MX_type
+from numpy import ndarray
+# global variable to store the type of the math interface
+casadi_type = MX_type
+numpy_type = ndarray
+
+

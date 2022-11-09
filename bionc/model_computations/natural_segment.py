@@ -5,7 +5,8 @@ import numpy as np
 from numpy import cos, sin, matmul, eye, zeros, sum, ones
 from numpy.linalg import inv
 
-from ..utils.natural_coordinates import SegmentNaturalCoordinates
+# from ..utils.natural_coordinates import SegmentNaturalCoordinates
+from ..math_interface.internal import SegmentNaturalCoordinates
 from ..utils.natural_velocities import SegmentNaturalVelocities
 from ..utils.natural_accelerations import SegmentNaturalAccelerations
 from ..utils.homogenous_transform import HomogeneousTransform

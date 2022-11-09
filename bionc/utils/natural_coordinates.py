@@ -4,137 +4,137 @@ from bionc.utils.vnop_array import vnop_array
 from bionc.utils.interpolation_matrix import interpolate_natural_vector
 
 
-class SegmentNaturalCoordinates(np.ndarray):
-    """
-    This class is made to handle Generalized Coordinates of a Segment
-    """
-
-    def __new__(cls, input_array: Union[np.ndarray, list, tuple]):
-        """
-        Create a new instance of the class.
-        """
-
-        obj = np.asarray(input_array).view(cls)
-
-        if obj.shape.__len__() == 1:
-            obj = obj[:, np.newaxis]
-
-        return obj
-
-    @classmethod
-    def from_components(
-        cls,
-        u: Union[np.ndarray, list] = None,
-        rp: Union[np.ndarray, list] = None,
-        rd: Union[np.ndarray, list] = None,
-        w: Union[np.ndarray, list] = None,
-    ):
-        """
-        Constructor of the class from the components of the natural coordinates
-        """
-
-        if u is None:
-            raise ValueError("u must be a numpy array (3x1) or a list of 3 elements")
-        if rp is None:
-            raise ValueError("rp must be a numpy array (3x1) or a list of 3 elements")
-        if rd is None:
-            raise ValueError("rd must be a numpy array (3x1) or a list of 3 elements")
-        if w is None:
-            raise ValueError("w must be a numpy array (3x1) or a list of 3 elements")
-
-        if not isinstance(u, np.ndarray):
-            u = np.array(u)
-        if not isinstance(rp, np.ndarray):
-            rp = np.array(rp)
-        if not isinstance(rd, np.ndarray):
-            rd = np.array(rd)
-        if not isinstance(w, np.ndarray):
-            w = np.array(w)
-
-        if u.shape[0] != 3:
-            raise ValueError("u must be a 3x1 numpy array")
-        if rp.shape[0] != 3:
-            raise ValueError("rp must be a 3x1 numpy array")
-        if rd.shape[0] != 3:
-            raise ValueError("rd must be a 3x1 numpy array")
-        if w.shape[0] != 3:
-            raise ValueError("v must be a 3x1 numpy array")
-
-        input_array = np.concatenate((u, rp, rd, w), axis=0)
-
-        if input_array.shape.__len__() == 1:
-            input_array = input_array[:, np.newaxis]
-
-        return cls(input_array)
-
-    def to_array(self):
-        return np.array(self).squeeze()
-
-    @property
-    def u(self):
-        return self[0:3, :].to_array()
-
-    @property
-    def rp(self):
-        return self[3:6, :].to_array()
-
-    @property
-    def rd(self):
-        return self[6:9, :].to_array()
-
-    @property
-    def w(self):
-        return self[9:12, :].to_array()
-
-    @property
-    def v(self):
-        return self.rp - self.rd
-
-    @property
-    def vector(self):
-        return self.to_array()
-
-    def to_components(self):
-        return self.u, self.rp, self.rd, self.w
-
-    def to_uvw(self):
-        return self.u, self.v, self.w
-
-    def to_non_orthogonal_basis(self, vector: np.ndarray) -> np.ndarray:
-        """
-        This function converts a vector expressed in the global coordinate system
-        to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
-
-        Parameters
-        ----------
-        vector: np.ndarray
-            The vector expressed in the global coordinate system
-
-        Returns
-        -------
-        np.ndarray
-            The vector expressed in the non-orthogonal coordinate system
-
-        """
-        return vnop_array(vector - self.rp, self.u, self.v, self.w)
-
-    def to_interpolation_matrix(self, vector: np.ndarray) -> np.ndarray:
-        """
-        This function converts a vector expressed in the global coordinate system
-        to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
-
-        Parameters
-        ----------
-        vector: np.ndarray
-            The vector expressed in the global coordinate system
-
-        Returns
-        -------
-        np.ndarray
-            The vector expressed in the non-orthogonal coordinate system
-
-        """
-        return interpolate_natural_vector(vnop_array(vector - self.rp, self.u, self.v, self.w))
+# class SegmentNaturalCoordinates(np.ndarray):
+#     """
+#     This class is made to handle Generalized Coordinates of a Segment
+#     """
+#
+#     def __new__(cls, input_array: Union[np.ndarray, list, tuple]):
+#         """
+#         Create a new instance of the class.
+#         """
+#
+#         obj = np.asarray(input_array).view(cls)
+#
+#         if obj.shape.__len__() == 1:
+#             obj = obj[:, np.newaxis]
+#
+#         return obj
+#
+#     @classmethod
+#     def from_components(
+#         cls,
+#         u: Union[np.ndarray, list] = None,
+#         rp: Union[np.ndarray, list] = None,
+#         rd: Union[np.ndarray, list] = None,
+#         w: Union[np.ndarray, list] = None,
+#     ):
+#         """
+#         Constructor of the class from the components of the natural coordinates
+#         """
+#
+#         if u is None:
+#             raise ValueError("u must be a numpy array (3x1) or a list of 3 elements")
+#         if rp is None:
+#             raise ValueError("rp must be a numpy array (3x1) or a list of 3 elements")
+#         if rd is None:
+#             raise ValueError("rd must be a numpy array (3x1) or a list of 3 elements")
+#         if w is None:
+#             raise ValueError("w must be a numpy array (3x1) or a list of 3 elements")
+#
+#         if not isinstance(u, np.ndarray):
+#             u = np.array(u)
+#         if not isinstance(rp, np.ndarray):
+#             rp = np.array(rp)
+#         if not isinstance(rd, np.ndarray):
+#             rd = np.array(rd)
+#         if not isinstance(w, np.ndarray):
+#             w = np.array(w)
+#
+#         if u.shape[0] != 3:
+#             raise ValueError("u must be a 3x1 numpy array")
+#         if rp.shape[0] != 3:
+#             raise ValueError("rp must be a 3x1 numpy array")
+#         if rd.shape[0] != 3:
+#             raise ValueError("rd must be a 3x1 numpy array")
+#         if w.shape[0] != 3:
+#             raise ValueError("v must be a 3x1 numpy array")
+#
+#         input_array = np.concatenate((u, rp, rd, w), axis=0)
+#
+#         if input_array.shape.__len__() == 1:
+#             input_array = input_array[:, np.newaxis]
+#
+#         return cls(input_array)
+#
+#     def to_array(self):
+#         return np.array(self).squeeze()
+#
+#     @property
+#     def u(self):
+#         return self[0:3, :].to_array()
+#
+#     @property
+#     def rp(self):
+#         return self[3:6, :].to_array()
+#
+#     @property
+#     def rd(self):
+#         return self[6:9, :].to_array()
+#
+#     @property
+#     def w(self):
+#         return self[9:12, :].to_array()
+#
+#     @property
+#     def v(self):
+#         return self.rp - self.rd
+#
+#     @property
+#     def vector(self):
+#         return self.to_array()
+#
+#     def to_components(self):
+#         return self.u, self.rp, self.rd, self.w
+#
+#     def to_uvw(self):
+#         return self.u, self.v, self.w
+#
+#     def to_non_orthogonal_basis(self, vector: np.ndarray) -> np.ndarray:
+#         """
+#         This function converts a vector expressed in the global coordinate system
+#         to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
+#
+#         Parameters
+#         ----------
+#         vector: np.ndarray
+#             The vector expressed in the global coordinate system
+#
+#         Returns
+#         -------
+#         np.ndarray
+#             The vector expressed in the non-orthogonal coordinate system
+#
+#         """
+#         return vnop_array(vector - self.rp, self.u, self.v, self.w)
+#
+#     def to_interpolation_matrix(self, vector: np.ndarray) -> np.ndarray:
+#         """
+#         This function converts a vector expressed in the global coordinate system
+#         to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
+#
+#         Parameters
+#         ----------
+#         vector: np.ndarray
+#             The vector expressed in the global coordinate system
+#
+#         Returns
+#         -------
+#         np.ndarray
+#             The vector expressed in the non-orthogonal coordinate system
+#
+#         """
+#         return interpolate_natural_vector(vnop_array(vector - self.rp, self.u, self.v, self.w))
 
 
 class NaturalCoordinates(np.ndarray):

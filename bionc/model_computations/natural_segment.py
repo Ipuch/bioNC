@@ -162,9 +162,8 @@ class NaturalSegment:
         tuple
             The parameters of the segment (alpha, beta, gamma, length)
         """
-
-        if not isinstance(Q, SegmentNaturalCoordinates):
-            Q = SegmentNaturalCoordinates(Q)
+        from ..math_interface.using_numpy import SegmentNaturalCoordinates
+        Q = SegmentNaturalCoordinates(Q)
 
         u, rp, rd, w = Q.to_components()
 
@@ -307,8 +306,8 @@ class NaturalSegment:
         np.ndarray
             Rigid body constraints of the segment [6 x 1 x N_frame]
         """
-        if not isinstance(Qi, SegmentNaturalCoordinates):
-            Qi = SegmentNaturalCoordinates(Qi)
+        # if not isinstance(Qi, SegmentNaturalCoordinates):
+        #     Qi = SegmentNaturalCoordinates(Qi)
 
         phir = zeros(6)
         # phir[0] = sum(Qi.u**2, 0) - 1
@@ -372,12 +371,6 @@ class NaturalSegment:
         Kr_dot : np.ndarray
             derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 ]
         """
-        if isinstance(Qdoti, SegmentNaturalCoordinates):
-            raise TypeError("Qdoti should be a SegmentNaturalVelocities object")
-            # not able to check if Qdoti is a SegmentNaturalVelocities if Qdoti is a np.ndarray
-        if not isinstance(Qdoti, SegmentNaturalVelocities):
-            Qdoti = SegmentNaturalVelocities(Qdoti)
-
         # initialisation
         Kr_dot = zeros((6, 12))
 

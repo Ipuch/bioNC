@@ -65,9 +65,6 @@ class BiomechanicalModel:
             Rigid body constraints of the segment [6 * nb_segments, 1]
         """
 
-        if not isinstance(Q, NaturalCoordinates):
-            Q = NaturalCoordinates(Q)
-
         Phi_r = np.zeros(6 * self.nb_segments())
         for i, segment_name in enumerate(self.segments):
             idx = slice(6 * i, 6 * (i + 1))
@@ -85,8 +82,6 @@ class BiomechanicalModel:
         np.ndarray
             Rigid body constraints of the segment [6 * nb_segments, nbQ]
         """
-        if not isinstance(Q, NaturalCoordinates):
-            Q = NaturalCoordinates(Q)
 
         K_r = np.zeros((6 * self.nb_segments(), Q.shape[0]))
         for i, segment_name in enumerate(self.segments):
@@ -110,9 +105,6 @@ class BiomechanicalModel:
         np.ndarray
             The derivative of the Jacobian matrix of the rigid body constraints [6, 12]
         """
-
-        if not isinstance(Qdot, NaturalVelocities):
-            Qdot = NaturalVelocities(Qdot)
 
         Kr_dot = np.zeros((6 * self.nb_segments(), Qdot.shape[0]))
         for i, segment_name in enumerate(self.segments):

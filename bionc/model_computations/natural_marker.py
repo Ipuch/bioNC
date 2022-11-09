@@ -7,7 +7,7 @@ from ..model_creation.protocols import Data
 from ..utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
-from ..math_interface.internal import SegmentNaturalCoordinates
+from bionc.math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates
 
 # todo: need a list of markers MarkerList
 

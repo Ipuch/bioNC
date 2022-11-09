@@ -1,8 +1,5 @@
 import numpy as np
-from typing import Union
-from bionc.utils.vnop_array import vnop_array
-from bionc.utils.interpolation_matrix import interpolate_natural_vector
-from ..math_interface.internal import SegmentNaturalCoordinates
+from bionc.math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates
 
 
 # class SegmentNaturalCoordinates(np.ndarray):

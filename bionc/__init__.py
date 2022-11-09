@@ -6,7 +6,6 @@ from .utils.natural_velocities import SegmentNaturalVelocities, NaturalVelocitie
 from .utils.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
 from .utils.homogenous_transform import HomogeneousTransform
 from .utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
-from .utils.natural_coordinates import vnop_array
 
 from .model_creation import (
     AxisTemplate,
@@ -38,13 +37,12 @@ from .math_interface.math_interface import (
     horzcat,
 )
 
-
-from .math_interface import internal
+from .math_interface.protocols import natural_coordinates
 from .math_interface import using_casadi as bionc_casadi
 from .math_interface import using_numpy as bionc_numpy
 
 # I don't know if it's useful to import the following yet
-from .math_interface.internal import SegmentNaturalCoordinates, NaturalCoordinates
+from bionc.math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 
 from casadi.casadi import MX as MX_type
 from numpy import ndarray

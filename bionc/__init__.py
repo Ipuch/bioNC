@@ -48,8 +48,7 @@ from .math_interface.internal import SegmentNaturalCoordinates
 
 from casadi.casadi import MX as MX_type
 from numpy import ndarray
+
 # global variable to store the type of the math interface
 casadi_type = MX_type
 numpy_type = ndarray
-
-

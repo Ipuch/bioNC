@@ -8,6 +8,7 @@ from ..model_computations.natural_marker import SegmentMarker, Marker
 # from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
 from ..model_computations.natural_segment import NaturalSegment
+
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
 from ..math_interface.internal import SegmentNaturalCoordinates
 

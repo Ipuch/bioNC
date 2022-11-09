@@ -3,6 +3,7 @@ from typing import Callable
 from ..model_computations.natural_axis import Axis
 from .natural_axis_template import AxisTemplate
 from ..model_computations.biomechanical_model import BiomechanicalModel
+
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
 from ..math_interface.internal import SegmentNaturalCoordinates
 from .marker_template import MarkerTemplate

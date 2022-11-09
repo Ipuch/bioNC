@@ -1,5 +1,6 @@
 from casadi import MX, vertcat
 from typing import Union
+
 # from bionc.utils.vnop_array import vnop_array
 # from bionc.utils.interpolation_matrix import interpolate_natural_vector
 

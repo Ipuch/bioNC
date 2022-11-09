@@ -28,8 +28,8 @@ def array(data, instance_type: type) -> ndarray | MX:
 
 def symmetrize_upp(A, instance_type: type) -> ndarray | MX:
     """
-    This function symmetrizes a matrix by copying the upper triangular part 
-    to the lower triangular part conserving the diagonal. 
+    This function symmetrizes a matrix by copying the upper triangular part
+    to the lower triangular part conserving the diagonal.
     """
     if instance_type == ndarray:
         return np.tril(A) + np.tril(A, -1).T

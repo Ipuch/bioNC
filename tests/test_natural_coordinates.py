@@ -1,10 +1,6 @@
 import numpy as np
 import pytest
 from bionc import (
-    NaturalCoordinates,
-    SegmentNaturalCoordinates,
-    NaturalVelocities,
-    SegmentNaturalVelocities,
     NaturalAccelerations,
     SegmentNaturalAccelerations,
     bionc_numpy as bionc_np,

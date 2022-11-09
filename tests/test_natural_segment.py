@@ -1,7 +1,6 @@
 from bionc import (
     NaturalSegment,
     SegmentMarker,
-    SegmentNaturalCoordinates,
     bionc_numpy as bionc_np,
 )
 import numpy as np

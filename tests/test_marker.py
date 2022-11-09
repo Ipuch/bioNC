@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 
-from bionc import SegmentMarker, Marker, SegmentNaturalCoordinates
+from bionc import SegmentMarker
 from bionc import bionc_numpy as bionc_np
 
 

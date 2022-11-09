@@ -70,6 +70,7 @@ class NaturalCoordinates(Protocol):
 
     def nb_qi(self):
         """This function returns the number of qi"""
+
     def u(self, segment_index):
         """This property returns the u vector of the natural coordinates"""
 

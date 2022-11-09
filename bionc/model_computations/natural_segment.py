@@ -163,6 +163,7 @@ class NaturalSegment:
             The parameters of the segment (alpha, beta, gamma, length)
         """
         from ..math_interface.using_numpy import SegmentNaturalCoordinates
+
         Q = SegmentNaturalCoordinates(Q)
 
         u, rp, rd, w = Q.to_components()

@@ -25,7 +25,7 @@ def test_SegmentNaturalCoordinatesCreator():
 
 # accelerations
 def test_NaturalAccelerationsCreator():
-    Qddot1 = SegmentNaturalAccelerations.from_components(
+    Qddot1 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([1, 2, 3]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 8, 9]),
@@ -61,13 +61,13 @@ def test_concatenate():
 
 
 def test_concatenate_accelerations():
-    Qddot1 = SegmentNaturalAccelerations.from_components(
+    Qddot1 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([1, 2, 3]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 8, 9]),
         rpddot=np.array([10, 11, 12]),
     )
-    Qddot2 = SegmentNaturalAccelerations.from_components(
+    Qddot2 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([11, 22, 33]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 82, 9]),
@@ -109,19 +109,19 @@ def test_NaturalCoordinatesConstructor():
 
 # do the same tests for NaturalAccelerations and SegmentNaturalAccelerations
 def test_NaturalAccelerationsConstructor():
-    Qddot1 = SegmentNaturalAccelerations.from_components(
+    Qddot1 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([1, 2, 3]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 8, 9]),
         rpddot=np.array([10, 11, 12]),
     )
-    Qddot2 = SegmentNaturalAccelerations.from_components(
+    Qddot2 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([11, 22, 33]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 82, 9]),
         rpddot=np.array([110, 11, 12]),
     )
-    Qddot = NaturalAccelerations.from_qddoti((Qddot1, Qddot2))
+    Qddot = bionc_np.NaturalAccelerations.from_qddoti((Qddot1, Qddot2))
     np.testing.assert_equal(Qddot.uddot(0), np.array([1, 2, 3]))
     np.testing.assert_equal(Qddot.uddot(1), np.array([11, 22, 33]))
     np.testing.assert_equal(Qddot.vector(0), Qddot1)

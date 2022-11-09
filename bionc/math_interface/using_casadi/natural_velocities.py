@@ -60,19 +60,19 @@ class SegmentNaturalVelocities(MX):
 
     @property
     def udot(self):
-        return self[0:3].to_array()
+        return self[0:3]
 
     @property
     def rpdot(self):
-        return self[3:6].to_array()
+        return self[3:6]
 
     @property
     def rddot(self):
-        return self[6:9].to_array()
+        return self[6:9]
 
     @property
     def wdot(self):
-        return self[9:12].to_array()
+        return self[9:12]
 
     @property
     def vdot(self):
@@ -142,4 +142,4 @@ class NaturalVelocities(MX):
 
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
-        return SegmentNaturalVelocities(self[array_idx].to_array())
+        return SegmentNaturalVelocities(self[array_idx])

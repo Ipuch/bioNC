@@ -3,7 +3,7 @@ import numpy as np
 
 
 from .utils import TestUtils
-from bionc import SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities, NaturalVelocities
+from bionc import SegmentNaturalVelocities, NaturalVelocities
 from bionc import bionc_numpy as bionc_np
 
 
@@ -772,25 +772,25 @@ def test_biomech_model():
     )
 
     # Test rigid body constraint jacobian derivative
-    Qdot1 = SegmentNaturalVelocities.from_components(
+    Qdot1 = bionc_np.SegmentNaturalVelocities.from_components(
         udot=[1, 2, 3.05],
         rpdot=[1.1, 1, 3.1],
         rddot=[1.2, 2, 4.1],
         wdot=[1.3, 2, 5.1],
     )
-    Qdot2 = SegmentNaturalVelocities.from_components(
+    Qdot2 = bionc_np.SegmentNaturalVelocities.from_components(
         udot=[1.4, 2, 3.2],
         rpdot=[1.5, 1, 3.2],
         rddot=[1.6, 2, 4.2],
         wdot=[1.7, 2, 5.2],
     )
-    Qdot3 = SegmentNaturalVelocities.from_components(
+    Qdot3 = bionc_np.SegmentNaturalVelocities.from_components(
         udot=[1.8, 2, 3.3],
         rpdot=[1.9, 1, 3.3],
         rddot=[2.1, 2, 4.3],
         wdot=[2.2, 2, 5.3],
     )
-    Qdot = NaturalVelocities.from_qdoti((Qdot1, Qdot2, Qdot3))
+    Qdot = bionc_np.NaturalVelocities.from_qdoti((Qdot1, Qdot2, Qdot3))
 
     np.testing.assert_array_almost_equal(
         natural_model.rigid_body_constraint_jacobian_derivative(Qdot),

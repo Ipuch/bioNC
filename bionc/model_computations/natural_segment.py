@@ -5,10 +5,10 @@ from numpy import cos, sin, matmul, eye, zeros, sum
 from numpy.linalg import inv
 
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
-from bionc.math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates
-from ..utils.natural_velocities import SegmentNaturalVelocities
-from ..utils.natural_accelerations import SegmentNaturalAccelerations
-from ..utils.homogenous_transform import HomogeneousTransform
+from ..math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from ..math_interface.using_casadi.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from ..math_interface.using_casadi.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from ..math_interface.using_casadi.homogenous_transform import HomogeneousTransform
 from ..model_computations.natural_marker import SegmentMarker
 
 

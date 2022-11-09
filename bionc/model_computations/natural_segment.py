@@ -9,7 +9,6 @@ from ..utils.natural_coordinates import SegmentNaturalCoordinates
 from ..utils.natural_velocities import SegmentNaturalVelocities
 from ..utils.natural_accelerations import SegmentNaturalAccelerations
 from ..utils.homogenous_transform import HomogeneousTransform
-from ..model_computations.natural_axis import Axis
 from ..model_computations.natural_marker import SegmentMarker, Marker
 
 
@@ -604,7 +603,7 @@ class NaturalSegment:
         Gi = self.mass_matrix
         Kr = self.rigid_body_constraint_jacobian(Qi)
         Krdot = self.rigid_body_constraint_jacobian_derivative(Qdoti)
-        biais = np.matmul(Krdot, Qdoti.vector)
+        biais = Krdot @ Qdoti.vector
 
         A = zeros((18, 18))
         A[0:12, 0:12] = Gi

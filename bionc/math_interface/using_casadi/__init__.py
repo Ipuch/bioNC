@@ -1,1 +1,1 @@
-from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates

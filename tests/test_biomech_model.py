@@ -3,7 +3,9 @@ import numpy as np
 
 
 from .utils import TestUtils
-from bionc import SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities, NaturalVelocities
+from bionc import SegmentNaturalCoordinates, NaturalCoordinates, \
+    SegmentNaturalVelocities, NaturalVelocities
+from bionc import bionc_numpy as bionc_np
 
 
 def test_biomech_model():
@@ -29,26 +31,26 @@ def test_biomech_model():
     assert natural_model.nb_Qddot() == 36
 
     # Test rigid body constraints
-    Q1 = SegmentNaturalCoordinates.from_components(
+    Q1 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=[1, 2, 3.05],
         rp=[1.1, 1, 3.1],
         rd=[1.2, 2, 4.1],
         w=[1.3, 2, 5.1],
     )
-    Q2 = SegmentNaturalCoordinates.from_components(
+    Q2 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=[1.4, 2, 3.2],
         rp=[1.5, 1, 3.2],
         rd=[1.6, 2, 4.2],
         w=[1.7, 2, 5.2],
     )
-    Q3 = SegmentNaturalCoordinates.from_components(
+    Q3 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=[1.8, 2, 3.3],
         rp=[1.9, 1, 3.3],
         rd=[2.1, 2, 4.3],
         w=[2.2, 2, 5.3],
     )
 
-    Q = NaturalCoordinates.from_qi((Q1, Q2, Q3))
+    Q = bionc_np.NaturalCoordinates.from_qi((Q1, Q2, Q3))
 
     np.testing.assert_array_almost_equal(
         natural_model.rigid_body_constraints(Q),

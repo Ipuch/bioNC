@@ -61,7 +61,7 @@ class NaturalSegmentTemplate:
         SegmentNaturalCoordinates
         The Segment Natural Coordinates Q (12 x n_frames)
         """
-
+        from ..math_interface.using_numpy import SegmentNaturalCoordinates
         self.Q = SegmentNaturalCoordinates.from_components(
             u=self.u_axis.to_axis(data, kinematic_chain).axis()[:3, :],
             rp=self.proximal_point.to_marker(data, kinematic_chain).position[:3, :],

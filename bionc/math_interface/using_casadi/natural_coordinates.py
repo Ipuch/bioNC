@@ -1,3 +1,4 @@
+import numpy as np
 from casadi import MX, vertcat
 from typing import Union
 
@@ -132,54 +133,62 @@ class SegmentNaturalCoordinates(MX):
     #     return interpolate_natural_vector(vnop_array(vector - self.rp, self.u, self.v, self.w))
 
 
-# class NaturalCoordinates(np.ndarray):
-#     def __new__(cls, input_array: np.ndarray):
-#         """
-#         Create a new instance of the class.
-#         """
-#
-#         return np.asarray(input_array).view(cls)
-#
-#     @classmethod
-#     def from_qi(cls, tuple_of_Q: tuple):
-#         """
-#         Constructor of the class.
-#         """
-#         if not isinstance(tuple_of_Q, tuple):
-#             raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
-#
-#         for Q in tuple_of_Q:
-#             if not isinstance(Q, SegmentNaturalCoordinates):
-#                 raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
-#
-#         input_array = np.concatenate(tuple_of_Q, axis=0)
-#         return cls(input_array)
-#
-#     def to_array(self):
-#         return np.array(self).squeeze()
-#
-#     def nb_qi(self):
-#         return self.shape[0] // 12
-#
-#     def u(self, segment_idx: int):
-#         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[0:3]
-#         return self[array_idx, :].to_array()
-#
-#     def rp(self, segment_idx: int):
-#         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[3:6]
-#         return self[array_idx, :].to_array()
-#
-#     def rd(self, segment_idx: int):
-#         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[6:9]
-#         return self[array_idx, :].to_array()
-#
-#     def w(self, segment_idx: int):
-#         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[9:12]
-#         return self[array_idx, :].to_array()
-#
-#     def v(self, segment_idx: int):
-#         return self.rp(segment_idx) - self.rd(segment_idx)
-#
-#     def vector(self, segment_idx: int):
-#         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
-#         return SegmentNaturalCoordinates(self[array_idx, :].to_array())
+class NaturalCoordinates(MX):
+    def __new__(cls, input_array: MX):
+        """
+        Create a new instance of the class.
+        """
+
+        if input_array.shape[0] % 12 != 0:
+            raise ValueError("input_array must be a column vector of size 12 x n elements")
+
+        obj = MX.__new__(cls)
+
+        return obj
+
+    @classmethod
+    def from_qi(cls, tuple_of_Q: tuple):
+        """
+        Constructor of the class.
+        """
+        if not isinstance(tuple_of_Q, tuple):
+            raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+
+        for Q in tuple_of_Q:
+            if not isinstance(Q, SegmentNaturalCoordinates):
+                raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+
+        input_array = vertcat(*tuple_of_Q)
+        return cls(input_array)
+
+    def to_array(self):
+        return self
+
+    def nb_qi(self):
+        return self.shape[0] // 12
+
+    def u(self, segment_idx: int):
+        array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[0:3]
+        return self[array_idx, :]
+
+    def rp(self, segment_idx: int):
+        array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[3:6]
+        return self[array_idx, :]
+
+    def rd(self, segment_idx: int):
+        array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[6:9]
+        return self[array_idx, :]
+
+    def w(self, segment_idx: int):
+        array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[9:12]
+        return self[array_idx, :]
+
+    def v(self, segment_idx: int):
+        return self.rp(segment_idx) - self.rd(segment_idx)
+
+    def vector(self, segment_idx: int = None):
+        if segment_idx is None:
+            return self[:]
+        else:
+            array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12).tolist()
+            return SegmentNaturalCoordinates.MX(self[array_idx])

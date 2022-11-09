@@ -7,12 +7,13 @@ from bionc import (
     SegmentNaturalVelocities,
     NaturalAccelerations,
     SegmentNaturalAccelerations,
+    bionc_numpy as bionc_np,
 )
 
 
 def test_SegmentNaturalCoordinatesCreator():
 
-    Qi = SegmentNaturalCoordinates.from_components(
+    Qi = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([0, 0, 0]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
@@ -42,13 +43,13 @@ def test_NaturalAccelerationsCreator():
 
 
 def test_concatenate():
-    Q1 = SegmentNaturalCoordinates.from_components(
+    Q1 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([1, 2, 3]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
         w=np.array([10, 11, 12]),
     )
-    Q2 = SegmentNaturalCoordinates.from_components(
+    Q2 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([11, 22, 33]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
@@ -83,20 +84,20 @@ def test_concatenate_accelerations():
 
 # Build a class called GeneralizedCoordinates to handle the concatenation of SegmentGeneralizedCoordinates
 def test_NaturalCoordinatesConstructor():
-    Q1 = SegmentNaturalCoordinates.from_components(
+    Q1 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([1, 2, 3]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
         w=np.array([10, 11, 12]),
     )
     print(Q1.v)
-    Q2 = SegmentNaturalCoordinates.from_components(
+    Q2 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([11, 22, 33]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
         w=np.array([10, 11, 12]),
     )
-    Q = NaturalCoordinates.from_qi((Q1, Q2))
+    Q = bionc_np.NaturalCoordinates.from_qi((Q1, Q2))
     np.testing.assert_equal(Q.u(0), np.array([1, 2, 3]))
     np.testing.assert_equal(Q.u(1), np.array([11, 22, 33]))
     np.testing.assert_equal(Q.v(0), -np.array([7, 8, 9]) + np.array([4, 5, 6]))

@@ -2,6 +2,7 @@ from bionc import (
     NaturalSegment,
     SegmentMarker,
     SegmentNaturalCoordinates,
+    bionc_numpy as bionc_np,
 )
 import numpy as np
 import pytest
@@ -61,7 +62,7 @@ def test_marker_features():
     my_segment.add_marker(marker1)
     my_segment.add_marker(marker2)
 
-    Qi = SegmentNaturalCoordinates.from_components(
+    Qi = bionc_np.SegmentNaturalCoordinates.from_components(
         u=[1, 2, 3],
         rp=[1, 1, 3],
         rd=[1, 2, 4],

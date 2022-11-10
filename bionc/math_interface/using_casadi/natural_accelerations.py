@@ -8,12 +8,12 @@ class SegmentNaturalAccelerations(MX):
     This class is made to handle Generalized Coordinates of a Segment
     """
 
-    def __new__(cls, input_array: Union[MX, list, tuple]):
+    def __new__(cls, input_array: MX):
         """
         Create a new instance of the class.
         """
 
-        obj = np.asarray(input_array).view(cls)
+        obj = MX.__new__(cls)
 
         return obj
 
@@ -124,19 +124,19 @@ class NaturalAccelerations(MX):
 
     def uddot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[0:3]
-        return self[array_idx].to_array()
+        return self[array_idx]
 
     def rpddot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[3:6]
-        return self[array_idx].to_array()
+        return self[array_idx]
 
     def rdddot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[6:9]
-        return self[array_idx].to_array()
+        return self[array_idx]
 
     def wddot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[9:12]
-        return self[array_idx].to_array()
+        return self[array_idx]
 
     def vddot(self, segment_idx: int):
         return self.rpddot(segment_idx) - self.rdddot(segment_idx)

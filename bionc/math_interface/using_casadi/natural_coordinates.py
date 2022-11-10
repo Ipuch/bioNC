@@ -191,4 +191,4 @@ class NaturalCoordinates(MX):
             return self[:]
         else:
             array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12).tolist()
-            return SegmentNaturalCoordinates.MX(self[array_idx])
+            return SegmentNaturalCoordinates(self[array_idx])

@@ -53,7 +53,7 @@ def test_concatenate():
     )
 
     # Methods such as u, v, w
-    # of SegmentGeneralizedCoordinatesInterface are not inherited if Q1 and Q2 are concatenated with numpy method
+    # of SegmentNaturalCoordinatesInterface are not inherited if Q1 and Q2 are concatenated with numpy method
     Q = np.concatenate((Q1, Q2), axis=0)
     # this would raise an error
     with pytest.raises(AttributeError, match="'numpy.ndarray' object has no attribute 'u'"):
@@ -78,7 +78,7 @@ def test_concatenate_accelerations():
         Qddot.uddot
 
 
-# Build a class called GeneralizedCoordinates to handle the concatenation of SegmentGeneralizedCoordinates
+# Build a class called GeneralizedCoordinates to handle the concatenation of SegmentNaturalCoordinates
 def test_NaturalCoordinatesConstructor():
     Q1 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([1, 2, 3]),

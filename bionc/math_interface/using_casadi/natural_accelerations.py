@@ -107,11 +107,11 @@ class NaturalAccelerations(MX):
         Constructor of the class
         """
         if not isinstance(tuple_of_Q, tuple):
-            raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+            raise ValueError("tuple_of_Q must be a tuple of SegmentNaturalAccelerations")
 
         for Q in tuple_of_Q:
             if not isinstance(Q, SegmentNaturalAccelerations):
-                raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+                raise ValueError("tuple_of_Q must be a tuple of SegmentNaturalAccelerations")
 
         input_array = vertcat(*tuple_of_Q)
         return cls(input_array)

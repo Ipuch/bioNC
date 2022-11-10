@@ -106,11 +106,11 @@ class NaturalVelocities(MX):
         Create a new instance of the class.
         """
         if not isinstance(tuple_of_Q, tuple):
-            raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+            raise ValueError("tuple_of_Q must be a tuple of SegmentNaturalVelocities")
 
         for Q in tuple_of_Q:
             if not isinstance(Q, SegmentNaturalVelocities):
-                raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+                raise ValueError("tuple_of_Q must be a tuple of SegmentNaturalVelocities")
 
         input_array = vertcat(*tuple_of_Q)
         return cls(input_array)
@@ -123,19 +123,19 @@ class NaturalVelocities(MX):
 
     def udot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[0:3]
-        return self[array_idx].to_array()
+        return self[array_idx]
 
     def rpdot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[3:6]
-        return self[array_idx].to_array()
+        return self[array_idx]
 
     def rddot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[6:9]
-        return self[array_idx].to_array()
+        return self[array_idx]
 
     def wdot(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)[9:12]
-        return self[array_idx].to_array()
+        return self[array_idx]
 
     def vdot(self, segment_idx: int):
         return self.rpdot(segment_idx) - self.rddot(segment_idx)

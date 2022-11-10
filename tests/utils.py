@@ -1,6 +1,7 @@
 from typing import Any
 from pathlib import Path
 import importlib.util
+from casadi import MX, Function
 
 
 class TestUtils:
@@ -18,3 +19,26 @@ class TestUtils:
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         return module
+
+    @staticmethod
+    def to_casadi_func(mx: MX):
+        return Function(
+            "f",
+            [],
+            [mx],
+            [],
+            ["f"],
+        ).expand()
+
+    @staticmethod
+    def mx_to_array(mx: MX):
+        """
+        Convert a casadi MX to a numpy array if it is only numeric values
+        """
+        return Function(
+            "f",
+            [],
+            [mx],
+            [],
+            ["f"],
+        ).expand()()["f"].toarray().squeeze()

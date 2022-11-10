@@ -151,11 +151,11 @@ class NaturalCoordinates(np.ndarray):
         Constructor of the class.
         """
         if not isinstance(tuple_of_Q, tuple):
-            raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+            raise ValueError("tuple_of_Q must be a tuple of SegmentNaturalCoordinates")
 
         for Q in tuple_of_Q:
             if not isinstance(Q, SegmentNaturalCoordinates):
-                raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+                raise ValueError("tuple_of_Q must be a tuple of SegmentNaturalCoordinates")
 
         input_array = np.concatenate(tuple_of_Q, axis=0)
         return cls(input_array)

@@ -100,11 +100,11 @@ class NaturalVelocities(np.ndarray):
         Create a new instance of the class.
         """
         if not isinstance(tuple_of_Q, tuple):
-            raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+            raise ValueError("tuple_of_Q must be a tuple of SegmentNaturalVelocities")
 
         for Q in tuple_of_Q:
             if not isinstance(Q, SegmentNaturalVelocities):
-                raise ValueError("tuple_of_Q must be a tuple of SegmentGeneralizedCoordinates")
+                raise ValueError("tuple_of_Q must be a tuple of SegmentNaturalVelocities")
 
         input_array = np.concatenate(tuple_of_Q, axis=0)
         return cls(input_array)

@@ -13,9 +13,6 @@ class HomogeneousTransform(MX):
         Create a new instance of the class.
         """
 
-        if not isinstance(input_array, MX):
-            raise TypeError("input_array must be a MX")
-
         if input_array.shape != (4, 4):
             raise ValueError("input_array must be a 4x4 array")
 
@@ -39,14 +36,24 @@ class HomogeneousTransform(MX):
         t: MX
             translation vector, a 3x1 array
         """
+
+        if x is None:
+            raise ValueError("u must be a numpy array (3x1) or a list of 3 elements")
+        if y is None:
+            raise ValueError("rp must be a numpy array (3x1) or a list of 3 elements")
+        if z is None:
+            raise ValueError("rd must be a numpy array (3x1) or a list of 3 elements")
+        if t is None:
+            raise ValueError("w must be a numpy array (3x1) or a list of 3 elements")
+
         if not isinstance(x, MX):
-            raise TypeError("x must be a array")
+            x = MX(x)
         if not isinstance(y, MX):
-            raise TypeError("y must be a array")
+            y = MX(y)
         if not isinstance(z, MX):
-            raise TypeError("z must be a array")
+            z = MX(z)
         if not isinstance(t, MX):
-            raise TypeError("t must be a array")
+            t = MX(t)
 
         if x.shape != (3, 1):
             raise ValueError("x must be a 3x1 array")
@@ -73,10 +80,15 @@ class HomogeneousTransform(MX):
         translation: MX
             A 3x1 translation vector
         """
+        if rotation is None:
+            raise ValueError("rotation must be a 3x3 array")
+        if translation is None:
+            raise ValueError("translation must be a 3x1 array")
+
         if not isinstance(rotation, MX):
-            raise TypeError("r must be a array")
+            MX(rotation)
         if not isinstance(translation, MX):
-            raise TypeError("t must be a array")
+            MX(translation)
 
         if rotation.shape != (3, 3):
             raise ValueError("r must be a 3x3 array")
@@ -97,11 +109,11 @@ class HomogeneousTransform(MX):
 
     @property
     def rot(self):
-        return self[:3, :3].to_array()
+        return self[:3, :3]
 
     @property
     def translation(self):
-        return self[3, 0:3].to_array()
+        return self[3, 0:3]
 
     def inv(self):
         """

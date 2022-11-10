@@ -35,10 +35,15 @@ class TestUtils:
         """
         Convert a casadi MX to a numpy array if it is only numeric values
         """
-        return Function(
-            "f",
-            [],
-            [mx],
-            [],
-            ["f"],
-        ).expand()()["f"].toarray().squeeze()
+        return (
+            Function(
+                "f",
+                [],
+                [mx],
+                [],
+                ["f"],
+            )
+            .expand()()["f"]
+            .toarray()
+            .squeeze()
+        )

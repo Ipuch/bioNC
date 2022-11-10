@@ -68,28 +68,35 @@ class NaturalVelocities(Protocol):
 
     def nb_qdoti(self):
         """This function returns the number of qi"""
+
     ...
 
     def udot(self, segment_index):
         """This property returns the u vector of the natural coordinates"""
+
     ...
 
     def rpdot(self, segment_index):
         """This property returns the rp vector of the natural coordinates"""
+
     ...
 
     def rddot(self, segment_index):
         """This property returns the rd vector of the natural coordinates"""
+
     ...
 
     def wdot(self, segment_index):
         """This property returns the w vector of the natural coordinates"""
+
     ...
 
     def vdot(self, segment_index):
         """This property returns the v vector of the natural coordinates"""
+
     ...
 
     def vector(self):
         """This property returns the vector of the natural coordinates"""
+
     ...

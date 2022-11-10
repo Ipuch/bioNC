@@ -59,4 +59,3 @@ def to_natural_vector(interpolation_matrix: np.ndarray) -> np.ndarray:
     vector[2] = interpolation_matrix[0, 9]
 
     return vector
-

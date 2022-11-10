@@ -7,6 +7,7 @@ class HomogeneousTransform(MX):
     """
     Homogenous transform class
     """
+
     def __new__(cls, input_array: MX):
         """
         Create a new instance of the class.

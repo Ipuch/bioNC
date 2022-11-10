@@ -87,28 +87,35 @@ class NaturalCoordinates(Protocol):
 
     def nb_qi(self):
         """This function returns the number of qi"""
+
     ...
 
     def u(self, segment_index):
         """This property returns the u vector of the natural coordinates"""
+
     ...
 
     def rp(self, segment_index):
         """This property returns the rp vector of the natural coordinates"""
+
     ...
 
     def rd(self, segment_index):
         """This property returns the rd vector of the natural coordinates"""
+
     ...
 
     def w(self, segment_index):
         """This property returns the w vector of the natural coordinates"""
+
     ...
 
     def v(self, segment_index):
         """This property returns the v vector of the natural coordinates"""
+
     ...
 
     def vector(self):
         """This property returns the vector of the natural coordinates"""
+
     ...

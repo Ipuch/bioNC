@@ -122,7 +122,7 @@ def test_natural_velocities_numpy():
     qdot = np.concatenate((qdot1, qdot2), axis=0)
     with pytest.raises(AttributeError, match="'numpy.ndarray' object has no attribute 'udot'"):
         qdot.udot
-        
+
 
 def test_natural_velocities_casadi():
     # -------------------------------------------------------------------------------------------------------------------
@@ -235,4 +235,3 @@ def test_natural_velocities_casadi():
     np.testing.assert_equal(TestUtils.mx_to_array(qdot.vector(1).rpdot), np.array([110, 11, 12]))
     np.testing.assert_equal(TestUtils.mx_to_array(qdot.vector(0).vdot), np.array([3, 3, 3]))
     np.testing.assert_equal(TestUtils.mx_to_array(qdot.vector(1).vdot), np.array([103, -71, 3]))
-

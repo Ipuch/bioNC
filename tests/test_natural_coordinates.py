@@ -166,6 +166,7 @@ def test_NaturalCoordinates_casadi():
     np.testing.assert_equal(TestUtils.mx_to_array(Q.vector(1).v), -np.array([7, 8, 9]) + np.array([4, 5, 6]))
     np.testing.assert_equal(Q.nb_qi(), 2)
 
+
 # do the same tests for NaturalAccelerations and SegmentNaturalAccelerations
 def test_NaturalAccelerations():
     Qddot1 = bionc_np.SegmentNaturalAccelerations.from_components(

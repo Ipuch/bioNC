@@ -2,9 +2,10 @@ import numpy as np
 
 from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from bionc.bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from ..protocols.biomechanical_model import AbstractBiomechanicalModel
 
 
-class BiomechanicalModel:
+class BiomechanicalModel(AbstractBiomechanicalModel):
     def __init__(self):
         from .natural_segment import NaturalSegment  # Imported here to prevent from circular imports
         from .joint import Joint  # Imported here to prevent from circular imports

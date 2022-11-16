@@ -1,8 +1,8 @@
 import pytest
 import numpy as np
 
-from bionc import SegmentMarker
-from bionc import bionc_numpy as bionc_np
+from bionc.bionc_casadi import SegmentMarker, SegmentNaturalCoordinates
+from .utils import TestUtils
 
 
 def test_segment_marker():
@@ -55,8 +55,8 @@ def test_segment_marker():
         is_anatomical=False,
     )
 
-    np.testing.assert_array_equal(segment_marker.position, np.ones(3))
-    np.testing.assert_array_equal(
+    TestUtils.mx_assert_equal(segment_marker.position, np.ones(3))
+    TestUtils.mx_assert_equal(
         segment_marker.interpolation_matrix,
         np.array(
             [
@@ -70,7 +70,7 @@ def test_segment_marker():
     assert not segment_marker.is_anatomical
 
     marker_location = np.array([1, 2, 3])
-    Qi = bionc_np.SegmentNaturalCoordinates.from_components(
+    Qi = SegmentNaturalCoordinates.from_components(
         u=[1, 2, 3],
         rp=[1, 1, 3],
         rd=[1, 2, 4],
@@ -78,10 +78,10 @@ def test_segment_marker():
     )
 
     constraint = segment_marker.constraint(marker_location=marker_location, Qi=Qi)
-    np.testing.assert_array_equal(constraint, np.array([-2, -2, -7]))
+    TestUtils.mx_assert_equal(constraint, np.array([-2, -2, -7]))
 
     constraint = segment_marker.constraint(marker_location=marker_location[:, np.newaxis], Qi=Qi)
-    np.testing.assert_array_equal(constraint, np.array([-2, -2, -7]))
+    TestUtils.mx_assert_equal(constraint, np.array([-2, -2, -7]))
 
     with pytest.raises(ValueError, match="The marker location must be a 3d vector"):
         segment_marker.constraint(marker_location=np.zeros(2), Qi=Qi)

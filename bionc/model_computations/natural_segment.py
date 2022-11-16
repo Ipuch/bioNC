@@ -235,7 +235,7 @@ class NaturalSegment:
                     ),
                 ],
             ]
-        )
+        ).T
 
     @property
     def transformation_matrix(self) -> np.ndarray:
@@ -311,19 +311,14 @@ class NaturalSegment:
             Qi = SegmentNaturalCoordinates(Qi)
 
         phir = zeros(6)
-        # phir[0] = sum(Qi.u**2, 0) - 1
-        # phir[1] = sum(Qi.u * (Qi.rp - Qi.rd), 0) - self.length * cos(self.gamma)
-        # phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-        # phir[3] = sum((Qi.rp - Qi.rd) ** 2, 0) - self.length**2
-        # phir[4] = sum((Qi.rp - Qi.rd) * Qi.w, 0) - self.length * cos(self.alpha)
-        # phir[5] = sum(Qi.w**2, 0) - 1
+        u, v, w = Qi.to_uvw()
 
-        phir[0] = sum(Qi.u**2, 0) - 1
-        phir[1] = sum(Qi.u * Qi.v, 0) - self.length * cos(self.gamma)
-        phir[2] = sum(Qi.u * Qi.w, 0) - cos(self.beta)
-        phir[3] = sum(Qi.v**2, 0) - self.length**2
-        phir[4] = sum(Qi.v * Qi.w, 0) - self.length * cos(self.alpha)
-        phir[5] = sum(Qi.w**2, 0) - 1
+        phir[0] = sum(u**2, 0) - 1
+        phir[1] = sum(u * v, 0) - self.length * cos(self.gamma)
+        phir[2] = sum(u * Qi.w, 0) - cos(self.beta)
+        phir[3] = sum(v**2, 0) - self.length**2
+        phir[4] = sum(v * w, 0) - self.length * cos(self.alpha)
+        phir[5] = sum(w**2, 0) - 1
 
         return phir
 
@@ -340,6 +335,8 @@ class NaturalSegment:
         # initialisation
         Kr = zeros((6, 12))
 
+        if not isinstance(Qi, SegmentNaturalCoordinates):
+            Qi = SegmentNaturalCoordinates(Qi)
         u, v, w = Qi.to_uvw()
 
         Kr[0, 0:3] = 2 * u
@@ -361,6 +358,20 @@ class NaturalSegment:
         Kr[5, 9:12] = 2 * w
 
         return Kr
+
+    def rigid_body_constraint_derivative(
+        self, Qi: SegmentNaturalCoordinates, Qdoti: SegmentNaturalVelocities
+    ) -> np.ndarray:
+        """
+        This function returns the derivative of the rigid body constraints denoted Phi_r_dot
+
+        Returns
+        -------
+        np.ndarray
+            Derivative of the rigid body constraints [6 x 1 x N_frame]
+        """
+
+        return self.rigid_body_constraint_jacobian(Qi) @ np.array(Qdoti)
 
     @staticmethod
     def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> np.ndarray:
@@ -412,16 +423,15 @@ class NaturalSegment:
             Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
         """
         # todo: verify the formula
-        middle_block = (
-            self.inertia
-            + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * eye(3)
-            - np.dot(self.center_of_mass.T, self.center_of_mass)
+        middle_block = self.inertia + self.mass * (
+            self.center_of_mass.T @ self.center_of_mass * eye(3)
+            - self.center_of_mass[:, np.newaxis] @ self.center_of_mass[:, np.newaxis].T
         )
 
         Binv = inv(self.transformation_matrix)
-        Binv_transpose = np.transpose(Binv)
+        Binv_transpose = Binv.T
 
-        return matmul(Binv, matmul(middle_block, Binv_transpose))
+        return Binv @ (middle_block @ Binv_transpose)
 
     @property
     def pseudo_inertia_matrix(self) -> np.ndarray:
@@ -446,7 +456,7 @@ class NaturalSegment:
         np.ndarray
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return matmul(inv(self.transformation_matrix), self.center_of_mass)
+        return inv(self.transformation_matrix) @ self.center_of_mass
 
     @property
     def center_of_mass_in_natural_coordinates_system(self) -> np.ndarray:
@@ -568,12 +578,13 @@ class NaturalSegment:
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return np.matmul(self.interpolation_matrix_center_of_mass.T * self.mass, np.array([0, 0, -9.81]))
+        return self.interpolation_matrix_center_of_mass.T * self.mass @ np.array([0, 0, -9.81])
 
     def differential_algebraic_equation(
         self,
         Qi: Union[SegmentNaturalCoordinates, np.ndarray],
         Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
+        stabilization: dict = None,
     ) -> Tuple[SegmentNaturalAccelerations, np.ndarray]:
         """
         This function returns the differential algebraic equation of the segment
@@ -584,6 +595,12 @@ class NaturalSegment:
             Natural coordinates of the segment
         Qdoti: SegmentNaturalCoordinates
             Derivative of the natural coordinates of the segment
+        stabilization: dict
+            Dictionary containing the Baumgarte's stabilization parameters:
+            * alpha: float
+                Stabilization parameter for the constraint
+            * beta: float
+                Stabilization parameter for the constraint derivative
 
         Returns
         -------
@@ -604,7 +621,12 @@ class NaturalSegment:
         Gi = self.mass_matrix
         Kr = self.rigid_body_constraint_jacobian(Qi)
         Krdot = self.rigid_body_constraint_jacobian_derivative(Qdoti)
-        biais = np.matmul(Krdot, Qdoti.vector)
+        biais = -Krdot @ Qdoti.vector
+
+        if stabilization is not None:
+            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+                "beta"
+            ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
         A = zeros((18, 18))
         A[0:12, 0:12] = Gi

@@ -114,29 +114,29 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     left_hip_joint = lambda m, bio: harrington2007(m["RFWT"], m["LFWT"], m["RBWT"], m["LBWT"])[1]
     right_knee_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RKNI", "RKNE")
     right_ankle_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI")
-    #m['R_HJC'] = right_hip_joint
-    #m['L_HJC'] = left_hip_joint
+    # m['R_HJC'] = right_hip_joint
+    # m['L_HJC'] = left_hip_joint
 
     model["PELVIS"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
-             u_axis=AxisTemplate(
-                 # from the middle of posterior illiac spine to the middle of anterior illiac spine
-                 start=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RBWT", "LBWT"),
-                 end=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RFWT", "LFWT"),
-             ),
-             # middle of the right and left posterior superior iliac spine
-             # or sacroiliac joint
-             proximal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RBWT", "LBWT"),
-             # Hip joint center projected in the sagittal plane of the pelvis ==> NO
-             # middle of the right and left hip joint center
-             # todo: how to compute the sagittal plane of the pelvis?
-             # We do not need it
-             distal_point=lambda m, bio: right_hip_joint(m, bio),
-             # normal to the sagittal plane of the pelvis
-             # todo
-             w_axis=AxisTemplate(start=left_hip_joint, end=right_hip_joint)
-         )
-     )
+            u_axis=AxisTemplate(
+                # from the middle of posterior illiac spine to the middle of anterior illiac spine
+                start=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RBWT", "LBWT"),
+                end=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RFWT", "LFWT"),
+            ),
+            # middle of the right and left posterior superior iliac spine
+            # or sacroiliac joint
+            proximal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RBWT", "LBWT"),
+            # Hip joint center projected in the sagittal plane of the pelvis ==> NO
+            # middle of the right and left hip joint center
+            # todo: how to compute the sagittal plane of the pelvis?
+            # We do not need it
+            distal_point=lambda m, bio: right_hip_joint(m, bio),
+            # normal to the sagittal plane of the pelvis
+            # todo
+            w_axis=AxisTemplate(start=left_hip_joint, end=right_hip_joint),
+        )
+    )
 
     model["THIGH"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(

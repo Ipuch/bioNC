@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from .natural_segment import NaturalSegment
-from bionc.math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 
 
 class JointBase(ABC):

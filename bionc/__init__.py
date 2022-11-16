@@ -22,7 +22,7 @@ from .model_computations import (
     BiomechanicalModel,
 )
 
-from .math_interface.math_interface import (
+from .math_interface import (
     zeros,
     eye,
     array,
@@ -31,14 +31,14 @@ from .math_interface.math_interface import (
     horzcat,
 )
 
-from .math_interface.protocols import natural_coordinates
-from .math_interface import using_casadi as bionc_casadi
-from .math_interface import using_numpy as bionc_numpy
+from .protocols import natural_coordinates
+from bionc import bionc_casadi
+from bionc import bionc_numpy
 
-from bionc.math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from bionc.math_interface.protocols.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
-from bionc.math_interface.protocols.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
-from bionc.math_interface.protocols.homogenous_transform import HomogeneousTransform
+from .protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from .protocols.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from .protocols.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from .protocols.homogenous_transform import HomogeneousTransform
 
 from casadi.casadi import MX as MX_type
 from numpy import ndarray

@@ -3,7 +3,7 @@ import numpy as np
 
 
 from .utils import TestUtils
-from bionc import SegmentNaturalVelocities, NaturalVelocities
+from bionc.bionc_numpy import SegmentNaturalVelocities, NaturalVelocities
 from bionc import bionc_numpy as bionc_np
 
 

@@ -5,10 +5,10 @@ from numpy import cos, sin, matmul, eye, zeros, sum
 from numpy.linalg import inv
 
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
-from ..math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..math_interface.using_casadi.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
-from ..math_interface.using_casadi.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
-from ..math_interface.using_casadi.homogenous_transform import HomogeneousTransform
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from ..bionc_casadi.homogenous_transform import HomogeneousTransform
 from ..model_computations.natural_marker import SegmentMarker
 
 
@@ -161,7 +161,7 @@ class NaturalSegment:
         tuple
             The parameters of the segment (alpha, beta, gamma, length)
         """
-        from ..math_interface.using_numpy import SegmentNaturalCoordinates
+        from ..bionc_numpy import SegmentNaturalCoordinates
 
         Q = SegmentNaturalCoordinates(Q)
 

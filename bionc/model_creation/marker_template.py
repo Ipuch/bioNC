@@ -10,7 +10,7 @@ from .protocols import Data
 from ..model_computations.natural_segment import NaturalSegment
 
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
-from bionc.math_interface.protocols.natural_coordinates import SegmentNaturalCoordinates
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 
 
 class MarkerTemplate:

@@ -3,8 +3,7 @@ import numpy as np
 
 
 from .utils import TestUtils
-from bionc.bionc_numpy import SegmentNaturalVelocities, NaturalVelocities
-from bionc import bionc_numpy as bionc_np
+from bionc.bionc_numpy import SegmentNaturalVelocities, NaturalVelocities, SegmentNaturalCoordinates, NaturalCoordinates
 
 
 def test_biomech_model():
@@ -33,19 +32,19 @@ def test_biomech_model():
     assert natural_model.nb_Qddot() == 48
 
     # Test rigid body constraints
-    Q1 = bionc_np.SegmentNaturalCoordinates.from_components(
+    Q1 = SegmentNaturalCoordinates.from_components(
         u=[1, 2, 3.05],
         rp=[1.1, 1, 3.1],
         rd=[1.2, 2, 4.1],
         w=[1.3, 2, 5.1],
     )
-    Q2 = bionc_np.SegmentNaturalCoordinates.from_components(
+    Q2 = SegmentNaturalCoordinates.from_components(
         u=[1.4, 2, 3.2],
         rp=[1.5, 1, 3.2],
         rd=[1.6, 2, 4.2],
         w=[1.7, 2, 5.2],
     )
-    Q3 = bionc_np.SegmentNaturalCoordinates.from_components(
+    Q3 = SegmentNaturalCoordinates.from_components(
         u=[1.8, 2, 3.3],
         rp=[1.9, 1, 3.3],
         rd=[2.1, 2, 4.3],
@@ -1303,19 +1302,19 @@ def test_biomech_model():
     )
 
     # Test rigid body constraint jacobian derivative
-    Qdot1 = bionc_np.SegmentNaturalVelocities.from_components(
+    Qdot1 = SegmentNaturalVelocities.from_components(
         udot=[1, 2, 3.05],
         rpdot=[1.1, 1, 3.1],
         rddot=[1.2, 2, 4.1],
         wdot=[1.3, 2, 5.1],
     )
-    Qdot2 = bionc_np.SegmentNaturalVelocities.from_components(
+    Qdot2 = SegmentNaturalVelocities.from_components(
         udot=[1.4, 2, 3.2],
         rpdot=[1.5, 1, 3.2],
         rddot=[1.6, 2, 4.2],
         wdot=[1.7, 2, 5.2],
     )
-    Qdot3 = bionc_np.SegmentNaturalVelocities.from_components(
+    Qdot3 = SegmentNaturalVelocities.from_components(
         udot=[1.8, 2, 3.3],
         rpdot=[1.9, 1, 3.3],
         rddot=[2.1, 2, 4.3],

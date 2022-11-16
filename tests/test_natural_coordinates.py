@@ -1,18 +1,18 @@
 import numpy as np
 import pytest
 from bionc import (
-    NaturalCoordinates,
-    SegmentNaturalCoordinates,
-    NaturalVelocities,
-    SegmentNaturalVelocities,
     NaturalAccelerations,
     SegmentNaturalAccelerations,
+    bionc_numpy as bionc_np,
+    bionc_casadi as bionc_mx,
 )
 
+from .utils import TestUtils
 
-def test_SegmentNaturalCoordinatesCreator():
 
-    Qi = SegmentNaturalCoordinates.from_components(
+def test_SegmentNaturalCoordinates():
+
+    Qi = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([0, 0, 0]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
@@ -28,7 +28,7 @@ def test_SegmentNaturalCoordinatesCreator():
 
 # accelerations
 def test_NaturalAccelerationsCreator():
-    Qddot1 = SegmentNaturalAccelerations.from_components(
+    Qddot1 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([1, 2, 3]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 8, 9]),
@@ -42,13 +42,13 @@ def test_NaturalAccelerationsCreator():
 
 
 def test_concatenate():
-    Q1 = SegmentNaturalCoordinates.from_components(
+    Q1 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([1, 2, 3]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
         w=np.array([10, 11, 12]),
     )
-    Q2 = SegmentNaturalCoordinates.from_components(
+    Q2 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([11, 22, 33]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
@@ -56,7 +56,7 @@ def test_concatenate():
     )
 
     # Methods such as u, v, w
-    # of SegmentGeneralizedCoordinatesInterface are not inherited if Q1 and Q2 are concatenated with numpy method
+    # of SegmentNaturalCoordinatesInterface are not inherited if Q1 and Q2 are concatenated with numpy method
     Q = np.concatenate((Q1, Q2), axis=0)
     # this would raise an error
     with pytest.raises(AttributeError, match="'numpy.ndarray' object has no attribute 'u'"):
@@ -64,13 +64,13 @@ def test_concatenate():
 
 
 def test_concatenate_accelerations():
-    Qddot1 = SegmentNaturalAccelerations.from_components(
+    Qddot1 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([1, 2, 3]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 8, 9]),
         rpddot=np.array([10, 11, 12]),
     )
-    Qddot2 = SegmentNaturalAccelerations.from_components(
+    Qddot2 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([11, 22, 33]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 82, 9]),
@@ -81,22 +81,22 @@ def test_concatenate_accelerations():
         Qddot.uddot
 
 
-# Build a class called GeneralizedCoordinates to handle the concatenation of SegmentGeneralizedCoordinates
-def test_NaturalCoordinatesConstructor():
-    Q1 = SegmentNaturalCoordinates.from_components(
+# Build a class called GeneralizedCoordinates to handle the concatenation of SegmentNaturalCoordinates
+def test_NaturalCoordinates():
+    Q1 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([1, 2, 3]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
         w=np.array([10, 11, 12]),
     )
     print(Q1.v)
-    Q2 = SegmentNaturalCoordinates.from_components(
+    Q2 = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([11, 22, 33]),
         rp=np.array([4, 5, 6]),
         rd=np.array([7, 8, 9]),
         w=np.array([10, 11, 12]),
     )
-    Q = NaturalCoordinates.from_qi((Q1, Q2))
+    Q = bionc_np.NaturalCoordinates.from_qi((Q1, Q2))
     np.testing.assert_equal(Q.u(0), np.array([1, 2, 3]))
     np.testing.assert_equal(Q.u(1), np.array([11, 22, 33]))
     np.testing.assert_equal(Q.v(0), -np.array([7, 8, 9]) + np.array([4, 5, 6]))
@@ -111,20 +111,20 @@ def test_NaturalCoordinatesConstructor():
 
 
 # do the same tests for NaturalAccelerations and SegmentNaturalAccelerations
-def test_NaturalAccelerationsConstructor():
-    Qddot1 = SegmentNaturalAccelerations.from_components(
+def test_NaturalAccelerations():
+    Qddot1 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([1, 2, 3]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 8, 9]),
         rpddot=np.array([10, 11, 12]),
     )
-    Qddot2 = SegmentNaturalAccelerations.from_components(
+    Qddot2 = bionc_np.SegmentNaturalAccelerations.from_components(
         uddot=np.array([11, 22, 33]),
         wddot=np.array([4, 5, 6]),
         rdddot=np.array([7, 82, 9]),
         rpddot=np.array([110, 11, 12]),
     )
-    Qddot = NaturalAccelerations.from_qddoti((Qddot1, Qddot2))
+    Qddot = bionc_np.NaturalAccelerations.from_qddoti((Qddot1, Qddot2))
     np.testing.assert_equal(Qddot.uddot(0), np.array([1, 2, 3]))
     np.testing.assert_equal(Qddot.uddot(1), np.array([11, 22, 33]))
     np.testing.assert_equal(Qddot.vector(0), Qddot1)

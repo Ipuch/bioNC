@@ -1,8 +1,8 @@
+from casadi import MX
 import numpy as np
-from numpy import eye
 
 
-def interpolate_natural_vector(vector: np.ndarray) -> np.ndarray:
+def interpolate_natural_vector(vector: np.ndarray | MX) -> MX:
     """
     This function converts a vector expressed in a non-orthogonal coordinate system
     to an interpolation matrix, denoted Ni, such as:
@@ -15,7 +15,7 @@ def interpolate_natural_vector(vector: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    interpolate_natural_vector: np.ndarray
+    interpolate_natural_vector: MX
         Interpolation  matrix [3 x 12], denoted Ni to get the location of the vector as linear combination of Q.
         vector in global frame = Ni * Qi
     """
@@ -23,16 +23,16 @@ def interpolate_natural_vector(vector: np.ndarray) -> np.ndarray:
     if vector.shape[0] != 3:
         raise ValueError("Vector must be 3x1")
 
-    interpolation_matrix = np.zeros((3, 12))
-    interpolation_matrix[0:3, 0:3] = vector[0] * eye(3)
-    interpolation_matrix[0:3, 3:6] = (1 + vector[1]) * eye(3)
-    interpolation_matrix[0:3, 6:9] = -vector[1] * eye(3)
-    interpolation_matrix[0:3, 9:12] = vector[2] * eye(3)
+    interpolation_matrix = MX.zeros((3, 12))
+    interpolation_matrix[0:3, 0:3] = vector[0] * MX.eye(3)
+    interpolation_matrix[0:3, 3:6] = (1 + vector[1]) * MX.eye(3)
+    interpolation_matrix[0:3, 6:9] = -vector[1] * MX.eye(3)
+    interpolation_matrix[0:3, 9:12] = vector[2] * MX.eye(3)
 
     return interpolation_matrix
 
 
-def to_natural_vector(interpolation_matrix: np.ndarray) -> np.ndarray:
+def to_natural_vector(interpolation_matrix: np.ndarray | MX) -> MX:
     """
     This function converts an interpolation matrix, denoted Ni, such as:
     Ni * Qi -> location in the global frame
@@ -46,19 +46,16 @@ def to_natural_vector(interpolation_matrix: np.ndarray) -> np.ndarray:
 
     Returns
     -------
-    np.ndarray
+    MX
         Vector in the natural coordinate system to interpolate (Pi, ui, vi, wi)
     """
 
     if interpolation_matrix.shape != (3, 12):
         raise ValueError("Interpolation matrix must be 3x12")
 
-    vector = np.zeros(3)
+    vector = MX.zeros(3)
     vector[0] = interpolation_matrix[0, 0]
     vector[1] = interpolation_matrix[0, 3] - 1
     vector[2] = interpolation_matrix[0, 9]
 
     return vector
-
-
-# test these two functions with pytest

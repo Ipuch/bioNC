@@ -1,9 +1,5 @@
-from .utils.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from .utils.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
-from .utils.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
-from .utils.homogenous_transform import HomogeneousTransform
-from .utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
-from .utils.natural_coordinates import vnop_array
+# from bionc.bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from .utils.vnop_array import vnop_array
 
 from .model_creation import (
     AxisTemplate,
@@ -16,12 +12,27 @@ from .model_creation import (
     Data,
     GenericDynamicModel,
 )
-from .model_computations import (
+from .bionc_numpy import (
     Axis,
     SegmentMarker,
     Marker,
-    Segment,
     NaturalSegment,
     InertiaParameters,
     BiomechanicalModel,
 )
+
+from .protocols import natural_coordinates
+from bionc import bionc_casadi
+from bionc import bionc_numpy
+
+from .protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from .protocols.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from .protocols.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from .protocols.homogenous_transform import HomogeneousTransform
+
+from casadi.casadi import MX as MX_type
+from numpy import ndarray
+
+# global variable to store the type of the math interface
+casadi_type = MX_type
+numpy_type = ndarray

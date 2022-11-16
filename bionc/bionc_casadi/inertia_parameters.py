@@ -3,9 +3,10 @@ from typing import Callable
 import numpy as np
 
 from .biomechanical_model import BiomechanicalModel
-from ..model_creation.protocols import Data
+from bionc.model_creation.protocols import Data
 
 
+# TODO: not used and tested yet
 class InertiaParameters:
     def __init__(
         self,

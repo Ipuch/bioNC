@@ -3,12 +3,7 @@ import numpy as np
 
 
 from .utils import TestUtils
-from bionc import (
-    SegmentNaturalCoordinates,
-    NaturalCoordinates,
-    SegmentNaturalVelocities,
-    NaturalVelocities,
-)
+from bionc.bionc_numpy import SegmentNaturalVelocities, NaturalVelocities, SegmentNaturalCoordinates, NaturalCoordinates
 
 
 def test_biomech_model():

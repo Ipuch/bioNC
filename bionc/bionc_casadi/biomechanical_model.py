@@ -1,11 +1,12 @@
 import numpy as np
+from casadi import MX
 
-from ..utils.natural_velocities import NaturalVelocities
-from ..utils.natural_coordinates import NaturalCoordinates
-from ..utils.natural_accelerations import NaturalAccelerations
+from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from .natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from ..protocols.biomechanical_model import AbstractBiomechanicalModel
 
 
-class BiomechanicalModel:
+class BiomechanicalModel(AbstractBiomechanicalModel):
     def __init__(self):
         from .natural_segment import NaturalSegment  # Imported here to prevent from circular imports
         from .joint import Joint  # Imported here to prevent from circular imports
@@ -54,41 +55,36 @@ class BiomechanicalModel:
     def nb_Qddot(self):
         return 12 * self.nb_segments()
 
-    def rigid_body_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
+    def rigid_body_constraints(self, Q: NaturalCoordinates) -> MX:
         """
         This function returns the rigid body constraints of all segments, denoted Phi_r
         as a function of the natural coordinates Q.
 
         Returns
         -------
-        np.ndarray
+        MX
             Rigid body constraints of the segment [6 * nb_segments, 1]
         """
 
-        if not isinstance(Q, NaturalCoordinates):
-            Q = NaturalCoordinates(Q)
-
-        Phi_r = np.zeros(6 * self.nb_segments())
+        Phi_r = MX.zeros(6 * self.nb_segments())
         for i, segment_name in enumerate(self.segments):
             idx = slice(6 * i, 6 * (i + 1))
             Phi_r[idx] = self.segments[segment_name].rigid_body_constraint(Q.vector(i))
 
         return Phi_r
 
-    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
+    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates) -> MX:
         """
         This function returns the rigid body constraints of all segments, denoted K_r
         as a function of the natural coordinates Q.
 
         Returns
         -------
-        np.ndarray
+        MX
             Rigid body constraints of the segment [6 * nb_segments, nbQ]
         """
-        if not isinstance(Q, NaturalCoordinates):
-            Q = NaturalCoordinates(Q)
 
-        K_r = np.zeros((6 * self.nb_segments(), Q.shape[0]))
+        K_r = MX.zeros((6 * self.nb_segments(), Q.shape[0]))
         for i, segment_name in enumerate(self.segments):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
@@ -96,7 +92,7 @@ class BiomechanicalModel:
 
         return K_r
 
-    def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
+    def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot
 
@@ -107,14 +103,11 @@ class BiomechanicalModel:
 
         Returns
         -------
-        np.ndarray
+        MX
             The derivative of the Jacobian matrix of the rigid body constraints [6, 12]
         """
 
-        if not isinstance(Qdot, NaturalVelocities):
-            Qdot = NaturalVelocities(Qdot)
-
-        Kr_dot = np.zeros((6 * self.nb_segments(), Qdot.shape[0]))
+        Kr_dot = MX.zeros((6 * self.nb_segments(), Qdot.shape[0]))
         for i, segment_name in enumerate(self.segments):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
@@ -130,10 +123,10 @@ class BiomechanicalModel:
 
         Returns
         -------
-        np.ndarray
+        MX
             generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
         """
-        G = np.zeros((12 * self.nb_segments(), 12 * self.nb_segments()))
+        G = MX.zeros((12 * self.nb_segments(), 12 * self.nb_segments()))
         for i, segment_name in enumerate(self.segments):
             Gi = self.segments[segment_name].mass_matrix
             if Gi is None:
@@ -152,7 +145,7 @@ class BiomechanicalModel:
 
         Returns
         -------
-        np.ndarray
+        MX
             generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
 
         """

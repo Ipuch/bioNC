@@ -1,12 +1,13 @@
 from typing import Callable
 
-from ..model_computations.natural_axis import Axis
 from .natural_axis_template import AxisTemplate
-from ..model_computations.biomechanical_model import BiomechanicalModel
-from ..utils.natural_coordinates import SegmentNaturalCoordinates
+from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
+
+# from ..utils.natural_coordinates import SegmentNaturalCoordinates
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from ..model_computations.natural_segment import NaturalSegment
+from ..bionc_numpy.natural_segment import NaturalSegment
 
 
 class NaturalSegmentTemplate:
@@ -59,6 +60,7 @@ class NaturalSegmentTemplate:
         SegmentNaturalCoordinates
         The Segment Natural Coordinates Q (12 x n_frames)
         """
+        from ..bionc_numpy import SegmentNaturalCoordinates
 
         self.Q = SegmentNaturalCoordinates.from_components(
             u=self.u_axis.to_axis(data, kinematic_chain).axis()[:3, :],

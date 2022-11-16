@@ -1,8 +1,7 @@
 from .protocols import Data
-from ..model_computations.segment import Segment
+
 from .segment_template import SegmentTemplate
-from ..model_computations.natural_segment import NaturalSegment
-from ..model_computations.biomechanical_model import BiomechanicalModel
+from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
 
 
 class BiomechanicalModelTemplate:

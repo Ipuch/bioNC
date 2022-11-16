@@ -1,13 +1,10 @@
-from bionc import (
-    NaturalSegment,
-    SegmentMarker,
-)
-from bionc.bionc_numpy import SegmentNaturalCoordinates
+from bionc.bionc_casadi import NaturalSegment, SegmentMarker, SegmentNaturalCoordinates
 import numpy as np
 import pytest
+from .utils import TestUtils
 
 
-def test_natural_segment():
+def test_natural_segment_casadi():
     # Let's create a segment
     my_segment = NaturalSegment(
         name="box",
@@ -21,16 +18,16 @@ def test_natural_segment():
     )
     # test the name of the segment
     assert my_segment.name == "box"
-    np.testing.assert_equal(my_segment.alpha, np.pi / 2)
-    np.testing.assert_equal(my_segment.beta, np.pi / 2)
-    np.testing.assert_equal(my_segment.gamma, np.pi / 2)
-    np.testing.assert_equal(my_segment.length, 1)
-    np.testing.assert_equal(my_segment.mass, 1)
-    np.testing.assert_equal(my_segment.center_of_mass, np.array([0, 0.01, 0]))
-    np.testing.assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+    TestUtils.mx_assert_equal(my_segment.alpha, np.pi / 2)
+    TestUtils.mx_assert_equal(my_segment.beta, np.pi / 2)
+    TestUtils.mx_assert_equal(my_segment.gamma, np.pi / 2)
+    TestUtils.mx_assert_equal(my_segment.length, 1)
+    TestUtils.mx_assert_equal(my_segment.mass, 1)
+    TestUtils.mx_assert_equal(my_segment.center_of_mass, np.array([0, 0.01, 0]))
+    TestUtils.mx_assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
 
 
-def test_marker_features():
+def test_marker_features_casadi():
     # Let's create a segment
     my_segment = NaturalSegment(
         name="Thigh",
@@ -60,7 +57,6 @@ def test_marker_features():
         is_technical=True,
         is_anatomical=False,
     )
-
     marker2 = SegmentMarker(
         name="my_marker2",
         parent_name="Thigh",
@@ -79,7 +75,7 @@ def test_marker_features():
     )
 
     np.testing.assert_array_equal(my_segment.nb_markers(), 2)
-    np.testing.assert_array_equal(
+    TestUtils.mx_assert_equal(
         my_segment.marker_constraints(
             marker_locations=np.array([[1, 2, 3], [1, 2, 3]]).T,
             Qi=Qi,
@@ -96,7 +92,7 @@ def test_marker_features():
             Qi=Qi,
         )
 
-    np.testing.assert_array_equal(
+    TestUtils.mx_assert_equal(
         my_segment.marker_jacobian(),
         np.array(
             [

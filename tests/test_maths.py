@@ -52,7 +52,9 @@ def test_vnop():
     V = np.array([[-1, 3, 5], [-0.5, 3, 6]]).T
     vnop = vnop_array(V, e1, e2, e3)
     np.testing.assert_allclose(
-        vnop, np.array([[0.752475, -0.267327, -0.405941], [0.668505, -0.203698, -0.426857]]).T, rtol=1e-5
+        vnop,
+        np.array([[0.752475, -0.267327, -0.405941], [0.668505, -0.203698, -0.426857]]).T,
+        rtol=1e-5,
     )
 
 

@@ -7,8 +7,11 @@ from bionc import bionc_numpy as bionc_np
 
 def test_segment_marker():
 
-    with pytest.raises(ValueError, match="Either a position or an interpolation matrix must be provided"):
-        SegmentMarker(
+    with pytest.raises(
+        ValueError,
+        match="Either a position or an interpolation matrix must be provided",
+    ):
+        segment_marker = SegmentMarker(
             name="my_marker",
             parent_name="Thigh",
             position=None,

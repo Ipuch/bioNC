@@ -146,7 +146,7 @@ class NaturalCoordinates(np.ndarray):
         return np.asarray(input_array).view(cls)
 
     @classmethod
-    def from_Qi(cls, tuple_of_Q: tuple):
+    def from_qi(cls, tuple_of_Q: tuple):
         """
         Constructor of the class.
         """
@@ -163,7 +163,7 @@ class NaturalCoordinates(np.ndarray):
     def to_array(self):
         return np.array(self).squeeze()
 
-    def nb_Qi(self):
+    def nb_qi(self):
         return self.shape[0] // 12
 
     def u(self, segment_idx: int):

@@ -95,7 +95,7 @@ class NaturalVelocities(np.ndarray):
         return np.asarray(input_array).view(cls)
 
     @classmethod
-    def from_Qdoti(cls, tuple_of_Q: tuple):
+    def from_qdoti(cls, tuple_of_Q: tuple):
         """
         Create a new instance of the class.
         """
@@ -112,7 +112,7 @@ class NaturalVelocities(np.ndarray):
     def to_array(self):
         return np.array(self)
 
-    def nb_Qdoti(self):
+    def nb_qdoti(self):
         return self.shape[0] // 12
 
     def udot(self, segment_idx: int):

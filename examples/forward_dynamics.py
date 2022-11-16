@@ -24,9 +24,9 @@ my_segment = NaturalSegment(
 Qi = SegmentNaturalCoordinates.from_components(
     u=np.array([1, 2, 3]), rp=np.array([2, 2, 3]), rd=np.array([1, 5, 3]), w=np.array([4, 2, 3])
 )
-print(my_segment.rigidBodyConstraint(Qi))
-print(my_segment.rigidBodyConstraintJacobian(Qi))
-print(my_segment.rigidBodyConstraintJacobianDerivative(Qi.vector))
+print(my_segment.rigid_body_constraint(Qi))
+print(my_segment.rigid_body_constraint_jacobian(Qi))
+print(my_segment.rigid_body_constraint_jacobian_derivative(Qi.vector))
 
 # Let's create a motion now
 # u as x axis, w as z axis - this doesn't work
@@ -64,7 +64,7 @@ all_states = RK4(time_steps, lambda t, states: dynamics(t, states)[0], states_0)
 
 defects = np.zeros((6, len(time_steps)))
 for i in range(len(time_steps)):
-    defects[:, i] = my_segment.rigidBodyConstraint(all_states[0:12, i])
+    defects[:, i] = my_segment.rigid_body_constraint(all_states[0:12, i])
     all_lambdas[:, i] = dynamics(time_steps[i], all_states[:, i])[1]
 
 import plotly.graph_objects as go

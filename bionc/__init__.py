@@ -16,7 +16,6 @@ from .bionc_numpy import (
     Axis,
     SegmentMarker,
     Marker,
-    Segment,
     NaturalSegment,
     InertiaParameters,
     BiomechanicalModel,

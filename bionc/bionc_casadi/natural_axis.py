@@ -1,5 +1,5 @@
 import numpy as np
-
+from casadi import MX
 from .natural_marker import Marker
 
 
@@ -16,7 +16,7 @@ class Axis:
         self.start_point = start
         self.end_point = end
 
-    def axis(self) -> np.ndarray:
+    def axis(self) -> MX:
         """
         Returns the axis vector
         """

@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
 
+from casadi import MX
 import numpy as np
 
 from .natural_segment import NaturalSegment
 from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates
 
 
+# TODO: not tested yet
 class JointBase(ABC):
     """
     This class is made to handle the kinematics of a joint
@@ -43,21 +45,21 @@ class JointBase(ABC):
 
         Returns
         -------
-        np.ndarray
+        MX
             Constraints of the joint
         """
 
     @abstractmethod
     def constraintJacobians(
         self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
-    ) -> np.ndarray:
+    ) -> MX:
         """
         This function returns the constraint Jacobians of the joint, denoted K_k
         as a function of the natural coordinates Q_parent and Q_child.
 
         Returns
         -------
-        np.ndarray
+        MX
             Constraint Jacobians of the joint [3, 2 * nbQ]
         """
 
@@ -87,7 +89,7 @@ class Joint:
             self.theta_1 = theta_1
             self.theta_2 = theta_2
 
-        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k
             as a function of the natural coordinates Q_parent and Q_child.
@@ -97,7 +99,7 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [3, 1]
             """
-            constraint = np.zeros(3)
+            constraint = MX.zeros(3)
             constraint[0] = Q_parent.rd - Q_child.rp
             constraint[1] = np.dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.segment_child.length * np.cos(
                 self.theta_1
@@ -118,7 +120,7 @@ class Joint:
             super(Joint.Universal, self).__init__(joint_name, segment_parent, segment_child)
             self.theta = theta
 
-        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k
             as a function of the natural coordinates Q_parent and Q_child.
@@ -128,9 +130,9 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [2, 1]
             """
-            N = np.zeros((3, 12))  # interpolation matrix of the given axis
+            N = MX.zeros((3, 12))  # interpolation matrix of the given axis
 
-            constraint = np.zeros(2)
+            constraint = MX.zeros(2)
             constraint[0] = Q_parent.rd - Q_child.rp
             constraint[1] = np.dot(Q_parent.w, np.matmul(N, Q_child.vector)) - np.cos(self.theta)
 
@@ -150,7 +152,7 @@ class Joint:
             # this thing is not none if the joint is not located at rp nor at rd and it needs to be used
             self.point_interpolation_matrix_in_child = point_interpolation_matrix_in_child
 
-        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k
             as a function of the natural coordinates Q_parent and Q_child.
@@ -160,13 +162,13 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [2, 1]
             """
-            N = np.zeros((3, 12))  # interpolation matrix of the given axis
+            N = MX.zeros((3, 12))  # interpolation matrix of the given axis
 
-            constraint = np.zeros(1)
+            constraint = MX.zeros(1)
             if self.point_interpolation_matrix_in_child is None:
                 constraint[0] = Q_parent.rd - Q_child.rp
             else:
-                constraint[0] = np.matmul(self.point_interpolation_matrix_in_child, Q_parent.vector) - Q_child.rd
+                constraint[0] = self.point_interpolation_matrix_in_child @ Q_parent.vector - Q_child.rd
 
             return constraint
 

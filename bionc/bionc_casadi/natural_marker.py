@@ -1,6 +1,7 @@
 from typing import Callable
 
 import numpy as np
+from casadi import MX, vertcat
 
 from .biomechanical_model import BiomechanicalModel
 from bionc.model_creation.protocols import Data
@@ -146,12 +147,12 @@ class SegmentMarker:
         return cls(
             name,
             parent_name,
-            position=natural_position,
+            position=MX(natural_position),
             is_technical=is_technical,
             is_anatomical=is_anatomical,
         )
 
-    def constraint(self, marker_location: np.ndarray, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+    def constraint(self, marker_location: np.ndarray, Qi: SegmentNaturalCoordinates) -> MX:
         """
         This function computes the constraint for the marker
 
@@ -171,10 +172,8 @@ class SegmentMarker:
         if marker_location.shape.__len__() > 1:
             if marker_location.shape[1] != 1:
                 raise ValueError("The marker location must be a 3d vector with only one column")
-            else:
-                marker_location = marker_location.squeeze()
 
-        return (marker_location - self.interpolation_matrix @ Qi.vector).squeeze()
+        return marker_location - self.interpolation_matrix @ Qi.vector
 
     def __str__(self):
         # Define the print function, so it automatically formats things in the file properly
@@ -217,7 +216,7 @@ class Marker:
     def __init__(
         self,
         name: str,
-        position: tuple[int | float, int | float, int | float] | np.ndarray = None,
+        position: tuple[int | float, int | float, int | float] | np.ndarray | MX = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
     ):
@@ -296,7 +295,7 @@ class Marker:
 
         return cls(
             name,
-            position,
+            MX(position),
             is_technical=is_technical,
             is_anatomical=is_anatomical,
         )

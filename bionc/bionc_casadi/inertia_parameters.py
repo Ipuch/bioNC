@@ -6,6 +6,7 @@ from .biomechanical_model import BiomechanicalModel
 from bionc.model_creation.protocols import Data
 
 
+# TODO: not used and tested yet
 class InertiaParameters:
     def __init__(
         self,

@@ -21,15 +21,6 @@ from .bionc_numpy import (
     BiomechanicalModel,
 )
 
-from .math_interface import (
-    zeros,
-    eye,
-    array,
-    symmetrize_upp,
-    vertcat,
-    horzcat,
-)
-
 from .protocols import natural_coordinates
 from bionc import bionc_casadi
 from bionc import bionc_numpy

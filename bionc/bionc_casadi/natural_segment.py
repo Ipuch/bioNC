@@ -2,7 +2,7 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, sin, transpose, norm_2, vertcat, sqrt, inv, dot, tril, tril2symm
+from casadi import cos, sin, transpose, norm_2, vertcat, sqrt, inv, dot, tril, tril2symm, sum1, sum2
 
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
@@ -307,12 +307,12 @@ class NaturalSegment(AbstractNaturalSegment):
         phir = MX.zeros(6)
         u, v, w = Qi.to_uvw()
 
-        phir[0] = u**2 - 1
-        phir[1] = u * v - self.length * cos(self.gamma)
-        phir[2] = u * Qi.w - cos(self.beta)
-        phir[3] = v**2 - self.length**2
-        phir[4] = v * w - self.length * cos(self.alpha)
-        phir[5] = w**2 - 1
+        phir[0] = sum1(u**2) - 1
+        phir[1] = dot(u, v) - self.length * cos(self.gamma)
+        phir[2] = dot(u, w) - cos(self.beta)
+        phir[3] = sum1(v**2) - self.length**2
+        phir[4] = dot(v, w) - self.length * cos(self.alpha)
+        phir[5] = sum1(w**2) - 1
 
         return phir
 
@@ -350,6 +350,29 @@ class NaturalSegment(AbstractNaturalSegment):
         Kr[5, 9:12] = 2 * w
 
         return Kr
+
+    def rigid_body_constraint_derivative(
+        self,
+        Qi: SegmentNaturalCoordinates,
+        Qdoti: SegmentNaturalVelocities,
+    ) -> MX:
+        """
+        This function returns the derivative of the rigid body constraints denoted Phi_r_dot
+
+        Parameters
+        ----------
+        Qi : SegmentNaturalCoordinates
+            The natural coordinates of the segment
+        Qdoti : SegmentNaturalVelocities
+            The natural velocities of the segment
+
+        Returns
+        -------
+        MX
+            Derivative of the rigid body constraints [6 x 1 x N_frame]
+        """
+
+        return self.rigid_body_constraint_jacobian(Qi) @ Qdoti.to_vector()
 
     @staticmethod
     def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> MX:
@@ -557,6 +580,7 @@ class NaturalSegment(AbstractNaturalSegment):
         self,
         Qi: Union[SegmentNaturalCoordinates, np.ndarray],
         Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
+        stabilization: dict = None,
     ) -> Tuple[SegmentNaturalAccelerations, np.ndarray]:
         """
         This function returns the differential algebraic equation of the segment
@@ -567,27 +591,28 @@ class NaturalSegment(AbstractNaturalSegment):
             Natural coordinates of the segment
         Qdoti: SegmentNaturalCoordinates
             Derivative of the natural coordinates of the segment
+        stabilization: dict
+            Dictionary containing the Baumgarte's stabilization parameters:
+            * alpha: float
+                Stabilization parameter for the constraint
+            * beta: float
+                Stabilization parameter for the constraint derivative
 
         Returns
         -------
         MX
             Differential algebraic equation of the segment [12 x 1]
         """
-        if isinstance(Qi, SegmentNaturalVelocities):
-            raise TypeError("Qi should be of type SegmentNaturalCoordinates")
-        if isinstance(Qdoti, SegmentNaturalCoordinates):
-            raise TypeError("Qdoti should be of type SegmentNaturalVelocities")
-
-        # not able to verify if the types of Qi and Qdoti are np.ndarray
-        if not isinstance(Qi, SegmentNaturalCoordinates):
-            Qi = SegmentNaturalCoordinates(Qi)
-        if not isinstance(Qdoti, SegmentNaturalVelocities):
-            Qdoti = SegmentNaturalVelocities(Qdoti)
 
         Gi = self.mass_matrix
         Kr = self.rigid_body_constraint_jacobian(Qi)
         Krdot = self.rigid_body_constraint_jacobian_derivative(Qdoti)
         biais = Krdot @ Qdoti.vector
+
+        if stabilization is not None:
+            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+                "beta"
+            ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
         A = MX.zeros((18, 18))
         A[0:12, 0:12] = Gi

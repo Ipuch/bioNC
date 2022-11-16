@@ -1,6 +1,6 @@
 import numpy as np
 
-from bionc import (
+from bionc.bionc_numpy import (
     NaturalSegment,
     NaturalCoordinates,
     SegmentNaturalCoordinates,
@@ -40,7 +40,7 @@ Qidot = SegmentNaturalVelocities.from_components(
 )
 
 print(my_segment.rigid_body_constraint(Qi))
-print(my_segment.rigid_body_constraint_derivative(Qi, Qidot))
+print(my_segment.rigid_body_constraint_jacobian_derivative(Qidot))
 
 if (my_segment.rigid_body_constraint(Qi) > 1e-6).any():
     print(my_segment.rigid_body_constraint(Qi))
@@ -79,8 +79,11 @@ defects = np.zeros((6, len(time_steps)))
 defects_dot = np.zeros((6, len(time_steps)))
 center_of_mass = np.zeros((3, len(time_steps)))
 for i in range(len(time_steps)):
-    defects[:, i] = my_segment.rigid_body_constraint(all_states[0:12, i])
-    defects_dot[:, i] = my_segment.rigid_body_constraint_derivative(all_states[0:12, i], all_states[12:24, i])
+    defects[:, i] = my_segment.rigid_body_constraint(SegmentNaturalCoordinates(all_states[0:12, i]))
+    defects_dot[:, i] = my_segment.rigid_body_constraint_derivative(
+        SegmentNaturalCoordinates(all_states[0:12, i]),
+        SegmentNaturalVelocities(all_states[12:24, i]),
+    )
     all_lambdas[:, i] = dynamics(time_steps[i], all_states[:, i])[1]
     center_of_mass[:, i] = my_segment.interpolation_matrix_center_of_mass @ all_states[0:12, i]
 

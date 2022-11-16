@@ -215,6 +215,17 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
+    def rigid_body_constraint_derivative(self, Qi):
+        """
+        This function returns the rigid body constraints derivative of the segment, denoted dphi_r/dQ.
+
+        Returns
+        -------
+        np.ndarray
+            Rigid body constraints derivative of the segment [6 x 6 x N_frame]
+        """
+
+    @abstractmethod
     def _pseudo_inertia_matrix(self):
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.

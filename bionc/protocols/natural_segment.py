@@ -1,4 +1,4 @@
-# import ABC 
+# import ABC
 from abc import ABC, abstractmethod
 from typing import Tuple, Union
 import numpy as np
@@ -44,6 +44,7 @@ class AbstractNaturalSegment(ABC):
         This function returns the jacobian of the marker constraints of the segment, denoted K_m
 
     """
+
     @abstractmethod
     def set_name(self, name: str):
         """
@@ -186,9 +187,7 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
-    def location_from_homogenous_transform(
-        self, T
-    ):
+    def location_from_homogenous_transform(self, T):
         """
         This function returns the location of the segment in natural coordinate from its homogenous transform
 

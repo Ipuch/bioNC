@@ -11,8 +11,10 @@ from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations, Nat
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
 from ..bionc_numpy.natural_marker import SegmentMarker
 
+from ..protocols.natural_segment import AbstractNaturalSegment
 
-class NaturalSegment:
+
+class NaturalSegment(AbstractNaturalSegment):
     """
         Class used to define anatomical segment based on natural coordinate.
 
@@ -414,7 +416,7 @@ class NaturalSegment:
         Binv = inv(self.transformation_matrix)
         Binv_transpose = np.transpose(Binv)
 
-        return matmul(Binv, matmul(middle_block, Binv_transpose))
+        return Binv @ (middle_block @ Binv_transpose)
 
     @property
     def pseudo_inertia_matrix(self) -> np.ndarray:
@@ -439,7 +441,7 @@ class NaturalSegment:
         np.ndarray
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return matmul(inv(self.transformation_matrix), self.center_of_mass)
+        return inv(self.transformation_matrix) @ self.center_of_mass
 
     @property
     def center_of_mass_in_natural_coordinates_system(self) -> np.ndarray:
@@ -561,7 +563,7 @@ class NaturalSegment:
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return np.matmul(self.interpolation_matrix_center_of_mass.T * self.mass, np.array([0, 0, -9.81]))
+        return (self.interpolation_matrix_center_of_mass.T * self.mass) @ np.array([0, 0, -9.81])
 
     def differential_algebraic_equation(
         self,

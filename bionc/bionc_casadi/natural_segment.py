@@ -10,8 +10,10 @@ from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations, Na
 from ..bionc_casadi.homogenous_transform import HomogeneousTransform
 from ..bionc_casadi.natural_marker import SegmentMarker
 
+from ..protocols.natural_segment import AbstractNaturalSegment
 
-class NaturalSegment:
+
+class NaturalSegment(AbstractNaturalSegment):
     """
         Class used to define anatomical segment based on natural coordinate.
 

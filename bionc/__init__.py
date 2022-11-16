@@ -12,7 +12,7 @@ from .model_creation import (
     Data,
     GenericDynamicModel,
 )
-from .model_computations import (
+from .bionc_numpy import (
     Axis,
     SegmentMarker,
     Marker,

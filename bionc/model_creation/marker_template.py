@@ -2,12 +2,12 @@ from typing import Callable, Union
 
 import numpy as np
 
-from ..model_computations.biomechanical_model import BiomechanicalModel
-from ..model_computations.natural_marker import SegmentMarker, Marker
+from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
+from ..bionc_numpy.natural_marker import SegmentMarker, Marker
 
 # from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
-from ..model_computations.natural_segment import NaturalSegment
+from ..bionc_numpy.natural_segment import NaturalSegment
 
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates

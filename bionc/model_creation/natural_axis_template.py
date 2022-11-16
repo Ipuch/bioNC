@@ -1,10 +1,10 @@
 from typing import Callable
 
-from ..model_computations.natural_axis import Axis
-from ..model_computations.biomechanical_model import BiomechanicalModel
+from ..bionc_numpy.natural_axis import Axis
+from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from ..model_computations.natural_segment import NaturalSegment
+from ..bionc_numpy.natural_segment import NaturalSegment
 
 
 class AxisTemplate:

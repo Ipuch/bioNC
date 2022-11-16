@@ -1,6 +1,6 @@
-from ..model_computations.inertia_parameters import InertiaParameters
-from ..model_computations.natural_marker import SegmentMarker
-from ..model_computations.natural_segment import NaturalSegment
+from .inertia_parameters import InertiaParameters
+from .natural_marker import SegmentMarker
+from .natural_segment import NaturalSegment
 
 
 class Segment:

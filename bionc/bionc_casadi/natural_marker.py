@@ -3,11 +3,11 @@ from typing import Callable
 import numpy as np
 
 from .biomechanical_model import BiomechanicalModel
-from ..model_creation.protocols import Data
-from ..utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from bionc.model_creation.protocols import Data
+from bionc.utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
-from ..protocols.natural_coordinates import SegmentNaturalCoordinates
+from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates
 
 # todo: need a list of markers MarkerList
 

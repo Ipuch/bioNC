@@ -1,7 +1,7 @@
 import numpy as np
 
-from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from bionc.bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
 
 
 class BiomechanicalModel:

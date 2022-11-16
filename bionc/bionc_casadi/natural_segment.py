@@ -220,21 +220,23 @@ class NaturalSegment:
         MX
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
         """
-        return MX(np.array(
-            [
-                [1, 0, 0],
-                [self.length * cos(self.gamma), self.length * sin(self.gamma), 0],
+        return MX(
+            np.array(
                 [
-                    cos(self.beta),
-                    (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta),
-                    np.sqrt(
-                        1
-                        - cos(self.beta) ** 2
-                        - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
-                    ),
-                ],
-            ]
-        ))
+                    [1, 0, 0],
+                    [self.length * cos(self.gamma), self.length * sin(self.gamma), 0],
+                    [
+                        cos(self.beta),
+                        (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta),
+                        np.sqrt(
+                            1
+                            - cos(self.beta) ** 2
+                            - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
+                        ),
+                    ],
+                ]
+            )
+        )
 
     @property
     def transformation_matrix(self) -> MX:

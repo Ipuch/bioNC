@@ -50,9 +50,7 @@ class JointBase(ABC):
         """
 
     @abstractmethod
-    def constraintJacobians(
-        self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
-    ) -> MX:
+    def constraintJacobians(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
         """
         This function returns the constraint Jacobians of the joint, denoted K_k
         as a function of the natural coordinates Q_parent and Q_child.

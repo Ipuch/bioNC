@@ -54,7 +54,7 @@ class BiomechanicalModel:
     def nb_Qddot(self):
         return 12 * self.nb_segments()
 
-    def rigid_body_constraints(self, Q: NaturalCoordinates) ->MX:
+    def rigid_body_constraints(self, Q: NaturalCoordinates) -> MX:
         """
         This function returns the rigid body constraints of all segments, denoted Phi_r
         as a function of the natural coordinates Q.

@@ -2,7 +2,7 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, sin, transpose, norm_2, vertcat, horzcat, mtimes, dot, cross, vertsplit, horzsplit, reshape
+from casadi import cos, sin, transpose, norm_2, vertcat, sqrt
 from numpy.linalg import inv
 
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
@@ -220,23 +220,19 @@ class NaturalSegment:
         MX
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
         """
-        return MX(
-            np.array(
-                [
-                    [1, 0, 0],
-                    [self.length * cos(self.gamma), self.length * sin(self.gamma), 0],
-                    [
-                        cos(self.beta),
-                        (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta),
-                        np.sqrt(
+        B = MX.zeros(3, 3)
+        B[0, :] = MX([1, 0, 0])
+        B[1, 0] = self.length * cos(self.gamma)
+        B[1, 1] = self.length * sin(self.gamma)
+        B[1, 2] = 0
+        B[2, 0] = cos(self.beta)
+        B[2, 1] = (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta)
+        B[2, 2] = sqrt(
                             1
                             - cos(self.beta) ** 2
                             - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
-                        ),
-                    ],
-                ]
-            )
-        )
+                        )
+        return B
 
     @property
     def transformation_matrix(self) -> MX:

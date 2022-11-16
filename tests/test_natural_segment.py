@@ -44,13 +44,23 @@ def test_marker_features():
     )
 
     # Let's add a marker
+    with pytest.raises(ValueError, match="The position must be a 3d vector with only one column"):
+        SegmentMarker(
+            name="my_marker1",
+            parent_name="Thigh",
+            position=np.eye(3),
+            is_technical=True,
+            is_anatomical=False,
+        )
+
     marker1 = SegmentMarker(
         name="my_marker1",
         parent_name="Thigh",
-        position=np.eye(3),
+        position=np.ones(3),
         is_technical=True,
         is_anatomical=False,
     )
+
     marker2 = SegmentMarker(
         name="my_marker2",
         parent_name="Thigh",
@@ -74,7 +84,7 @@ def test_marker_features():
             marker_locations=np.array([[1, 2, 3], [1, 2, 3]]).T,
             Qi=Qi,
         ),
-        np.array([[-1, 2, -5], [-2, -2, -9]]).T,
+        np.array([[-2, -2, -7], [-2, -2, -9]]).T,
     )
 
     with pytest.raises(
@@ -90,9 +100,9 @@ def test_marker_features():
         my_segment.marker_jacobian(),
         np.array(
             [
-                [-1.0, -0.0, -0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, -0.0, -0.0, -0.0],
-                [-0.0, -0.0, -0.0, -0.0, -2.0, -0.0, 0.0, 1.0, 0.0, -0.0, -0.0, -0.0],
-                [-0.0, -0.0, -0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, -0.0, -0.0, -1.0],
+                [-1.0, -0.0, -0.0, -2.0, -0.0, -0.0, 1.0, 0.0, 0.0, -1.0, -0.0, -0.0],
+                [-0.0, -1.0, -0.0, -0.0, -2.0, -0.0, 0.0, 1.0, 0.0, -0.0, -1.0, -0.0],
+                [-0.0, -0.0, -1.0, -0.0, -0.0, -2.0, 0.0, 0.0, 1.0, -0.0, -0.0, -1.0],
                 [-0.0, -0.0, -0.0, -2.0, -0.0, -0.0, 1.0, 0.0, 0.0, -2.0, -0.0, -0.0],
                 [-0.0, -0.0, -0.0, -0.0, -2.0, -0.0, 0.0, 1.0, 0.0, -0.0, -2.0, -0.0],
                 [-0.0, -0.0, -0.0, -0.0, -0.0, -2.0, 0.0, 0.0, 1.0, -0.0, -0.0, -2.0],

@@ -2,6 +2,7 @@ from typing import Any
 from pathlib import Path
 import importlib.util
 from casadi import MX, Function
+import numpy as np
 
 
 class TestUtils:
@@ -47,3 +48,10 @@ class TestUtils:
             .toarray()
             .squeeze()
         )
+
+    @staticmethod
+    def mx_assert_equal(mx: MX, expected: Any):
+        """
+        Assert that a casadi MX is equal to a numpy array if it is only numeric values
+        """
+        np.testing.assert_equal(TestUtils.mx_to_array(mx), expected)

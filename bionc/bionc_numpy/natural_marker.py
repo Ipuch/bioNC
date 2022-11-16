@@ -4,9 +4,7 @@ import numpy as np
 
 from .biomechanical_model import BiomechanicalModel
 from bionc.model_creation.protocols import Data
-from bionc.utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
-
-# from ..utils.natural_coordinates import SegmentNaturalCoordinates
+from bionc.bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates
 
 # todo: need a list of markers MarkerList
@@ -73,6 +71,9 @@ class SegmentMarker:
         elif position is not None and interpolation_matrix is None:
             if position.shape[0] != 3:
                 raise ValueError("The position must be a 3d vector")
+            if position.shape.__len__() > 1:
+                if position.shape[1] != 1:
+                    raise ValueError("The position must be a 3d vector with only one column")
 
             self.position = position if isinstance(position, np.ndarray) else np.array(position)
             self.interpolation_matrix = interpolate_natural_vector(self.position)

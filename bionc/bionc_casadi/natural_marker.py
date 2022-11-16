@@ -1,11 +1,11 @@
 from typing import Callable
 
 import numpy as np
-from casadi import MX, vertcat
+from casadi import MX, vertcat, horzcat
 
 from .biomechanical_model import BiomechanicalModel
 from bionc.model_creation.protocols import Data
-from bionc.utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from bionc.bionc_casadi.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 
 # from ..utils.natural_coordinates import SegmentNaturalCoordinates
 from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates
@@ -74,15 +74,18 @@ class SegmentMarker:
         elif position is not None and interpolation_matrix is None:
             if position.shape[0] != 3:
                 raise ValueError("The position must be a 3d vector")
+            if position.shape.__len__() > 1:
+                if position.shape[1] != 1:
+                    raise ValueError("The position must be a 3d vector with only one column")
 
-            self.position = position if isinstance(position, np.ndarray) else np.array(position)
+            self.position = MX(position if isinstance(position, np.ndarray) else np.array(position))
             self.interpolation_matrix = interpolate_natural_vector(self.position)
 
         elif position is None and interpolation_matrix is not None:
             if interpolation_matrix.shape != (3, 12):
                 raise ValueError("The interpolation matrix must be a 3x12 matrix")
 
-            self.interpolation_matrix = interpolation_matrix
+            self.interpolation_matrix = MX(interpolation_matrix)
             self.position = to_natural_vector(self.interpolation_matrix)
 
         else:
@@ -239,7 +242,7 @@ class Marker:
 
         if position.shape[0] != 4:
             if position.shape[0] == 3:  # If the position is a 3d vector, add a 1 at the bottom
-                position = np.vstack((position, np.ones((1, position.shape[1]))))
+                position = vertcat((position, MX.ones((1, position.shape[1]))))
             else:
                 raise ValueError("The position must be (XYZ x time) or (XYZ1 x time)")
 

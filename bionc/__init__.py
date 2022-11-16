@@ -1,4 +1,4 @@
-from .utils.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+# from bionc.bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 from .utils.vnop_array import vnop_array
 
 from .model_creation import (

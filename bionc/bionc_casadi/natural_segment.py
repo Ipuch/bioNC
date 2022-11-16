@@ -2,14 +2,13 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, sin, transpose, norm_2, vertcat, sqrt
-from numpy.linalg import inv
+from casadi import cos, sin, transpose, norm_2, vertcat, sqrt, inv, dot, tril, tril2symm
 
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
 from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
 from ..bionc_casadi.homogenous_transform import HomogeneousTransform
-from ..bionc_numpy.natural_marker import SegmentMarker
+from ..bionc_casadi.natural_marker import SegmentMarker
 
 
 class NaturalSegment:
@@ -228,10 +227,8 @@ class NaturalSegment:
         B[2, 0] = cos(self.beta)
         B[2, 1] = (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta)
         B[2, 2] = sqrt(
-                            1
-                            - cos(self.beta) ** 2
-                            - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
-                        )
+            1 - cos(self.beta) ** 2 - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
+        )
         return B
 
     @property
@@ -398,8 +395,8 @@ class NaturalSegment:
         # todo: verify the formula
         middle_block = (
             self.inertia
-            + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * MX.eye(3)
-            - np.dot(self.center_of_mass.T, self.center_of_mass)
+            + self.mass * dot(self.center_of_mass, self.center_of_mass) * MX.eye(3)
+            - dot(self.center_of_mass, self.center_of_mass)
         )
 
         Binv = inv(self.transformation_matrix)
@@ -472,7 +469,7 @@ class NaturalSegment:
         Gi[9:12, 9:12] = Ji[2, 2] * MX.eye(3)
 
         # symmetrize the matrix
-        Gi = np.tril(Gi) + np.tril(Gi, -1).T
+        Gi = tril2symm(tril(Gi))
 
         return Gi
 
@@ -669,4 +666,4 @@ class NaturalSegment:
         MX
             The jacobian of the marker constraints of the segment (3 x N_markers)
         """
-        return vertcat([-marker.interpolation_matrix for marker in self._markers])
+        return vertcat(*[-marker.interpolation_matrix for marker in self._markers])

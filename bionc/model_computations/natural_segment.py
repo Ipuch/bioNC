@@ -423,10 +423,9 @@ class NaturalSegment:
             Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
         """
         # todo: verify the formula
-        middle_block = (
-            self.inertia
-            + self.mass * (self.center_of_mass.T @ self.center_of_mass * eye(3)
-            - self.center_of_mass[:, np.newaxis] @ self.center_of_mass[:, np.newaxis].T)
+        middle_block = self.inertia + self.mass * (
+            self.center_of_mass.T @ self.center_of_mass * eye(3)
+            - self.center_of_mass[:, np.newaxis] @ self.center_of_mass[:, np.newaxis].T
         )
 
         Binv = inv(self.transformation_matrix)

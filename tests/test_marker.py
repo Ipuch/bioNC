@@ -6,7 +6,10 @@ from bionc import SegmentMarker, Marker, SegmentNaturalCoordinates
 
 def test_segment_marker():
 
-    with pytest.raises(ValueError, match="Either a position or an interpolation matrix must be provided"):
+    with pytest.raises(
+        ValueError,
+        match="Either a position or an interpolation matrix must be provided",
+    ):
         segment_marker = SegmentMarker(
             name="my_marker",
             parent_name="Thigh",

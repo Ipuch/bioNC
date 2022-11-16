@@ -3,11 +3,19 @@ import numpy as np
 
 
 from .utils import TestUtils
-from bionc import SegmentNaturalCoordinates, NaturalCoordinates, SegmentNaturalVelocities, NaturalVelocities
+from bionc import (
+    SegmentNaturalCoordinates,
+    NaturalCoordinates,
+    SegmentNaturalVelocities,
+    NaturalVelocities,
+)
 
 
 def test_biomech_model():
-    from examples.model_creation import generate_c3d_file, model_creation_from_measured_data
+    from examples.model_creation import (
+        generate_c3d_file,
+        model_creation_from_measured_data,
+    )
 
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation.py")
@@ -47,31 +55,43 @@ def test_biomech_model():
         rd=[2.1, 2, 4.3],
         w=[2.2, 2, 5.3],
     )
+    Q4 = SegmentNaturalCoordinates.from_components(
+        u=[2.3, 2, 3.4],
+        rp=[2.4, 1, 3.4],
+        rd=[2.5, 2, 4.4],
+        w=[2.6, 2, 5.4],
+    )
 
-    Q = NaturalCoordinates.from_Qi((Q1, Q2, Q3))
+    Q = NaturalCoordinates.from_Qi((Q1, Q2, Q3, Q4))
 
     np.testing.assert_array_almost_equal(
-        natural_model.rigidBodyConstraints(Q),
+        natural_model.rigidBodyConstraints(Q)[0:36],
         np.array(
             [
                 13.3025,
-                -4.884351,
-                21.029635,
-                1.85279,
-                -7.243083,
+                -5.122739,
+                20.857273,
+                1.978688,
+                -7.218355,
                 30.7,
                 15.2,
-                -5.264128,
-                22.889538,
-                1.885293,
-                -7.379097,
+                -5.074351,
+                23.194635,
+                1.85279,
+                -7.383083,
                 32.93,
                 17.13,
-                -5.75097,
-                25.633757,
-                2.020706,
-                -7.737107,
+                -5.584128,
+                25.319538,
+                1.915293,
+                -7.749097,
                 35.93,
+                19.85,
+                -5.72097,
+                28.523757,
+                1.990706,
+                -7.657107,
+                38.92,
             ]
         ),
         decimal=6,

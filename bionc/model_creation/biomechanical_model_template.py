@@ -1,12 +1,14 @@
 from .protocols import Data
 
 from .segment_template import SegmentTemplate
-from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
+from ..bionc_numpy.biomechanical_model import BiomechanicalModel
+from bionc.bionc_numpy.enums import JointType
 
 
 class BiomechanicalModelTemplate:
     def __init__(self):
         self.segments = {}
+        self.joints = {}
 
     def __getitem__(self, name: str):
         return self.segments[name]
@@ -18,6 +20,27 @@ class BiomechanicalModelTemplate:
             )
         segment.name = name  # Make sure the name of the segment fits the internal one
         self.segments[name] = segment
+
+    def add_joint(self, name: str, joint_type: JointType, parent: str, child: str):
+        """
+        This method adds a joint to the model
+
+        Parameters
+        ----------
+        joint : JointType
+            The joint to add
+        parent : str
+            The name of the parent segment
+        child : str
+            The name of the child segment
+
+        Returns
+        -------
+        None
+        """
+        if name is None:
+            name = f"{parent}_{child}"
+        self.joints[name] = dict(name=name, joint_type=joint_type, parent=parent, child=child)
 
     def update(self, data: Data) -> BiomechanicalModel:
         """
@@ -47,5 +70,8 @@ class BiomechanicalModelTemplate:
 
             for marker in s.markers:
                 model.segments[name].add_marker(marker.to_segment_marker(data, model, Q_xp))
+
+        for key, joint in self.joints.items():
+            model._add_joint(joint)
 
         return model

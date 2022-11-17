@@ -1,7 +1,7 @@
 import numpy as np
 
-from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from bionc.bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from bionc.protocols.natural_coordinates import NaturalCoordinates
+from bionc.bionc_numpy.natural_velocities import NaturalVelocities
 from ..protocols.biomechanical_model import AbstractBiomechanicalModel
 
 
@@ -32,6 +32,31 @@ class BiomechanicalModel(AbstractBiomechanicalModel):
             out_string += str(self.segments[name])
             out_string += "\n\n\n"  # Give some space between segments
         return out_string
+
+    def _add_joint(self, joint: dict):
+        """
+        This function adds a joint to the biomechanical model. It is not recommended to use this function directly.
+
+        Parameters
+        ----------
+        joint : dict
+            A dictionary containing the joints to be added to the biomechanical model:
+            {name: str, joint: Joint, parent: str, child: str}
+
+
+        """
+        if joint["parent"] not in self.segments.keys():
+            raise ValueError("The parent segment does not exist")
+        if joint["child"] not in self.segments.keys():
+            raise ValueError("The child segment does not exist")
+        if joint["name"] in self.joints.keys():
+            raise ValueError("The joint name already exists")
+
+        self.joints[joint["name"]] = joint["joint_type"].value(
+            joint["name"],
+            self.segments[joint["parent"]],
+            self.segments[joint["child"]],
+        )
 
     def nb_segments(self):
         return len(self.segments)
@@ -115,6 +140,25 @@ class BiomechanicalModel(AbstractBiomechanicalModel):
             )
 
         return Kr_dot
+
+    def joint_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the joint constraints of all joints, denoted Phi_k
+        as a function of the natural coordinates Q.
+
+        Returns
+        -------
+        np.ndarray
+            Joint constraints of the segment [nb_joints, 1]
+        """
+
+        Phi_k = np.zeros(self.nb_joints())
+        for i, joint_name in enumerate(self.joints):
+            Q_parent = Q.vector(self.segments[self.joints[joint_name].parent.name].index)
+            Q_child = Q.vector(self.segments[self.joints[joint_name].child.name].index)
+            Phi_k[i] = self.joints[joint_name].constraint(Q_parent, Q_child)
+
+        return Phi_k
 
     def _update_mass_matrix(self):
         """

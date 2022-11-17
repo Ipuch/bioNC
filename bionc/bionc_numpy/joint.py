@@ -3,10 +3,47 @@ from abc import ABC, abstractmethod
 import numpy as np
 
 from .natural_segment import NaturalSegment
-from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates
+from .natural_coordinates import SegmentNaturalCoordinates
 
 
-class JointBase(ABC):
+class AbstractJoint(ABC):
+    """
+    This class is made to handle the kinematics of a joint
+
+    Methods
+    -------
+    constraints(self, Q_parent: NaturalCoordinates, Q_child: NaturalCoordinates) -> np.ndarray
+        Returns the constraints of the joint, this defect function should be zero when the joint is in a valid position
+
+    """
+
+    @abstractmethod
+    def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the constraints of the joint, denoted Phi_k as a function of the natural coordinates Q.
+
+        Returns
+        -------
+        np.ndarray
+            Constraints of the joint
+        """
+
+    @abstractmethod
+    def constraint_jacobian(
+        self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+    ) -> np.ndarray:
+        """
+        This function returns the constraint Jacobians of the joint, denoted K_k
+        as a function of the natural coordinates Q_parent and Q_child.
+
+        Returns
+        -------
+        np.ndarray
+            Constraint Jacobians of the joint [3, 2 * nbQ]
+        """
+
+
+class JointBase(AbstractJoint):
     """
     This class is made to handle the kinematics of a joint
 
@@ -37,7 +74,7 @@ class JointBase(ABC):
         self.segment_child = segment_child
 
     @abstractmethod
-    def constraints(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+    def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
         """
         This function returns the constraints of the joint, denoted Phi_k as a function of the natural coordinates Q.
 
@@ -46,9 +83,10 @@ class JointBase(ABC):
         np.ndarray
             Constraints of the joint
         """
+        pass
 
     @abstractmethod
-    def constraintJacobians(
+    def constraint_jacobian(
         self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
     ) -> np.ndarray:
         """
@@ -60,6 +98,7 @@ class JointBase(ABC):
         np.ndarray
             Constraint Jacobians of the joint [3, 2 * nbQ]
         """
+        pass
 
 
 class Joint:
@@ -86,6 +125,7 @@ class Joint:
             super(Joint.Hinge, self).__init__(joint_name, segment_parent, segment_child)
             self.theta_1 = theta_1
             self.theta_2 = theta_2
+            self.nb_constraints = 3
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """
@@ -117,6 +157,7 @@ class Joint:
 
             super(Joint.Universal, self).__init__(joint_name, segment_parent, segment_child)
             self.theta = theta
+            self.nb_constraints = 2
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """
@@ -146,6 +187,7 @@ class Joint:
         ):
 
             super(Joint.Spherical, self).__init__(joint_name, segment_parent, segment_child)
+            self.nb_constraints = 1
             # todo: do something better
             # this thing is not none if the joint is not located at rp nor at rd and it needs to be used
             self.point_interpolation_matrix_in_child = point_interpolation_matrix_in_child
@@ -169,6 +211,18 @@ class Joint:
                 constraint[0] = np.matmul(self.point_interpolation_matrix_in_child, Q_parent.vector) - Q_child.rd
 
             return constraint
+
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            np.ndarray
+                Kinematic constraints of the joint [2, 1]
+            """
+            raise(NotImplementedError, "This function is not implemented yet")
 
 
 # todo : more to come

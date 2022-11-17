@@ -6,7 +6,7 @@ from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
 
 
-class AbstractBiomechanicalModel:
+class AbstractBiomechanicalModel(ABC):
     """
     This class is the base class for all biomechanical models. It contains the segments and the joints of the model.
 

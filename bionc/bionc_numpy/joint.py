@@ -22,16 +22,16 @@ class Joint:
         def __init__(
             self,
             joint_name: str,
-            segment_parent: NaturalSegment,
-            segment_child: NaturalSegment,
+            parent: NaturalSegment,
+            child: NaturalSegment,
             theta_1: float,
             theta_2: float,
         ):
 
-            super(Joint.Hinge, self).__init__(joint_name, segment_parent, segment_child)
+            super(Joint.Hinge, self).__init__(joint_name, parent, child)
             self.theta_1 = theta_1
             self.theta_2 = theta_2
-            self.nb_constraints = 3
+            self.nb_constraints = 5
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """
@@ -43,12 +43,10 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [3, 1]
             """
-            constraint = np.zeros(3)
-            constraint[0] = Q_parent.rd - Q_child.rp
-            constraint[1] = np.dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.segment_child.length * np.cos(
-                self.theta_1
-            )
-            constraint[2] = np.dot(Q_parent.w, Q_child.u) - np.cos(self.theta_2)
+            constraint = np.zeros(self.nb_constraints)
+            constraint[:3] = Q_parent.rd - Q_child.rp
+            constraint[3] = np.dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.child.length * np.cos(self.theta_1)
+            constraint[4] = np.dot(Q_parent.w, Q_child.u) - np.cos(self.theta_2)
 
             return constraint
 
@@ -56,14 +54,14 @@ class Joint:
         def __init__(
             self,
             joint_name: str,
-            segment_parent: NaturalSegment,
-            segment_child: NaturalSegment,
+            parent: NaturalSegment,
+            child: NaturalSegment,
             theta: float,
         ):
 
-            super(Joint.Universal, self).__init__(joint_name, segment_parent, segment_child)
+            super(Joint.Universal, self).__init__(joint_name, parent, child)
             self.theta = theta
-            self.nb_constraints = 2
+            self.nb_constraints = 4
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """
@@ -75,11 +73,10 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [2, 1]
             """
-            N = np.zeros((3, 12))  # interpolation matrix of the given axis
-
-            constraint = np.zeros(2)
-            constraint[0] = Q_parent.rd - Q_child.rp
-            constraint[1] = np.dot(Q_parent.w, np.matmul(N, Q_child.vector)) - np.cos(self.theta)
+            N = np.zeros((3, 12))
+            constraint = np.zeros(self.nb_constraints)
+            constraint[:3] = Q_parent.rd - Q_child.rp
+            constraint[3] = np.dot(Q_parent.w, N @ Q_child.vector) - np.cos(self.theta)
 
             return constraint
 
@@ -87,13 +84,13 @@ class Joint:
         def __init__(
             self,
             joint_name: str,
-            segment_parent: NaturalSegment,
-            segment_child: NaturalSegment,
+            parent: NaturalSegment,
+            child: NaturalSegment,
             point_interpolation_matrix_in_child: float = None,
         ):
 
-            super(Joint.Spherical, self).__init__(joint_name, segment_parent, segment_child)
-            self.nb_constraints = 1
+            super(Joint.Spherical, self).__init__(joint_name, parent, child)
+            self.nb_constraints = 3
             # todo: do something better
             # this thing is not none if the joint is not located at rp nor at rd and it needs to be used
             self.point_interpolation_matrix_in_child = point_interpolation_matrix_in_child
@@ -108,13 +105,11 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [2, 1]
             """
-            N = np.zeros((3, 12))  # interpolation matrix of the given axis
 
-            constraint = np.zeros(1)
-            if self.point_interpolation_matrix_in_child is None:
-                constraint[0] = Q_parent.rd - Q_child.rp
-            else:
-                constraint[0] = np.matmul(self.point_interpolation_matrix_in_child, Q_parent.vector) - Q_child.rd
+            # if self.point_interpolation_matrix_in_child is None:
+            constraint = Q_parent.rd - Q_child.rp
+            # else:
+            #     constraint = self.point_interpolation_matrix_in_child @ Q_parent.vector - Q_child.rd
 
             return constraint
 

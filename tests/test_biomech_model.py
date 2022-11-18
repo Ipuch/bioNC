@@ -26,6 +26,7 @@ def test_biomech_model():
     assert natural_model.nb_segments() == 4
     assert natural_model.nb_markers() == 12
     assert natural_model.nb_joints() == 3
+    assert natural_model.nb_joint_constraints() == 9
 
     assert natural_model.nb_Q() == 48
     assert natural_model.nb_Qdot() == 48
@@ -2536,6 +2537,39 @@ def test_biomech_model():
             ]
         ),
         decimal=6,
+    )
+
+    # Test rigid body constraints
+    Q1 = SegmentNaturalCoordinates.from_components(
+        u=[1, 2, 3.05],
+        rp=[1.1, 1, 3.1],
+        rd=[1.2, 2, 4.1],
+        w=[1.3, 2, 5.1],
+    )
+    Q2 = SegmentNaturalCoordinates.from_components(
+        u=[1.4, 2, 3.2],
+        rp=[1.5, 1, 3.2],
+        rd=[1.6, 2, 4.2],
+        w=[1.7, 2, 5.2],
+    )
+    Q3 = SegmentNaturalCoordinates.from_components(
+        u=[1.8, 2, 3.3],
+        rp=[1.9, 1, 3.3],
+        rd=[2.1, 2, 4.3],
+        w=[2.2, 2, 5.3],
+    )
+    Q4 = SegmentNaturalCoordinates.from_components(
+        u=[2.3, 2, 3.4],
+        rp=[2.4, 1, 3.4],
+        rd=[2.5, 2, 4.4],
+        w=[2.6, 2, 5.4],
+    )
+
+    Q = NaturalCoordinates.from_qi((Q1, Q3, Q2, Q4))
+
+    np.testing.assert_array_almost_equal(
+        natural_model.joint_constraints(Q),
+        np.array([-0.7, 1.0, 0.8, 0.6, 1.0, 1.1, -0.8, 1.0, 0.8]),
     )
 
     # not implemented yet

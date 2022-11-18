@@ -51,9 +51,9 @@ class JointBase(AbstractJoint):
     ----------
     joint_name : str
         The name of the joint
-    segment_parent : NaturalSegment
+    parent : NaturalSegment
         The parent segment of the joint
-    segment_child : NaturalSegment
+    child : NaturalSegment
         The child segment of the joint
 
     Methods
@@ -66,12 +66,12 @@ class JointBase(AbstractJoint):
     def __init__(
         self,
         joint_name: str,
-        segment_parent: AbstractNaturalSegment,
-        segment_child: AbstractNaturalSegment,
+        parent: AbstractNaturalSegment,
+        child: AbstractNaturalSegment,
     ):
         self.joint_name = joint_name
-        self.segment_parent = segment_parent
-        self.segment_child = segment_child
+        self.parent = parent
+        self.child = child
 
     @abstractmethod
     def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:

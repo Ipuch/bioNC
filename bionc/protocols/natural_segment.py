@@ -543,8 +543,8 @@ class GenericNaturalSegment(AbstractNaturalSegment):
 
     @classmethod
     def from_experimental_Q(
-            cls,
-            Qi: SegmentNaturalCoordinates,
+        cls,
+        Qi: SegmentNaturalCoordinates,
     ) -> "NaturalSegment":
         """
         Parameters
@@ -706,7 +706,8 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         pass
 
     def location_from_homogenous_transform(
-            self, T,
+        self,
+        T,
     ) -> SegmentNaturalCoordinates:
         """
         This function returns the location of the segment in natural coordinate from its homogenous transform
@@ -733,9 +734,9 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         pass
 
     def rigid_body_constraint_derivative(
-            self,
-            Qi: SegmentNaturalCoordinates,
-            Qdoti: SegmentNaturalVelocities,
+        self,
+        Qi: SegmentNaturalCoordinates,
+        Qdoti: SegmentNaturalVelocities,
     ):
         """
         This function returns the derivative of the rigid body constraints denoted Phi_r_dot
@@ -805,10 +806,10 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         pass
 
     def differential_algebraic_equation(
-            self,
-            Qi: Union[SegmentNaturalCoordinates, np.ndarray],
-            Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
-            stabilization: dict = None,
+        self,
+        Qi: Union[SegmentNaturalCoordinates, np.ndarray],
+        Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
+        stabilization: dict = None,
     ) -> tuple:
         """
         This function returns the differential algebraic equation of the segment
@@ -875,4 +876,3 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         This function returns the marker jacobian of the segment
         """
         pass
-    

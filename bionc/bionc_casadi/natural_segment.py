@@ -39,6 +39,8 @@ class NaturalSegment(AbstractNaturalSegment):
     ----------
     _name : str
         name of the segment
+    _index : int
+        index of the segment
     _length : float
         length of the segment
     _alpha : float

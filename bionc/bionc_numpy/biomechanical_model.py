@@ -3,6 +3,7 @@ import numpy as np
 from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.bionc_numpy.natural_velocities import NaturalVelocities
 from ..protocols.biomechanical_model import AbstractBiomechanicalModel
+from ..protocols.natural_segment_list import SegmentList
 
 
 class BiomechanicalModel(AbstractBiomechanicalModel):
@@ -11,6 +12,7 @@ class BiomechanicalModel(AbstractBiomechanicalModel):
         from .joint import Joint  # Imported here to prevent from circular imports
 
         self.segments: dict[str:NaturalSegment, ...] = {}
+        # self.segments: SegmentList = SegmentList()
         self.joints: dict[str:Joint, ...] = {}
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # the order of the segment matters
@@ -21,6 +23,7 @@ class BiomechanicalModel(AbstractBiomechanicalModel):
 
     def __setitem__(self, name: str, segment: "NaturalSegment"):
         if segment.name == name:  # Make sure the name of the segment fits the internal one
+            segment.set_index(len(self.segments))
             self.segments[name] = segment
             self._update_mass_matrix()  # Update the generalized mass matrix
         else:
@@ -69,6 +72,12 @@ class BiomechanicalModel(AbstractBiomechanicalModel):
 
     def nb_joints(self):
         return len(self.joints)
+
+    def nb_joint_constraints(self):
+        nb_joint_constraints = 0
+        for joint in self.joints:
+            nb_joint_constraints += self.joints[joint].nb_constraints()
+        return nb_joint_constraints
 
     def nb_Q(self):
         return 12 * self.nb_segments()
@@ -149,14 +158,19 @@ class BiomechanicalModel(AbstractBiomechanicalModel):
         Returns
         -------
         np.ndarray
-            Joint constraints of the segment [nb_joints, 1]
+            Joint constraints of the segment [nb_joint_constraints, 1]
         """
 
-        Phi_k = np.zeros(self.nb_joints())
+        Phi_k = np.zeros(self.nb_joint_constraints())
+        nb_constraints = 0
         for i, joint_name in enumerate(self.joints):
+            idx = slice(nb_constraints, nb_constraints + self.joints[joint_name].nb_constraints())
+
             Q_parent = Q.vector(self.segments[self.joints[joint_name].parent.name].index)
             Q_child = Q.vector(self.segments[self.joints[joint_name].child.name].index)
-            Phi_k[i] = self.joints[joint_name].constraint(Q_parent, Q_child)
+            Phi_k[idx] = self.joints[joint_name].constraint(Q_parent, Q_child)
+
+            nb_constraints += self.joints[joint_name].nb_constraints()
 
         return Phi_k
 

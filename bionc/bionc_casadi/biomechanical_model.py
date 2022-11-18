@@ -46,6 +46,12 @@ class BiomechanicalModel(AbstractBiomechanicalModel):
     def nb_joints(self):
         return len(self.joints)
 
+    def nb_joint_constraints(self):
+        nb_joint_constraints = 0
+        for joint in self.joints:
+            nb_joint_constraints += self.joints[joint].nb_constraints()
+        return nb_joint_constraints
+
     def nb_Q(self):
         return 12 * self.nb_segments()
 
@@ -116,6 +122,30 @@ class BiomechanicalModel(AbstractBiomechanicalModel):
             )
 
         return Kr_dot
+
+    def joint_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the joint constraints of all joints, denoted Phi_k
+        as a function of the natural coordinates Q.
+
+        Returns
+        -------
+        np.ndarray
+            Joint constraints of the segment [nb_joint_constraints, 1]
+        """
+
+        Phi_k = MX.zeros(self.nb_joint_constraints())
+        nb_constraints = 0
+        for i, joint_name in enumerate(self.joints):
+            idx = slice(nb_constraints, nb_constraints + self.joints[joint_name].nb_constraints())
+
+            Q_parent = Q.vector(self.segments[self.joints[joint_name].parent.name].index)
+            Q_child = Q.vector(self.segments[self.joints[joint_name].child.name].index)
+            Phi_k[idx] = self.joints[joint_name].constraint(Q_parent, Q_child)
+
+            nb_constraints += self.joints[joint_name].nb_constraints()
+
+        return Phi_k
 
     def _update_mass_matrix(self):
         """

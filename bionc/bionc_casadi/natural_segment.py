@@ -65,9 +65,11 @@ class NaturalSegment(AbstractNaturalSegment):
         mass: Union[MX, float, np.float64] = None,
         center_of_mass: Union[MX, np.ndarray] = None,
         inertia: Union[MX, np.ndarray] = None,
+        index: int = None,
     ):
 
         self._name = name
+        self._index = index
 
         self._length = MX(length)
         self._alpha = MX(alpha)
@@ -115,6 +117,17 @@ class NaturalSegment(AbstractNaturalSegment):
             Name of the segment
         """
         self._name = name
+
+    def set_index(self, index: int):
+        """
+        This function sets the index of the segment
+
+        Parameters
+        ----------
+        index : int
+            Index of the segment
+        """
+        self._index = index
 
     @classmethod
     def from_experimental_Q(
@@ -181,6 +194,10 @@ class NaturalSegment(AbstractNaturalSegment):
     @property
     def name(self):
         return self._name
+
+    @property
+    def index(self):
+        return self._index
 
     @property
     def length(self):

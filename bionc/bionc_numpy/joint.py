@@ -52,7 +52,7 @@ class Joint:
 
             return constraint
 
-    class Universal(JointBase, ABC):
+    class Universal(JointBase):
         def __init__(
             self,
             joint_name: str,

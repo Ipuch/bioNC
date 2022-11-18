@@ -80,6 +80,17 @@ class AbstractBiomechanicalModel(ABC):
         """
 
     @abstractmethod
+    def nb_joint_constraints(self):
+        """
+        This function returns the number of joint constraints in the model
+
+        Returns
+        -------
+        int
+            number of joint constraints in the model
+        """
+
+    @abstractmethod
     def nb_Q(self):
         """
         This function returns the number of natural coordinates of the model
@@ -133,6 +144,18 @@ class AbstractBiomechanicalModel(ABC):
         -------
             The derivative of the Jacobian matrix of the rigid body constraints [6, 12]
         """
+
+    @abstractmethod
+    def joint_constraints(self, Q: NaturalCoordinates):
+        """
+        This function returns the kinematic constraints of all joints, denoted Phi_k
+        as a function of the natural coordinates Q.
+
+        Returns
+        -------
+        Kinematic constraints of the joints [nb_joints_constraints, 1]
+        """
+        ...
 
     @abstractmethod
     def _update_mass_matrix(self):

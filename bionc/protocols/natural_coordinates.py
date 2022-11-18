@@ -115,7 +115,7 @@ class NaturalCoordinates(Protocol):
 
     ...
 
-    def vector(self):
+    def vector(self, segment_idx):
         """This property returns the vector of the natural coordinates"""
 
     ...

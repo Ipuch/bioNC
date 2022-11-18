@@ -25,7 +25,7 @@ def test_biomech_model():
     # Test model
     assert natural_model.nb_segments() == 4
     assert natural_model.nb_markers() == 12
-    assert natural_model.nb_joints() == 0
+    assert natural_model.nb_joints() == 3
 
     assert natural_model.nb_Q() == 48
     assert natural_model.nb_Qdot() == 48

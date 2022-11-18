@@ -59,6 +59,7 @@ class NaturalSegment(AbstractNaturalSegment):
     def __init__(
         self,
         name: str = None,
+        index: int = None,
         alpha: Union[float, np.float64] = np.pi / 2,
         beta: Union[float, np.float64] = np.pi / 2,
         gamma: Union[float, np.float64] = np.pi / 2,
@@ -69,6 +70,7 @@ class NaturalSegment(AbstractNaturalSegment):
     ):
 
         self._name = name
+        self._index = index
 
         self._length = length
         self._alpha = alpha
@@ -116,6 +118,17 @@ class NaturalSegment(AbstractNaturalSegment):
             Name of the segment
         """
         self._name = name
+
+    def set_index(self, index: int):
+        """
+        This function sets the index of the segment
+
+        Parameters
+        ----------
+        index : int
+            Index of the segment
+        """
+        self._index = index
 
     @classmethod
     def from_experimental_Q(
@@ -182,6 +195,10 @@ class NaturalSegment(AbstractNaturalSegment):
     @property
     def name(self):
         return self._name
+
+    @property
+    def index(self):
+        return self._index
 
     @property
     def length(self):

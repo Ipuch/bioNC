@@ -11,6 +11,12 @@ class AbstractNaturalSegment(ABC):
     -------
     set_name
         This method is used to set the name of the segment.
+    set_index
+        This method is used to set the index of the segment.
+    name
+        This method is used to get the name of the segment.
+    index
+        This method is used to get the index of the segment.
     alpha
         This method is used to return the alpha angle of the segment.
     beta
@@ -54,6 +60,16 @@ class AbstractNaturalSegment(ABC):
         name : str
             Name of the segment
         """
+    @abstractmethod
+    def set_index(self, index: int):
+        """
+        This function sets the index of the segment
+
+        Parameters
+        ----------
+        index : int
+            Index of the segment
+        """
 
     @abstractmethod
     def name(self):
@@ -64,6 +80,17 @@ class AbstractNaturalSegment(ABC):
         -------
         str
             Name of the segment
+        """
+
+    @abstractmethod
+    def index(self):
+        """
+        This function returns the index of the segment
+
+        Returns
+        -------
+        int
+            Index of the segment
         """
 
     @abstractmethod

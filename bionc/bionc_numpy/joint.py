@@ -118,7 +118,9 @@ class Joint:
 
             return constraint
 
-        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k
             as a function of the natural coordinates Q_parent and Q_child.
@@ -128,7 +130,7 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [2, 1]
             """
-            raise(NotImplementedError, "This function is not implemented yet")
+            raise (NotImplementedError, "This function is not implemented yet")
 
 
 # todo : more to come

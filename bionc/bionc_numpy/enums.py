@@ -6,6 +6,7 @@ class JointType(Enum):
     """
     This class represents the different types of joints
     """
+
     WELD = "not implemented yet"
     REVOLUTE = Joint.Hinge
     PRISMATIC = "not implemented yet"

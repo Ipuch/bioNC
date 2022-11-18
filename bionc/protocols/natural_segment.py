@@ -60,6 +60,7 @@ class AbstractNaturalSegment(ABC):
         name : str
             Name of the segment
         """
+
     @abstractmethod
     def set_index(self, index: int):
         """

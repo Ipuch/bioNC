@@ -875,3 +875,4 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         This function returns the marker jacobian of the segment
         """
         pass
+    

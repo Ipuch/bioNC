@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 from casadi import MX
 from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_velocities import SegmentNaturalVelocities
+from .homogenous_transform import HomogeneousTransform
+from .natural_markers import AbstractSegmentMarker
 
 
 class AbstractNaturalSegment(ABC):
@@ -830,7 +833,7 @@ class GenericNaturalSegment(AbstractNaturalSegment):
 
         pass
 
-    def add_marker(self, marker: SegmentMarker):
+    def add_marker(self, marker: AbstractSegmentMarker):
         """
         Add a new marker to the segment
 

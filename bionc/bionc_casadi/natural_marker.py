@@ -4,16 +4,16 @@ import numpy as np
 from casadi import MX, vertcat, horzcat
 
 from .biomechanical_model import BiomechanicalModel
-from bionc.model_creation.protocols import Data
-from bionc.bionc_casadi.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from ..model_creation.protocols import Data
+from ..bionc_casadi.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 
-# from ..utils.natural_coordinates import SegmentNaturalCoordinates
-from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates
+from ..protocols.natural_markers import AbstractSegmentMarker
 
 # todo: need a list of markers MarkerList
 
 
-class SegmentMarker:
+class SegmentMarker(AbstractSegmentMarker):
     """
     Class used to create a segment markers for the natural segments
 

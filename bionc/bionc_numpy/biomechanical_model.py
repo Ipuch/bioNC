@@ -7,17 +7,7 @@ from ..protocols.biomechanical_model import GenericBiomechanicalModel
 
 class BiomechanicalModel(GenericBiomechanicalModel):
     def __init__(self):
-
-        from .natural_segment import NaturalSegment  # Imported here to prevent from circular imports
-        from .joint import Joint  # Imported here to prevent from circular imports
-
         super().__init__()
-        self.segments: dict[str:NaturalSegment, ...] = {}
-        # self.segments: SegmentList = SegmentList()
-        self.joints: dict[str:Joint, ...] = {}
-        # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
-        # the order of the segment matters
-        self._mass_matrix = self._update_mass_matrix()
 
     def rigid_body_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
         """

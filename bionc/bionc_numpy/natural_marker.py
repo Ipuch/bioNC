@@ -3,14 +3,15 @@ from typing import Callable
 import numpy as np
 
 from .biomechanical_model import BiomechanicalModel
-from bionc.model_creation.protocols import Data
-from bionc.bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
-from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates
+from ..model_creation.protocols import Data
+from ..bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates
+from ..protocols.natural_markers import AbstractSegmentMarker
 
 # todo: need a list of markers MarkerList
 
 
-class SegmentMarker:
+class SegmentMarker(AbstractSegmentMarker):
     """
     Class used to create a segment markers for the natural segments
 

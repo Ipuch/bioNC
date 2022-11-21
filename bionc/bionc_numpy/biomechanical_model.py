@@ -116,19 +116,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         self._mass_matrix = G
 
-    @property
-    def mass_matrix(self):
-        """
-        This function returns the generalized mass matrix of the system, denoted G
-
-        Returns
-        -------
-        np.ndarray
-            generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
-
-        """
-        return self._mass_matrix
-
 
 # def kinematicConstraints(self, Q):
 #     # Method to calculate the kinematic constraints

@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-
 from casadi import MX, dot, cos, sin
 import numpy as np
 
@@ -11,7 +9,6 @@ from ..protocols.joint import JointBase
 class Joint(JointBase):
     """
     The public interface to the different Joint classes
-
     """
 
     class Hinge(JointBase):
@@ -46,14 +43,26 @@ class Joint(JointBase):
             """
             constraint = MX.zeros(self.nb_constraints)
             constraint[:3, 0] = Q_parent.rd - Q_child.rp
-            constraint[3, 0] = dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.segment_child.length * cos(
+            constraint[3, 0] = dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.child.length * cos(
                 self.theta_1
             )
             constraint[4, 0] = dot(Q_parent.w, Q_child.u) - cos(self.theta_2)
 
             return constraint
 
-    class Universal(JointBase, ABC):
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                Jacobian of the kinematic constraints of the joint
+            """
+            raise NotImplementedError("This function is not implemented yet")
+
+    class Universal(JointBase):
         def __init__(
                 self,
                 joint_name: str,

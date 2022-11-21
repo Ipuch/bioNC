@@ -7,9 +7,9 @@ class JointType(Enum):
     This class represents the different types of joints
     """
 
-    WELD = "not implemented yet"
+    # WELD = "not implemented yet"
     REVOLUTE = Joint.Hinge
-    PRISMATIC = "not implemented yet"
-    CARDAN = Joint.Universal
+    # PRISMATIC = "not implemented yet"
+    UNIVERSAL = Joint.Universal
     SPHERICAL = Joint.Spherical
-    PLANAR = "planar"
+    # PLANAR = "planar"

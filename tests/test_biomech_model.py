@@ -8,7 +8,7 @@ from .utils import TestUtils
 @pytest.mark.parametrize(
     "bionc_type",
     [
-        # "numpy",
+        "numpy",
         "casadi"
     ],
 )

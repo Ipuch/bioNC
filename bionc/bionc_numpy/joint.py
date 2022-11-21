@@ -184,7 +184,7 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [2, 1]
             """
-            raise (NotImplementedError, "This function is not implemented yet")
+            raise NotImplementedError("This function is not implemented yet")
 
         def to_mx(self):
             """

@@ -84,7 +84,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         self._mass = mass
         if center_of_mass is None:
-            self._center_of_mass = MX(center_of_mass)
+            self._center_of_mass = center_of_mass
             self._center_of_mass_in_natural_coordinates_system = None
             self._interpolation_matrix_center_of_mass = None
         else:
@@ -95,7 +95,7 @@ class NaturalSegment(AbstractNaturalSegment):
             self._interpolation_matrix_center_of_mass = self._interpolation_matrix_center_of_mass()
 
         if inertia is None:
-            self._inertia = MX(inertia)
+            self._inertia = inertia
             self._inertia_in_natural_coordinates_system = None
             self._interpolation_matrix_inertia = None
             self._mass_matrix = None

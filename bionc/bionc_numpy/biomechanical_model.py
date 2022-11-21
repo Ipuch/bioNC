@@ -9,6 +9,24 @@ class BiomechanicalModel(GenericBiomechanicalModel):
     def __init__(self):
         super().__init__()
 
+    def to_mx(self):
+        """
+        This function returns the equivalent of the current BiomechanicalModel with casadi MX variables
+
+        Returns
+        -------
+        BiomechanicalModel
+            The equivalent of the current BiomechanicalModel with casadi MX variables
+        """
+        from ..bionc_casadi.biomechanical_model import BiomechanicalModel as CasadiBiomechanicalModel
+        biomechanical_model = CasadiBiomechanicalModel()
+        biomechanical_model.segments = {key: segment.to_mx() for key, segment in self.segments.items()}
+        biomechanical_model.joints = {key: joint.to_mx() for key, joint in self.joints.items()}
+        biomechanical_model._update_mass_matrix()
+
+        return biomechanical_model
+
+
     def rigid_body_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
         """
         This function returns the rigid body constraints of all segments, denoted Phi_r

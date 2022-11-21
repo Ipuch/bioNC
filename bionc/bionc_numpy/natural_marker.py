@@ -214,6 +214,19 @@ class SegmentMarker(AbstractSegmentMarker):
         else:
             raise NotImplementedError(f"The subtraction for {type(other)} is not implemented")
 
+    def to_mx(self):
+        """
+        This function converts the marker to a mx marker
+        """
+        from ..bionc_casadi import SegmentMarker as SegmentMarkerMX
+        return SegmentMarkerMX(
+            name=self.name,
+            parent_name=self.parent_name,
+            position=self.position,
+            is_technical=self.is_technical,
+            is_anatomical=self.is_anatomical,
+        )
+
 
 class Marker:
     def __init__(

@@ -108,6 +108,24 @@ class NaturalSegment(AbstractNaturalSegment):
         # list of markers embedded in the segment
         self._markers = []
 
+    def to_mx(self) -> AbstractNaturalSegment:
+        from ..bionc_casadi.natural_segment import NaturalSegment as NaturalSegmentCasadi
+        natural_segment = NaturalSegmentCasadi(
+            name=self.name,
+            index=self.index,
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
+            length=self.length,
+            mass=self.mass,
+            center_of_mass=self.center_of_mass,
+            inertia=self.inertia,
+        )
+        for marker in self._markers:
+            natural_segment.add_marker(marker.to_mx())
+
+        return natural_segment
+
     def set_name(self, name: str):
         """
         This function sets the name of the segment

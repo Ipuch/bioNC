@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Union
 from pathlib import Path
 import importlib.util
 from casadi import MX, Function
@@ -50,8 +50,18 @@ class TestUtils:
         )
 
     @staticmethod
-    def mx_assert_equal(mx: MX, expected: Any):
+    def mx_assert_equal(mx: MX, expected: Any, decimal: int = 6):
         """
         Assert that a casadi MX is equal to a numpy array if it is only numeric values
         """
-        np.testing.assert_equal(TestUtils.mx_to_array(mx), expected)
+        np.testing.assert_almost_equal(TestUtils.mx_to_array(mx), expected, decimal=decimal)
+
+    @staticmethod
+    def assert_equal(value: Union[MX, np.ndarray], expected: Any, decimal: int = 6):
+        """
+        Assert that a casadi MX or numpy array is equal to a numpy array if it is only numeric values
+        """
+        if isinstance(value, MX):
+            TestUtils.mx_assert_equal(value, expected, decimal=decimal)
+        else:
+            np.testing.assert_almost_equal(value, expected, decimal=decimal)

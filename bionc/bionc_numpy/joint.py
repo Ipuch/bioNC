@@ -50,6 +50,27 @@ class Joint:
 
             return constraint
 
+    def to_mx(self):
+        """
+        This function returns the joint as a mx joint
+
+        Returns
+        -------
+        JointBase
+            The joint as a mx joint
+        """
+        from ..bionc_casadi.joint import Joint as CasadiJoint
+
+        return CasadiJoint.Hinge(
+            joint_name=self.joint_name,
+            segment_parent=self.parent,
+            segment_child=self.child,
+            theta_1=self.theta_1,
+            theta_2=self.theta_2,
+        )
+
+
+
     class Universal(JointBase):
         def __init__(
             self,
@@ -126,6 +147,24 @@ class Joint:
                 Kinematic constraints of the joint [2, 1]
             """
             raise (NotImplementedError, "This function is not implemented yet")
+
+        def to_mx(self):
+            """
+            This function returns the joint as a mx joint
+
+            Returns
+            -------
+            JointBase
+                The joint as a mx joint
+            """
+            from ..bionc_casadi.joint import Joint as CasadiJoint
+
+            return CasadiJoint.Spherical(
+                joint_name=self.joint_name,
+                parent=self.parent.to_mx(),
+                child=self.child.to_mx(),
+                point_interpolation_matrix_in_child=self.point_interpolation_matrix_in_child,
+            )
 
 
 # todo : more to come

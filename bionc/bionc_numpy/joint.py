@@ -69,8 +69,6 @@ class Joint:
             theta_2=self.theta_2,
         )
 
-
-
     class Universal(JointBase):
         def __init__(
             self,

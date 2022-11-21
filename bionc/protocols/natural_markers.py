@@ -20,6 +20,7 @@ class AbstractSegmentMarker(ABC):
         Computes the constraint for the marker given the segment natural coordinates and experimental marker location
 
     """
+
     @abstractmethod
     def from_data(
         cls,

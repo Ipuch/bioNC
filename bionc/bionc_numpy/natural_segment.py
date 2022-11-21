@@ -110,6 +110,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
     def to_mx(self) -> AbstractNaturalSegment:
         from ..bionc_casadi.natural_segment import NaturalSegment as NaturalSegmentCasadi
+
         natural_segment = NaturalSegmentCasadi(
             name=self.name,
             index=self.index,

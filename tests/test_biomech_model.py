@@ -19,11 +19,19 @@ def test_biomech_model(bionc_type):
     )
 
     if bionc_type == "casadi":
-        from bionc.bionc_casadi import SegmentNaturalVelocities, NaturalVelocities, SegmentNaturalCoordinates, \
-            NaturalCoordinates
+        from bionc.bionc_casadi import (
+            SegmentNaturalVelocities,
+            NaturalVelocities,
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+        )
     else:
-        from bionc.bionc_numpy import SegmentNaturalVelocities, NaturalVelocities, SegmentNaturalCoordinates, \
-            NaturalCoordinates
+        from bionc.bionc_numpy import (
+            SegmentNaturalVelocities,
+            NaturalVelocities,
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+        )
 
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation.py")

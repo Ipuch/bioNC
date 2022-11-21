@@ -219,6 +219,7 @@ class SegmentMarker(AbstractSegmentMarker):
         This function converts the marker to a mx marker
         """
         from ..bionc_casadi import SegmentMarker as SegmentMarkerMX
+
         return SegmentMarkerMX(
             name=self.name,
             parent_name=self.parent_name,

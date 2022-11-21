@@ -3,14 +3,15 @@ from typing import Callable
 import numpy as np
 
 from .biomechanical_model import BiomechanicalModel
-from bionc.model_creation.protocols import Data
-from bionc.bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
-from bionc.protocols.natural_coordinates import SegmentNaturalCoordinates
+from ..model_creation.protocols import Data
+from ..bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates
+from ..protocols.natural_markers import AbstractSegmentMarker
 
 # todo: need a list of markers MarkerList
 
 
-class SegmentMarker:
+class SegmentMarker(AbstractSegmentMarker):
     """
     Class used to create a segment markers for the natural segments
 
@@ -212,6 +213,20 @@ class SegmentMarker:
             return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
         else:
             raise NotImplementedError(f"The subtraction for {type(other)} is not implemented")
+
+    def to_mx(self):
+        """
+        This function converts the marker to a mx marker
+        """
+        from ..bionc_casadi import SegmentMarker as SegmentMarkerMX
+
+        return SegmentMarkerMX(
+            name=self.name,
+            parent_name=self.parent_name,
+            position=self.position,
+            is_technical=self.is_technical,
+            is_anatomical=self.is_anatomical,
+        )
 
 
 class Marker:

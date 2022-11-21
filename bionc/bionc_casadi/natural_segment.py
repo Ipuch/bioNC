@@ -39,6 +39,8 @@ class NaturalSegment(AbstractNaturalSegment):
     ----------
     _name : str
         name of the segment
+    _index : int
+        index of the segment
     _length : float
         length of the segment
     _alpha : float
@@ -65,9 +67,11 @@ class NaturalSegment(AbstractNaturalSegment):
         mass: Union[MX, float, np.float64] = None,
         center_of_mass: Union[MX, np.ndarray] = None,
         inertia: Union[MX, np.ndarray] = None,
+        index: int = None,
     ):
 
         self._name = name
+        self._index = index
 
         self._length = MX(length)
         self._alpha = MX(alpha)
@@ -80,7 +84,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         self._mass = mass
         if center_of_mass is None:
-            self._center_of_mass = MX(center_of_mass)
+            self._center_of_mass = center_of_mass
             self._center_of_mass_in_natural_coordinates_system = None
             self._interpolation_matrix_center_of_mass = None
         else:
@@ -91,7 +95,7 @@ class NaturalSegment(AbstractNaturalSegment):
             self._interpolation_matrix_center_of_mass = self._interpolation_matrix_center_of_mass()
 
         if inertia is None:
-            self._inertia = MX(inertia)
+            self._inertia = inertia
             self._inertia_in_natural_coordinates_system = None
             self._interpolation_matrix_inertia = None
             self._mass_matrix = None
@@ -115,6 +119,17 @@ class NaturalSegment(AbstractNaturalSegment):
             Name of the segment
         """
         self._name = name
+
+    def set_index(self, index: int):
+        """
+        This function sets the index of the segment
+
+        Parameters
+        ----------
+        index : int
+            Index of the segment
+        """
+        self._index = index
 
     @classmethod
     def from_experimental_Q(
@@ -181,6 +196,10 @@ class NaturalSegment(AbstractNaturalSegment):
     @property
     def name(self):
         return self._name
+
+    @property
+    def index(self):
+        return self._index
 
     @property
     def length(self):

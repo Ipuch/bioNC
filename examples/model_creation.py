@@ -11,6 +11,7 @@ from bionc import (
     NaturalSegmentTemplate,
     C3dData,
     BiomechanicalModel,
+    JointType,
 )
 import ezc3d
 
@@ -197,7 +198,26 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     model["FOOT"].add_marker(MarkerTemplate("RTAR", parent_name="FOOT"))
     model["FOOT"].add_marker(MarkerTemplate("ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT"))
 
-    # todo: add the joints
+    model.add_joint(
+        name="hip",
+        joint_type=JointType.SPHERICAL,
+        parent="PELVIS",
+        child="THIGH",
+    )
+
+    model.add_joint(
+        name="knee",
+        joint_type=JointType.SPHERICAL,
+        parent="THIGH",
+        child="SHANK",
+    )
+
+    model.add_joint(
+        name="ankle",
+        joint_type=JointType.SPHERICAL,
+        parent="SHANK",
+        child="FOOT",
+    )
 
     c3d_data = C3dData(f"{c3d_filename}")
 

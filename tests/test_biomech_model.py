@@ -1,16 +1,34 @@
 import os
 import numpy as np
-
+import pytest
 
 from .utils import TestUtils
-from bionc.bionc_numpy import SegmentNaturalVelocities, NaturalVelocities, SegmentNaturalCoordinates, NaturalCoordinates
 
 
-def test_biomech_model():
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_biomech_model(bionc_type):
     from examples.model_creation import (
         generate_c3d_file,
         model_creation_from_measured_data,
     )
+
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            SegmentNaturalVelocities,
+            NaturalVelocities,
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            SegmentNaturalVelocities,
+            NaturalVelocities,
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+        )
 
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation.py")
@@ -19,13 +37,18 @@ def test_biomech_model():
     filename = module.generate_c3d_file()
     # Generate model
     natural_model = module.model_creation_from_measured_data(filename)
+
     # delete c3d file
     os.remove(filename)
+
+    if bionc_type == "casadi":
+        natural_model = natural_model.to_mx()
 
     # Test model
     assert natural_model.nb_segments() == 4
     assert natural_model.nb_markers() == 12
-    assert natural_model.nb_joints() == 0
+    assert natural_model.nb_joints() == 3
+    assert natural_model.nb_joint_constraints() == 9
 
     assert natural_model.nb_Q() == 48
     assert natural_model.nb_Qdot() == 48
@@ -59,7 +82,7 @@ def test_biomech_model():
 
     Q = NaturalCoordinates.from_qi((Q1, Q2, Q3, Q4))
 
-    np.testing.assert_array_almost_equal(
+    TestUtils.assert_equal(
         natural_model.rigid_body_constraints(Q),
         np.array(
             [
@@ -92,7 +115,7 @@ def test_biomech_model():
         decimal=6,
     )
 
-    np.testing.assert_array_almost_equal(
+    TestUtils.assert_equal(
         natural_model.rigid_body_constraints_jacobian(Q),
         np.array(
             [
@@ -1329,7 +1352,7 @@ def test_biomech_model():
 
     Qdot = NaturalVelocities.from_qdoti((Qdot1, Qdot2, Qdot3, Qdot4))
 
-    np.testing.assert_array_almost_equal(
+    TestUtils.assert_equal(
         natural_model.rigid_body_constraint_jacobian_derivative(Qdot),
         np.array(
             [
@@ -2536,6 +2559,39 @@ def test_biomech_model():
             ]
         ),
         decimal=6,
+    )
+
+    # Test rigid body constraints
+    Q1 = SegmentNaturalCoordinates.from_components(
+        u=[1, 2, 3.05],
+        rp=[1.1, 1, 3.1],
+        rd=[1.2, 2, 4.1],
+        w=[1.3, 2, 5.1],
+    )
+    Q2 = SegmentNaturalCoordinates.from_components(
+        u=[1.4, 2, 3.2],
+        rp=[1.5, 1, 3.2],
+        rd=[1.6, 2, 4.2],
+        w=[1.7, 2, 5.2],
+    )
+    Q3 = SegmentNaturalCoordinates.from_components(
+        u=[1.8, 2, 3.3],
+        rp=[1.9, 1, 3.3],
+        rd=[2.1, 2, 4.3],
+        w=[2.2, 2, 5.3],
+    )
+    Q4 = SegmentNaturalCoordinates.from_components(
+        u=[2.3, 2, 3.4],
+        rp=[2.4, 1, 3.4],
+        rd=[2.5, 2, 4.4],
+        w=[2.6, 2, 5.4],
+    )
+
+    Q = NaturalCoordinates.from_qi((Q1, Q3, Q2, Q4))
+
+    TestUtils.assert_equal(
+        natural_model.joint_constraints(Q),
+        np.array([-0.7, 1.0, 0.8, 0.6, 1.0, 1.1, -0.8, 1.0, 0.8]),
     )
 
     # not implemented yet

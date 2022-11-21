@@ -59,6 +59,7 @@ class NaturalSegment(AbstractNaturalSegment):
     def __init__(
         self,
         name: str = None,
+        index: int = None,
         alpha: Union[float, np.float64] = np.pi / 2,
         beta: Union[float, np.float64] = np.pi / 2,
         gamma: Union[float, np.float64] = np.pi / 2,
@@ -69,6 +70,7 @@ class NaturalSegment(AbstractNaturalSegment):
     ):
 
         self._name = name
+        self._index = index
 
         self._length = length
         self._alpha = alpha
@@ -106,6 +108,25 @@ class NaturalSegment(AbstractNaturalSegment):
         # list of markers embedded in the segment
         self._markers = []
 
+    def to_mx(self) -> AbstractNaturalSegment:
+        from ..bionc_casadi.natural_segment import NaturalSegment as NaturalSegmentCasadi
+
+        natural_segment = NaturalSegmentCasadi(
+            name=self.name,
+            index=self.index,
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
+            length=self.length,
+            mass=self.mass,
+            center_of_mass=self.center_of_mass,
+            inertia=self.inertia,
+        )
+        for marker in self._markers:
+            natural_segment.add_marker(marker.to_mx())
+
+        return natural_segment
+
     def set_name(self, name: str):
         """
         This function sets the name of the segment
@@ -116,6 +137,17 @@ class NaturalSegment(AbstractNaturalSegment):
             Name of the segment
         """
         self._name = name
+
+    def set_index(self, index: int):
+        """
+        This function sets the index of the segment
+
+        Parameters
+        ----------
+        index : int
+            Index of the segment
+        """
+        self._index = index
 
     @classmethod
     def from_experimental_Q(
@@ -182,6 +214,10 @@ class NaturalSegment(AbstractNaturalSegment):
     @property
     def name(self):
         return self._name
+
+    @property
+    def index(self):
+        return self._index
 
     @property
     def length(self):

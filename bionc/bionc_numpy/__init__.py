@@ -13,3 +13,5 @@ from .natural_marker import SegmentMarker, Marker
 from .natural_segment import NaturalSegment
 from .inertia_parameters import InertiaParameters
 from .interpolation_matrix import interpolate_natural_vector, to_natural_vector
+from .enums import JointType
+from .joint import Joint

@@ -7,10 +7,7 @@ from .utils import TestUtils
 
 @pytest.mark.parametrize(
     "bionc_type",
-    [
-        "numpy",
-        "casadi"
-    ],
+    ["numpy", "casadi"],
 )
 def test_biomech_model(bionc_type):
     from examples.model_creation import (

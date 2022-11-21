@@ -13,10 +13,7 @@ from .utils import TestUtils
 )
 @pytest.mark.parametrize(
     "bionc_type",
-    [
-        "numpy",
-        "casadi"
-    ],
+    ["numpy", "casadi"],
 )
 def test_biomech_model(bionc_type, joint_type: JointType):
 
@@ -69,9 +66,9 @@ def test_biomech_model(bionc_type, joint_type: JointType):
     if joint_type == JointType.REVOLUTE:
         joint = Joint.Hinge(joint_name="hinge", parent=box, child=bbox, theta_1=0.2, theta_2=0.3)
     elif joint_type == JointType.UNIVERSAL:
-        joint = Joint.Universal(joint_name="universal",  parent=box, child=bbox, theta=0.4)
+        joint = Joint.Universal(joint_name="universal", parent=box, child=bbox, theta=0.4)
     elif joint_type == JointType.SPHERICAL:
-        joint = Joint.Spherical(joint_name="spherical",  parent=box, child=bbox)
+        joint = Joint.Spherical(joint_name="spherical", parent=box, child=bbox)
     else:
         raise ValueError("Joint type not tested yet")
 
@@ -90,23 +87,27 @@ def test_biomech_model(bionc_type, joint_type: JointType):
 
     if joint_type == JointType.REVOLUTE:
         TestUtils.assert_equal(
-            joint.constraint(Q1, Q2), np.array([-0.3     ,  0.9     ,  0.9     , -8.9001  , 21.384664]),decimal=6,
+            joint.constraint(Q1, Q2),
+            np.array([-0.3, 0.9, 0.9, -8.9001, 21.384664]),
+            decimal=6,
         )
         with pytest.raises(NotImplementedError, match="This function is not implemented yet"):
             joint.constraint_jacobian(Q1, Q2)
 
     elif joint_type == JointType.UNIVERSAL:
         TestUtils.assert_equal(
-            joint.constraint(Q1, Q2), np.array([-0.3     ,  0.9     ,  0.9     , -0.921061]),decimal=6,
+            joint.constraint(Q1, Q2),
+            np.array([-0.3, 0.9, 0.9, -0.921061]),
+            decimal=6,
         )
         with pytest.raises(NotImplementedError, match="This function is not implemented yet"):
             joint.constraint_jacobian(Q1, Q2)
 
     elif joint_type == JointType.SPHERICAL:
         TestUtils.assert_equal(
-            joint.constraint(Q1, Q2), np.array([-0.3,  0.9,  0.9]),decimal=6,
+            joint.constraint(Q1, Q2),
+            np.array([-0.3, 0.9, 0.9]),
+            decimal=6,
         )
         with pytest.raises(NotImplementedError, match="This function is not implemented yet"):
             joint.constraint_jacobian(Q1, Q2)
-
-

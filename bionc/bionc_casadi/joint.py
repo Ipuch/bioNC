@@ -43,9 +43,7 @@ class Joint(JointBase):
             """
             constraint = MX.zeros(self.nb_constraints)
             constraint[:3, 0] = Q_parent.rd - Q_child.rp
-            constraint[3, 0] = dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.child.length * cos(
-                self.theta_1
-            )
+            constraint[3, 0] = dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.child.length * cos(self.theta_1)
             constraint[4, 0] = dot(Q_parent.w, Q_child.u) - cos(self.theta_2)
 
             return constraint
@@ -64,11 +62,11 @@ class Joint(JointBase):
 
     class Universal(JointBase):
         def __init__(
-                self,
-                joint_name: str,
-                parent: NaturalSegment,
-                child: NaturalSegment,
-                theta: float,
+            self,
+            joint_name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            theta: float,
         ):
             super(Joint.Universal, self).__init__(joint_name, parent, child)
             self.theta = theta

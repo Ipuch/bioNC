@@ -14,4 +14,3 @@ from .natural_segment import NaturalSegment
 from .inertia_parameters import InertiaParameters
 from .interpolation_matrix import interpolate_natural_vector, to_natural_vector
 from .joint import Joint
-

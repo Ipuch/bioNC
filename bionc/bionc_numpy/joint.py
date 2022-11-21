@@ -1,5 +1,3 @@
-from abc import ABC, abstractmethod
-
 import numpy as np
 
 from .natural_segment import NaturalSegment
@@ -41,7 +39,7 @@ class Joint:
             Returns
             -------
             np.ndarray
-                Kinematic constraints of the joint [3, 1]
+                Kinematic constraints of the joint [5, 1]
             """
             constraint = np.zeros(self.nb_constraints)
             constraint[:3] = Q_parent.rd - Q_child.rp
@@ -50,24 +48,36 @@ class Joint:
 
             return constraint
 
-    def to_mx(self):
-        """
-        This function returns the joint as a mx joint
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+            """
+            This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
 
-        Returns
-        -------
-        JointBase
-            The joint as a mx joint
-        """
-        from ..bionc_casadi.joint import Joint as CasadiJoint
+            Returns
+            -------
+            MX
+                Jacobian of the kinematic constraints of the joint
+            """
+            raise NotImplementedError("This function is not implemented yet")
 
-        return CasadiJoint.Hinge(
-            joint_name=self.joint_name,
-            segment_parent=self.parent,
-            segment_child=self.child,
-            theta_1=self.theta_1,
-            theta_2=self.theta_2,
-        )
+        def to_mx(self):
+            """
+            This function returns the joint as a mx joint
+
+            Returns
+            -------
+            JointBase
+                The joint as a mx joint
+            """
+            from ..bionc_casadi.joint import Joint as CasadiJoint
+
+            return CasadiJoint.Hinge(
+                joint_name=self.joint_name,
+                parent=self.parent.to_mx(),
+                child=self.child.to_mx(),
+                theta_1=self.theta_1,
+                theta_2=self.theta_2,
+            )
 
     class Universal(JointBase):
         def __init__(
@@ -90,7 +100,7 @@ class Joint:
             Returns
             -------
             np.ndarray
-                Kinematic constraints of the joint [2, 1]
+                Kinematic constraints of the joint [4, 1]
             """
             N = np.zeros((3, 12))
             constraint = np.zeros(self.nb_constraints)
@@ -98,6 +108,36 @@ class Joint:
             constraint[3] = np.dot(Q_parent.w, N @ Q_child.vector) - np.cos(self.theta)
 
             return constraint
+
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+            """
+            This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                Jacobian of the kinematic constraints of the joint [1, 24]
+            """
+            raise NotImplementedError("This function is not implemented yet")
+
+        def to_mx(self):
+            """
+            This function returns the joint as a mx joint
+
+            Returns
+            -------
+            JointBase
+                The joint as a mx joint
+            """
+            from ..bionc_casadi.joint import Joint as CasadiJoint
+
+            return CasadiJoint.Universal(
+                joint_name=self.joint_name,
+                parent=self.parent.to_mx(),
+                child=self.child.to_mx(),
+                theta=self.theta,
+            )
 
     class Spherical(JointBase):
         def __init__(
@@ -122,7 +162,7 @@ class Joint:
             Returns
             -------
             np.ndarray
-                Kinematic constraints of the joint [2, 1]
+                Kinematic constraints of the joint [3, 1]
             """
 
             # if self.point_interpolation_matrix_in_child is None:

@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 
-from casadi import MX
+from casadi import MX, dot, cos, sin
 import numpy as np
 
 from .natural_segment import NaturalSegment
-from ..protocols.natural_coordinates import SegmentNaturalCoordinates
+from .natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.joint import JointBase
 
 
@@ -23,15 +23,16 @@ class Joint(JointBase):
         def __init__(
             self,
             joint_name: str,
-            segment_parent: NaturalSegment,
-            segment_child: NaturalSegment,
+            parent: NaturalSegment,
+            child: NaturalSegment,
             theta_1: float,
             theta_2: float,
         ):
 
-            super(Joint.Hinge, self).__init__(joint_name, segment_parent, segment_child)
+            super(Joint.Hinge, self).__init__(joint_name, parent, child)
             self.theta_1 = theta_1
             self.theta_2 = theta_2
+            self.nb_constraints = 5
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
@@ -41,28 +42,28 @@ class Joint(JointBase):
             Returns
             -------
             np.ndarray
-                Kinematic constraints of the joint [3, 1]
+                Kinematic constraints of the joint [5, 1]
             """
-            constraint = MX.zeros(3)
-            constraint[0] = Q_parent.rd - Q_child.rp
-            constraint[1] = np.dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.segment_child.length * np.cos(
+            constraint = MX.zeros(self.nb_constraints)
+            constraint[:3, 0] = Q_parent.rd - Q_child.rp
+            constraint[3, 0] = dot(Q_parent.w, Q_child.rp - Q_child.rd) - self.segment_child.length * cos(
                 self.theta_1
             )
-            constraint[2] = np.dot(Q_parent.w, Q_child.u) - np.cos(self.theta_2)
+            constraint[4, 0] = dot(Q_parent.w, Q_child.u) - cos(self.theta_2)
 
             return constraint
 
     class Universal(JointBase, ABC):
         def __init__(
-            self,
-            joint_name: str,
-            segment_parent: NaturalSegment,
-            segment_child: NaturalSegment,
-            theta: float,
+                self,
+                joint_name: str,
+                parent: NaturalSegment,
+                child: NaturalSegment,
+                theta: float,
         ):
-
-            super(Joint.Universal, self).__init__(joint_name, segment_parent, segment_child)
+            super(Joint.Universal, self).__init__(joint_name, parent, child)
             self.theta = theta
+            self.nb_constraints = 4
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
@@ -72,15 +73,27 @@ class Joint(JointBase):
             Returns
             -------
             np.ndarray
-                Kinematic constraints of the joint [2, 1]
+                Kinematic constraints of the joint [4, 1]
             """
             N = MX.zeros((3, 12))  # interpolation matrix of the given axis
 
-            constraint = MX.zeros(2)
-            constraint[0] = Q_parent.rd - Q_child.rp
-            constraint[1] = np.dot(Q_parent.w, np.matmul(N, Q_child.vector)) - np.cos(self.theta)
+            constraint = MX.zeros(self.nb_constraints)
+            constraint[:3, 0] = Q_parent.rd - Q_child.rp
+            constraint[3, 0] = dot(Q_parent.w, N @ Q_child.vector) - cos(self.theta)
 
             return constraint
+
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                Jacobian of the kinematic constraints of the joint
+            """
+            raise NotImplementedError("This function is not implemented yet")
 
     class Spherical(JointBase):
         def __init__(
@@ -105,7 +118,7 @@ class Joint(JointBase):
             Returns
             -------
             np.ndarray
-                Kinematic constraints of the joint [2, 1]
+                Kinematic constraints of the joint [3, 1]
             """
             # N = MX.zeros((3, 12))  # interpolation matrix of the given axis
             #

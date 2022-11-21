@@ -1,9 +1,7 @@
-import os
 import numpy as np
 import pytest
 
 from bionc import JointType
-
 from .utils import TestUtils
 
 
@@ -15,26 +13,20 @@ from .utils import TestUtils
     "bionc_type",
     ["numpy", "casadi"],
 )
-def test_biomech_model(bionc_type, joint_type: JointType):
+def test_joints(bionc_type, joint_type: JointType):
 
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
             BiomechanicalModel,
             NaturalSegment,
-            SegmentNaturalVelocities,
-            NaturalVelocities,
             SegmentNaturalCoordinates,
-            NaturalCoordinates,
             Joint,
         )
     else:
         from bionc.bionc_numpy import (
             BiomechanicalModel,
             NaturalSegment,
-            SegmentNaturalVelocities,
-            NaturalVelocities,
             SegmentNaturalCoordinates,
-            NaturalCoordinates,
             Joint,
         )
 

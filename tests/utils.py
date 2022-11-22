@@ -50,6 +50,13 @@ class TestUtils:
         )
 
     @staticmethod
+    def to_array(value: Union[MX, np.ndarray]):
+        if isinstance(value, MX):
+            return TestUtils.mx_to_array(value)
+        else:
+            return value
+
+    @staticmethod
     def mx_assert_equal(mx: MX, expected: Any, decimal: int = 6):
         """
         Assert that a casadi MX is equal to a numpy array if it is only numeric values

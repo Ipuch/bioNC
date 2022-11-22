@@ -99,7 +99,7 @@ class HomogeneousTransform(np.ndarray):
 
     @property
     def translation(self):
-        return self[3, 0:3].to_array()
+        return self[0:3, 3].to_array()
 
     def inv(self):
         """

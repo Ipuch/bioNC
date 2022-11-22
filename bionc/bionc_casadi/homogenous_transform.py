@@ -113,7 +113,7 @@ class HomogeneousTransform(MX):
 
     @property
     def translation(self):
-        return self[3, 0:3]
+        return self[0:3, 3]
 
     def inv(self):
         """

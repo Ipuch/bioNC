@@ -167,6 +167,21 @@ class NaturalCoordinates(MX):
         return obj
 
     @classmethod
+    def sym(cls, nb_segments: int):
+        """
+        Constructor of the class with symbolic variables
+
+        Parameters
+        ----------
+        nb_segments : int
+            Number of segments
+        """
+
+        input_array = vertcat(*[SegmentNaturalCoordinates.sym(f"_{i}") for i in range(nb_segments)])
+
+        return cls(input_array)
+
+    @classmethod
     def from_qi(cls, tuple_of_Q: tuple):
         """
         Constructor of the class.

@@ -40,10 +40,10 @@ class SegmentNaturalAccelerations(MX):
     @classmethod
     def from_components(
         cls,
-        uddot: Union[MX, list] = None,
-        rpddot: Union[MX, list] = None,
-        rdddot: Union[MX, list] = None,
-        wddot: Union[MX, list] = None,
+        uddot: Union[np.ndarray, MX, list] = None,
+        rpddot: Union[np.ndarray, MX, list] = None,
+        rdddot: Union[np.ndarray, MX, list] = None,
+        wddot: Union[np.ndarray, MX, list] = None,
     ):
         if uddot is None:
             raise ValueError("uddot must be a numpy array (3x1) or a list of 3 elements")
@@ -120,6 +120,21 @@ class NaturalAccelerations(MX):
         obj = MX.__new__(cls)
 
         return obj
+
+    @classmethod
+    def sym(cls, nb_segments: int):
+        """
+        Constructor of the class with symbolic variables
+
+        Parameters
+        ----------
+        nb_segments : int
+            Number of segments
+        """
+
+        input_array = vertcat(*[SegmentNaturalAccelerations.sym(f"_{i}") for i in range(nb_segments)])
+
+        return cls(input_array)
 
     @classmethod
     def from_qddoti(cls, tuple_of_Q: tuple):

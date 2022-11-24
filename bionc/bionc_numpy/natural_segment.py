@@ -1,13 +1,12 @@
 from typing import Union, Tuple
 
 import numpy as np
-from numpy import cos, sin, matmul, eye, zeros, sum, dot
+from numpy import cos, sin, eye, zeros, sum, dot, transpose
 from numpy.linalg import inv
 
-# from ..utils.natural_coordinates import SegmentNaturalCoordinates
-from ..bionc_numpy.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
-from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from ..bionc_numpy.natural_coordinates import SegmentNaturalCoordinates
+from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities
+from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
 from ..bionc_numpy.natural_marker import SegmentMarker
 
@@ -109,6 +108,9 @@ class NaturalSegment(AbstractNaturalSegment):
         self._markers = []
 
     def to_mx(self) -> AbstractNaturalSegment:
+        """
+        This function returns the segment in MX format
+        """
         from ..bionc_casadi.natural_segment import NaturalSegment as NaturalSegmentCasadi
 
         natural_segment = NaturalSegmentCasadi(

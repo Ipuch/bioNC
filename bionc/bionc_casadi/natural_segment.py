@@ -507,15 +507,25 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi[0:3, 3:6] = (self.mass * n_ci[0] + Ji[0, 1]) * MX.eye(3)
         Gi[0:3, 6:9] = -Ji[0, 1] * MX.eye(3)
         Gi[0:3, 9:12] = -Ji[0, 2] * MX.eye(3)
+
         Gi[3:6, 3:6] = (self.mass + 2 * self.mass * n_ci[1] + Ji[1, 1]) * MX.eye(3)
         Gi[3:6, 6:9] = -(self.mass * n_ci[1] + Ji[1, 1]) * MX.eye(3)
         Gi[3:6, 9:12] = (self.mass * n_ci[2] + Ji[1, 2]) * MX.eye(3)
+
         Gi[6:9, 6:9] = Ji[1, 1] * MX.eye(3)
         Gi[6:9, 9:12] = -Ji[1, 2] * MX.eye(3)
+
         Gi[9:12, 9:12] = Ji[2, 2] * MX.eye(3)
 
-        # symmetrize the matrix
-        Gi = tril2symm(tril(Gi))
+        # symmetrize the matrix without the diagonal blocks
+        Gi[3:6, 0:3] = Gi[0:3, 3:6]
+        Gi[6:9, 0:3] = Gi[0:3, 6:9]
+        Gi[9:12, 0:3] = Gi[0:3, 9:12]
+
+        Gi[6:9, 3:6] = Gi[3:6, 6:9]
+        Gi[9:12, 3:6] = Gi[3:6, 9:12]
+
+        Gi[9:12, 6:9] = Gi[6:9, 9:12]
 
         return Gi
 

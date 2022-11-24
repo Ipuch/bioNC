@@ -536,7 +536,14 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi[9:12, 9:12] = Ji[2, 2] * eye(3)
 
         # symmetrize the matrix
-        Gi = np.tril(Gi) + np.tril(Gi, -1).T
+        Gi[3:6, 0:3] = Gi[0:3, 3:6]
+        Gi[6:9, 0:3] = Gi[0:3, 6:9]
+        Gi[9:12, 0:3] = Gi[0:3, 9:12]
+
+        Gi[6:9, 3:6] = Gi[3:6, 6:9]
+        Gi[9:12, 3:6] = Gi[3:6, 9:12]
+
+        Gi[9:12, 6:9] = Gi[6:9, 9:12]
 
         return Gi
 

@@ -97,7 +97,7 @@ def test_natural_vectors_sym():
 
     from casadi import Function
 
-    f = Function('f', [Q, Qdot, Qddot], [Q, Qdot, Qddot])
+    f = Function("f", [Q, Qdot, Qddot], [Q, Qdot, Qddot])
     q_num = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     qdot_num = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) * 2
     qddot_num = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) * 3
@@ -105,7 +105,3 @@ def test_natural_vectors_sym():
     TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[0], q_num[:, np.newaxis])
     TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[1], qdot_num[:, np.newaxis])
     TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[2], qddot_num[:, np.newaxis])
-
-
-
-

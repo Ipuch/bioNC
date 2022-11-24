@@ -141,15 +141,18 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Parameters
         ----------
         Q : NaturalCoordinates
-            The natural coordinates of the segment [12, 1]
+            The natural coordinates of the segment [12 x n, 1]
 
         Returns
         -------
         float
             The potential energy of the system
         """
+        E = 0
+        for i, segment_name in enumerate(self.segments):
+            E += self.segments[segment_name].potential_energy(Q.vector(i))
 
-        NotImplementedError("This function is not implemented yet")
+        return E
 
     def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities) -> MX:
         """

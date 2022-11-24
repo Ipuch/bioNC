@@ -172,6 +172,25 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return E
 
+    def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities) -> np.ndarray | float:
+        """
+        This function returns the lagrangian of the system as a function of the natural coordinates Q and Qdot
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 x n, 1]
+
+        Returns
+        -------
+        float
+            The lagrangian of the system
+        """
+
+        return self.kinetic_energy(Qdot) - self.potential_energy(Q)
+
 
 # def kinematicConstraints(self, Q):
 #     # Method to calculate the kinematic constraints

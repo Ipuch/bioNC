@@ -142,7 +142,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Parameters
         ----------
         Qdot : NaturalVelocities
-            The natural velocities of the segment [12, 1]
+            The natural velocities of the segment [12 x n, 1]
 
         Returns
         -------
@@ -152,22 +152,25 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return 0.5 * transpose(Qdot.to_array()) @ self._mass_matrix @ Qdot.to_array()
 
-    def potential_energy(self, Q: NaturalCoordinates) -> np.ndarray:
+    def potential_energy(self, Q: NaturalCoordinates) -> np.ndarray | float:
         """
         This function returns the potential energy of the system as a function of the natural coordinates Q
 
         Parameters
         ----------
         Q : NaturalCoordinates
-            The natural coordinates of the segment [12, 1]
+            The natural coordinates of the segment [12 x n, 1]
 
         Returns
         -------
         float
             The potential energy of the system
         """
+        E = 0
+        for i, segment_name in enumerate(self.segments):
+            E += self.segments[segment_name].potential_energy(Q.vector(i))
 
-        NotImplementedError("This function is not implemented yet")
+        return E
 
 
 # def kinematicConstraints(self, Q):

@@ -15,7 +15,8 @@ def to_numeric_MX(mx: MX, expand: bool = False) -> MX:
 
     """
     if expand:
-        return MX(Function(
+        return MX(
+            Function(
                 "f",
                 [],
                 [mx],
@@ -27,10 +28,14 @@ def to_numeric_MX(mx: MX, expand: bool = False) -> MX:
             .squeeze()
         )
     else:
-        return MX(Function(
+        return MX(
+            Function(
                 "f",
                 [],
                 [mx],
                 [],
                 ["f"],
-            )()["f"].toarray().squeeze())
+            )()["f"]
+            .toarray()
+            .squeeze()
+        )

@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import transpose
 
 from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.bionc_numpy.natural_velocities import NaturalVelocities
@@ -134,6 +135,39 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         self._mass_matrix = G
 
+    def kinetic_energy(self, Qdot: NaturalVelocities) -> float:
+        """
+        This function returns the kinetic energy of the system as a function of the natural coordinates Q and Qdot
+
+        Parameters
+        ----------
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12, 1]
+
+        Returns
+        -------
+        float
+            The kinetic energy of the system
+        """
+
+        return 0.5 * transpose(Qdot.to_array()) @ self._mass_matrix @ Qdot.to_array()
+
+    def potential_energy(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the potential energy of the system as a function of the natural coordinates Q
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12, 1]
+
+        Returns
+        -------
+        float
+            The potential energy of the system
+        """
+
+        NotImplementedError("This function is not implemented yet")
 
 # def kinematicConstraints(self, Q):
 #     # Method to calculate the kinematic constraints

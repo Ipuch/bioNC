@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import MX
+from casadi import MX, transpose
 
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
@@ -116,6 +116,59 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             G[idx, idx] = self.segments[segment_name].mass_matrix
 
         self._mass_matrix = G
+
+    def kinetic_energy(self, Qdot: NaturalVelocities) -> MX:
+        """
+        This function returns the kinetic energy of the system as a function of the natural coordinates Q and Qdot
+
+        Parameters
+        ----------
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12, 1]
+
+        Returns
+        -------
+        MX
+            The kinetic energy of the system
+        """
+
+        return 0.5 * transpose(Qdot.to_array()) @ self._mass_matrix @ Qdot.to_array()
+
+    def potential_energy(self, Q: NaturalCoordinates) -> MX:
+        """
+        This function returns the potential energy of the system as a function of the natural coordinates Q
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12, 1]
+
+        Returns
+        -------
+        float
+            The potential energy of the system
+        """
+
+        NotImplementedError("This function is not implemented yet")
+
+    def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities) -> MX:
+        """
+        This function returns the lagrangian of the system as a function of the natural coordinates Q and Qdot
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12, 1]
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12, 1]
+
+        Returns
+        -------
+        MX
+            The lagrangian of the system
+        """
+
+        return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
 
 # def kinematicConstraints(self, Q):

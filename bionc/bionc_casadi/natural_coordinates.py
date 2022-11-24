@@ -23,10 +23,10 @@ class SegmentNaturalCoordinates(MX):
     @classmethod
     def from_components(
         cls,
-        u: Union[MX, list] = None,
-        rp: Union[MX, list] = None,
-        rd: Union[MX, list] = None,
-        w: Union[MX, list] = None,
+        u: Union[np.ndarray, MX, list] = None,
+        rp: Union[np.ndarray, MX, list] = None,
+        rd: Union[np.ndarray, MX, list] = None,
+        w: Union[np.ndarray, MX, list] = None,
     ):
         """
         Constructor of the class from the components of the natural coordinates

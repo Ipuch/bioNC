@@ -88,3 +88,24 @@ def test_NaturalAccelerations_casadi():
     np.testing.assert_equal(TestUtils.mx_to_array(Qddot.vector(0).uddot), np.array([1, 2, 3]))
     np.testing.assert_equal(TestUtils.mx_to_array(Qddot.vector(1).uddot), np.array([11, 22, 33]))
     np.testing.assert_equal(Qddot.nb_qddoti(), 2)
+
+
+def test_natural_vectors_sym():
+    Q = bionc_mx.SegmentNaturalCoordinates.sym()
+    Qdot = bionc_mx.SegmentNaturalVelocities.sym()
+    Qddot = bionc_mx.SegmentNaturalAccelerations.sym()
+
+    from casadi import Function
+
+    f = Function('f', [Q, Qdot, Qddot], [Q, Qdot, Qddot])
+    q_num = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
+    qdot_num = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) * 2
+    qddot_num = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]) * 3
+
+    TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[0], q_num[:, np.newaxis])
+    TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[1], qdot_num[:, np.newaxis])
+    TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[2], qddot_num[:, np.newaxis])
+
+
+
+

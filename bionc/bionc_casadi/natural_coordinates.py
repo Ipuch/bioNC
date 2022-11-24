@@ -21,6 +21,26 @@ class SegmentNaturalCoordinates(MX):
         return obj
 
     @classmethod
+    def sym(cls, suffix: str = ""):
+        """
+        Constructor of the class with symbolic variables
+
+        Parameters
+        ----------
+        suffix : str
+            Suffix to add to the variable names
+        """
+
+        u = MX.sym(f"u{suffix}", 3, 1)
+        rp = MX.sym(f"rp{suffix}", 3, 1)
+        rd = MX.sym(f"rd{suffix}", 3, 1)
+        w = MX.sym(f"w{suffix}", 3, 1)
+
+        input_array = vertcat(u, rp, rd, w)
+
+        return cls(input_array)
+
+    @classmethod
     def from_components(
         cls,
         u: Union[np.ndarray, MX, list] = None,

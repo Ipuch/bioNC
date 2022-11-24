@@ -18,6 +18,26 @@ class SegmentNaturalAccelerations(MX):
         return obj
 
     @classmethod
+    def sym(cls, suffix: str = ""):
+        """
+        Constructor of the class with symbolic variables
+
+        Parameters
+        ----------
+        suffix : str
+            Suffix to add to the variable names
+        """
+
+        uddot = MX.sym(f"uddot{suffix}", 3, 1)
+        rppdot = MX.sym(f"rppdot{suffix}", 3, 1)
+        rdddot = MX.sym(f"rdddot{suffix}", 3, 1)
+        wddot = MX.sym(f"wddot{suffix}", 3, 1)
+
+        input_array = vertcat(uddot, rppdot, rdddot, wddot)
+
+        return cls(input_array)
+
+    @classmethod
     def from_components(
         cls,
         uddot: Union[MX, list] = None,

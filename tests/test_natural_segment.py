@@ -1,13 +1,27 @@
-from bionc import (
-    NaturalSegment,
-    SegmentMarker,
-)
-from bionc.bionc_numpy import SegmentNaturalCoordinates
 import numpy as np
 import pytest
 
+from .utils import TestUtils
 
-def test_natural_segment():
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_natural_segment(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+            SegmentNaturalVelocities,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+            SegmentNaturalVelocities,
+        )
+
     # Let's create a segment
     my_segment = NaturalSegment(
         name="box",
@@ -21,16 +35,82 @@ def test_natural_segment():
     )
     # test the name of the segment
     assert my_segment.name == "box"
-    np.testing.assert_equal(my_segment.alpha, np.pi / 2)
-    np.testing.assert_equal(my_segment.beta, np.pi / 2)
-    np.testing.assert_equal(my_segment.gamma, np.pi / 2)
-    np.testing.assert_equal(my_segment.length, 1)
-    np.testing.assert_equal(my_segment.mass, 1)
-    np.testing.assert_equal(my_segment.center_of_mass, np.array([0, 0.01, 0]))
-    np.testing.assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+    TestUtils.assert_equal(my_segment.alpha, np.pi / 2)
+    TestUtils.assert_equal(my_segment.beta, np.pi / 2)
+    TestUtils.assert_equal(my_segment.gamma, np.pi / 2)
+    TestUtils.assert_equal(my_segment.length, 1)
+    TestUtils.assert_equal(my_segment.mass, 1)
+    TestUtils.assert_equal(my_segment.center_of_mass, np.array([0, 0.01, 0]))
+    TestUtils.assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+    print(my_segment.mass_matrix)
+
+    M = np.array([[ 1.00e+00,  0.00e+00,  0.00e+00, -1.00e-04, -0.00e+00, -0.00e+00,
+         1.00e-04,  0.00e+00,  0.00e+00,  1.00e-04,  0.00e+00,  0.00e+00],
+       [ 0.00e+00,  1.00e+00,  0.00e+00, -0.00e+00, -1.00e-04, -0.00e+00,
+         0.00e+00,  1.00e-04,  0.00e+00,  0.00e+00,  1.00e-04,  0.00e+00],
+       [ 0.00e+00,  0.00e+00,  1.00e+00, -0.00e+00, -0.00e+00, -1.00e-04,
+         0.00e+00,  0.00e+00,  1.00e-04,  0.00e+00,  0.00e+00,  1.00e-04],
+       [-1.00e-04, -0.00e+00, -0.00e+00,  2.02e+00,  0.00e+00,  0.00e+00,
+        -1.01e+00, -0.00e+00, -0.00e+00, -1.00e-04, -0.00e+00, -0.00e+00],
+       [-0.00e+00, -1.00e-04, -0.00e+00,  0.00e+00,  2.02e+00,  0.00e+00,
+        -0.00e+00, -1.01e+00, -0.00e+00, -0.00e+00, -1.00e-04, -0.00e+00],
+       [-0.00e+00, -0.00e+00, -1.00e-04,  0.00e+00,  0.00e+00,  2.02e+00,
+        -0.00e+00, -0.00e+00, -1.01e+00, -0.00e+00, -0.00e+00, -1.00e-04],
+       [ 1.00e-04,  0.00e+00,  0.00e+00, -1.01e+00, -0.00e+00, -0.00e+00,
+         1.00e+00,  0.00e+00,  0.00e+00,  1.00e-04,  0.00e+00,  0.00e+00],
+       [ 0.00e+00,  1.00e-04,  0.00e+00, -0.00e+00, -1.01e+00, -0.00e+00,
+         0.00e+00,  1.00e+00,  0.00e+00,  0.00e+00,  1.00e-04,  0.00e+00],
+       [ 0.00e+00,  0.00e+00,  1.00e-04, -0.00e+00, -0.00e+00, -1.01e+00,
+         0.00e+00,  0.00e+00,  1.00e+00,  0.00e+00,  0.00e+00,  1.00e-04],
+       [ 1.00e-04,  0.00e+00,  0.00e+00, -1.00e-04, -0.00e+00, -0.00e+00,
+         1.00e-04,  0.00e+00,  0.00e+00,  1.00e+00,  0.00e+00,  0.00e+00],
+       [ 0.00e+00,  1.00e-04,  0.00e+00, -0.00e+00, -1.00e-04, -0.00e+00,
+         0.00e+00,  1.00e-04,  0.00e+00,  0.00e+00,  1.00e+00,  0.00e+00],
+       [ 0.00e+00,  0.00e+00,  1.00e-04, -0.00e+00, -0.00e+00, -1.00e-04,
+         0.00e+00,  0.00e+00,  1.00e-04,  0.00e+00,  0.00e+00,  1.00e+00]])
+
+    TestUtils.assert_equal(my_segment.mass_matrix, M)
+
+    # kinetic energy and potential energy
+
+    Qi = SegmentNaturalCoordinates.from_components(
+        u=np.array([0.11, 0.12, 0.13]),
+        rp=np.array([0.21, 0.22, 0.23]),
+        rd=np.array([0.31, 0.32, 0.33]),
+        w=np.array([0.41, 0.42, 0.43]),
+    )
+
+    Qdoti = SegmentNaturalVelocities.from_components(
+        udot=np.array([0.1, 0.2, 0.3]),
+        rpdot=np.array([0.4, 0.5, 0.6]),
+        rddot=np.array([0.7, 0.8, 0.9]),
+        wdot=np.array([0.4, 0.5, 0.6]),
+    )
+
+    TestUtils.assert_equal(my_segment.kinetic_energy(Qdoti), np.array(0.970595))
+    TestUtils.assert_equal(my_segment.potential_energy(Qi), np.array(0.229))
 
 
-def test_marker_features():
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_marker_features(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+            SegmentNaturalVelocities,
+            SegmentMarker,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+            SegmentNaturalVelocities,
+            SegmentMarker,
+        )
+
     # Let's create a segment
     my_segment = NaturalSegment(
         name="Thigh",
@@ -78,8 +158,8 @@ def test_marker_features():
         w=[1, 2, 5],
     )
 
-    np.testing.assert_array_equal(my_segment.nb_markers(), 2)
-    np.testing.assert_array_equal(
+    TestUtils.assert_equal(my_segment.nb_markers(), 2)
+    TestUtils.assert_equal(
         my_segment.marker_constraints(
             marker_locations=np.array([[1, 2, 3], [1, 2, 3]]).T,
             Qi=Qi,
@@ -96,7 +176,7 @@ def test_marker_features():
             Qi=Qi,
         )
 
-    np.testing.assert_array_equal(
+    TestUtils.assert_equal(
         my_segment.marker_jacobian(),
         np.array(
             [

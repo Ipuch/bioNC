@@ -24,15 +24,13 @@ my_segment = NaturalSegment(
 
 # Let's create a motion now
 # u as x-axis, w as z axis - this doesn't work
-# Qi = SegmentNaturalCoordinates.from_components(
-#     u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1]
-# )
+Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
 # u as y-axis - this works fine
 # Qi = SegmentNaturalCoordinates.from_components(
 #     u=[0, 1, 0], rp=[0, 0, 0], rd=[0, 0, -1], w=[1, 0, 0]
 #     )
 # u as z-axis - this doesn't work
-Qi = SegmentNaturalCoordinates.from_components(u=[0, 0, 1], rp=[0, 0, 0], rd=[-1, 0, 0], w=[0, 1, 0])
+# Qi = SegmentNaturalCoordinates.from_components(u=[0, 0, 1], rp=[0, 0, 0], rd=[-1, 0, 0], w=[0, 1, 0])
 
 # Velocities are zero
 Qidot = SegmentNaturalVelocities.from_components(

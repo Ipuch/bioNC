@@ -12,6 +12,8 @@ from ..bionc_casadi.natural_marker import SegmentMarker
 
 from ..protocols.natural_segment import AbstractNaturalSegment
 
+from .utils import to_numeric_MX
+
 
 class NaturalSegment(AbstractNaturalSegment):
     """
@@ -443,7 +445,7 @@ class NaturalSegment(AbstractNaturalSegment):
             - dot(self.center_of_mass, self.center_of_mass)
         )
 
-        Binv = inv(self.transformation_matrix)
+        Binv = to_numeric_MX(inv(self.transformation_matrix))
         Binv_transpose = transpose(Binv)
 
         return Binv @ middle_block @ Binv_transpose
@@ -471,7 +473,7 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return inv(self.transformation_matrix) @ self.center_of_mass
+        return to_numeric_MX(self.transformation_matrix) @ self.center_of_mass
 
     @property
     def center_of_mass_in_natural_coordinates_system(self) -> MX:
@@ -505,15 +507,25 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi[0:3, 3:6] = (self.mass * n_ci[0] + Ji[0, 1]) * MX.eye(3)
         Gi[0:3, 6:9] = -Ji[0, 1] * MX.eye(3)
         Gi[0:3, 9:12] = -Ji[0, 2] * MX.eye(3)
+
         Gi[3:6, 3:6] = (self.mass + 2 * self.mass * n_ci[1] + Ji[1, 1]) * MX.eye(3)
         Gi[3:6, 6:9] = -(self.mass * n_ci[1] + Ji[1, 1]) * MX.eye(3)
         Gi[3:6, 9:12] = (self.mass * n_ci[2] + Ji[1, 2]) * MX.eye(3)
+
         Gi[6:9, 6:9] = Ji[1, 1] * MX.eye(3)
         Gi[6:9, 9:12] = -Ji[1, 2] * MX.eye(3)
+
         Gi[9:12, 9:12] = Ji[2, 2] * MX.eye(3)
 
-        # symmetrize the matrix
-        Gi = tril2symm(tril(Gi))
+        # symmetrize the matrix without the diagonal blocks
+        Gi[3:6, 0:3] = Gi[0:3, 3:6]
+        Gi[6:9, 0:3] = Gi[0:3, 6:9]
+        Gi[9:12, 0:3] = Gi[0:3, 9:12]
+
+        Gi[6:9, 3:6] = Gi[3:6, 6:9]
+        Gi[9:12, 3:6] = Gi[3:6, 9:12]
+
+        Gi[9:12, 6:9] = Gi[6:9, 9:12]
 
         return Gi
 
@@ -713,3 +725,35 @@ class NaturalSegment(AbstractNaturalSegment):
             The jacobian of the marker constraints of the segment (3 x N_markers)
         """
         return vertcat(*[-marker.interpolation_matrix for marker in self._markers])
+
+    def potential_energy(self, Qi: SegmentNaturalCoordinates) -> MX:
+        """
+        This function returns the potential energy of the segment
+
+        Parameters
+        ----------
+        Qi: SegmentNaturalCoordinates
+            Natural coordinates of the segment
+
+        Returns
+        -------
+        MX
+            Potential energy of the segment
+        """
+        return (self.mass * self.interpolation_matrix_center_of_mass @ Qi.vector)[2, 0]
+
+    def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
+        """
+        This function returns the kinetic energy of the segment
+
+        Parameters
+        ----------
+        Qdoti: SegmentNaturalVelocities
+            Derivative of the natural coordinates of the segment
+
+        Returns
+        -------
+        float
+            Kinetic energy of the segment
+        """
+        return 0.5 * transpose(Qdoti.to_array()) @ (self.mass_matrix @ Qdoti.to_array())

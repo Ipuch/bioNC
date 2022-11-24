@@ -443,6 +443,36 @@ class AbstractNaturalSegment(ABC):
             The jacobian of the marker constraints of the segment (3 x N_markers)
         """
 
+    @abstractmethod
+    def potential_energy(self, Qi: SegmentNaturalCoordinates):
+        """
+        This function returns the potential energy of the segment
+
+        Parameters
+        ----------
+        Qi: SegmentNaturalCoordinates
+            Natural coordinates of the segment
+
+        Returns
+        -------
+            Potential energy of the segment
+        """
+
+    @abstractmethod
+    def kinetic_energy(self, Qdoti: SegmentNaturalCoordinates):
+        """
+        This function returns the kinetic energy of the segment
+
+        Parameters
+        ----------
+        Qdoti: SegmentNaturalCoordinates
+            Derivative of the natural coordinates of the segment
+
+        Returns
+        -------
+            Kinetic energy of the segment
+        """
+
 
 class GenericNaturalSegment(AbstractNaturalSegment):
     """
@@ -877,5 +907,36 @@ class GenericNaturalSegment(AbstractNaturalSegment):
     def marker_jacobian(self):
         """
         This function returns the marker jacobian of the segment
+        """
+        pass
+
+    def potential_energy(self, Qi: SegmentNaturalCoordinates):
+        """
+        This function returns the potential energy of the segment
+
+        Parameters
+        ----------
+        Qi: SegmentNaturalCoordinates
+            Natural coordinates of the segment
+
+        Returns
+        -------
+            Potential energy of the segment
+        """
+        pass
+
+    def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
+        """
+        This function returns the kinetic energy of the segment
+
+        Parameters
+        ----------
+        Qdoti: SegmentNaturalVelocities
+            Derivative of the natural coordinates of the segment
+
+        Returns
+        -------
+        float
+            Kinetic energy of the segment
         """
         pass

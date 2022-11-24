@@ -1,13 +1,12 @@
 from typing import Union, Tuple
 
 import numpy as np
-from numpy import cos, sin, matmul, eye, zeros, sum, dot
+from numpy import cos, sin, eye, zeros, sum, dot, transpose
 from numpy.linalg import inv
 
-# from ..utils.natural_coordinates import SegmentNaturalCoordinates
-from ..bionc_numpy.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
-from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from ..bionc_numpy.natural_coordinates import SegmentNaturalCoordinates
+from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities
+from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
 from ..bionc_numpy.natural_marker import SegmentMarker
 
@@ -109,6 +108,9 @@ class NaturalSegment(AbstractNaturalSegment):
         self._markers = []
 
     def to_mx(self) -> AbstractNaturalSegment:
+        """
+        This function returns the segment in MX format
+        """
         from ..bionc_casadi.natural_segment import NaturalSegment as NaturalSegmentCasadi
 
         natural_segment = NaturalSegmentCasadi(
@@ -534,7 +536,14 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi[9:12, 9:12] = Ji[2, 2] * eye(3)
 
         # symmetrize the matrix
-        Gi = np.tril(Gi) + np.tril(Gi, -1).T
+        Gi[3:6, 0:3] = Gi[0:3, 3:6]
+        Gi[6:9, 0:3] = Gi[0:3, 6:9]
+        Gi[9:12, 0:3] = Gi[0:3, 9:12]
+
+        Gi[6:9, 3:6] = Gi[3:6, 6:9]
+        Gi[9:12, 3:6] = Gi[3:6, 9:12]
+
+        Gi[9:12, 6:9] = Gi[6:9, 9:12]
 
         return Gi
 
@@ -742,3 +751,35 @@ class NaturalSegment(AbstractNaturalSegment):
             The jacobian of the marker constraints of the segment (3 x N_markers)
         """
         return np.vstack([-marker.interpolation_matrix for marker in self._markers])
+
+    def potential_energy(self, Qi: SegmentNaturalCoordinates) -> float:
+        """
+        This function returns the potential energy of the segment
+
+        Parameters
+        ----------
+        Qi: SegmentNaturalCoordinates
+            Natural coordinates of the segment
+
+        Returns
+        -------
+        float
+            Potential energy of the segment
+        """
+        return (self.mass * self.interpolation_matrix_center_of_mass @ Qi.vector)[2]
+
+    def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
+        """
+        This function returns the kinetic energy of the segment
+
+        Parameters
+        ----------
+        Qdoti: SegmentNaturalVelocities
+            Derivative of the natural coordinates of the segment
+
+        Returns
+        -------
+        float
+            Kinetic energy of the segment
+        """
+        return 0.5 * transpose(Qdoti.to_array()) @ self.mass_matrix @ Qdoti.to_array()

@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import transpose
 
 from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.bionc_numpy.natural_velocities import NaturalVelocities
@@ -133,6 +134,62 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             G[idx, idx] = self.segments[segment_name].mass_matrix
 
         self._mass_matrix = G
+
+    def kinetic_energy(self, Qdot: NaturalVelocities) -> float:
+        """
+        This function returns the kinetic energy of the system as a function of the natural coordinates Q and Qdot
+
+        Parameters
+        ----------
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 x n, 1]
+
+        Returns
+        -------
+        float
+            The kinetic energy of the system
+        """
+
+        return 0.5 * transpose(Qdot.to_array()) @ self._mass_matrix @ Qdot.to_array()
+
+    def potential_energy(self, Q: NaturalCoordinates) -> np.ndarray | float:
+        """
+        This function returns the potential energy of the system as a function of the natural coordinates Q
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+        float
+            The potential energy of the system
+        """
+        E = 0
+        for i, segment_name in enumerate(self.segments):
+            E += self.segments[segment_name].potential_energy(Q.vector(i))
+
+        return E
+
+    def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities) -> np.ndarray | float:
+        """
+        This function returns the lagrangian of the system as a function of the natural coordinates Q and Qdot
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 x n, 1]
+
+        Returns
+        -------
+        float
+            The lagrangian of the system
+        """
+
+        return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
 
 # def kinematicConstraints(self, Q):

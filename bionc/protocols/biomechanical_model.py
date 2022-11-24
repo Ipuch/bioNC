@@ -1,5 +1,7 @@
 import numpy as np
+from casadi import MX
 
+from typing import Union
 from abc import ABC, abstractmethod
 from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
@@ -325,14 +327,6 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
             The derivative of the Jacobian matrix of the rigid body constraints [6, 12]
         """
 
-        Kr_dot = np.zeros((6 * self.nb_segments(), Qdot.shape[0]))
-        for i, segment_name in enumerate(self.segments):
-            idx_row = slice(6 * i, 6 * (i + 1))
-            idx_col = slice(12 * i, 12 * (i + 1))
-            Kr_dot[idx_row, idx_col] = self.segments[segment_name].rigid_body_constraint_jacobian_derivative(
-                Qdot.vector(i)
-            )
-
         pass
 
     def joint_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
@@ -358,3 +352,54 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
             generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
         """
         pass
+
+    def kinetic_energy(self, Qdot: NaturalVelocities) -> Union[np.ndarray, MX]:
+        """
+        This function computes the kinetic energy of the system
+
+        Parameters
+        ----------
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 * n, 1]
+
+        Returns
+        -------
+        Union[np.ndarray, MX]
+            The kinetic energy of the system
+        """
+        pass
+
+    def potential_energy(self, Q: NaturalCoordinates) -> Union[np.ndarray, MX]:
+        """
+        This function computes the potential energy of the system
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * n, 1]
+
+        Returns
+        -------
+        Union[np.ndarray, MX]
+            The potential energy of the system
+        """
+        pass
+
+    def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities) -> np.ndarray:
+        """
+        This function returns the lagrangian of the system as a function of the natural coordinates Q and Qdot
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12, 1]
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12, 1]
+
+        Returns
+        -------
+        MX
+            The lagrangian of the system
+        """
+
+        return self.kinetic_energy(Qdot) - self.potential_energy(Q)

@@ -20,10 +20,10 @@ class SegmentNaturalVelocities(MX):
     @classmethod
     def from_components(
         cls,
-        udot: Union[MX, list] = None,
-        rpdot: Union[MX, list] = None,
-        rddot: Union[MX, list] = None,
-        wdot: Union[MX, list] = None,
+        udot: Union[np.ndarray, MX, list] = None,
+        rpdot: Union[np.ndarray, MX, list] = None,
+        rddot: Union[np.ndarray, MX, list] = None,
+        wdot: Union[np.ndarray, MX, list] = None,
     ):
         if udot is None:
             raise ValueError("u must be a array (3x1) or a list of 3 elements")

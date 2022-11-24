@@ -122,4 +122,3 @@ def test_natural_vectors_sym():
     TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[0], q_num[:, np.newaxis])
     TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[1], qdot_num[:, np.newaxis])
     TestUtils.assert_equal(f(q_num, qdot_num, qddot_num)[2], qddot_num[:, np.newaxis])
-    

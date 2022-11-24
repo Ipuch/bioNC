@@ -715,3 +715,35 @@ class NaturalSegment(AbstractNaturalSegment):
             The jacobian of the marker constraints of the segment (3 x N_markers)
         """
         return vertcat(*[-marker.interpolation_matrix for marker in self._markers])
+
+    def potential_energy(self, Qi: SegmentNaturalCoordinates) -> MX:
+        """
+        This function returns the potential energy of the segment
+
+        Parameters
+        ----------
+        Qi: SegmentNaturalCoordinates
+            Natural coordinates of the segment
+
+        Returns
+        -------
+        MX
+            Potential energy of the segment
+        """
+        return (self.mass * self.interpolation_matrix_center_of_mass @ Qi.vector)[2, 0]
+
+    def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
+        """
+        This function returns the kinetic energy of the segment
+
+        Parameters
+        ----------
+        Qdoti: SegmentNaturalVelocities
+            Derivative of the natural coordinates of the segment
+
+        Returns
+        -------
+        float
+            Kinetic energy of the segment
+        """
+        return 0.5 * transpose(Qdoti.to_array()) @ (self.mass_matrix @ Qdoti.to_array())

@@ -12,6 +12,8 @@ from ..bionc_casadi.natural_marker import SegmentMarker
 
 from ..protocols.natural_segment import AbstractNaturalSegment
 
+from .utils import to_numeric_MX
+
 
 class NaturalSegment(AbstractNaturalSegment):
     """
@@ -443,7 +445,7 @@ class NaturalSegment(AbstractNaturalSegment):
             - dot(self.center_of_mass, self.center_of_mass)
         )
 
-        Binv = inv(self.transformation_matrix)
+        Binv = to_numeric_MX(inv(self.transformation_matrix))
         Binv_transpose = transpose(Binv)
 
         return Binv @ middle_block @ Binv_transpose
@@ -471,7 +473,7 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return inv(self.transformation_matrix) @ self.center_of_mass
+        return to_numeric_MX(self.transformation_matrix) @ self.center_of_mass
 
     @property
     def center_of_mass_in_natural_coordinates_system(self) -> MX:

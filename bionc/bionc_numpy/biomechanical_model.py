@@ -169,6 +169,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         NotImplementedError("This function is not implemented yet")
 
+
 # def kinematicConstraints(self, Q):
 #     # Method to calculate the kinematic constraints
 

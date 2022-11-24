@@ -403,4 +403,3 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         """
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
-    

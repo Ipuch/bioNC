@@ -18,6 +18,26 @@ class SegmentNaturalVelocities(MX):
         return obj
 
     @classmethod
+    def sym(cls, suffix: str = ""):
+        """
+        Constructor of the class with symbolic variables
+
+        Parameters
+        ----------
+        suffix : str
+            Suffix to add to the variable names
+        """
+
+        udot = MX.sym(f"udot{suffix}", 3, 1)
+        rpdot = MX.sym(f"rpdot{suffix}", 3, 1)
+        rddot = MX.sym(f"rddot{suffix}", 3, 1)
+        wdot = MX.sym(f"wdot{suffix}", 3, 1)
+
+        input_array = vertcat(udot, rpdot, rddot, wdot)
+
+        return cls(input_array)
+
+    @classmethod
     def from_components(
         cls,
         udot: Union[np.ndarray, MX, list] = None,
@@ -99,6 +119,21 @@ class NaturalVelocities(MX):
         obj = MX.__new__(cls)
 
         return obj
+
+    @classmethod
+    def sym(cls, nb_segments: int):
+        """
+        Constructor of the class with symbolic variables
+
+        Parameters
+        ----------
+        nb_segments : int
+            Number of segments
+        """
+
+        input_array = vertcat(*[SegmentNaturalVelocities.sym(f"_{i}") for i in range(nb_segments)])
+
+        return cls(input_array)
 
     @classmethod
     def from_qdoti(cls, tuple_of_Q: tuple):

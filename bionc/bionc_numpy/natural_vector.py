@@ -44,7 +44,7 @@ class NaturalVector(AbstractNaturalVector, np.ndarray):
         """ This function returns the vector of the w axis"""
         return cls(np.array([0, 0, 1]))
 
-    def interpolation_matrix(self):
+    def interpolate(self) -> np.ndarray:
         """ This function converts the natural vector into the interpolation matrix """
         interpolation_matrix = np.zeros((3, 12))
         interpolation_matrix[0:3, 0:3] = self[0] * eye(3)

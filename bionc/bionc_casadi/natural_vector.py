@@ -14,10 +14,15 @@ class NaturalVector(AbstractNaturalVector, MX):
         Create a new instance of the class.
         """
 
-        if len(input_array) != 3:
-            raise ValueError("The input array must have 3 elements")
-
         obj = MX.__new__(cls)
+
+        if isinstance(input_array, MX):
+            size = input_array.shape[0]
+        else:
+            size = len(input_array)
+
+        if size != 3:
+            raise ValueError("The input array must have 3 elements")
 
         return obj
 
@@ -41,7 +46,7 @@ class NaturalVector(AbstractNaturalVector, MX):
         """ This function returns the vector of the w axis"""
         return cls(np.array([0, 0, 1]))
 
-    def interpolation_matrix(self):
+    def interpolate(self) -> MX:
         """ This function converts the natural vector into the interpolation matrix """
         interpolation_matrix = MX.zeros((3, 12))
         interpolation_matrix[0:3, 0:3] = self[0] * MX.eye(3)

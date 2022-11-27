@@ -9,6 +9,7 @@ from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities
 from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
 from ..bionc_numpy.natural_marker import SegmentMarker
+from ..bionc_numpy.natural_vector import NaturalVector
 
 from ..protocols.natural_segment import AbstractNaturalSegment
 
@@ -83,14 +84,12 @@ class NaturalSegment(AbstractNaturalSegment):
         self._mass = mass
         if center_of_mass is None:
             self._center_of_mass = center_of_mass
-            self._center_of_mass_in_natural_coordinates_system = None
-            self._interpolation_matrix_center_of_mass = None
+            self._natural_center_of_mass = None
         else:
             if center_of_mass.shape[0] != 3:
                 raise ValueError("Center of mass must be 3x1")
             self._center_of_mass = center_of_mass
-            self._center_of_mass_in_natural_coordinates_system = self._center_of_mass_in_natural_coordinates_system()
-            self._interpolation_matrix_center_of_mass = self._interpolation_matrix_center_of_mass()
+            self._natural_center_of_mass = self._natural_center_of_mass()
 
         if inertia is None:
             self._inertia = inertia
@@ -484,7 +483,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
         return self._pseudo_inertia_matrix
 
-    def _center_of_mass_in_natural_coordinates_system(self) -> np.ndarray:
+    def _natural_center_of_mass(self) -> np.ndarray:
         """
         This function computes the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -494,10 +493,10 @@ class NaturalSegment(AbstractNaturalSegment):
         np.ndarray
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return inv(self.transformation_matrix) @ self.center_of_mass
+        return NaturalVector(inv(self.transformation_matrix) @ self.center_of_mass)
 
     @property
-    def center_of_mass_in_natural_coordinates_system(self) -> np.ndarray:
+    def natural_center_of_mass(self) -> np.ndarray:
         """
         This function returns the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -507,7 +506,7 @@ class NaturalSegment(AbstractNaturalSegment):
         np.ndarray
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return self._center_of_mass_in_natural_coordinates_system
+        return self._natural_center_of_mass
 
     def _update_mass_matrix(self) -> np.ndarray:
         """
@@ -520,7 +519,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         Ji = self.pseudo_inertia_matrix
-        n_ci = self.center_of_mass_in_natural_coordinates_system
+        n_ci = self.natural_center_of_mass
 
         Gi = zeros((12, 12))
 
@@ -559,59 +558,6 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         return self._mass_matrix
-
-    @staticmethod
-    def interpolate(vector: np.ndarray) -> np.ndarray:
-        """
-        This function interpolates the vector to get the interpolation matrix, denoted Ni
-        such as:
-        Ni * Qi = location in the global frame
-
-        Parameters
-        ----------
-        vector : np.ndarray
-            Vector in the natural coordinate system to interpolate (Pi, ui, vi, wi)
-
-        Returns
-        -------
-        interpolate_natural_vector: np.ndarray
-            Interpolation  matrix [3 x 12], denoted Ni to get the location of the vector as linear combination of Q.
-            vector in global frame = Ni * Qi
-        """
-
-        interpolation_matrix = np.zeros((3, 12))
-        interpolation_matrix[0:3, 0:3] = vector[0] * eye(3)
-        interpolation_matrix[0:3, 3:6] = (1 + vector[1]) * eye(3)
-        interpolation_matrix[0:3, 6:9] = -vector[1] * eye(3)
-        interpolation_matrix[0:3, 9:12] = vector[2] * eye(3)
-
-        return interpolation_matrix
-
-    def _interpolation_matrix_center_of_mass(self) -> np.ndarray:
-        """
-        This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
-        It allows to apply the gravity force at the center of mass of the segment.
-
-        Returns
-        -------
-        np.ndarray
-            Interpolation matrix for the center of mass of the segment in the natural coordinate system [12 x 3]
-        """
-        n_ci = self.center_of_mass_in_natural_coordinates_system
-        return self.interpolate(n_ci)
-
-    @property
-    def interpolation_matrix_center_of_mass(self) -> np.ndarray:
-        """
-        This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
-        It allows to apply the gravity force at the center of mass of the segment.
-
-        Returns
-        -------
-        np.ndarray
-            Interpolation matrix for the center of mass of the segment in the natural coordinate system [12 x 3]
-        """
-        return self._interpolation_matrix_center_of_mass
 
     def weight(self) -> np.ndarray:
         """
@@ -766,7 +712,7 @@ class NaturalSegment(AbstractNaturalSegment):
         float
             Potential energy of the segment
         """
-        return (self.mass * self.interpolation_matrix_center_of_mass @ Qi.vector)[2]
+        return (self.mass * self.natural_center_of_mass.interpolate() @ Qi.vector)[2]
 
     def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
         """

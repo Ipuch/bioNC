@@ -6,7 +6,7 @@ class AbstractNaturalVector(ABC):
     Class used to create a natural vector, a vector that is expressed in the natural coordinate system of a segment
     """
     @abstractmethod
-    def interpolation_matrix(self):
+    def interpolate(self):
         """ This function converts the natural vector into the interpolation matrix """
 
     def proximal(self):

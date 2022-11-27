@@ -282,7 +282,7 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
-    def _center_of_mass_in_natural_coordinates_system(self):
+    def _natural_center_of_mass(self):
         """
         This function computes the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -294,7 +294,7 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
-    def center_of_mass_in_natural_coordinates_system(self):
+    def natural_center_of_mass(self):
         """
         This function returns the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -325,30 +325,6 @@ class AbstractNaturalSegment(ABC):
         -------
         np.ndarray
             mass matrix of the segment [12 x 12]
-        """
-
-    @abstractmethod
-    def _interpolation_matrix_center_of_mass(self):
-        """
-        This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
-        It allows to apply the gravity force at the center of mass of the segment.
-
-        Returns
-        -------
-        np.ndarray
-            Interpolation matrix for the center of mass of the segment in the natural coordinate system [12 x 3]
-        """
-
-    @abstractmethod
-    def interpolation_matrix_center_of_mass(self):
-        """
-        This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
-        It allows to apply the gravity force at the center of mass of the segment.
-
-        Returns
-        -------
-        np.ndarray
-            Interpolation matrix for the center of mass of the segment in the natural coordinate system [12 x 3]
         """
 
     @abstractmethod
@@ -528,14 +504,12 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         self._mass = mass
         if center_of_mass is None:
             self._center_of_mass = center_of_mass
-            self._center_of_mass_in_natural_coordinates_system = None
-            self._interpolation_matrix_center_of_mass = None
+            self._natural_center_of_mass = None
         else:
             if center_of_mass.shape[0] != 3:
                 raise ValueError("Center of mass must be 3x1")
             self._center_of_mass = center_of_mass
-            self._center_of_mass_in_natural_coordinates_system = self._center_of_mass_in_natural_coordinates_system()
-            self._interpolation_matrix_center_of_mass = self._interpolation_matrix_center_of_mass()
+            self._natural_center_of_mass = self._natural_center_of_mass()
 
         if inertia is None:
             self._inertia = inertia
@@ -696,7 +670,7 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         return self._pseudo_inertia_matrix
 
     @property
-    def center_of_mass_in_natural_coordinates_system(self):
+    def natural_center_of_mass(self):
         """
         This function returns the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -705,19 +679,7 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         -------
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return self._center_of_mass_in_natural_coordinates_system
-
-    @property
-    def interpolation_matrix_center_of_mass(self):
-        """
-        This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
-        It allows to apply the gravity force at the center of mass of the segment.
-
-        Returns
-        -------
-            Interpolation matrix for the center of mass of the segment in the natural coordinate system [12 x 3]
-        """
-        return self._interpolation_matrix_center_of_mass
+        return self._natural_center_of_mass
 
     def _transformation_matrix(self) -> MX:
         """
@@ -797,7 +759,7 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         """
         pass
 
-    def _center_of_mass_in_natural_coordinates_system(self):
+    def _natural_center_of_mass(self):
         """
         This function computes the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -807,28 +769,6 @@ class GenericNaturalSegment(AbstractNaturalSegment):
     def _update_mass_matrix(self):
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.
-        """
-        pass
-
-    @staticmethod
-    def interpolate(vector):
-        """
-        This function interpolates the vector to get the interpolation matrix, denoted Ni
-        such as:
-        Ni * Qi = location in the global frame
-
-        Parameters
-        ----------
-        vector : np.ndarray
-            Vector in the natural coordinate system to interpolate (Pi, ui, vi, wi)
-        """
-
-        pass
-
-    def _interpolation_matrix_center_of_mass(self):
-        """
-        This function returns the interpolation matrix for the center of mass of the segment, denoted N_i^Ci.
-        It allows to apply the gravity force at the center of mass of the segment.
         """
         pass
 

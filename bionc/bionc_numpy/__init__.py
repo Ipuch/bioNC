@@ -15,4 +15,4 @@ from .inertia_parameters import InertiaParameters
 from .interpolation_matrix import interpolate_natural_vector, to_natural_vector
 from .enums import JointType
 from .joint import Joint
-from.natural_vector import NaturalVector
+from .natural_vector import NaturalVector

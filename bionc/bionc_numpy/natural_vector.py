@@ -26,26 +26,26 @@ class NaturalVector(AbstractNaturalVector, np.ndarray):
 
     @classmethod
     def proximal(cls):
-        """ This function returns the vector of the proximal point, denoted rp"""
+        """This function returns the vector of the proximal point, denoted rp"""
         return cls(np.array([0, 0, 0]))
 
     @classmethod
     def distal(cls):
-        """ This function returns the vector of the distal point, denoted rd"""
+        """This function returns the vector of the distal point, denoted rd"""
         return cls(np.array([0, -1, 0]))
 
     @classmethod
     def u_axis(cls):
-        """ This function returns the vector of the u axis"""
+        """This function returns the vector of the u axis"""
         return cls(np.array([1, 0, 0]))
 
     @classmethod
     def w_axis(cls):
-        """ This function returns the vector of the w axis"""
+        """This function returns the vector of the w axis"""
         return cls(np.array([0, 0, 1]))
 
     def interpolate(self) -> np.ndarray:
-        """ This function converts the natural vector into the interpolation matrix """
+        """This function converts the natural vector into the interpolation matrix"""
         interpolation_matrix = np.zeros((3, 12))
         interpolation_matrix[0:3, 0:3] = self[0] * eye(3)
         interpolation_matrix[0:3, 3:6] = (1 + self[1]) * eye(3)

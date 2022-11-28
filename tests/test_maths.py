@@ -57,13 +57,23 @@ def test_vnop():
         rtol=1e-5,
     )
 
-
-def test_interpolate_natural_vector():
-    from bionc.bionc_numpy import interpolate_natural_vector, to_natural_vector
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_interpolate_natural_vector(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            NaturalVector,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            NaturalVector,
+        )
 
     vector = np.array([1, 2, 3])
-    interpolation_matrix = interpolate_natural_vector(vector)
-    np.testing.assert_allclose(
+    interpolation_matrix = NaturalVector(vector).interpolate()
+    TestUtils.assert_equal(
         interpolation_matrix,
         np.array(
             [
@@ -74,51 +84,3 @@ def test_interpolate_natural_vector():
         ),
     )
 
-    vector_2 = to_natural_vector(interpolation_matrix)
-    np.testing.assert_allclose(vector, vector_2)
-
-    # test the failure cases
-    with pytest.raises(ValueError, match="Vector must be 3x1"):
-        interpolate_natural_vector(np.array([1, 2, 3, 4]))
-    with pytest.raises(ValueError, match="Interpolation matrix must be 3x12"):
-        to_natural_vector(
-            np.array(
-                [
-                    [1.0, 0.0, 0.0, 3.0, 0.0, 0.0, -2.0, -0.0, -0.0, 3.0, 0.0, 0.0],
-                    [0.0, 1.0, 0.0, 0.0, 3.0, 0.0, -0.0, -2.0, -0.0, 0.0, 3.0, 0.0],
-                ]
-            )
-        )
-
-
-def test_interpolate_natural_vector_casadi():
-    from bionc.bionc_casadi import interpolate_natural_vector, to_natural_vector
-
-    vector = np.array([1, 2, 3])
-    interpolation_matrix = interpolate_natural_vector(vector)
-    TestUtils.mx_assert_equal(
-        interpolation_matrix,
-        np.array(
-            [
-                [1.0, 0.0, 0.0, 3.0, 0.0, 0.0, -2.0, -0.0, -0.0, 3.0, 0.0, 0.0],
-                [0.0, 1.0, 0.0, 0.0, 3.0, 0.0, -0.0, -2.0, -0.0, 0.0, 3.0, 0.0],
-                [0.0, 0.0, 1.0, 0.0, 0.0, 3.0, -0.0, -0.0, -2.0, 0.0, 0.0, 3.0],
-            ]
-        ),
-    )
-
-    vector_2 = to_natural_vector(interpolation_matrix)
-    TestUtils.mx_assert_equal(vector_2, vector)
-
-    # test the failure cases
-    with pytest.raises(ValueError, match="Vector must be 3x1"):
-        interpolate_natural_vector(np.array([1, 2, 3, 4]))
-    with pytest.raises(ValueError, match="Interpolation matrix must be 3x12"):
-        to_natural_vector(
-            np.array(
-                [
-                    [1.0, 0.0, 0.0, 3.0, 0.0, 0.0, -2.0, -0.0, -0.0, 3.0, 0.0, 0.0],
-                    [0.0, 1.0, 0.0, 0.0, 3.0, 0.0, -0.0, -2.0, -0.0, 0.0, 3.0, 0.0],
-                ]
-            )
-        )

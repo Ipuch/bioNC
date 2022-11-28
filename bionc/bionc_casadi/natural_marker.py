@@ -5,7 +5,6 @@ from casadi import MX, vertcat, horzcat
 
 from .biomechanical_model import BiomechanicalModel
 from ..model_creation.protocols import Data
-from ..bionc_casadi.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_markers import AbstractNaturalMarker

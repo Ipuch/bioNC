@@ -4,7 +4,6 @@ import numpy as np
 
 from .biomechanical_model import BiomechanicalModel
 from ..model_creation.protocols import Data
-from ..bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_markers import AbstractNaturalMarker
 from .natural_vector import NaturalVector

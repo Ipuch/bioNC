@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Union
 from bionc.utils.vnop_array import vnop_array
-from bionc.bionc_numpy.interpolation_matrix import interpolate_natural_vector
+from .natural_vector import NaturalVector
 
 
 class SegmentNaturalCoordinates(np.ndarray):
@@ -100,7 +100,7 @@ class SegmentNaturalCoordinates(np.ndarray):
     def to_uvw(self):
         return self.u, self.v, self.w
 
-    def to_non_orthogonal_basis(self, vector: np.ndarray) -> np.ndarray:
+    def to_non_orthogonal_basis(self, vector: np.ndarray) -> NaturalVector:
         """
         This function converts a vector expressed in the global coordinate system
         to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
@@ -116,7 +116,7 @@ class SegmentNaturalCoordinates(np.ndarray):
             The vector expressed in the non-orthogonal coordinate system
 
         """
-        return vnop_array(vector - self.rp, self.u, self.v, self.w)
+        return NaturalVector(vnop_array(vector - self.rp, self.u, self.v, self.w))
 
     def to_interpolation_matrix(self, vector: np.ndarray) -> np.ndarray:
         """
@@ -134,7 +134,7 @@ class SegmentNaturalCoordinates(np.ndarray):
             The vector expressed in the non-orthogonal coordinate system
 
         """
-        return interpolate_natural_vector(vnop_array(vector - self.rp, self.u, self.v, self.w))
+        return self.to_non_orthogonal_basis(vector).interpolate()
 
 
 class NaturalCoordinates(np.ndarray):

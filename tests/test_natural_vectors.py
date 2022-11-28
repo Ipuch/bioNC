@@ -12,12 +12,12 @@ def test_natural_vector(bionc_type):
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
             NaturalVector,
-            SegmentMarker,
+            NaturalMarker,
         )
     else:
         from bionc.bionc_numpy import (
             NaturalVector,
-            SegmentMarker,
+            NaturalMarker,
         )
 
     natural_vector = NaturalVector([1, 2, 3])

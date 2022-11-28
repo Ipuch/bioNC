@@ -8,7 +8,7 @@ from ..bionc_numpy.natural_coordinates import SegmentNaturalCoordinates
 from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities
 from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
-from ..bionc_numpy.natural_marker import SegmentMarker
+from ..bionc_numpy.natural_marker import NaturalMarker
 from ..bionc_numpy.natural_vector import NaturalVector
 
 from ..protocols.natural_segment import AbstractNaturalSegment
@@ -27,7 +27,7 @@ class NaturalSegment(AbstractNaturalSegment):
     rigid_body_constraint_jacobian()
         This function returns the jacobian of rigid body constraints of the segment, denoted K_r
 
-    add_marker()
+    add_natural_marker()
         This function adds a marker to the segment
     nb_markers()
         This function returns the number of markers in the segment
@@ -124,7 +124,7 @@ class NaturalSegment(AbstractNaturalSegment):
             inertia=self.inertia,
         )
         for marker in self._markers:
-            natural_segment.add_marker(marker.to_mx())
+            natural_segment.add_natural_marker(marker.to_mx())
 
         return natural_segment
 
@@ -483,7 +483,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
         return self._pseudo_inertia_matrix
 
-    def _natural_center_of_mass(self) -> np.ndarray:
+    def _natural_center_of_mass(self) -> NaturalVector:
         """
         This function computes the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -496,7 +496,7 @@ class NaturalSegment(AbstractNaturalSegment):
         return NaturalVector(inv(self.transformation_matrix) @ self.center_of_mass)
 
     @property
-    def natural_center_of_mass(self) -> np.ndarray:
+    def natural_center_of_mass(self) -> NaturalVector:
         """
         This function returns the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -569,7 +569,7 @@ class NaturalSegment(AbstractNaturalSegment):
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return (self.interpolation_matrix_center_of_mass.T * self.mass) @ np.array([0, 0, -9.81])
+        return (self.natural_center_of_mass.interpolate().T * self.mass) @ np.array([0, 0, -9.81])
 
     def differential_algebraic_equation(
         self,
@@ -633,7 +633,7 @@ class NaturalSegment(AbstractNaturalSegment):
         lambda_i = x[12:]
         return SegmentNaturalAccelerations(Qddoti), lambda_i
 
-    def add_marker(self, marker: SegmentMarker):
+    def add_natural_marker(self, marker: NaturalMarker):
         """
         Add a new marker to the segment
 

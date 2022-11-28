@@ -14,7 +14,7 @@ from .model_creation import (
 )
 from .bionc_numpy import (
     Axis,
-    SegmentMarker,
+    NaturalMarker,
     Marker,
     NaturalSegment,
     InertiaParameters,

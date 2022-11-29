@@ -7,6 +7,7 @@ from ..model_creation.protocols import Data
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_markers import AbstractNaturalMarker
 from .natural_vector import NaturalVector
+
 # todo: need a list of markers MarkerList
 
 

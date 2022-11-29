@@ -96,4 +96,3 @@ def test_interpolate_natural_vector(bionc_type):
             ]
         ),
     )
-

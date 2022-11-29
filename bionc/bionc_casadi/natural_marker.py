@@ -122,7 +122,7 @@ class NaturalMarker(AbstractNaturalMarker):
         if len(p.shape) != 2 or p.shape[0] != 4:
             raise RuntimeError(f"The function {function} must return a np.ndarray of dimension 4xT (XYZ1 x time)")
 
-        natural_positions = Q_xp.to_non_orthogonal_basis(vector=p[:3, :])
+        natural_positions = Q_xp.to_natural_vector(vector=p[:3, :])
         # mean
         natural_position = NaturalVector(natural_positions.mean(axis=1))
 

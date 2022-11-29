@@ -51,18 +51,10 @@ class SegmentNaturalCoordinates(Protocol):
         """This function returns the uvw vector of the natural coordinates"""
         ...
 
-    def to_non_orthogonal_basis(self, vector):
+    def to_natural_vector(self, vector):
         """
         This function converts a vector expressed in the global coordinate system
-        to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
-        """
-
-    ...
-
-    def to_interpolation_matrix(self, vector):
-        """
-        This function converts a vector expressed in the global coordinate system
-        to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
+        to a vector expressed in a non-orthogonal coordinate system (rp, u, v, w) associated to the segment coordinates.
         """
         ...
 

@@ -69,7 +69,7 @@ class BiomechanicalModelTemplate:
             model[s.name] = natural_segment
 
             for marker in s.markers:
-                model.segments[name].add_marker(marker.to_segment_marker(data, model, Q_xp))
+                model.segments[name].add_natural_marker(marker.to_natural_marker(data, model, Q_xp))
 
         for key, joint in self.joints.items():
             model._add_joint(joint)

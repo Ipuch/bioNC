@@ -1,9 +1,8 @@
 import numpy as np
-from casadi import MX, vertcat
+from casadi import MX, vertcat, sum2, cross, sum1
 from typing import Union
 
-# from bionc.utils.vnop_array import vnop_array
-# from bionc.utils.interpolation_matrix import interpolate_natural_vector
+from .natural_vector import NaturalVector
 
 
 class SegmentNaturalCoordinates(MX):
@@ -116,41 +115,68 @@ class SegmentNaturalCoordinates(MX):
     def to_uvw(self):
         return self.u, self.v, self.w
 
-    # def to_non_orthogonal_basis(self, vector: MX) -> MX:
-    #     """
-    #     This function converts a vector expressed in the global coordinate system
-    #     to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
-    #
-    #     Parameters
-    #     ----------
-    #     vector: MX
-    #         The vector expressed in the global coordinate system
-    #
-    #     Returns
-    #     -------
-    #     MX
-    #         The vector expressed in the non-orthogonal coordinate system
-    #
-    #     """
-    #     return vnop_array(vector - self.rp, self.u, self.v, self.w)
-    #
-    # def to_interpolation_matrix(self, vector: MX) -> MX:
-    #     """
-    #     This function converts a vector expressed in the global coordinate system
-    #     to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
-    #
-    #     Parameters
-    #     ----------
-    #     vector: MX
-    #         The vector expressed in the global coordinate system
-    #
-    #     Returns
-    #     -------
-    #     MX
-    #         The vector expressed in the non-orthogonal coordinate system
-    #
-    #     """
-    #     return interpolate_natural_vector(vnop_array(vector - self.rp, self.u, self.v, self.w))
+    def to_natural_vector(self, vector: MX | np.ndarray) -> NaturalVector:
+        """
+        This function converts a vector expressed in the global coordinate system
+        to a vector expressed in a non-orthogonal coordinate system associated to the segment coordinates.
+
+        Parameters
+        ----------
+        vector: np.ndarray
+            The vector expressed in the global coordinate system (3x1) or (3xN)
+
+        Returns
+        -------
+        np.ndarray
+            The vector expressed in the non-orthogonal coordinate system (rp, u, v, w)
+
+        """
+        return NaturalVector(self.vnop_array(vector - self.rp, self.u, self.v, self.w))
+
+    @staticmethod
+    def vnop_array(V: np.ndarray | MX, e1: MX, e2: MX, e3: MX) -> MX:
+        """
+        This function converts a vector expressed in the global coordinate system
+        to a vector expressed in a non-orthogonal coordinate system.
+
+        Parameters
+        ----------
+        V: np.ndarray | MX
+            The vector expressed in the global coordinate system
+        e1: MX
+            The first vector of the non-orthogonal coordinate system, usually the u-axis
+        e2: MX
+            The second vector of the non-orthogonal coordinate system, usually the v-axis
+        e3: MX
+            The third vector of the non-orthogonal coordinate system, usually the w-axis
+
+        Returns
+        -------
+        vnop: MX
+            The vector expressed in the non-orthogonal coordinate system
+        """
+
+        if V.shape[0] != 3:
+            raise ValueError("The vector must be expressed in 3D.")
+        if isinstance(V, np.ndarray):
+            V = MX(V)
+
+        if e1.shape[0] != 3:
+            raise ValueError("The first vector of the non-orthogonal coordinate system must be expressed in 3D.")
+
+        if e2.shape[0] != 3:
+            raise ValueError("The second vector of the non-orthogonal coordinate system must be expressed in 3D.")
+
+        if e3.shape[0] != 3:
+            raise ValueError("The third vector of the non-orthogonal coordinate system must be expressed in 3D.")
+
+        vnop = MX.zeros(V.shape)
+
+        vnop[0, 0] = sum1(np.cross(e2, e3) * V) / sum1(cross(e1, e2) * e3)
+        vnop[1, 0] = sum1(cross(e3, e1) * V) / sum1(cross(e1, e2) * e3)
+        vnop[2, 0] = sum1(cross(e1, e2) * V) / sum1(cross(e1, e2) * e3)
+
+        return vnop
 
 
 class NaturalCoordinates(MX):

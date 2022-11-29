@@ -141,14 +141,14 @@ def test_marker_features(bionc_type):
             NaturalSegment,
             SegmentNaturalCoordinates,
             SegmentNaturalVelocities,
-            SegmentMarker,
+            NaturalMarker,
         )
     else:
         from bionc.bionc_numpy import (
             NaturalSegment,
             SegmentNaturalCoordinates,
             SegmentNaturalVelocities,
-            SegmentMarker,
+            NaturalMarker,
         )
 
     # Let's create a segment
@@ -163,9 +163,17 @@ def test_marker_features(bionc_type):
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
     )
 
+    # NaturalMarker(
+    #     name="my_marker1",
+    #     parent_name="Thigh",
+    #     position=np.eye(3),
+    #     is_technical=True,
+    #     is_anatomical=False,
+    # )
+
     # Let's add a marker
     with pytest.raises(ValueError, match="The position must be a 3d vector with only one column"):
-        SegmentMarker(
+        NaturalMarker(
             name="my_marker1",
             parent_name="Thigh",
             position=np.eye(3),
@@ -173,7 +181,7 @@ def test_marker_features(bionc_type):
             is_anatomical=False,
         )
 
-    marker1 = SegmentMarker(
+    marker1 = NaturalMarker(
         name="my_marker1",
         parent_name="Thigh",
         position=np.ones(3),
@@ -181,15 +189,15 @@ def test_marker_features(bionc_type):
         is_anatomical=False,
     )
 
-    marker2 = SegmentMarker(
+    marker2 = NaturalMarker(
         name="my_marker2",
         parent_name="Thigh",
         position=np.array([0, 1, 2]),
         is_technical=True,
         is_anatomical=False,
     )
-    my_segment.add_marker(marker1)
-    my_segment.add_marker(marker2)
+    my_segment.add_natural_marker(marker1)
+    my_segment.add_natural_marker(marker2)
 
     Qi = SegmentNaturalCoordinates.from_components(
         u=[1, 2, 3],

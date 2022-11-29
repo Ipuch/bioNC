@@ -3,7 +3,7 @@ from typing import Callable, Union
 import numpy as np
 
 from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
-from ..bionc_numpy.natural_marker import SegmentMarker, Marker
+from ..bionc_numpy.natural_marker import NaturalMarker, Marker
 
 # from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
@@ -21,10 +21,10 @@ class MarkerTemplate:
         parent_name: str = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
-        marker_type: str = "SegmentMarker",
+        marker_type: str = "NaturalMarker",
     ):
         """
-        This is a pre-constructor for the SegmentMarker class. It allows to create a generic model by marker names
+        This is a pre-constructor for the NaturalMarker class. It allows to create a generic model by marker names
 
         Parameters
         ----------
@@ -50,7 +50,7 @@ class MarkerTemplate:
 
     def to_marker(
         self, data: Data, kinematic_chain: BiomechanicalModel, natural_segment: NaturalSegment = None
-    ) -> Union[SegmentMarker, Marker]:
+    ) -> Union[NaturalMarker, Marker]:
         return Marker.from_data(
             data=data,
             name=self.name,
@@ -60,10 +60,10 @@ class MarkerTemplate:
             is_anatomical=self.is_anatomical,
         )
 
-    def to_segment_marker(
+    def to_natural_marker(
         self, data: Data, kinematic_chain: BiomechanicalModel, Q_xp: SegmentNaturalCoordinates = None
-    ) -> Union[SegmentMarker, Marker]:
-        return SegmentMarker.from_data(
+    ) -> Union[NaturalMarker, Marker]:
+        return NaturalMarker.from_data(
             data,
             self.name,
             self.function,

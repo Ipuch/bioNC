@@ -8,7 +8,7 @@ from ..model_creation.protocols import Data
 from .natural_coordinates import SegmentNaturalCoordinates
 
 
-class AbstractSegmentMarker(ABC):
+class AbstractNaturalMarker(ABC):
     """
     Class used to create a segment markers for the natural segments
 

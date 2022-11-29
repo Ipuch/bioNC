@@ -4,14 +4,14 @@ import numpy as np
 
 from .biomechanical_model import BiomechanicalModel
 from ..model_creation.protocols import Data
-from ..bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
-from ..protocols.natural_markers import AbstractSegmentMarker
+from ..protocols.natural_markers import AbstractNaturalMarker
+from .natural_vector import NaturalVector
 
 # todo: need a list of markers MarkerList
 
 
-class SegmentMarker(AbstractSegmentMarker):
+class NaturalMarker(AbstractNaturalMarker):
     """
     Class used to create a segment markers for the natural segments
 
@@ -42,8 +42,7 @@ class SegmentMarker(AbstractSegmentMarker):
         self,
         name: str,
         parent_name: str,
-        position: tuple[int | float, int | float, int | float] | np.ndarray = None,
-        interpolation_matrix: np.ndarray = None,
+        position: tuple[int | float, int | float, int | float] | np.ndarray | NaturalVector = None,
         is_technical: bool = True,
         is_anatomical: bool = False,
     ):
@@ -56,8 +55,6 @@ class SegmentMarker(AbstractSegmentMarker):
             The name of the parent the marker is attached to
         position
             The 3d position of the marker in the non orthogonal segment coordinate system
-        interpolation_matrix
-            The interpolation matrix to use for the marker
         is_technical
             If the marker should be flagged as a technical marker
         is_anatomical
@@ -66,28 +63,11 @@ class SegmentMarker(AbstractSegmentMarker):
         self.name = name
         self.parent_name = parent_name
 
-        if position is None and interpolation_matrix is None:
-            raise ValueError("Either a position or an interpolation matrix must be provided")
+        if not isinstance(position, NaturalVector):
+            position = NaturalVector(position)
 
-        elif position is not None and interpolation_matrix is None:
-            if position.shape[0] != 3:
-                raise ValueError("The position must be a 3d vector")
-            if position.shape.__len__() > 1:
-                if position.shape[1] != 1:
-                    raise ValueError("The position must be a 3d vector with only one column")
-
-            self.position = position if isinstance(position, np.ndarray) else np.array(position)
-            self.interpolation_matrix = interpolate_natural_vector(self.position)
-
-        elif position is None and interpolation_matrix is not None:
-            if interpolation_matrix.shape != (3, 12):
-                raise ValueError("The interpolation matrix must be a 3x12 matrix")
-
-            self.interpolation_matrix = interpolation_matrix
-            self.position = to_natural_vector(self.interpolation_matrix)
-
-        else:
-            raise ValueError("position and interpolation matrix cannot both be provided")
+        self.position = position
+        self.interpolation_matrix = position.interpolate()
 
         self.is_technical = is_technical
         self.is_anatomical = is_anatomical
@@ -139,9 +119,9 @@ class SegmentMarker(AbstractSegmentMarker):
         if len(p.shape) != 2 or p.shape[0] != 4:
             raise RuntimeError(f"The function {function} must return a np.ndarray of dimension 4xT (XYZ1 x time)")
 
-        natural_positions = Q_xp.to_non_orthogonal_basis(vector=p[:3, :])
+        natural_positions = Q_xp.to_natural_vector(vector=p[:3, :])
         # mean
-        natural_position = natural_positions.mean(axis=1)
+        natural_position = NaturalVector(natural_positions.mean(axis=1))
 
         if np.isnan(natural_position).all():
             raise RuntimeError(f"All the values for {function} returned nan which is not permitted")
@@ -197,9 +177,9 @@ class SegmentMarker(AbstractSegmentMarker):
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position + other)
-        elif isinstance(other, SegmentMarker):
-            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position + other.position)
+            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position + other)
+        elif isinstance(other, NaturalMarker):
+            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position + other.position)
         else:
             raise NotImplementedError(f"The addition for {type(other)} is not implemented")
 
@@ -208,9 +188,9 @@ class SegmentMarker(AbstractSegmentMarker):
             other = np.array(other)
 
         if isinstance(other, np.ndarray):
-            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position - other)
-        elif isinstance(other, SegmentMarker):
-            return SegmentMarker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
+            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position - other)
+        elif isinstance(other, NaturalMarker):
+            return NaturalMarker(name=self.name, parent_name=self.parent_name, position=self.position - other.position)
         else:
             raise NotImplementedError(f"The subtraction for {type(other)} is not implemented")
 
@@ -218,7 +198,7 @@ class SegmentMarker(AbstractSegmentMarker):
         """
         This function converts the marker to a mx marker
         """
-        from ..bionc_casadi import SegmentMarker as SegmentMarkerMX
+        from ..bionc_casadi import NaturalMarker as SegmentMarkerMX
 
         return SegmentMarkerMX(
             name=self.name,

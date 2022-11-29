@@ -1,6 +1,3 @@
-# from bionc.bionc_numpy.interpolation_matrix import interpolate_natural_vector, to_natural_vector
-from .utils.vnop_array import vnop_array
-
 from .model_creation import (
     AxisTemplate,
     MarkerTemplate,
@@ -14,7 +11,7 @@ from .model_creation import (
 )
 from .bionc_numpy import (
     Axis,
-    SegmentMarker,
+    NaturalMarker,
     Marker,
     NaturalSegment,
     InertiaParameters,

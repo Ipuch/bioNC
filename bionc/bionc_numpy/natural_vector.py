@@ -14,13 +14,19 @@ class NaturalVector(AbstractNaturalVector, np.ndarray):
         Create a new instance of the class.
         """
 
-        if len(input_array) != 3:
+        if not isinstance(input_array, np.ndarray):
+            input_array = np.array(input_array)
+
+        size1 = input_array.shape[0]
+        size2 = input_array.shape[1] if input_array.shape.__len__() == 2 else 1
+
+        if size1 != 3:
             raise ValueError("The input array must have 3 elements")
 
-        obj = np.asarray(input_array).view(cls)
+        if size2 != 1:
+            raise ValueError("The position must be a 3d vector with only one column")
 
-        # if obj.shape.__len__() == 1:
-        #     obj = obj[:, np.newaxis]
+        obj = np.asarray(input_array).view(cls)
 
         return obj
 

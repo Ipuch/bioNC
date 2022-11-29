@@ -5,7 +5,7 @@ from casadi import MX
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
 from .homogenous_transform import HomogeneousTransform
-from .natural_markers import AbstractSegmentMarker
+from .natural_markers import AbstractNaturalMarker
 
 
 class AbstractNaturalSegment(ABC):
@@ -44,7 +44,7 @@ class AbstractNaturalSegment(ABC):
         This function returns the jacobian of rigid body constraints of the segment, denoted K_r.
 
 
-    add_marker()
+    add_natural_marker()
         This function adds a marker to the segment
     nb_markers()
         This function returns the number of markers in the segment
@@ -369,7 +369,7 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
-    def add_marker(self, marker):
+    def add_natural_marker(self, marker):
         """
         Add a new marker to the segment
 
@@ -803,7 +803,7 @@ class GenericNaturalSegment(AbstractNaturalSegment):
 
         pass
 
-    def add_marker(self, marker: AbstractSegmentMarker):
+    def add_natural_marker(self, marker: AbstractNaturalMarker):
         """
         Add a new marker to the segment
 

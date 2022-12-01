@@ -338,14 +338,24 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
         pass
 
-    def joint_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
+    def joint_constraints(self, Q: NaturalCoordinates):
         """
         This function returns the joint constraints of all joints, denoted Phi_k
         as a function of the natural coordinates Q.
 
         Returns
         -------
-        np.ndarray
+            Joint constraints of the segment [nb_joint_constraints, 1]
+        """
+
+        pass
+
+    def joint_constraints_jacobian(self, Q: NaturalCoordinates):
+        """
+        This function returns the joint constraints of all joints, denoted K_k
+
+        Returns
+        -------
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
 

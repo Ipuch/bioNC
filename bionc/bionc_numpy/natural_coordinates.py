@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Union
 from .natural_vector import NaturalVector
+from ..utils.enums import NaturalAxis
 
 
 class SegmentNaturalCoordinates(np.ndarray):
@@ -169,6 +170,30 @@ class SegmentNaturalCoordinates(np.ndarray):
         vnop[2, :] = np.sum(np.cross(e1, e2, axis=0) * V, 0) / np.sum(np.cross(e1, e2, axis=0) * e3, 0)
 
         return vnop
+
+    def axis(self, axis: Union[str, NaturalAxis]) -> np.ndarray:
+        """
+        This function returns the axis of the segment.
+
+        Parameters
+        ----------
+        axis: str
+            The axis to return (u, v, w)
+
+        Returns
+        -------
+        np.ndarray
+            The axis of the segment
+
+        """
+        if axis == "u" or axis == NaturalAxis.U:
+            return self.u
+        elif axis == "v" or axis == NaturalAxis.V:
+            return self.v
+        elif axis == "w" or axis == NaturalAxis.W:
+            return self.w
+        else:
+            raise ValueError("The axis must be u, v or w")
 
 
 class NaturalCoordinates(np.ndarray):

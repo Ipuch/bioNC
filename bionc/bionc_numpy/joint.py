@@ -1,8 +1,10 @@
+from typing import Tuple
 import numpy as np
 
 from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.joint import JointBase
+from ..utils.enums import NaturalAxis
 
 
 class Joint:
@@ -82,16 +84,50 @@ class Joint:
             )
 
     class Universal(JointBase):
+        """
+        This class is to define a Universal joint between two segments.
+
+        Methods
+        -------
+        constraint(Q_parent, Q_child)
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+        constraint_jacobian(Q_parent, Q_child)
+            This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+        to_mx()
+            This function returns the joint as a mx joint to be used with the bionc_casadi package.
+
+        Attributes
+        ----------
+        joint_name : str
+            Name of the joint
+        parent : NaturalSegment
+            Parent segment of the joint
+        child : NaturalSegment
+            Child segment of the joint
+        parent_axis : NaturalAxis
+            Axis of the parent segment
+        child_axis : NaturalAxis
+            Axis of the child segment
+        theta : float
+            Angle between the two axes
+        """
         def __init__(
             self,
             joint_name: str,
             parent: NaturalSegment,
             child: NaturalSegment,
+            parent_axis: NaturalAxis,
+            child_axis: NaturalAxis,
             theta: float,
         ):
 
             super(Joint.Universal, self).__init__(joint_name, parent, child)
+            self.parent_axis = parent_axis
+            self.child_axis = child_axis
             self.theta = theta
+
             self.nb_constraints = 4
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
@@ -104,26 +140,34 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [4, 1]
             """
-            N = np.zeros((3, 12))
+            # N = np.zeros((3, 12))
             constraint = np.zeros(self.nb_constraints)
             constraint[:3] = Q_parent.rd - Q_child.rp
-            constraint[3] = np.dot(Q_parent.w, N @ Q_child.vector) - np.cos(self.theta)
+            constraint[3] = np.dot(Q_parent.axis(self.parent_axis), Q_child.axis(self.child_axis)) - np.cos(self.theta)
 
             return constraint
 
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
             """
-            This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
+            This function returns the kinematic constraints of the joint, denoted K_k
             as a function of the natural coordinates Q_parent and Q_child.
 
             Returns
             -------
-            MX
-                Jacobian of the kinematic constraints of the joint [1, 24]
+            Tuple[np.ndarray, np.ndarray]
+                joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
             """
-            raise NotImplementedError("This function is not implemented yet")
+            # todo: may be wrong for the moment
+            K_k_parent = np.zeros((self.nb_constraints, 12))
+            K_k_parent[:3, 6:9] = np.eye(3)
+            K_k_parent[3, 3:6] = Q_child.axis(self.child_axis)  # need to select the right index
+
+            K_k_child = np.zeros((self.nb_constraints, 12))
+            K_k_child[:3, :3] = -np.eye(3)
+
+            return K_k_parent, K_k_child
 
         def to_mx(self):
             """
@@ -178,17 +222,23 @@ class Joint:
 
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
-        ) -> np.ndarray:
+        ) -> Tuple[np.ndarray, np.ndarray]:
             """
-            This function returns the kinematic constraints of the joint, denoted Phi_k
+            This function returns the kinematic constraints of the joint, denoted K_k
             as a function of the natural coordinates Q_parent and Q_child.
 
             Returns
             -------
-            np.ndarray
-                Kinematic constraints of the joint [2, 1]
+            Tuple[np.ndarray, np.ndarray]
+                joint constraints jacobian of the parent and child segment [3, 12] and [3, 12]
             """
-            raise NotImplementedError("This function is not implemented yet")
+            K_k_parent = np.zeros((self.nb_constraints, 12))
+            K_k_parent[:3, 6:9] = np.eye(3)
+
+            K_k_child = np.zeros((self.nb_constraints, 12))
+            K_k_child[:3, 3:6] = - np.eye(3)
+
+            return K_k_parent, K_k_child
 
         def to_mx(self):
             """

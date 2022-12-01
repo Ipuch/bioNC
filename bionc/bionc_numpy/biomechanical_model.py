@@ -114,6 +114,32 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return Phi_k
 
+    def joint_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the joint constraints of all joints, denoted K_k
+        as a function of the natural coordinates Q.
+
+        Returns
+        -------
+        np.ndarray
+            Joint constraints of the segment [nb_joint_constraints, nbQ]
+        """
+
+        K_k = np.zeros((self.nb_joint_constraints(), Q.shape[0]))
+        nb_constraints = 0
+        for joint_name, joint in self.joints.items():
+            idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
+            idx_col_parent = slice(12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1))
+            idx_col_child = slice(12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1))
+
+            Q_parent = Q.vector(self.segments[joint.parent.name].index)
+            Q_child = Q.vector(self.segments[joint.child.name].index)
+            K_k[idx_row, idx_col_parent], K_k[idx_row, idx_col_child] = joint.constraint_jacobian(Q_parent, Q_child)
+
+            nb_constraints += self.joints[joint_name].nb_constraints
+
+        return K_k
+
     def _update_mass_matrix(self):
         """
         This function computes the generalized mass matrix of the system, denoted G

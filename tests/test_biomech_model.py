@@ -116,12 +116,7 @@ def test_biomech_model(bionc_type):
         natural_model.rigid_body_constraints_jacobian(Q),
         np.array(
             [
-                [
-                    2.0,
-                    4.0,
-                    6.1,
-                    0,
-                    0,
+                [2.0, 4.0, 6.1, 0, 0,
                     0,
                     0,
                     0,
@@ -2589,6 +2584,11 @@ def test_biomech_model(bionc_type):
     TestUtils.assert_equal(
         natural_model.joint_constraints(Q),
         np.array([-0.7, 1.0, 0.8, 0.6, 1.0, 1.1, -0.8, 1.0, 0.8]),
+    )
+
+    TestUtils.assert_equal(
+        natural_model.joint_constraints_jacobian(Q),
+        np.array([0]),
     )
 
     # not implemented yet

@@ -116,7 +116,12 @@ def test_biomech_model(bionc_type):
         natural_model.rigid_body_constraints_jacobian(Q),
         np.array(
             [
-                [2.0, 4.0, 6.1, 0, 0,
+                [
+                    2.0,
+                    4.0,
+                    6.1,
+                    0,
+                    0,
                     0,
                     0,
                     0,
@@ -3310,4 +3315,3 @@ def test_biomech_model_mass(bionc_type):
         ]
     )
     TestUtils.assert_equal(model.mass_matrix, G)
-    

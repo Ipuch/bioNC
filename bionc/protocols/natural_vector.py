@@ -17,4 +17,3 @@ class AbstractNaturalVector(ABC):
     @abstractmethod
     def distal(self):
         """This function returns the vector of the distal point, denoted rd"""
-

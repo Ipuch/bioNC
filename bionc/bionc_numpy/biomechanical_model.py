@@ -129,8 +129,12 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         nb_constraints = 0
         for joint_name, joint in self.joints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
-            idx_col_parent = slice(12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1))
-            idx_col_child = slice(12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1))
+            idx_col_parent = slice(
+                12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
+            )
+            idx_col_child = slice(
+                12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
+            )
 
             Q_parent = Q.vector(self.segments[joint.parent.name].index)
             Q_child = Q.vector(self.segments[joint.child.name].index)

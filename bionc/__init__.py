@@ -36,4 +36,3 @@ casadi_type = MX_type
 numpy_type = ndarray
 
 from .utils.enums import NaturalAxis
-

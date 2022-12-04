@@ -41,4 +41,3 @@ class AbstractInterpolationMatrix(ABC):
     @abstractmethod
     def trans(self):
         """This function returns the translation matrix part of the interpolation matrix"""
-

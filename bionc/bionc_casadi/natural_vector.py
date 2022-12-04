@@ -144,4 +144,3 @@ class InterpolationMatrix(AbstractInterpolationMatrix, MX):
         translation_interpolation_matrix[0:3, 9:12] = 0
 
         return translation_interpolation_matrix
-

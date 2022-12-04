@@ -113,6 +113,7 @@ class Joint:
         theta : float
             Angle between the two axes
         """
+
         def __init__(
             self,
             joint_name: str,
@@ -236,7 +237,7 @@ class Joint:
             K_k_parent[:3, 6:9] = np.eye(3)
 
             K_k_child = np.zeros((self.nb_constraints, 12))
-            K_k_child[:3, 3:6] = - np.eye(3)
+            K_k_child[:3, 3:6] = -np.eye(3)
 
             return K_k_parent, K_k_child
 

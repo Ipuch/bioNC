@@ -24,7 +24,7 @@ def test_natural_vector(bionc_type):
     TestUtils.assert_equal(natural_vector, np.array([1, 2, 3]))
     assert natural_vector.interpolate().shape == (3, 12)
     Nrot = np.concatenate((np.eye(3), 2 * np.eye(3), -2 * np.eye(3), 3 * np.eye(3)), axis=1)
-    Ntrans = np.concatenate((np.zeros((3,3)), 1 * np.eye(3), np.zeros((3,3)), np.zeros((3,3))), axis=1)
+    Ntrans = np.concatenate((np.zeros((3, 3)), 1 * np.eye(3), np.zeros((3, 3)), np.zeros((3, 3))), axis=1)
     TestUtils.assert_equal(natural_vector.interpolate(), Nrot + Ntrans)
     TestUtils.assert_equal(natural_vector.interpolate().rot, Nrot)
     TestUtils.assert_equal(natural_vector.interpolate().trans, Ntrans)
@@ -40,6 +40,3 @@ def test_natural_vector(bionc_type):
     assert natural_vector.interpolate().shape == (3, 12)
     N = np.concatenate((np.zeros((3, 3)), np.zeros((3, 3)), np.eye(3), np.zeros((3, 3))), axis=1)
     TestUtils.assert_equal(natural_vector.interpolate(), N)
-
-
-

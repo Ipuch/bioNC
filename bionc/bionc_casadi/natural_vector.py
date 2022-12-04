@@ -3,6 +3,7 @@ from casadi import MX
 import numpy as np
 from ..protocols.natural_vector import AbstractNaturalVector
 from ..protocols.interpolation_matrix import AbstractInterpolationMatrix
+from ..utils.enums import NaturalAxis
 
 
 class NaturalVector(AbstractNaturalVector, MX):
@@ -44,6 +45,15 @@ class NaturalVector(AbstractNaturalVector, MX):
     def distal(cls):
         """This function returns the vector of the distal point, denoted rd"""
         return cls(np.array([0, -1, 0]))
+
+    @classmethod
+    def axis(cls, axis: NaturalAxis):
+        if axis == NaturalAxis.U:
+            return cls(np.array([1, 0, 0]))
+        elif axis == NaturalAxis.V:
+            return cls(np.array([0, 1, 0]))
+        elif axis == NaturalAxis.W:
+            return cls(np.array([0, 0, 1]))
 
     def interpolate(self) -> MX:
         """This function converts the natural vector into the interpolation matrix"""

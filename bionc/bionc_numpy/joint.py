@@ -5,6 +5,7 @@ from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.joint import JointBase
 from ..utils.enums import NaturalAxis
+from .natural_vector import NaturalVector
 
 
 class Joint:
@@ -27,7 +28,6 @@ class Joint:
             theta_1: float,
             theta_2: float,
         ):
-
             super(Joint.Hinge, self).__init__(joint_name, parent, child)
             self.theta_1 = theta_1
             self.theta_2 = theta_2
@@ -123,10 +123,13 @@ class Joint:
             child_axis: NaturalAxis,
             theta: float,
         ):
-
             super(Joint.Universal, self).__init__(joint_name, parent, child)
             self.parent_axis = parent_axis
+            self.parent_vector = NaturalVector.axis(self.parent_axis)
+
             self.child_axis = child_axis
+            self.child_vector = NaturalVector.axis(self.child_axis)
+
             self.theta = theta
 
             self.nb_constraints = 4
@@ -160,13 +163,13 @@ class Joint:
             Tuple[np.ndarray, np.ndarray]
                 joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
             """
-            # todo: may be wrong for the moment
             K_k_parent = np.zeros((self.nb_constraints, 12))
             K_k_parent[:3, 6:9] = np.eye(3)
-            K_k_parent[3, 3:6] = Q_child.axis(self.child_axis)  # need to select the right index
+
+            K_k_parent[3, :] = self.parent_vector.interpolate().rot.T @ self.child_vector.interpolate().rot @ Q_child
 
             K_k_child = np.zeros((self.nb_constraints, 12))
-            K_k_child[:3, :3] = -np.eye(3)
+            K_k_child[3, :] = (self.parent_vector.interpolate().rot @ Q_parent).T @ self.child_vector.interpolate().rot
 
             return K_k_parent, K_k_child
 
@@ -196,7 +199,6 @@ class Joint:
             child: NaturalSegment,
             point_interpolation_matrix_in_child: float = None,
         ):
-
             super(Joint.Spherical, self).__init__(joint_name, parent, child)
             self.nb_constraints = 3
             # todo: do something better

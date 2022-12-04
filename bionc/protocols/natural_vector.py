@@ -10,6 +10,7 @@ class AbstractNaturalVector(ABC):
     def interpolate(self):
         """This function converts the natural vector into the interpolation matrix"""
 
+    @abstractmethod
     def proximal(self):
         """This function returns the vector of the proximal point, denoted rp"""
 
@@ -17,10 +18,3 @@ class AbstractNaturalVector(ABC):
     def distal(self):
         """This function returns the vector of the distal point, denoted rd"""
 
-    @abstractmethod
-    def u_axis(self):
-        """This function returns the vector of the u axis"""
-
-    @abstractmethod
-    def w_axis(self):
-        """This function returns the vector of the w axis"""

@@ -184,7 +184,10 @@ class AbstractBiomechanicalModel(ABC):
 
 class GenericBiomechanicalModel(AbstractBiomechanicalModel):
     """
-    This class is the base with simple methods for all biomechanical models. It contains the segments and the joints of the model.
+    This class is the base with simple methods for all biomechanical models.
+    It contains the segments and the joints of the model.
+
+    The implemented method are not specific to numpy or casadi.
 
     Methods
     ----------
@@ -264,6 +267,12 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
             nb_joint_constraints += joint.nb_constraints
         return nb_joint_constraints
 
+    def nb_rigid_body_constraints(self):
+        return 6 * self.nb_segments()
+
+    def nb_holonomic_constraints(self):
+        return self.nb_joint_constraints() + self.nb_rigid_body_constraints()
+
     def nb_Q(self):
         return 12 * self.nb_segments()
 
@@ -329,14 +338,24 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
         pass
 
-    def joint_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
+    def joint_constraints(self, Q: NaturalCoordinates):
         """
         This function returns the joint constraints of all joints, denoted Phi_k
         as a function of the natural coordinates Q.
 
         Returns
         -------
-        np.ndarray
+            Joint constraints of the segment [nb_joint_constraints, 1]
+        """
+
+        pass
+
+    def joint_constraints_jacobian(self, Q: NaturalCoordinates):
+        """
+        This function returns the joint constraints of all joints, denoted K_k
+
+        Returns
+        -------
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
 

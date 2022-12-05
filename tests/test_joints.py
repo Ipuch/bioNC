@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from bionc import JointType
+from bionc import JointType, NaturalAxis
 from .utils import TestUtils
 
 
@@ -14,7 +14,6 @@ from .utils import TestUtils
     ["numpy", "casadi"],
 )
 def test_joints(bionc_type, joint_type: JointType):
-
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
             BiomechanicalModel,
@@ -56,9 +55,25 @@ def test_joints(bionc_type, joint_type: JointType):
     model["box"] = box
     model["bbox"] = bbox
     if joint_type == JointType.REVOLUTE:
-        joint = Joint.Hinge(joint_name="hinge", parent=box, child=bbox, theta_1=0.2, theta_2=0.3)
+        parent_axis = NaturalAxis.U, NaturalAxis.V
+        child_axis = NaturalAxis.V, NaturalAxis.W
+        theta = np.pi / 3, 3 * np.pi / 4
+        joint = Joint.Hinge(
+            joint_name="hinge", parent=box, child=bbox, parent_axis=parent_axis, child_axis=child_axis, theta=theta
+        )
+
     elif joint_type == JointType.UNIVERSAL:
-        joint = Joint.Universal(joint_name="universal", parent=box, child=bbox, theta=0.4)
+        joint = Joint.Universal(
+            joint_name="universal",
+            parent=box,
+            child=bbox,
+            parent_axis=NaturalAxis.U,
+            child_axis=NaturalAxis.W,
+            theta=0.4,
+        )
+        # joint = Joint.Universal(joint_name="universal", parent=box, child=bbox,
+        #                         parent_axis=NaturalAxis.V, child_axis=NaturalAxis.W,
+        #                         theta=0.4)
     elif joint_type == JointType.SPHERICAL:
         joint = Joint.Spherical(joint_name="spherical", parent=box, child=bbox)
     else:
@@ -80,26 +95,94 @@ def test_joints(bionc_type, joint_type: JointType):
     if joint_type == JointType.REVOLUTE:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            np.array([-0.3, 0.9, 0.9, -8.9001, 21.384664]),
+            np.array([-0.3, 0.9, 0.9, -5.85, -6.762893]),
             decimal=6,
         )
-        with pytest.raises(NotImplementedError, match="This function is not implemented yet"):
-            joint.constraint_jacobian(Q1, Q2)
+        parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                    [-0.1, -1.1, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.7, 2.0, 5.3, -1.7, -2.0, -5.3, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0, 2.0, 3.05, -1.0, -2.0, -3.05, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.1, -1.0, -1.0],
+                ]
+            ),
+            decimal=6,
+        )
 
     elif joint_type == JointType.UNIVERSAL:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            np.array([-0.3, 0.9, 0.9, -0.921061]),
+            np.array([-0.3, 0.9, 0.9, 20.943939]),
             decimal=6,
         )
-        with pytest.raises(NotImplementedError, match="This function is not implemented yet"):
-            joint.constraint_jacobian(Q1, Q2)
-
+        parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                    [1.7, 2.0, 5.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.05],
+                ]
+            ),
+            decimal=6,
+        )
     elif joint_type == JointType.SPHERICAL:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
             np.array([-0.3, 0.9, 0.9]),
             decimal=6,
         )
-        with pytest.raises(NotImplementedError, match="This function is not implemented yet"):
-            joint.constraint_jacobian(Q1, Q2)
+        parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )

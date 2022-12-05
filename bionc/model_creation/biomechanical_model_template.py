@@ -5,6 +5,7 @@ from ..bionc_numpy.biomechanical_model import BiomechanicalModel
 from ..bionc_numpy.enums import JointType
 from ..utils.enums import NaturalAxis
 
+
 class BiomechanicalModelTemplate:
     def __init__(self):
         self.segments = {}
@@ -21,15 +22,16 @@ class BiomechanicalModelTemplate:
         segment.name = name  # Make sure the name of the segment fits the internal one
         self.segments[name] = segment
 
-    def add_joint(self,
-                  name: str,
-                  joint_type: JointType,
-                  parent: str,
-                  child: str,
-                  parent_axis : NaturalAxis | tuple[NaturalAxis] | list[NaturalAxis] = None,
-                  child_axis : NaturalAxis | tuple[NaturalAxis] | list[NaturalAxis] = None,
-                  theta: float | tuple[float] | list[float] = None,
-                  ):
+    def add_joint(
+        self,
+        name: str,
+        joint_type: JointType,
+        parent: str,
+        child: str,
+        parent_axis: NaturalAxis | tuple[NaturalAxis] | list[NaturalAxis] = None,
+        child_axis: NaturalAxis | tuple[NaturalAxis] | list[NaturalAxis] = None,
+        theta: float | tuple[float] | list[float] = None,
+    ):
         """
         This method adds a joint to the model
 

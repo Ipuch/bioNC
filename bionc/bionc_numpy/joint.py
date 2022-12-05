@@ -301,4 +301,3 @@ class Joint:
                 parent=self.parent.to_mx(),
                 child=self.child.to_mx(),
             )
-        

@@ -77,14 +77,14 @@ class Joint(JointBase):
             constraint[:3, 0] = Q_parent.rd - Q_child.rp
 
             for i in range(2):
-                constraint[i + 3] = dot(
-                    Q_parent.axis(self.parent_axis[i]), Q_child.axis(self.child_axis[i])
-                ) - cos(self.theta[i])
+                constraint[i + 3] = dot(Q_parent.axis(self.parent_axis[i]), Q_child.axis(self.child_axis[i])) - cos(
+                    self.theta[i]
+                )
 
             return constraint
 
         def constraint_jacobian(
-                self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[MX, MX]:
             """
             This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
@@ -102,10 +102,15 @@ class Joint(JointBase):
             K_k_child[:3, 3:6] = -MX.eye(3)
 
             for i in range(2):
-                K_k_parent[i + 3, :] = transpose(self.parent_vector[i].interpolate().rot) \
-                                       @ self.child_vector[i].interpolate().rot @ Q_child
-                K_k_child[i + 3, :] = transpose(self.parent_vector[i].interpolate().rot @ Q_parent)\
-                                      @ self.child_vector[i].interpolate().rot
+                K_k_parent[i + 3, :] = (
+                    transpose(self.parent_vector[i].interpolate().rot)
+                    @ self.child_vector[i].interpolate().rot
+                    @ Q_child
+                )
+                K_k_child[i + 3, :] = (
+                    transpose(self.parent_vector[i].interpolate().rot @ Q_parent)
+                    @ self.child_vector[i].interpolate().rot
+                )
 
             return K_k_parent, K_k_child
 
@@ -137,6 +142,7 @@ class Joint(JointBase):
         theta :
             Angle between the two axes
         """
+
         def __init__(
             self,
             joint_name: str,
@@ -179,7 +185,9 @@ class Joint(JointBase):
 
             return constraint
 
-        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> tuple[MX, MX]:
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
             as a function of the natural coordinates Q_parent and Q_child.
@@ -192,11 +200,15 @@ class Joint(JointBase):
             K_k_parent = MX.zeros((self.nb_constraints, 12))
             K_k_parent[:3, 6:9] = MX.eye(3)
 
-            K_k_parent[3, :] = transpose(self.parent_vector.interpolate().rot) @ self.child_vector.interpolate().rot @ Q_child
+            K_k_parent[3, :] = (
+                transpose(self.parent_vector.interpolate().rot) @ self.child_vector.interpolate().rot @ Q_child
+            )
 
             K_k_child = MX.zeros((self.nb_constraints, 12))
             K_k_child[:3, 3:6] = -np.eye(3)
-            K_k_child[3, :] = transpose(self.parent_vector.interpolate().rot @ Q_parent) @ self.child_vector.interpolate().rot
+            K_k_child[3, :] = (
+                transpose(self.parent_vector.interpolate().rot @ Q_parent) @ self.child_vector.interpolate().rot
+            )
 
             return K_k_parent, K_k_child
 
@@ -225,7 +237,9 @@ class Joint(JointBase):
 
             return constraint
 
-        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> tuple[MX, MX]:
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
             as a function of the natural coordinates Q_parent and Q_child.

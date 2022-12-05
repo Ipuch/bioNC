@@ -3,6 +3,7 @@ from casadi import MX, vertcat, sum2, cross, sum1
 from typing import Union
 
 from .natural_vector import NaturalVector
+from ..utils.enums import NaturalAxis
 
 
 class SegmentNaturalCoordinates(MX):
@@ -177,6 +178,30 @@ class SegmentNaturalCoordinates(MX):
         vnop[2, 0] = sum1(cross(e1, e2) * V) / sum1(cross(e1, e2) * e3)
 
         return vnop
+
+    def axis(self, axis: Union[str, NaturalAxis]) -> MX:
+        """
+        This function returns the axis of the segment.
+
+        Parameters
+        ----------
+        axis: str
+            The axis to return (u, v, w)
+
+        Returns
+        -------
+        MX
+            The axis of the segment
+
+        """
+        if axis == "u" or axis == NaturalAxis.U:
+            return self.u
+        elif axis == "v" or axis == NaturalAxis.V:
+            return self.v
+        elif axis == "w" or axis == NaturalAxis.W:
+            return self.w
+        else:
+            raise ValueError("The axis must be u, v or w")
 
 
 class NaturalCoordinates(MX):

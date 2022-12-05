@@ -121,8 +121,9 @@ class Joint:
                 joint_name=self.joint_name,
                 parent=self.parent.to_mx(),
                 child=self.child.to_mx(),
-                theta_1=self.theta_1,
-                theta_2=self.theta_2,
+                parent_axis=self.parent_axis,
+                child_axis=self.child_axis,
+                theta=self.theta,
             )
 
     class Universal(JointBase):
@@ -235,6 +236,8 @@ class Joint:
                 joint_name=self.joint_name,
                 parent=self.parent.to_mx(),
                 child=self.child.to_mx(),
+                parent_axis=self.parent_axis,
+                child_axis=self.child_axis,
                 theta=self.theta,
             )
 
@@ -244,13 +247,9 @@ class Joint:
             joint_name: str,
             parent: NaturalSegment,
             child: NaturalSegment,
-            point_interpolation_matrix_in_child: float = None,
         ):
             super(Joint.Spherical, self).__init__(joint_name, parent, child)
             self.nb_constraints = 3
-            # todo: do something better
-            # this thing is not none if the joint is not located at rp nor at rd and it needs to be used
-            self.point_interpolation_matrix_in_child = point_interpolation_matrix_in_child
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """
@@ -262,17 +261,13 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [3, 1]
             """
-
-            # if self.point_interpolation_matrix_in_child is None:
             constraint = Q_parent.rd - Q_child.rp
-            # else:
-            #     constraint = self.point_interpolation_matrix_in_child @ Q_parent.vector - Q_child.rd
 
             return constraint
 
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
-        ) -> Tuple[np.ndarray, np.ndarray]:
+        ) -> tuple[np.ndarray, np.ndarray]:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
             as a function of the natural coordinates Q_parent and Q_child.
@@ -305,8 +300,5 @@ class Joint:
                 joint_name=self.joint_name,
                 parent=self.parent.to_mx(),
                 child=self.child.to_mx(),
-                point_interpolation_matrix_in_child=self.point_interpolation_matrix_in_child,
             )
-
-
-# todo : more to come
+        

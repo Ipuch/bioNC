@@ -43,7 +43,7 @@ class JointBase(AbstractJoint):
 
     Attributes
     ----------
-    joint_name : str
+    name : str
         The name of the joint
     parent : NaturalSegment
         The parent segment of the joint
@@ -59,11 +59,11 @@ class JointBase(AbstractJoint):
 
     def __init__(
         self,
-        joint_name: str,
+        name: str,
         parent: AbstractNaturalSegment,
         child: AbstractNaturalSegment,
     ):
-        self.joint_name = joint_name
+        self.name = name
         self.parent = parent
         self.child = child
 

@@ -243,11 +243,16 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         if joint["name"] in self.joints.keys():
             raise ValueError("The joint name already exists")
 
-        self.joints[joint["name"]] = joint["joint_type"].value(
-            joint["name"],
-            self.segments[joint["parent"]],
-            self.segments[joint["child"]],
-        )
+        # remove name of the joint_type from the dictionary
+        joint_type = joint.pop("joint_type")
+        # remove None values from the dictionary
+        joint = {key: value for key, value in joint.items() if value is not None}
+        # replace parent field by the parent segment
+        joint["parent"] = self.segments[joint["parent"]]
+        # replace child field by the child segment
+        joint["child"] = self.segments[joint["child"]]
+
+        self.joints[joint["name"]] = joint_type.value(**joint)
 
     def nb_segments(self):
         return len(self.segments)

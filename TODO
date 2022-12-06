@@ -1,14 +1,9 @@
-Todo list for the development of the project bioNC
-
-The template would be great to build generic biomechanical models based on experimental data.
-
+Todo: list for the development of the project bioNC
 InertiaParameters need to be generated in SCS or in NSCS ? it can be both...
 
-model creation - on the way
-- from experimental data ? (see the template)
+model creation:
 - from biomod ?
 - from opensim ?
 
-add a methode to add joints to the model
 add a class to add muscles to the model
 add a class to add ligaments to the model

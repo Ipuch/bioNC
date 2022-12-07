@@ -1,4 +1,4 @@
-import os
+from sys import platform
 import numpy as np
 import pytest
 
@@ -81,51 +81,53 @@ def test_biomech_model(bionc_type):
         ),
     )
 
-    xdot, lambdas = dynamics(
-        0,
-        np.concatenate(
-            (
-                SegmentNaturalCoordinates(np.linspace(0, 11, 12)).to_array(),
-                SegmentNaturalVelocities(np.linspace(0, 11, 12)).to_array(),
+    # only test on linux
+    if platform == "linux":
+        xdot, lambdas = dynamics(
+            0,
+            np.concatenate(
+                (
+                    SegmentNaturalCoordinates(np.linspace(0, 11, 12)).to_array(),
+                    SegmentNaturalVelocities(np.linspace(0, 11, 12)).to_array(),
+                ),
+                axis=0,
             ),
-            axis=0,
-        ),
-    )
+        )
 
-    TestUtils.assert_equal(
-        xdot,
-        np.array(
-            [
-                0.0,
-                1.0,
-                2.0,
-                3.0,
-                4.0,
-                5.0,
-                6.0,
-                7.0,
-                8.0,
-                9.0,
-                1.0e01,
-                1.1e01,
-                -1.97372982e-16,
-                -1.0,
-                -2.0,
-                1.77635684e-15,
-                -1.59872116e-15,
-                -9.81,
-                -3.0,
-                -3.0,
-                -1.281e01,
-                -9.0,
-                -1.0e01,
-                -1.1e01,
-            ]
-        ),
-    )
-    TestUtils.assert_equal(
-        lambdas, np.array([0.71294616, -1.27767695, -0.42589232, 2.41651543, 1.27767695, 0.71294616])
-    )
+        TestUtils.assert_equal(
+            xdot,
+            np.array(
+                [
+                    0.0,
+                    1.0,
+                    2.0,
+                    3.0,
+                    4.0,
+                    5.0,
+                    6.0,
+                    7.0,
+                    8.0,
+                    9.0,
+                    1.0e01,
+                    1.1e01,
+                    -1.97372982e-16,
+                    -1.0,
+                    -2.0,
+                    1.77635684e-15,
+                    -1.59872116e-15,
+                    -9.81,
+                    -3.0,
+                    -3.0,
+                    -1.281e01,
+                    -9.0,
+                    -1.0e01,
+                    -1.1e01,
+                ]
+            ),
+        )
+        TestUtils.assert_equal(
+            lambdas, np.array([0.71294616, -1.27767695, -0.42589232, 2.41651543, 1.27767695, 0.71294616])
+        )
 
     TestUtils.assert_equal(
         all_states[:, 0],

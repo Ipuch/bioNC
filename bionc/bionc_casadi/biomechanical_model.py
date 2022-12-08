@@ -203,12 +203,51 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
+    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates) -> MX:
+        """
+        This function returns the marker constraints of all segments, denoted Phi_r
+        as a function of the natural coordinates Q.
 
-# def kinematicConstraints(self, Q):
-#     # Method to calculate the kinematic constraints
+        markers : np.ndarray | MX
+            The markers positions [3,nb_markers]
 
-# def forwardDynamics(self, Q, Qdot):
-#
-#     return Qddot, lambdas
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
 
-# def inverseDynamics(self):
+        Returns
+        -------
+        MX
+            Rigid body constraints of the segment [nb_segments, 1]
+        """
+        if markers.shape[1] != self.nb_markers():
+            raise ValueError(f"markers should have {self.nb_markers()} columns")
+
+        phi_m = MX.zeros(self.nb_markers())
+        marker_count = 0
+        for i_segment, segment_name in enumerate(self.segments):
+            marker_idx = slice(marker_count, marker_count + self.segments[segment_name].nb_markers)
+            markers_temp = markers[:, marker_idx]
+            phi_m[marker_idx] = self.segments[segment_name].markers_constraints(markers_temp, Q.vector(i_segment))
+            marker_count += self.segments[segment_name].nb_markers
+
+        return phi_m
+
+    def marker_constraint_jacobian(self) -> MX:
+        """
+        This function returns the Jacobian matrix the markers constraints, denoted k_m.
+
+        Returns
+        -------
+        MX
+            Joint constraints of the segment [3xnb_marker, 12xnb_segment]/[3xnb_marker, nbQ]
+        """
+
+        km = MX.zeros((3 * self.nb_markers(), 12 * self.nb_segments()))
+        marker_count = 0
+        for i_segment, segment_name in enumerate(self.segments):
+            marker_idx = slice(marker_count, marker_count + self.segments[segment_name].nb_markers)
+            segment_idx = slice(12 * i_segment, 12 * (i_segment + 1))
+            km[marker_idx, segment_idx] = self.segments[segment_name].marker_constraint_jacobian()
+            marker_count += self.segments[segment_name].nb_markers
+
+        return km

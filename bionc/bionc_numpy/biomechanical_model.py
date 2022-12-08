@@ -221,9 +221,34 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
+    def markers_constraints(self, markers: np.ndarray, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the marker constraints of all segments, denoted Phi_r
+        as a function of the natural coordinates Q.
 
-# def kinematicConstraints(self, Q):
-#     # Method to calculate the kinematic constraints
+        markers : np.ndarray
+            The markers positions [3,nb_markers]
+
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+        np.ndarray
+            Rigid body constraints of the segment [nb_segments, 1]
+        """
+        if markers.shape[1] != self.nb_markers():
+            raise ValueError(f"markers should have {self.nb_markers()} columns")
+        
+        phi_m = np.zeros(self.nb_markers())
+        marker_count = 0
+        for i_segment, segment_name in enumerate(self.segments):
+            marker_idx = slice(marker_count, marker_count+self.segments[segment_name].nb_markers)
+            markers_temp = markers[:, marker_idx]
+            phi_m[marker_idx] = self.segments[segment_name].markers_constraints(markers_temp, Q.vector(i_segment))
+            marker_count += self.segments[segment_name].nb_markers
+
+        return phi_m
 
 # def forwardDynamics(self, Q, Qdot):
 #

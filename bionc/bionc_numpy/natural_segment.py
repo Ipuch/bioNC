@@ -668,7 +668,7 @@ class NaturalSegment(AbstractNaturalSegment):
         Parameters
         ----------
         marker_locations: np.ndarray
-            Marker locations in the global/inertial coordinate system (3 x N_markers)
+            Marker locations in the global/inertial coordinate system [3,N_markers]
         Qi: SegmentNaturalCoordinates
             Natural coordinates of the segment
 

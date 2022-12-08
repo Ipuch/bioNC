@@ -243,9 +243,11 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         phi_m = np.zeros(self.nb_markers())
         marker_count = 0
         for i_segment, segment_name in enumerate(self.segments):
-            marker_idx = slice(marker_count, marker_count+self.segments[segment_name].nb_markers)
+            marker_idx = slice(marker_count, marker_count+self.segments[segment_name].nb_markers())
             markers_temp = markers[:, marker_idx]
-            phi_m[marker_idx] = self.segments[segment_name].markers_constraints(markers_temp, Q.vector(i_segment))
+            if markers_temp.shape[1] == 0:
+                continue
+            phi_m[marker_idx] = self.segments[segment_name].marker_constraints(markers_temp, Q.vector(i_segment))
             marker_count += self.segments[segment_name].nb_markers
 
         return phi_m

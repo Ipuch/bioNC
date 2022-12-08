@@ -250,7 +250,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return phi_m
 
-    def marker_constraint_jacobian(self):
+    def marker_constraint_jacobian(self)-> np.ndarray :
         """
         This function returns the Jacobian matrix the markers constraints, denoted k_m.
 

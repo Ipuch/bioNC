@@ -116,7 +116,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
     def joint_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
         """
-        This function returns the joint constraints of all joints, denoted K_k
+        This function returns the Jacobian matrix the joint constraints, denoted K_k
         as a function of the natural coordinates Q.
 
         Returns
@@ -239,7 +239,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
         if markers.shape[1] != self.nb_markers():
             raise ValueError(f"markers should have {self.nb_markers()} columns")
-        
+
         phi_m = np.zeros(self.nb_markers())
         marker_count = 0
         for i_segment, segment_name in enumerate(self.segments):
@@ -250,6 +250,22 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return phi_m
 
-# def forwardDynamics(self, Q, Qdot):
-#
-#     return Qddot, lambdas
+    def marker_constraint_jacobian(self):
+        """
+        This function returns the Jacobian matrix the markers constraints, denoted k_m.
+
+        Returns
+        -------
+        np.ndarray
+            Joint constraints of the segment [3xnb_marker, 12xnb_segment]/[3xnb_marker, nbQ]
+        """
+
+        km = np.zeros((3*self.nb_markers(), 12 * self.nb_segments()))
+        marker_count = 0
+        for i_segment, segment_name in enumerate(self.segments):
+            marker_idx = slice(marker_count, marker_count+self.segments[segment_name].nb_markers)
+            segment_idx = slice(12 * i_segment, 12 * (i_segment + 1))
+            km[marker_idx,segment_idx] = self.segments[segment_name].marker_constraint_jacobian()
+            marker_count += self.segments[segment_name].nb_markers
+
+        return km

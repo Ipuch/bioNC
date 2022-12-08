@@ -1,5 +1,5 @@
 """
-Example script for animating a model
+Example script for animating markers
 """
 
 import numpy as np

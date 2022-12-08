@@ -253,5 +253,3 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 # def forwardDynamics(self, Q, Qdot):
 #
 #     return Qddot, lambdas
-
-# def inverseDynamics(self):

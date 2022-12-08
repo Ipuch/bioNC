@@ -219,16 +219,27 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         MX
             Rigid body constraints of the segment [nb_segments, 1]
         """
+        if not isinstance(markers, MX):
+            markers = MX(markers)
         if markers.shape[1] != self.nb_markers():
             raise ValueError(f"markers should have {self.nb_markers()} columns")
 
-        phi_m = MX.zeros(self.nb_markers())
+
+        phi_m = MX.zeros((self.nb_markers()*3,1))
         marker_count = 0
+        constraint_count = 0
+
         for i_segment, segment_name in enumerate(self.segments):
-            marker_idx = slice(marker_count, marker_count + self.segments[segment_name].nb_markers)
+            if self.segments[segment_name].nb_markers() == 0:
+                continue
+            constraint_idx = slice(constraint_count*3, (constraint_count + self.segments[segment_name].nb_markers())*3)
+            marker_idx = slice(marker_count, marker_count + self.segments[segment_name].nb_markers())
+
             markers_temp = markers[:, marker_idx]
-            phi_m[marker_idx] = self.segments[segment_name].markers_constraints(markers_temp, Q.vector(i_segment))
-            marker_count += self.segments[segment_name].nb_markers
+            phi_m[constraint_idx,0] = self.segments[segment_name].marker_constraints(markers_temp, Q.vector(i_segment))
+
+            marker_count +=  self.segments[segment_name].nb_markers()
+            constraint_count += self.segments[segment_name].nb_markers()
 
         return phi_m
 

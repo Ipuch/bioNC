@@ -694,7 +694,7 @@ class NaturalSegment(AbstractNaturalSegment):
         Returns
         -------
         np.ndarray
-            The jacobian of the marker constraints of the segment (3 x N_markers)
+            The jacobian of the marker constraints of the segment [3, N_markers]
         """
         return np.vstack([-marker.interpolation_matrix for marker in self._markers])
 

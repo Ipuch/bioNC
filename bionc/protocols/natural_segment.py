@@ -389,6 +389,16 @@ class AbstractNaturalSegment(ABC):
         int
             Number of markers of the segment
         """
+    @abstractmethod
+    def marker_names(self) -> list[str]:
+        """
+        Returns the names of the markers of the natural segment
+
+        Returns
+        -------
+        list[str]
+            Names of the markers of the segment
+        """
 
     @abstractmethod
     def marker_constraints(self, marker_locations, Qi):
@@ -830,6 +840,9 @@ class GenericNaturalSegment(AbstractNaturalSegment):
             Number of markers of the segment
         """
         return len(self._markers)
+
+    def marker_names(self) -> list[str]:
+        return [marker.name for marker in self._markers]
 
     def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates) -> MX:
         """

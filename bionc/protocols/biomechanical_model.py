@@ -330,6 +330,12 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
             nb_markers += self.segments[key].nb_markers()
         return nb_markers
 
+    def marker_names(self):
+        marker_names = []
+        for key in self.segments:
+            marker_names += self.segments[key].marker_names()
+        return marker_names
+
     def nb_joints(self):
         return len(self.joints)
 

@@ -3,7 +3,6 @@ from typing import Callable
 from .natural_axis_template import AxisTemplate
 from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
 
-# from ..utils.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from .marker_template import MarkerTemplate
 from .protocols import Data

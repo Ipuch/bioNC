@@ -1,15 +1,12 @@
 from casadi import MX, Function, vertcat, nlpsol
 import numpy as np
+from pathlib import Path
 import pytest
-from bionc import JointType, NaturalAxis
 
+from bionc import JointType, NaturalAxis
+from bionc.bionc_numpy import BiomechanicalModel as BiomechanicalModelNumpy
 from bionc.bionc_casadi import (
-    BiomechanicalModel,
-    NaturalSegment,
     NaturalCoordinates,
-    SegmentNaturalCoordinates,
-    Joint,
-    NaturalMarker
 )
 
 
@@ -58,43 +55,13 @@ from bionc.bionc_casadi import (
 #
 # r['x'] # ça serait Q_
 
-
-
-
-box = NaturalSegment(
-    name="box",
-    alpha=np.pi / 2,
-    beta=np.pi / 2,
-    gamma=np.pi / 2,
-    length=1,
-    mass=1,
-    center_of_mass=np.array([0, 0, 0]),  # scs
-    inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # scs
-)
-
-bbox = NaturalSegment(
-    name="bbox",
-    alpha=np.pi / 5,
-    beta=np.pi / 3,
-    gamma=np.pi / 2.1,
-    length=1.5,
-    mass=1.1,
-    center_of_mass=np.array([0.1, 0.11, 0.111]),  # scs
-    inertia=np.array([[1.1, 0, 0], [0, 1.2, 0], [0, 0, 1.3]]),  # scs
-)
-
-bbox.add_natural_marker(marker=NaturalMarker(name="marker", position=np.array([0.1, 0.11, 0.111]), parent_name="bbox"))
-
-model = BiomechanicalModel()
-model["box"] = box
-model["bbox"] = bbox
-
-
+model = BiomechanicalModelNumpy.load(Path.cwd().parent.absolute().__str__() + "/models/lower_limb.nc")  # models can only be loaded if a numpy model
+model = model.to_mx()  # convert to casadi model
 
 # Declare the Q init
 Q = NaturalCoordinates.sym(model.nb_segments())
 
-markers = np.zeros((3 * model.nb_markers(),1))
+markers = np.zeros((3, model.nb_markers()))
 # Extract the phir
 phir = model.rigid_body_constraints(Q)
 #
@@ -114,7 +81,7 @@ nlp = dict(
 S = nlpsol('S', 'ipopt', nlp)
 print(S)
 
-r = S(x0=np.zeros((12*2,1)), # ça serait Q_init
+r = S(x0=np.zeros((Q.shape[0], 1)), # ça serait Q_init
       lbg=0,  # lower bound on g, nous ça serait 0
       ubg=0,  # upper bound on g, nous ça serait 0
       )

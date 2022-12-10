@@ -288,6 +288,8 @@ def main():
     # remove the c3d file
     os.remove(filename)
 
+    model.save("models/lower_limb.nc")
+
 
 if __name__ == "__main__":
     main()

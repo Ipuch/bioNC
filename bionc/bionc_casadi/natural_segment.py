@@ -11,12 +11,12 @@ from ..bionc_casadi.homogenous_transform import HomogeneousTransform
 from ..bionc_casadi.natural_marker import NaturalMarker
 from ..bionc_casadi.natural_vector import NaturalVector
 
-from ..protocols.natural_segment import AbstractNaturalSegment
+from ..protocols.natural_segment import GenericNaturalSegment
 
 from .utils import to_numeric_MX
 
 
-class NaturalSegment(AbstractNaturalSegment):
+class NaturalSegment(GenericNaturalSegment):
     """
         Class used to define anatomical segment based on natural coordinate.
 
@@ -35,7 +35,7 @@ class NaturalSegment(AbstractNaturalSegment):
         This function returns the number of markers in the segment
     marker_constraints()
         This function returns the defects of the marker constraints of the segment, denoted Phi_m
-    marker_jacobian()
+    markers_jacobian()
         This function returns the jacobian of the marker constraints of the segment, denoted K_m
 
     Attributes
@@ -110,28 +110,6 @@ class NaturalSegment(AbstractNaturalSegment):
         # list of markers embedded in the segment
         self._markers = []
 
-    def set_name(self, name: str):
-        """
-        This function sets the name of the segment
-
-        Parameters
-        ----------
-        name : str
-            Name of the segment
-        """
-        self._name = name
-
-    def set_index(self, index: int):
-        """
-        This function sets the index of the segment
-
-        Parameters
-        ----------
-        index : int
-            Index of the segment
-        """
-        self._index = index
-
     @classmethod
     def from_experimental_Q(
         cls,
@@ -190,45 +168,6 @@ class NaturalSegment(AbstractNaturalSegment):
         gamma = np.arccos(np.sum(u * (rp - rd), axis=0) / length)
 
         return alpha, beta, gamma, length
-
-    # def __str__(self):
-    #     print("to do")
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def index(self):
-        return self._index
-
-    @property
-    def length(self):
-        return self._length
-
-    @property
-    def alpha(self):
-        return self._alpha
-
-    @property
-    def beta(self):
-        return self._beta
-
-    @property
-    def gamma(self):
-        return self._gamma
-
-    @property
-    def mass(self):
-        return self._mass
-
-    @property
-    def center_of_mass(self):
-        return self._center_of_mass
-
-    @property
-    def inertia(self):
-        return self._inertia
 
     def _transformation_matrix(self) -> MX:
         """
@@ -661,7 +600,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return defects
 
-    def marker_jacobian(self):
+    def markers_jacobian(self):
         """
         This function returns the marker jacobian of the segment
 

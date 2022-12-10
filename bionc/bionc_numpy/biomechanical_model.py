@@ -1,3 +1,5 @@
+from typing import Callable
+
 import numpy as np
 from numpy import transpose
 
@@ -116,7 +118,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
     def joint_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
         """
-        This function returns the joint constraints of all joints, denoted K_k
+        This function returns the Jacobian matrix the joint constraints, denoted K_k
         as a function of the natural coordinates Q.
 
         Returns
@@ -221,12 +223,61 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
+    def markers_constraints(self, markers: np.ndarray, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the marker constraints of all segments, denoted Phi_r
+        as a function of the natural coordinates Q.
 
-# def kinematicConstraints(self, Q):
-#     # Method to calculate the kinematic constraints
+        markers : np.ndarray
+            The markers positions [3,nb_markers]
 
-# def forwardDynamics(self, Q, Qdot):
-#
-#     return Qddot, lambdas
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
 
-# def inverseDynamics(self):
+        Returns
+        -------
+        np.ndarray
+            Rigid body constraints of the segment [nb_markers x 3, 1]
+        """
+        if markers.shape[1] != self.nb_markers():
+            raise ValueError(f"markers should have {self.nb_markers()} columns")
+
+        phi_m = np.zeros((self.nb_markers() * 3))
+        marker_count = 0
+
+        for i_segment, name in enumerate(self.segments):
+            if self.segments[name].nb_markers() == 0:
+                continue
+            constraint_idx = slice(marker_count * 3, (marker_count + self.segments[name].nb_markers()) * 3)
+            marker_idx = slice(marker_count, marker_count + self.segments[name].nb_markers())
+
+            markers_temp = markers[:, marker_idx]
+            phi_m[constraint_idx] = (
+                self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment)).flatten("F")
+            )
+
+            marker_count += self.segments[name].nb_markers()
+
+        return phi_m
+
+    def markers_constraints_jacobian(self) -> np.ndarray:
+        """
+        This function returns the Jacobian matrix the markers constraints, denoted k_m.
+
+        Returns
+        -------
+        np.ndarray
+            Joint constraints of the marker segment [nb_markers x 3, nb_Q]
+        """
+
+        km = np.zeros((3 * self.nb_markers(), 12 * self.nb_segments()))
+        marker_count = 0
+        for i_segment, name in enumerate(self.segments):
+            if self.segments[name].nb_markers() == 0:
+                continue
+            constraint_idx = slice(marker_count * 3, (marker_count + self.segments[name].nb_markers()) * 3)
+            segment_idx = slice(12 * i_segment, 12 * (i_segment + 1))
+            km[constraint_idx, segment_idx] = self.segments[name].markers_jacobian()
+            marker_count += self.segments[name].nb_markers()
+
+        return km

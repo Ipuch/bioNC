@@ -50,7 +50,7 @@ class AbstractNaturalSegment(ABC):
         This function returns the number of markers in the segment
     marker_constraints()
         This function returns the defects of the marker constraints of the segment, denoted Phi_m
-    marker_jacobian()
+    markers_jacobian()
         This function returns the jacobian of the marker constraints of the segment, denoted K_m
 
     """
@@ -391,6 +391,17 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
+    def marker_names(self) -> list[str]:
+        """
+        Returns the names of the markers of the natural segment
+
+        Returns
+        -------
+        list[str]
+            Names of the markers of the segment
+        """
+
+    @abstractmethod
     def marker_constraints(self, marker_locations, Qi):
         """
         This function returns the marker constraints of the segment
@@ -409,7 +420,7 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
-    def marker_jacobian(self):
+    def markers_jacobian(self):
         """
         This function returns the marker jacobian of the segment
 
@@ -831,6 +842,9 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         """
         return len(self._markers)
 
+    def marker_names(self) -> list[str]:
+        return [marker.name for marker in self._markers]
+
     def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates) -> MX:
         """
         This function returns the marker constraints of the segment
@@ -844,7 +858,7 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         """
         pass
 
-    def marker_jacobian(self):
+    def markers_jacobian(self):
         """
         This function returns the marker jacobian of the segment
         """

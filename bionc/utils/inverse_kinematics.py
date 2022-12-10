@@ -30,10 +30,11 @@ class InverseKinematics:
         The markers [3, n_markers, n_frames]
     """
 
-    def __init__(self,
-                biomechanical_model: BiomechanicalModel,
-                markers: np.ndarray,
-                 ):
+    def __init__(
+        self,
+        biomechanical_model: BiomechanicalModel,
+        markers: np.ndarray,
+    ):
         self.biomechanical_model = biomechanical_model
         self.markers = markers
 

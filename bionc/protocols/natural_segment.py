@@ -389,6 +389,7 @@ class AbstractNaturalSegment(ABC):
         int
             Number of markers of the segment
         """
+
     @abstractmethod
     def marker_names(self) -> list[str]:
         """

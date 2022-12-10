@@ -635,7 +635,11 @@ class NaturalSegment(GenericNaturalSegment):
         np.ndarray
             The jacobian of the marker constraints of the segment [3, N_markers]
         """
-        return np.vstack([-marker.interpolation_matrix for marker in self._markers]) if self.nb_markers() > 0 else np.array([])
+        return (
+            np.vstack([-marker.interpolation_matrix for marker in self._markers])
+            if self.nb_markers() > 0
+            else np.array([])
+        )
 
     def potential_energy(self, Qi: SegmentNaturalCoordinates) -> float:
         """

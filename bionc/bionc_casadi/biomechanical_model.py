@@ -242,13 +242,13 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         if markers.shape[1] != self.nb_markers():
             raise ValueError(f"markers should have {self.nb_markers()} columns")
 
-        phi_m = MX.zeros((self.nb_markers()*3, 1))
+        phi_m = MX.zeros((self.nb_markers() * 3, 1))
         marker_count = 0
 
         for i_segment, name in enumerate(self.segments):
             if self.segments[name].nb_markers() == 0:
                 continue
-            constraint_idx = slice(marker_count*3, (marker_count + self.segments[name].nb_markers())*3)
+            constraint_idx = slice(marker_count * 3, (marker_count + self.segments[name].nb_markers()) * 3)
             marker_idx = slice(marker_count, marker_count + self.segments[name].nb_markers())
 
             markers_temp = markers[:, marker_idx]

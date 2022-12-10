@@ -249,13 +249,15 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
     """
 
-    def __init__(self,
-                 segments: dict[str:Any, ...] = None,
-                 joints: dict[str:Any, ...] = None,
-                 ):
+    def __init__(
+        self,
+        segments: dict[str:Any, ...] = None,
+        joints: dict[str:Any, ...] = None,
+    ):
 
         from .natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
         from .joint import AbstractJoint  # Imported here to prevent from circular imports
+
         self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
         self.joints: dict[str:AbstractJoint, ...] = {} if joints is None else joints
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new

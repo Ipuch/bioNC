@@ -1,5 +1,6 @@
 import numpy as np
 from casadi import MX, transpose
+import pickle
 
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
@@ -9,6 +10,23 @@ from ..protocols.biomechanical_model import GenericBiomechanicalModel
 class BiomechanicalModel(GenericBiomechanicalModel):
     def __init__(self):
         super().__init__()
+
+    def save(self, filename: str):
+        raise NotImplementedError("Saving a biomechanical model is not implemented yet with casadi models.")
+        # todo: only possible with numpy models so far
+        # do a method that returns a numpy model and save it
+        # with open(filename, "wb") as file:
+        #     pickle.dump(self, file)
+
+    @staticmethod
+    def load(filename: str):
+        raise NotImplementedError("Loading a biomechanical model is not implemented yet with casadi models.")
+        # todo: only possible with numpy models so far
+        # load the numpy model and convert it to casadi
+        # with open(filename, "rb") as file:
+        #     model = pickle.load(file)
+        #
+        # return model
 
     def rigid_body_constraints(self, Q: NaturalCoordinates) -> MX:
         """

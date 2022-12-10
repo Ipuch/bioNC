@@ -15,6 +15,7 @@ from .utils import TestUtils
 def test_biomech_model(bionc_type):
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
+            BiomechanicalModel,
             SegmentNaturalVelocities,
             NaturalVelocities,
             SegmentNaturalCoordinates,
@@ -22,6 +23,7 @@ def test_biomech_model(bionc_type):
         )
     else:
         from bionc.bionc_numpy import (
+            BiomechanicalModel,
             SegmentNaturalVelocities,
             NaturalVelocities,
             SegmentNaturalCoordinates,
@@ -3051,6 +3053,20 @@ def test_biomech_model(bionc_type):
             ]
         ),
     )
+
+    filename = "natural_model.nc"
+    if bionc_type == "numpy":
+        natural_model.save(filename)
+        natural_model = BiomechanicalModel.load(filename)
+        os.remove(filename)
+
+    elif bionc_type == "casadi":
+        # not implemented yet with casadi
+        with pytest.raises(NotImplementedError):
+            natural_model.save(filename)
+        with pytest.raises(NotImplementedError):
+            natural_model = BiomechanicalModel.load(filename)
+
 
 @pytest.mark.parametrize(
     "bionc_type",

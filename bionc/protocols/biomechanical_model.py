@@ -1,8 +1,10 @@
 import numpy as np
 from casadi import MX
 
-from typing import Union
+from typing import Union, Any
 from abc import ABC, abstractmethod
+import pickle
+
 from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
 
@@ -50,6 +52,33 @@ class AbstractBiomechanicalModel(ABC):
     def __str__(self):
         """
         This function returns a string representation of the model
+        """
+
+    @abstractmethod
+    def save(self, filename: str):
+        """
+        This function saves the model to a file
+
+        Parameters
+        ----------
+        filename : str
+            The path to the file
+        """
+
+    @staticmethod
+    def load(filename: str):
+        """
+        This function loads a model from a file
+
+        Parameters
+        ----------
+        filename : str
+            The path to the file
+
+        Returns
+        -------
+        AbstractBiomechanicalModel
+            The loaded model
         """
 
     @abstractmethod
@@ -181,6 +210,31 @@ class AbstractBiomechanicalModel(ABC):
 
         """
 
+    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates):
+        """
+        This function returns the marker constraints of all segments, denoted Phi_r
+        as a function of the natural coordinates Q.
+
+        markers : np.ndarray | MX
+            The markers positions [3,nb_markers]
+
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+            Rigid body constraints of the segment [nb_markers x 3, 1]
+        """
+
+    def markers_constraints_jacobian(self):
+        """
+        This function returns the Jacobian matrix the markers constraints, denoted k_m.
+
+        Returns
+        -------
+            Joint constraints of the marker [nb_markers x 3, nb_Q]
+        """
+
 
 class GenericBiomechanicalModel(AbstractBiomechanicalModel):
     """
@@ -195,13 +249,15 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
     """
 
-    def __init__(self):
+    def __init__(self,
+                 segments: dict[str:Any, ...] = None,
+                 joints: dict[str:Any, ...] = None,
+                 ):
+
         from .natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
         from .joint import AbstractJoint  # Imported here to prevent from circular imports
-
-        self.segments: dict[str:AbstractNaturalSegment, ...] = {}
-        # self.segments: SegmentList = SegmentList()
-        self.joints: dict[str:AbstractJoint, ...] = {}
+        self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
+        self.joints: dict[str:AbstractJoint, ...] = {} if joints is None else joints
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # the order of the segment matters
         self._mass_matrix = self._update_mass_matrix()
@@ -209,7 +265,7 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
     def __getitem__(self, name: str):
         return self.segments[name]
 
-    def __setitem__(self, name: str, segment: "NaturalSegment"):
+    def __setitem__(self, name: str, segment: Any):
         if segment.name == name:  # Make sure the name of the segment fits the internal one
             segment.set_index(len(self.segments))
             self.segments[name] = segment
@@ -223,6 +279,17 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
             out_string += str(self.segments[name])
             out_string += "\n\n\n"  # Give some space between segments
         return out_string
+
+    def save(self, filename: str):
+        with open(filename, "wb") as file:
+            pickle.dump(self, file)
+
+    @staticmethod
+    def load(filename: str):
+        with open(filename, "rb") as file:
+            model = pickle.load(file)
+
+        return model
 
     def _add_joint(self, joint: dict):
         """
@@ -427,3 +494,9 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         """
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
+
+    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates):
+        pass
+
+    def markers_constraints_jacobian(self):
+        pass

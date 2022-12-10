@@ -35,7 +35,7 @@ class NaturalSegment(AbstractNaturalSegment):
         This function returns the number of markers in the segment
     marker_constraints()
         This function returns the defects of the marker constraints of the segment, denoted Phi_m
-    marker_jacobian()
+    markers_jacobian()
         This function returns the jacobian of the marker constraints of the segment, denoted K_m
 
     Attributes
@@ -661,7 +661,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return defects
 
-    def marker_jacobian(self):
+    def markers_jacobian(self):
         """
         This function returns the marker jacobian of the segment
 

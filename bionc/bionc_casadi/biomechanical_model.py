@@ -217,48 +217,47 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Returns
         -------
         MX
-            Rigid body constraints of the segment [nb_segments, 1]
+            Rigid body constraints of the segment [nb_markers x 3, 1]
         """
         if not isinstance(markers, MX):
             markers = MX(markers)
         if markers.shape[1] != self.nb_markers():
             raise ValueError(f"markers should have {self.nb_markers()} columns")
 
-
-        phi_m = MX.zeros((self.nb_markers()*3,1))
+        phi_m = MX.zeros((self.nb_markers()*3, 1))
         marker_count = 0
-        constraint_count = 0
 
-        for i_segment, segment_name in enumerate(self.segments):
-            if self.segments[segment_name].nb_markers() == 0:
+        for i_segment, name in enumerate(self.segments):
+            if self.segments[name].nb_markers() == 0:
                 continue
-            constraint_idx = slice(constraint_count*3, (constraint_count + self.segments[segment_name].nb_markers())*3)
-            marker_idx = slice(marker_count, marker_count + self.segments[segment_name].nb_markers())
+            constraint_idx = slice(marker_count*3, (marker_count + self.segments[name].nb_markers())*3)
+            marker_idx = slice(marker_count, marker_count + self.segments[name].nb_markers())
 
             markers_temp = markers[:, marker_idx]
-            phi_m[constraint_idx,0] = self.segments[segment_name].marker_constraints(markers_temp, Q.vector(i_segment))
+            phi_m[constraint_idx, 0] = self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment))[:]
 
-            marker_count +=  self.segments[segment_name].nb_markers()
-            constraint_count += self.segments[segment_name].nb_markers()
+            marker_count += self.segments[name].nb_markers()
 
         return phi_m
 
-    def marker_constraint_jacobian(self) -> MX:
+    def markers_constraints_jacobian(self) -> MX:
         """
         This function returns the Jacobian matrix the markers constraints, denoted k_m.
 
         Returns
         -------
         MX
-            Joint constraints of the segment [3xnb_marker, 12xnb_segment]/[3xnb_marker, nbQ]
+            Joint constraints of the marker [nb_markers x 3, nb_Q]
         """
 
         km = MX.zeros((3 * self.nb_markers(), 12 * self.nb_segments()))
         marker_count = 0
-        for i_segment, segment_name in enumerate(self.segments):
-            marker_idx = slice(marker_count, marker_count + self.segments[segment_name].nb_markers)
+        for i_segment, name in enumerate(self.segments):
+            if self.segments[name].nb_markers() == 0:
+                continue
+            constraint_idx = slice(marker_count * 3, (marker_count + self.segments[name].nb_markers()) * 3)
             segment_idx = slice(12 * i_segment, 12 * (i_segment + 1))
-            km[marker_idx, segment_idx] = self.segments[segment_name].marker_constraint_jacobian()
-            marker_count += self.segments[segment_name].nb_markers
+            km[constraint_idx, segment_idx] = self.segments[name].markers_jacobian()
+            marker_count += self.segments[name].nb_markers()
 
         return km

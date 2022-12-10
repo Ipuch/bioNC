@@ -225,7 +225,7 @@ def test_marker_features(bionc_type):
         )
 
     TestUtils.assert_equal(
-        my_segment.marker_jacobian(),
+        my_segment.markers_jacobian(),
         np.array(
             [
                 [-1.0, -0.0, -0.0, -2.0, -0.0, -0.0, 1.0, 0.0, 0.0, -1.0, -0.0, -0.0],

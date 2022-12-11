@@ -32,9 +32,8 @@ install:
   
   # Setup the conda environment
   - conda env update -f environment.yml -n base
-  - conda install pytest-cov black pytest codecov -cconda-forge
+  - conda install pytest-cov pytest codecov -cconda-forge
   - conda list
-  - sh: if [[ $CI_LINUX == true ]]; then black . -l120 --exclude "external/*" --check; fi
 
 # to run your custom scripts instead of automatic tests
 test_script:

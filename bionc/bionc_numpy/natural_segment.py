@@ -625,7 +625,7 @@ class NaturalSegment(GenericNaturalSegment):
         """
         return len(self._markers)
 
-    def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+    def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical:bool=True) -> np.ndarray:
         """
         This function returns the marker constraints of the segment
 
@@ -635,34 +635,46 @@ class NaturalSegment(GenericNaturalSegment):
             Marker locations in the global/inertial coordinate system [3,N_markers]
         Qi: SegmentNaturalCoordinates
             Natural coordinates of the segment
+        only_technical: bool
+            If True, only the technical constraints are returned, by default True
 
         Returns
         -------
         np.ndarray
             The defects of the marker constraints of the segment (3 x N_markers)
         """
-        if marker_locations.shape != (3, self.nb_markers()):
-            raise ValueError(f"marker_locations should be of shape (3, {self.nb_markers()})")
+        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
 
-        defects = np.zeros((3, self.nb_markers()))
+        if marker_locations.shape != (3, nb_markers):
+            raise ValueError(f"marker_locations should be of shape (3, {nb_markers})")
 
-        for i, marker in enumerate(self._markers):
+        defects = np.zeros((3, nb_markers))
+
+        for i, marker in enumerate(markers):
             defects[:, i] = marker.constraint(marker_location=marker_locations[:, i], Qi=Qi)
 
         return defects
 
-    def markers_jacobian(self):
+    def markers_jacobian(self, only_technical:bool=True) -> np.ndarray:
         """
         This function returns the marker jacobian of the segment
+
+        Parameters
+        ----------
+        only_technical: bool
+            If True, only the constraints jacobian of technical markers are returned, by default True
 
         Returns
         -------
         np.ndarray
             The jacobian of the marker constraints of the segment [3, N_markers]
         """
+        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
         return (
-            np.vstack([-marker.interpolation_matrix for marker in self._markers])
-            if self.nb_markers() > 0
+            np.vstack([-marker.interpolation_matrix for marker in markers])
+            if nb_markers > 0
             else np.array([])
         )
 

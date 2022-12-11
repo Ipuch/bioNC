@@ -1,9 +1,10 @@
-from typing import Union, Tuple
+from typing import Union, Tuple, Callable
 
 import numpy as np
 from numpy import cos, sin, eye, zeros, sum, dot, transpose
 from numpy.linalg import inv
 
+from ..model_creation.protocols import Data
 from ..bionc_numpy.natural_coordinates import SegmentNaturalCoordinates
 from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities
 from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
@@ -77,6 +78,7 @@ class NaturalSegment(GenericNaturalSegment):
         self._beta = beta
         self._gamma = gamma
 
+        self._experimental_Q_function = None
         # todo: sanity check to make sure u, v or w are not collinear
         # todo: implement all the transformations matrix according the Ph.D thesis of Alexandre Naaim
         self._transformation_matrix = self._transformation_matrix()
@@ -186,6 +188,29 @@ class NaturalSegment(GenericNaturalSegment):
         gamma = np.arccos(np.sum(u * (rp - rd), axis=0) / length)
 
         return alpha, beta, gamma, length
+
+    def set_experimental_Q_function(self, function: Callable):
+        """
+        This function sets the experimental Q function
+
+        Parameters
+        ----------
+        function : Callable
+            The function that returns the experimental Q
+        """
+        self._experimental_Q_function: Callable = function
+
+    def _Qi_from_markers(self, markers: Data, model) -> SegmentNaturalCoordinates:
+        """
+        This function sets the experimental Q function
+
+        Parameters
+        ----------
+        markers : Data
+            The markers of all the model
+        """
+
+        return self._experimental_Q_function(markers, model)
 
     def _transformation_matrix(self) -> np.ndarray:
         """

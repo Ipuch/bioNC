@@ -46,7 +46,8 @@ def test_biomech_model(bionc_type):
 
     # Test model
     assert natural_model.nb_segments() == 4
-    assert natural_model.nb_markers() == 12
+    assert natural_model.nb_markers() == 16
+    assert natural_model.nb_markers_technical() == 11
     assert natural_model.nb_joints() == 3
     assert natural_model.nb_joint_constraints() == 9
     assert natural_model.nb_rigid_body_constraints() == 6 * 4
@@ -3056,6 +3057,10 @@ def test_biomech_model(bionc_type):
 
     # check the list of marker names
     marker_names = [
+        "RFWT",
+        "LFWT",
+        "RBWT",
+        "LBWT",
         "HIP_CENTER",
         "RKNI",
         "RKNE",

@@ -11,4 +11,5 @@ dependencies:
 - casadi
 - ezc3d
 - plotly
+- dill
 

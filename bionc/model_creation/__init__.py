@@ -1,3 +1,8 @@
+"""
+This subpackage contains the functions to create the model from experimental markers stored in a Data object,
+such as c3d files.
+"""
+
 # The actual model to inherit from
 from .biomechanical_model_template import BiomechanicalModelTemplate
 
@@ -11,3 +16,5 @@ from .inertia_parameters_template import InertiaParametersTemplate
 
 # The accepted data formating
 from .c3d_data import C3dData
+
+# anymore class can be added here (csv, trc, etc.)

@@ -3,7 +3,7 @@ from casadi import MX
 
 from typing import Union, Any
 from abc import ABC, abstractmethod
-import pickle
+import dill as pickle
 
 from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
@@ -96,6 +96,17 @@ class AbstractBiomechanicalModel(ABC):
         -------
         int
             number of markers in the model
+        """
+
+    @abstractmethod
+    def nb_markers_technical(self):
+        """
+        This function returns the number of technical markers in the model
+
+        Returns
+        -------
+        int
+            number of technical markers in the model
         """
 
     @abstractmethod
@@ -332,10 +343,22 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
             nb_markers += self.segments[key].nb_markers()
         return nb_markers
 
+    def nb_markers_technical(self):
+        nb_markers = 0
+        for key in self.segments:
+            nb_markers += self.segments[key].nb_markers_technical()
+        return nb_markers
+
     def marker_names(self):
         marker_names = []
         for key in self.segments:
             marker_names += self.segments[key].marker_names()
+        return marker_names
+
+    def marker_names_technical(self):
+        marker_names = []
+        for key in self.segments:
+            marker_names += self.segments[key].marker_names_technical()
         return marker_names
 
     def nb_joints(self):

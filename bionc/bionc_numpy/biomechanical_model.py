@@ -3,7 +3,7 @@ from typing import Callable
 import numpy as np
 from numpy import transpose
 
-from bionc.protocols.natural_coordinates import NaturalCoordinates
+from .natural_coordinates import NaturalCoordinates
 from bionc.bionc_numpy.natural_velocities import NaturalVelocities
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 
@@ -281,3 +281,32 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             marker_count += self.segments[name].nb_markers()
 
         return km
+
+    def Q_from_markers(self, markers: np.ndarray) -> NaturalCoordinates:
+        """
+        This function returns the natural coordinates of the system as a function of the markers positions
+
+        Parameters
+        ----------
+        markers : np.ndarray
+            The markers positions [3, nb_markers]
+
+        Returns
+        -------
+        NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+        """
+        if markers.shape[1] != self.nb_markers_technical():
+            raise ValueError(f"markers should have {self.nb_markers_technical()} columns")
+
+        # convert markers to Data
+        from ..model_creation.generic_data import GenericData
+
+        marker_data = GenericData(markers, self.marker_names_technical())
+
+        Q = []
+
+        for name in self.segments:
+            Q.append(self.segments[name]._Qi_from_markers(marker_data, self))
+
+        return NaturalCoordinates.from_qi(tuple(Q))

@@ -599,7 +599,9 @@ class NaturalSegment(GenericNaturalSegment):
 
         return markers
 
-    def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True) -> MX:
+    def marker_constraints(
+        self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
+    ) -> MX:
         """
         This function returns the marker constraints of the segment
 

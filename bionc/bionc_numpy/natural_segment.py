@@ -650,7 +650,9 @@ class NaturalSegment(GenericNaturalSegment):
 
         return markers
 
-    def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical:bool=True) -> np.ndarray:
+    def marker_constraints(
+        self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
+    ) -> np.ndarray:
         """
         This function returns the marker constraints of the segment
 
@@ -697,11 +699,7 @@ class NaturalSegment(GenericNaturalSegment):
         """
         nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
         markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
-        return (
-            np.vstack([-marker.interpolation_matrix for marker in markers])
-            if nb_markers > 0
-            else np.array([])
-        )
+        return np.vstack([-marker.interpolation_matrix for marker in markers]) if nb_markers > 0 else np.array([])
 
     def potential_energy(self, Qi: SegmentNaturalCoordinates) -> float:
         """

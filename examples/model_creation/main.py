@@ -331,10 +331,10 @@ def main():
     markers_model = model.markers(Qxp)
 
     from viz import cheap_markers_animation
+
     # display the experimental markers in red and the model markers in green
     # almost superimposed because the model is well defined on the experimental data
     cheap_markers_animation(markers_model, markers_xp)
-
 
     # remove the c3d file
     os.remove(filename)

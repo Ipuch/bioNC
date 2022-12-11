@@ -246,7 +246,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return markers
 
-    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool=True) -> MX:
+    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool = True) -> MX:
         """
         This function returns the marker constraints of all segments, denoted Phi_r
         as a function of the natural coordinates Q.
@@ -269,25 +269,28 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
         if markers.shape[1] != nb_markers:
-            raise ValueError(f"markers should have {nb_markers} columns. "
-                             f"And should include the following markers: "
-                             f"{self.marker_names_technical() if only_technical else self.marker_names()}")
+            raise ValueError(
+                f"markers should have {nb_markers} columns. "
+                f"And should include the following markers: "
+                f"{self.marker_names_technical() if only_technical else self.marker_names()}"
+            )
 
         phi_m = MX.zeros((nb_markers * 3, 1))
         marker_count = 0
 
         for i_segment, name in enumerate(self.segments):
-            nb_segment_markers = self.segments[name].nb_markers_technical() if only_technical else self.segments[
-                name].nb_markers()
+            nb_segment_markers = (
+                self.segments[name].nb_markers_technical() if only_technical else self.segments[name].nb_markers()
+            )
             if nb_segment_markers == 0:
                 continue
             constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
             marker_idx = slice(marker_count, marker_count + nb_segment_markers)
 
             markers_temp = markers[:, marker_idx]
-            phi_m[constraint_idx] = (
-                self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment))[:]  # [:] to flatten the array
-            )
+            phi_m[constraint_idx] = self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment))[
+                :
+            ]  # [:] to flatten the array
 
             marker_count += nb_segment_markers
 
@@ -313,8 +316,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         km = MX.zeros((3 * nb_markers, 12 * self.nb_segments()))
         marker_count = 0
         for i_segment, name in enumerate(self.segments):
-            nb_segment_markers = self.segments[name].nb_markers_technical() if only_technical else self.segments[
-                name].nb_markers()
+            nb_segment_markers = (
+                self.segments[name].nb_markers_technical() if only_technical else self.segments[name].nb_markers()
+            )
             if nb_segment_markers == 0:
                 continue
             constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)

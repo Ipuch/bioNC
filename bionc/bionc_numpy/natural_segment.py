@@ -636,7 +636,7 @@ class NaturalSegment(GenericNaturalSegment):
         Qi: SegmentNaturalCoordinates
             Natural coordinates of the segment
         only_technical: bool
-            If True, only the technical constraints are returned, by default True
+            If True, only the constraints of technical markers are returned, by default True
 
         Returns
         -------
@@ -656,7 +656,7 @@ class NaturalSegment(GenericNaturalSegment):
 
         return defects
 
-    def markers_jacobian(self, only_technical:bool=True) -> np.ndarray:
+    def markers_jacobian(self, only_technical: bool = True) -> np.ndarray:
         """
         This function returns the marker jacobian of the segment
 

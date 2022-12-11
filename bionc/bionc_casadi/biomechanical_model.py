@@ -221,6 +221,31 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
+    def markers(self, Q: NaturalCoordinates) -> MX:
+        """
+        This function returns the position of the markers of the system as a function of the natural coordinates Q
+        also referred as forward kinematics
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+        MX
+            The position of the markers [3, nbMarkers, nbFrames]
+            in the global coordinate system/ inertial coordinate system
+        """
+        markers = MX.zeros((3, self.nb_markers(), Q.shape[1]))
+        nb_markers = 0
+        for _, segment in self.segments.items():
+            idx = slice(nb_markers, nb_markers + segment.nb_markers)
+            markers[:, idx, :] = segment.markers(Q.vector(segment.index))
+            nb_markers += segment.nb_markers
+
+        return markers
+
     def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool=True) -> MX:
         """
         This function returns the marker constraints of all segments, denoted Phi_r

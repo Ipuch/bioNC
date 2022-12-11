@@ -2,11 +2,11 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, sin, transpose, norm_2, vertcat, sqrt, inv, dot, tril, tril2symm, sum1, sum2
+from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, sum2
 
-from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
-from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from ..bionc_casadi.natural_coordinates import SegmentNaturalCoordinates
+from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities
+from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_casadi.homogenous_transform import HomogeneousTransform
 from ..bionc_casadi.natural_marker import NaturalMarker
 from ..bionc_casadi.natural_vector import NaturalVector
@@ -573,6 +573,31 @@ class NaturalSegment(GenericNaturalSegment):
             Number of markers of the segment
         """
         return len(self._markers)
+
+    def markers(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the position of the markers of the system as a function of the natural coordinates Q
+        also referred as forward kinematics
+
+        Parameters
+        ----------
+        Qi : SegmentNaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+        np.ndarray
+            The position of the markers [3, nbMarkers, nbFrames]
+            in the global coordinate system/ inertial coordinate system
+        """
+        if not isinstance(Qi, SegmentNaturalCoordinates):
+            Qi = SegmentNaturalCoordinates(Qi)
+
+        markers = np.zeros((3, self.nb_markers(), Qi.shape[1]))
+        for i, marker in enumerate(self._markers):
+            markers[:, i, :] = marker.position_in_global(Qi)
+
+        return markers
 
     def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True) -> MX:
         """

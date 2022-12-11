@@ -625,6 +625,31 @@ class NaturalSegment(GenericNaturalSegment):
         """
         return len(self._markers)
 
+    def markers(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the position of the markers of the system as a function of the natural coordinates Q
+        also referred as forward kinematics
+
+        Parameters
+        ----------
+        Qi : SegmentNaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+        np.ndarray
+            The position of the markers [3, nbMarkers, nbFrames]
+            in the global coordinate system/ inertial coordinate system
+        """
+        if not isinstance(Qi, SegmentNaturalCoordinates):
+            Qi = SegmentNaturalCoordinates(Qi)
+
+        markers = np.zeros((3, self.nb_markers(), Qi.shape[1]))
+        for i, marker in enumerate(self._markers):
+            markers[:, i, :] = marker.position_in_global(Qi)
+
+        return markers
+
     def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical:bool=True) -> np.ndarray:
         """
         This function returns the marker constraints of the segment

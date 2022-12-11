@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
 
+import ezc3d
 import numpy as np
+from pyomeca import Markers
 
 from bionc import (
     AxisTemplate,
@@ -13,7 +15,7 @@ from bionc import (
     BiomechanicalModel,
     JointType,
 )
-import ezc3d
+
 
 # from .de_leva import DeLevaTable todo: add this to the example
 #
@@ -317,12 +319,28 @@ def main():
     filename = generate_c3d_file()
     # Create the model from a c3d file and markers as template
     model = model_creation_from_measured_data(filename)
+
+    # display the experimental markers and model
+    # load experimental markers
+    markers_xp = Markers.from_c3d(filename).to_numpy()
+
+    # compute the natural coordinates
+    Qxp = model.Q_from_markers(markers_xp[:, :, 0:2])
+
+    # compute model markers location based on the natural coordinates
+    markers_model = model.markers(Qxp)
+
+    from viz import cheap_markers_animation
+    # display the experimental markers in red and the model markers in green
+    # almost superimposed because the model is well defined on the experimental data
+    cheap_markers_animation(markers_model, markers_xp)
+
+
     # remove the c3d file
     os.remove(filename)
+
     # dump the model in a pickle format
-    model.save("models/lower_limb.nc")
-    # display the model
-    # todo: add a display interface to bionc
+    model.save("../models/lower_limb.nc")
 
 
 if __name__ == "__main__":

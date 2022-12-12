@@ -32,7 +32,7 @@ def test_biomech_model(bionc_type):
         )
 
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/main.py")
+    module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
 
     # Generate c3d file
     filename = module.generate_c3d_file()

@@ -2,11 +2,11 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, sin, transpose, norm_2, vertcat, sqrt, inv, dot, tril, tril2symm, sum1, sum2
+from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, sum2
 
-from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
-from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from ..bionc_casadi.natural_coordinates import SegmentNaturalCoordinates
+from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities
+from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_casadi.homogenous_transform import HomogeneousTransform
 from ..bionc_casadi.natural_marker import NaturalMarker
 from ..bionc_casadi.natural_vector import NaturalVector
@@ -574,7 +574,34 @@ class NaturalSegment(GenericNaturalSegment):
         """
         return len(self._markers)
 
-    def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates) -> MX:
+    def markers(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the position of the markers of the system as a function of the natural coordinates Q
+        also referred as forward kinematics
+
+        Parameters
+        ----------
+        Qi : SegmentNaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+        np.ndarray
+            The position of the markers [3, nbMarkers]
+            in the global coordinate system/ inertial coordinate system
+        """
+        if not isinstance(Qi, SegmentNaturalCoordinates):
+            Qi = SegmentNaturalCoordinates(Qi)
+
+        markers = MX.zeros((3, self.nb_markers()))
+        for i, marker in enumerate(self._markers):
+            markers[:, i] = marker.position_in_global(Qi)
+
+        return markers
+
+    def marker_constraints(
+        self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
+    ) -> MX:
         """
         This function returns the marker constraints of the segment
 
@@ -584,32 +611,44 @@ class NaturalSegment(GenericNaturalSegment):
             Marker locations in the global/inertial coordinate system (3 x N_markers)
         Qi: SegmentNaturalCoordinates
             Natural coordinates of the segment
+        only_technical: bool
+            If True, only the constraints of technical markers are returned, by default True
 
         Returns
         -------
         MX
             The defects of the marker constraints of the segment (3 x N_markers)
         """
-        if marker_locations.shape != (3, self.nb_markers()):
-            raise ValueError(f"marker_locations should be of shape (3, {self.nb_markers()})")
+        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
 
-        defects = MX.zeros((3, self.nb_markers()))
+        if marker_locations.shape != (3, nb_markers):
+            raise ValueError(f"marker_locations should be of shape (3, {nb_markers})")
 
-        for i, marker in enumerate(self._markers):
+        defects = MX.zeros((3, nb_markers))
+
+        for i, marker in enumerate(markers):
             defects[:, i] = marker.constraint(marker_location=marker_locations[:, i], Qi=Qi)
 
         return defects
 
-    def markers_jacobian(self):
+    def markers_jacobian(self, only_technical: bool = True) -> MX:
         """
         This function returns the marker jacobian of the segment
+
+        Parameters
+        ----------
+        only_technical: bool
+            If True, only the jacobian of technical markers are returned, by default True
 
         Returns
         -------
         MX
             The jacobian of the marker constraints of the segment (3 x N_markers)
         """
-        return vertcat(*[-marker.interpolation_matrix for marker in self._markers])
+        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
+        return vertcat(*[-marker.interpolation_matrix for marker in markers]) if nb_markers > 0 else MX.zeros((0, 12))
 
     def potential_energy(self, Qi: SegmentNaturalCoordinates) -> MX:
         """

@@ -221,61 +221,109 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
-    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates) -> MX:
+    def markers(self, Q: NaturalCoordinates) -> MX:
         """
-        This function returns the marker constraints of all segments, denoted Phi_r
-        as a function of the natural coordinates Q.
+        This function returns the position of the markers of the system as a function of the natural coordinates Q
+        also referred as forward kinematics
 
-        markers : np.ndarray | MX
-            The markers positions [3,nb_markers]
-
+        Parameters
+        ----------
         Q : NaturalCoordinates
             The natural coordinates of the segment [12 x n, 1]
 
         Returns
         -------
         MX
-            Rigid body constraints of the segment [nb_markers x 3, 1]
+            The position of the markers [3, nbMarkers, nbFrames]
+            in the global coordinate system/ inertial coordinate system
+        """
+        markers = MX.zeros((3, self.nb_markers(), Q.shape[1]))
+        nb_markers = 0
+        for _, segment in self.segments.items():
+            idx = slice(nb_markers, nb_markers + segment.nb_markers)
+            markers[:, idx, :] = segment.markers(Q.vector(segment.index))
+            nb_markers += segment.nb_markers
+
+        return markers
+
+    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool = True) -> MX:
+        """
+        This function returns the marker constraints of all segments, denoted Phi_r
+        as a function of the natural coordinates Q.
+
+        markers : np.ndarray | MX
+           The markers positions [3,nb_markers]
+        Q : NaturalCoordinates
+           The natural coordinates of the segment [12 x n, 1]
+        only_technical : bool
+           If True, only technical markers are considered, by default True,
+           because we only want to use technical markers for inverse kinematics, this choice can be revised.
+
+        Returns
+        -------
+        MX
+           Rigid body constraints of the segment [nb_markers x 3, 1]
         """
         if not isinstance(markers, MX):
             markers = MX(markers)
-        if markers.shape[1] != self.nb_markers():
-            raise ValueError(f"markers should have {self.nb_markers()} columns")
 
-        phi_m = MX.zeros((self.nb_markers() * 3, 1))
+        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        if markers.shape[1] != nb_markers:
+            raise ValueError(
+                f"markers should have {nb_markers} columns. "
+                f"And should include the following markers: "
+                f"{self.marker_names_technical() if only_technical else self.marker_names()}"
+            )
+
+        phi_m = MX.zeros((nb_markers * 3, 1))
         marker_count = 0
 
         for i_segment, name in enumerate(self.segments):
-            if self.segments[name].nb_markers() == 0:
+            nb_segment_markers = (
+                self.segments[name].nb_markers_technical() if only_technical else self.segments[name].nb_markers()
+            )
+            if nb_segment_markers == 0:
                 continue
-            constraint_idx = slice(marker_count * 3, (marker_count + self.segments[name].nb_markers()) * 3)
-            marker_idx = slice(marker_count, marker_count + self.segments[name].nb_markers())
+            constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
+            marker_idx = slice(marker_count, marker_count + nb_segment_markers)
 
             markers_temp = markers[:, marker_idx]
-            phi_m[constraint_idx, 0] = self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment))[:]
+            phi_m[constraint_idx] = self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment))[
+                :
+            ]  # [:] to flatten the array
 
-            marker_count += self.segments[name].nb_markers()
+            marker_count += nb_segment_markers
 
         return phi_m
 
-    def markers_constraints_jacobian(self) -> MX:
+    def markers_constraints_jacobian(self, only_technical: bool = True) -> MX:
         """
-        This function returns the Jacobian matrix the markers constraints, denoted k_m.
+        This function returns the Jacobian matrix the markers constraints, denoted K_m.
+
+        Parameters
+        ----------
+        only_technical : bool
+            If True, only technical markers are considered, by default True,
+            because we only want to use technical markers for inverse kinematics, this choice can be revised.
 
         Returns
         -------
         MX
             Joint constraints of the marker [nb_markers x 3, nb_Q]
         """
+        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
 
-        km = MX.zeros((3 * self.nb_markers(), 12 * self.nb_segments()))
+        km = MX.zeros((3 * nb_markers, 12 * self.nb_segments()))
         marker_count = 0
         for i_segment, name in enumerate(self.segments):
-            if self.segments[name].nb_markers() == 0:
+            nb_segment_markers = (
+                self.segments[name].nb_markers_technical() if only_technical else self.segments[name].nb_markers()
+            )
+            if nb_segment_markers == 0:
                 continue
-            constraint_idx = slice(marker_count * 3, (marker_count + self.segments[name].nb_markers()) * 3)
+            constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
             segment_idx = slice(12 * i_segment, 12 * (i_segment + 1))
             km[constraint_idx, segment_idx] = self.segments[name].markers_jacobian()
-            marker_count += self.segments[name].nb_markers()
+            marker_count += nb_segment_markers
 
         return km

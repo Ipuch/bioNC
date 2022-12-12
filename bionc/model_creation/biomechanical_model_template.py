@@ -82,10 +82,13 @@ class BiomechanicalModelTemplate:
         for name in self.segments:
             s = self.segments[name]
 
+            # need to be done right before the update
             Q_xp = s.natural_segment.experimental_Q(data, model)
 
             natural_segment = s.natural_segment.update()
             natural_segment.set_name(name)
+
+            natural_segment.set_experimental_Q_function(s.natural_segment.experimental_Q)
 
             # inertia_parameters = None
             # if s.inertia_parameters is not None:

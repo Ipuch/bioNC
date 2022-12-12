@@ -159,6 +159,21 @@ class NaturalMarker(AbstractNaturalMarker):
 
         return marker_location - self.interpolation_matrix @ Qi.vector
 
+    def position_in_global(self, Qi: SegmentNaturalCoordinates) -> MX:
+        """
+        This function computes the position of the marker in the global coordinate system
+
+        Parameters
+        ----------
+        Qi : SegmentNaturalCoordinates
+            The segment natural coordinates
+
+        Returns
+        -------
+        The position of the marker in the global coordinate system
+        """
+        return self.interpolation_matrix @ Qi
+
     def __str__(self):
         # Define the print function, so it automatically formats things in the file properly
         out_string = f"marker {self.name}\n"

@@ -1,7 +1,9 @@
 import os
 from pathlib import Path
 
+import ezc3d
 import numpy as np
+from pyomeca import Markers
 
 from bionc import (
     AxisTemplate,
@@ -13,7 +15,7 @@ from bionc import (
     BiomechanicalModel,
     JointType,
 )
-import ezc3d
+
 
 # from .de_leva import DeLevaTable todo: add this to the example
 #
@@ -139,6 +141,19 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         )
     )
 
+    model["PELVIS"].add_marker(
+        MarkerTemplate(name="RFWT", function=right_hip_joint, parent_name="PELVIS", is_technical=True)
+    )
+    model["PELVIS"].add_marker(
+        MarkerTemplate(name="LFWT", function=left_hip_joint, parent_name="PELVIS", is_technical=True)
+    )
+    model["PELVIS"].add_marker(
+        MarkerTemplate(name="RBWT", function=right_hip_joint, parent_name="PELVIS", is_technical=True)
+    )
+    model["PELVIS"].add_marker(
+        MarkerTemplate(name="LBWT", function=left_hip_joint, parent_name="PELVIS", is_technical=True)
+    )
+
     model["THIGH"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
@@ -154,10 +169,18 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         )
     )
 
-    model["THIGH"].add_marker(MarkerTemplate(name="HIP_CENTER", function=right_hip_joint, parent_name="THIGH"))
-    model["THIGH"].add_marker(MarkerTemplate("RKNI", parent_name="THIGH"))
-    model["THIGH"].add_marker(MarkerTemplate("RKNE", parent_name="THIGH"))
-    model["THIGH"].add_marker(MarkerTemplate("KNEE_JOINT", function=right_knee_joint, parent_name="THIGH"))
+    model["THIGH"].add_marker(
+        MarkerTemplate(
+            name="HIP_CENTER", function=right_hip_joint, parent_name="THIGH", is_technical=False, is_anatomical=True
+        )
+    )
+    model["THIGH"].add_marker(MarkerTemplate("RKNI", parent_name="THIGH", is_technical=True))
+    model["THIGH"].add_marker(MarkerTemplate("RKNE", parent_name="THIGH", is_technical=True))
+    model["THIGH"].add_marker(
+        MarkerTemplate(
+            "KNEE_JOINT", function=right_knee_joint, parent_name="THIGH", is_technical=False, is_anatomical=True
+        )
+    )
 
     model["SHANK"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
@@ -173,10 +196,16 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
             w_axis=AxisTemplate(start="RANE", end="RANI"),
         )
     )
-    model["SHANK"].add_marker(MarkerTemplate("KNEE_JOINT", right_knee_joint, parent_name="SHANK"))
-    model["SHANK"].add_marker(MarkerTemplate("RANE", parent_name="SHANK"))
-    model["SHANK"].add_marker(MarkerTemplate("RANI", parent_name="SHANK"))
-    model["SHANK"].add_marker(MarkerTemplate("ANKLE_JOINT", function=right_ankle_joint, parent_name="SHANK"))
+    model["SHANK"].add_marker(
+        MarkerTemplate("KNEE_JOINT", right_knee_joint, parent_name="SHANK", is_technical=False, is_anatomical=True)
+    )
+    model["SHANK"].add_marker(MarkerTemplate("RANE", parent_name="SHANK", is_technical=True))
+    model["SHANK"].add_marker(MarkerTemplate("RANI", parent_name="SHANK", is_technical=True))
+    model["SHANK"].add_marker(
+        MarkerTemplate(
+            "ANKLE_JOINT", function=right_ankle_joint, parent_name="SHANK", is_technical=False, is_anatomical=True
+        )
+    )
 
     model["FOOT"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
@@ -193,10 +222,14 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         )
     )
 
-    model["FOOT"].add_marker(MarkerTemplate("RHEE", parent_name="FOOT"))
-    model["FOOT"].add_marker(MarkerTemplate("RTARI", parent_name="FOOT"))
-    model["FOOT"].add_marker(MarkerTemplate("RTAR", parent_name="FOOT"))
-    model["FOOT"].add_marker(MarkerTemplate("ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT"))
+    model["FOOT"].add_marker(MarkerTemplate("RHEE", parent_name="FOOT", is_technical=True))
+    model["FOOT"].add_marker(MarkerTemplate("RTARI", parent_name="FOOT", is_technical=True))
+    model["FOOT"].add_marker(MarkerTemplate("RTAR", parent_name="FOOT", is_technical=True))
+    model["FOOT"].add_marker(
+        MarkerTemplate(
+            "ANKLE_JOINT", function=right_ankle_joint, parent_name="FOOT", is_technical=False, is_anatomical=True
+        )
+    )
 
     model.add_joint(
         name="hip",
@@ -237,6 +270,7 @@ def generate_c3d_file():
     # Fill it with random data
     c3d["parameters"]["POINT"]["RATE"]["value"] = [100]
     c3d["parameters"]["POINT"]["LABELS"]["value"] = marker_tuple
+    c3d["parameters"]["POINT"]["UNITS"]["value"] = ["m"]
 
     c3d["data"]["points"] = np.ones((4, len(marker_tuple), 2))
     c3d["data"]["points"][:3, 0, :] = np.array(
@@ -285,10 +319,28 @@ def main():
     filename = generate_c3d_file()
     # Create the model from a c3d file and markers as template
     model = model_creation_from_measured_data(filename)
+
+    # display the experimental markers and model
+    # load experimental markers
+    markers_xp = Markers.from_c3d(filename).to_numpy()
+
+    # compute the natural coordinates
+    Qxp = model.Q_from_markers(markers_xp[:, :, 0:2])
+
+    # compute model markers location based on the natural coordinates
+    markers_model = model.markers(Qxp)
+
+    from viz import cheap_markers_animation
+
+    # display the experimental markers in red and the model markers in green
+    # almost superimposed because the model is well defined on the experimental data
+    cheap_markers_animation(markers_model, markers_xp)
+
     # remove the c3d file
     os.remove(filename)
 
-    model.save("models/lower_limb.nc")
+    # dump the model in a pickle format
+    model.save("../models/lower_limb.nc")
 
 
 if __name__ == "__main__":

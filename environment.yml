@@ -10,5 +10,7 @@ dependencies:
 - packaging
 - casadi
 - ezc3d
+- pyomeca
 - plotly
+- dill
 

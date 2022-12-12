@@ -69,7 +69,7 @@ def test_segment_template():
 
 
 def test_model_creation():
-    from examples.model_creation import model_creation_from_measured_data, generate_c3d_file
+    from examples.model_creation.main import model_creation_from_measured_data, generate_c3d_file
 
     # create a c3d file with data
     filename = generate_c3d_file()

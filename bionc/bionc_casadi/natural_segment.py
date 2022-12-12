@@ -587,15 +587,15 @@ class NaturalSegment(GenericNaturalSegment):
         Returns
         -------
         np.ndarray
-            The position of the markers [3, nbMarkers, nbFrames]
+            The position of the markers [3, nbMarkers]
             in the global coordinate system/ inertial coordinate system
         """
         if not isinstance(Qi, SegmentNaturalCoordinates):
             Qi = SegmentNaturalCoordinates(Qi)
 
-        markers = np.zeros((3, self.nb_markers(), Qi.shape[1]))
+        markers = MX.zeros((3, self.nb_markers()))
         for i, marker in enumerate(self._markers):
-            markers[:, i, :] = marker.position_in_global(Qi)
+            markers[:, i] = marker.position_in_global(Qi)
 
         return markers
 

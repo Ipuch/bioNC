@@ -172,7 +172,7 @@ class NaturalMarker(AbstractNaturalMarker):
         -------
         The position of the marker in the global coordinate system
         """
-        return self.interpolation_matrix @ Qi.vector
+        return self.interpolation_matrix @ Qi
 
     def __str__(self):
         # Define the print function, so it automatically formats things in the file properly

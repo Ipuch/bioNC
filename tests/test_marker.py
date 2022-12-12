@@ -73,4 +73,4 @@ def test_segment_marker(bionc_type):
         segment_marker.constraint(marker_location=np.zeros((3, 2)), Qi=Qi)
 
     TestUtils.assert_equal(segment_marker.position_in_global(Qi=Qi),
-                           np.array([ 3.,  4., 10.]))
+                           np.array([ 3.,  4., 10.])[:, np.newaxis], squeeze=False)

@@ -3075,6 +3075,21 @@ def test_biomech_model(bionc_type):
         "ANKLE_JOINT",
     ]
     assert natural_model.marker_names() == marker_names
+    # check the list of marker names
+    marker_names_technical = [
+        "RFWT",
+        "LFWT",
+        "RBWT",
+        "LBWT",
+        "RKNI",
+        "RKNE",
+        "RANE",
+        "RANI",
+        "RHEE",
+        "RTARI",
+        "RTAR",
+    ]
+    assert natural_model.marker_names_technical() == marker_names_technical
 
     filename = "natural_model.nc"
     if bionc_type == "numpy":

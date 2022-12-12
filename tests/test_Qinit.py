@@ -10,27 +10,10 @@ from pyomeca import Markers
     "bionc_type",
     [
         "numpy",
-        # "casadi",
+        "casadi",
     ],
 )
 def test_biomech_model(bionc_type):
-    if bionc_type == "casadi":
-        from bionc.bionc_casadi import (
-            BiomechanicalModel,
-            SegmentNaturalVelocities,
-            NaturalVelocities,
-            SegmentNaturalCoordinates,
-            NaturalCoordinates,
-        )
-    else:
-        from bionc.bionc_numpy import (
-            BiomechanicalModel,
-            SegmentNaturalVelocities,
-            NaturalVelocities,
-            SegmentNaturalCoordinates,
-            NaturalCoordinates,
-        )
-
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
 

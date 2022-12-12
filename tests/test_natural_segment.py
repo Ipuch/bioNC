@@ -237,14 +237,8 @@ def test_marker_features(bionc_type):
             ]
         ),
     )
-    markers_positions = np.array([[[ 3.],
-        [ 3.]],
-       [[ 4.],
-        [ 4.]],
-       [[10.],
-        [12.]]])
+    markers_positions = np.array([[[3.0], [3.0]], [[4.0], [4.0]], [[10.0], [12.0]]])
     TestUtils.assert_equal(
         my_segment.markers(Qi=Qi),
-        markers_positions.squeeze() if bionc_type=="casadi" else markers_positions,
+        markers_positions.squeeze() if bionc_type == "casadi" else markers_positions,
     )
-

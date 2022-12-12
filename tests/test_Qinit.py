@@ -30,10 +30,11 @@ def test_biomech_model(bionc_type):
     Q1 = model.Q_from_markers(markers[:, :, 0:1])
     Q2 = model.Q_from_markers(markers[:, :, 1:2])
 
-    with pytest.raises(ValueError,
-                       # match="markers should have 11 columns, and should include the following markers: "
-                       #       "['RFWT', 'LFWT', 'RBWT', 'LBWT', 'RKNI', 'RKNE', 'RANE', 'RANI', 'RHEE', 'RTARI', 'RTAR']"
-                       ):
+    with pytest.raises(
+        ValueError,
+        # match="markers should have 11 columns, and should include the following markers: "
+        #       "['RFWT', 'LFWT', 'RBWT', 'LBWT', 'RKNI', 'RKNE', 'RANE', 'RANI', 'RHEE', 'RTARI', 'RTAR']"
+    ):
         model.Q_from_markers(markers[:, 0:2, 0:1])
 
     # Test Q
@@ -148,5 +149,3 @@ def test_biomech_model(bionc_type):
             ]
         ),
     )
-
-

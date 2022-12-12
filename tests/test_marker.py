@@ -72,5 +72,6 @@ def test_segment_marker(bionc_type):
     with pytest.raises(ValueError, match="The marker location must be a 3d vector with only one column"):
         segment_marker.constraint(marker_location=np.zeros((3, 2)), Qi=Qi)
 
-    TestUtils.assert_equal(segment_marker.position_in_global(Qi=Qi),
-                           np.array([ 3.,  4., 10.])[:, np.newaxis], squeeze=False)
+    TestUtils.assert_equal(
+        segment_marker.position_in_global(Qi=Qi), np.array([3.0, 4.0, 10.0])[:, np.newaxis], squeeze=False
+    )

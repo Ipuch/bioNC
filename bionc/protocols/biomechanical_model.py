@@ -230,7 +230,7 @@ class GenericBiomechanicalModel(ABC):
         Returns
         -------
         np.ndarray
-            generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
+            generalized mass matrix of the segment [12 * nb_segments x 12 * * nb_segment]
 
         """
         return self._mass_matrix
@@ -270,7 +270,7 @@ class GenericBiomechanicalModel(ABC):
         Parameters
         ----------
         Qdot : NaturalVelocities
-            The natural velocities of the segment [12, 1]
+            The natural velocities of the segment [nb_segments * 12, 1]
 
         Returns
         -------
@@ -313,7 +313,7 @@ class GenericBiomechanicalModel(ABC):
         Returns
         -------
         np.ndarray
-            generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
+            generalized mass matrix of the segment [12 * nb_segments, 12 * nb_segment]
         """
         pass
 
@@ -325,7 +325,7 @@ class GenericBiomechanicalModel(ABC):
         Parameters
         ----------
         Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * n, 1]
+            The natural velocities of the segment [12 * nb_segments, 1]
 
         Returns
         -------
@@ -342,7 +342,7 @@ class GenericBiomechanicalModel(ABC):
         Parameters
         ----------
         Q : NaturalCoordinates
-            The natural coordinates of the segment [12 * n, 1]
+            The natural coordinates of the segment [12 * nb_segments, 1]
 
         Returns
         -------
@@ -358,13 +358,12 @@ class GenericBiomechanicalModel(ABC):
         Parameters
         ----------
         Q : NaturalCoordinates
-            The natural coordinates of the segment [12, 1]
+            The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalVelocities
-            The natural velocities of the segment [12, 1]
+            The natural velocities of the segment [12 * nb_segments, 1]
 
         Returns
         -------
-        MX
             The lagrangian of the system
         """
 
@@ -380,7 +379,7 @@ class GenericBiomechanicalModel(ABC):
             The markers positions [3,nb_markers]
 
         Q : NaturalCoordinates
-            The natural coordinates of the segment [12 x n, 1]
+            The natural coordinates of the segment [12 * nb_segments, 1]
 
         Returns
         -------

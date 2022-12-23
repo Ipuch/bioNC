@@ -1,4 +1,3 @@
-from typing import Union
 from casadi import MX
 import numpy as np
 from ..protocols.natural_vector import AbstractNaturalVector
@@ -11,7 +10,7 @@ class NaturalVector(AbstractNaturalVector, MX):
     Class used to create a natural vector, a vector that is expressed in the natural coordinate system of a segment
     """
 
-    def __new__(cls, input_array: Union[MX, np.ndarray, list, tuple]):
+    def __new__(cls, input_array: MX | np.ndarray | list | tuple):
         """
         Create a new instance of the class.
         """
@@ -98,7 +97,7 @@ class InterpolationMatrix(AbstractInterpolationMatrix, MX):
         Returns the translation matrix of the interpolation matrix
     """
 
-    def __new__(cls, input_array: Union[MX, np.ndarray, list, tuple]):
+    def __new__(cls, input_array: MX | np.ndarray | list | tuple):
         """
         Create a new instance of the class.
         """

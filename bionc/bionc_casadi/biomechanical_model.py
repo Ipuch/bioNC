@@ -106,7 +106,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         for joint_name, joint in self.joints.items():
             idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
-            Q_parent = Q.vector(self.segments[joint.parent.name].index)
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
             Q_child = Q.vector(self.segments[joint.child.name].index)
             Phi_k[idx] = joint.constraint(Q_parent, Q_child)
 
@@ -129,16 +131,21 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         nb_constraints = 0
         for joint_name, joint in self.joints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
-            idx_col_parent = slice(
-                12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
-            )
+
+            if joint.parent is not None:  # If the joint is not a ground joint
+                idx_col_parent = slice(
+                    12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
+                )
+                Q_child = Q.vector(self.segments[joint.child.name].index)
+                K_k[idx_row, idx_col_parent] = joint.parent_constraint_jacobian(Q_child)
+
             idx_col_child = slice(
                 12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
             )
-
-            Q_parent = Q.vector(self.segments[joint.parent.name].index)
-            Q_child = Q.vector(self.segments[joint.child.name].index)
-            K_k[idx_row, idx_col_parent], K_k[idx_row, idx_col_child] = joint.constraint_jacobian(Q_parent, Q_child)
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
+            K_k[idx_row, idx_col_child] = joint.child_constraint_jacobian(Q_parent)
 
             nb_constraints += self.joints[joint_name].nb_constraints
 

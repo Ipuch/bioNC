@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from bionc import JointType, NaturalAxis
+from bionc import JointType, NaturalAxis, CartesianAxis
 from .utils import TestUtils
 
 
@@ -20,6 +20,7 @@ def test_joints(bionc_type, joint_type: JointType):
             NaturalSegment,
             SegmentNaturalCoordinates,
             Joint,
+            GroundJoint,
         )
     else:
         from bionc.bionc_numpy import (
@@ -27,6 +28,7 @@ def test_joints(bionc_type, joint_type: JointType):
             NaturalSegment,
             SegmentNaturalCoordinates,
             Joint,
+            GroundJoint,
         )
 
     box = NaturalSegment(
@@ -76,6 +78,14 @@ def test_joints(bionc_type, joint_type: JointType):
         #                         theta=0.4)
     elif joint_type == JointType.SPHERICAL:
         joint = Joint.Spherical(name="spherical", parent=box, child=bbox)
+    elif joint_type == JointType.GROUND_REVOLUTE:
+        joint = GroundJoint.Hinge(
+            name="hinge",
+            child="box",
+            parent_axis=[CartesianAxis.X, CartesianAxis.X],
+            child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
+            theta=[np.pi / 2, np.pi / 2],
+        )
     else:
         raise ValueError("Joint type not tested yet")
 
@@ -182,6 +192,27 @@ def test_joints(bionc_type, joint_type: JointType):
                     [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                     [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )
+    elif joint_type == JointType.GROUND_REVOLUTE:
+
+        TestUtils.assert_equal(
+            joint.constraint(Q1, Q2),
+            np.array([-1.5, -1.1, -3.2, -0.1, 1.7]),
+            decimal=6,
+        )
+        child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        TestUtils.assert_equal(
+            child_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
                 ]
             ),
             decimal=6,

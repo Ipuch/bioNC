@@ -12,5 +12,5 @@ from .natural_axis import Axis
 from .natural_marker import NaturalMarker, Marker
 from .natural_segment import NaturalSegment
 from .inertia_parameters import InertiaParameters
-from .joint import Joint
+from .joint import Joint, GroundJoint
 from .natural_vector import NaturalVector

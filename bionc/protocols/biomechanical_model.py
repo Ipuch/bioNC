@@ -9,245 +9,7 @@ from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
 
 
-class AbstractBiomechanicalModel(ABC):
-    """
-    This class is the base class for all biomechanical models. It contains the segments and the joints of the model.
-
-    Methods
-    ----------
-
-
-    """
-
-    @abstractmethod
-    def __getitem__(self, name: str):
-        """
-        This function returns the segment with the given name
-
-        Parameters
-        ----------
-        name : str
-            Name of the segment
-
-        Returns
-        -------
-        NaturalSegment
-            The segment with the given name
-        """
-
-    @abstractmethod
-    def __setitem__(self, name: str, segment: "NaturalSegment"):
-        """
-        This function adds a segment to the model
-
-        Parameters
-        ----------
-        name : str
-            Name of the segment
-        segment : NaturalSegment
-            The segment to add
-        """
-
-    @abstractmethod
-    def __str__(self):
-        """
-        This function returns a string representation of the model
-        """
-
-    @abstractmethod
-    def save(self, filename: str):
-        """
-        This function saves the model to a file
-
-        Parameters
-        ----------
-        filename : str
-            The path to the file
-        """
-
-    @staticmethod
-    def load(filename: str):
-        """
-        This function loads a model from a file
-
-        Parameters
-        ----------
-        filename : str
-            The path to the file
-
-        Returns
-        -------
-        AbstractBiomechanicalModel
-            The loaded model
-        """
-
-    @abstractmethod
-    def nb_segments(self):
-        """
-        This function returns the number of segments in the model
-        """
-
-    @abstractmethod
-    def nb_markers(self):
-        """
-        This function returns the number of markers in the model
-
-        Returns
-        -------
-        int
-            number of markers in the model
-        """
-
-    @abstractmethod
-    def nb_markers_technical(self):
-        """
-        This function returns the number of technical markers in the model
-
-        Returns
-        -------
-        int
-            number of technical markers in the model
-        """
-
-    @abstractmethod
-    def nb_joints(self):
-        """
-        This function returns the number of joints in the model
-
-        Returns
-        -------
-        int
-            number of joints in the model
-        """
-
-    @abstractmethod
-    def nb_joint_constraints(self):
-        """
-        This function returns the number of joint constraints in the model
-
-        Returns
-        -------
-        int
-            number of joint constraints in the model
-        """
-
-    @abstractmethod
-    def nb_Q(self):
-        """
-        This function returns the number of natural coordinates of the model
-        """
-
-    @abstractmethod
-    def nb_Qdot(self):
-        """
-        This function returns the number of natural velocities of the model
-        """
-
-    @abstractmethod
-    def nb_Qddot(self):
-        """
-        This function returns the number of natural accelerations of the model
-        """
-
-    @abstractmethod
-    def rigid_body_constraints(self, Q: NaturalCoordinates):
-        """
-        This function returns the rigid body constraints of all segments, denoted Phi_r
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        Rigid body constraints of the segment [6 * nb_segments, 1]
-        """
-
-    @abstractmethod
-    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates):
-        """
-        This function returns the rigid body constraints of all segments, denoted K_r
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        Rigid body constraints of the segment [6 * nb_segments, nbQ]
-        """
-
-    @abstractmethod
-    def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities):
-        """
-        This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot
-
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12, 1]
-
-        Returns
-        -------
-            The derivative of the Jacobian matrix of the rigid body constraints [6, 12]
-        """
-
-    @abstractmethod
-    def joint_constraints(self, Q: NaturalCoordinates):
-        """
-        This function returns the kinematic constraints of all joints, denoted Phi_k
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        Kinematic constraints of the joints [nb_joints_constraints, 1]
-        """
-        ...
-
-    @abstractmethod
-    def _update_mass_matrix(self):
-        """
-        This function computes the generalized mass matrix of the system, denoted G
-
-        Returns
-        -------
-        np.ndarray
-            generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
-        """
-
-    @abstractmethod
-    def mass_matrix(self):
-        """
-        This function returns the generalized mass matrix of the system, denoted G
-
-        Returns
-        -------
-        np.ndarray
-            generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
-
-        """
-
-    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates):
-        """
-        This function returns the marker constraints of all segments, denoted Phi_r
-        as a function of the natural coordinates Q.
-
-        markers : np.ndarray | MX
-            The markers positions [3,nb_markers]
-
-        Q : NaturalCoordinates
-            The natural coordinates of the segment [12 x n, 1]
-
-        Returns
-        -------
-            Rigid body constraints of the segment [nb_markers x 3, 1]
-        """
-
-    def markers_constraints_jacobian(self):
-        """
-        This function returns the Jacobian matrix the markers constraints, denoted k_m.
-
-        Returns
-        -------
-            Joint constraints of the marker [nb_markers x 3, nb_Q]
-        """
-
-
-class GenericBiomechanicalModel(AbstractBiomechanicalModel):
+class GenericBiomechanicalModel(ABC):
     """
     This class is the base with simple methods for all biomechanical models.
     It contains the segments and the joints of the model.
@@ -276,9 +38,32 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         self._mass_matrix = self._update_mass_matrix()
 
     def __getitem__(self, name: str):
+        """
+        This function returns the segment with the given name
+
+        Parameters
+        ----------
+        name : str
+            Name of the segment
+
+        Returns
+        -------
+        NaturalSegment
+            The segment with the given name
+        """
         return self.segments[name]
 
     def __setitem__(self, name: str, segment: Any):
+        """
+        This function adds a segment to the model
+
+        Parameters
+        ----------
+        name : str
+            Name of the segment
+        segment : NaturalSegment
+            The segment to add
+        """
         if segment.name == name:  # Make sure the name of the segment fits the internal one
             segment.set_index(len(self.segments))
             self.segments[name] = segment
@@ -286,19 +71,33 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         else:
             raise ValueError("The name of the segment does not match the name of the segment")
 
-    def __str__(self):
-        out_string = "version 4\n\n"
-        for name in self.segments:
-            out_string += str(self.segments[name])
-            out_string += "\n\n\n"  # Give some space between segments
-        return out_string
-
     def save(self, filename: str):
+        """
+        This function saves the model to a file
+
+        Parameters
+        ----------
+        filename : str
+            The path to the file
+        """
         with open(filename, "wb") as file:
             pickle.dump(self, file)
 
     @staticmethod
     def load(filename: str):
+        """
+        This function loads a model from a file
+
+        Parameters
+        ----------
+        filename : str
+            The path to the file
+
+        Returns
+        -------
+        GenericBiomechanicalModel
+            The loaded model
+        """
         with open(filename, "rb") as file:
             model = pickle.load(file)
 
@@ -316,7 +115,7 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         """
         if (
             joint["parent"] is not None
-            and joint["parent"] is not "GROUND"
+            and joint["parent"] != "GROUND"
             and joint["parent"] not in self.segments.keys()
         ):
             raise ValueError("The parent segment does not exist")
@@ -340,55 +139,91 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
         self.joints[joint["name"]] = joint_type.value(**joint)
 
-    def nb_segments(self):
+    def nb_segments(self) -> int:
+        """
+        This function returns the number of segments in the model
+        """
         return len(self.segments)
 
-    def nb_markers(self):
+    def nb_markers(self) -> int:
+        """
+        This function returns the number of markers in the model
+        """
         nb_markers = 0
         for key in self.segments:
             nb_markers += self.segments[key].nb_markers()
         return nb_markers
 
-    def nb_markers_technical(self):
+    def nb_markers_technical(self) -> int:
+        """
+        This function returns the number of technical markers in the model
+        """
         nb_markers = 0
         for key in self.segments:
             nb_markers += self.segments[key].nb_markers_technical()
         return nb_markers
 
-    def marker_names(self):
+    def marker_names(self) -> list[str]:
+        """
+        This function returns the names of the markers in the model
+        """
         marker_names = []
         for key in self.segments:
             marker_names += self.segments[key].marker_names()
         return marker_names
 
-    def marker_names_technical(self):
+    def marker_names_technical(self) -> list[str]:
+        """
+        This function returns the names of the technical markers in the model
+        """
         marker_names = []
         for key in self.segments:
             marker_names += self.segments[key].marker_names_technical()
         return marker_names
 
-    def nb_joints(self):
+    def nb_joints(self) -> int:
+        """
+        This function returns the number of joints in the model
+        """
         return len(self.joints)
 
-    def nb_joint_constraints(self):
+    def nb_joint_constraints(self) -> int:
+        """
+        This function returns the number of joint constraints in the model
+        """
         nb_joint_constraints = 0
         for joint_name, joint in self.joints.items():
             nb_joint_constraints += joint.nb_constraints
         return nb_joint_constraints
 
-    def nb_rigid_body_constraints(self):
+    def nb_rigid_body_constraints(self) -> int:
+        """
+        This function returns the number of rigid body constraints in the model
+        """
         return 6 * self.nb_segments()
 
-    def nb_holonomic_constraints(self):
+    def nb_holonomic_constraints(self) -> int:
+        """
+        This function returns the number of holonomic constraints in the model
+        """
         return self.nb_joint_constraints() + self.nb_rigid_body_constraints()
 
-    def nb_Q(self):
+    def nb_Q(self) -> int:
+        """
+        This function returns the number of generalized coordinates in the model
+        """
         return 12 * self.nb_segments()
 
-    def nb_Qdot(self):
+    def nb_Qdot(self) -> int:
+        """
+        This function returns the number of generalized velocities in the model
+        """
         return 12 * self.nb_segments()
 
-    def nb_Qddot(self):
+    def nb_Qddot(self) -> int:
+        """
+        This function returns the number of generalized accelerations in the model
+        """
         return 12 * self.nb_segments()
 
     @property
@@ -404,7 +239,8 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         """
         return self._mass_matrix
 
-    def rigid_body_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
+    @abstractmethod
+    def rigid_body_constraints(self, Q: NaturalCoordinates):
         """
         This function returns the rigid body constraints of all segments, denoted Phi_r
         as a function of the natural coordinates Q.
@@ -417,7 +253,8 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
         pass
 
-    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
+    @abstractmethod
+    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates):
         """
         This function returns the rigid body constraints of all segments, denoted K_r
         as a function of the natural coordinates Q.
@@ -427,9 +264,9 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         np.ndarray
             Rigid body constraints of the segment [6 * nb_segments, nbQ]
         """
-
         pass
 
+    @abstractmethod
     def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot
@@ -447,6 +284,7 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
         pass
 
+    @abstractmethod
     def joint_constraints(self, Q: NaturalCoordinates):
         """
         This function returns the joint constraints of all joints, denoted Phi_k
@@ -459,6 +297,7 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
         pass
 
+    @abstractmethod
     def joint_constraints_jacobian(self, Q: NaturalCoordinates):
         """
         This function returns the joint constraints of all joints, denoted K_k
@@ -470,6 +309,7 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
         pass
 
+    @abstractmethod
     def _update_mass_matrix(self):
         """
         This function computes the generalized mass matrix of the system, denoted G
@@ -481,6 +321,7 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         """
         pass
 
+    @abstractmethod
     def kinetic_energy(self, Qdot: NaturalVelocities) -> Union[np.ndarray, MX]:
         """
         This function computes the kinetic energy of the system
@@ -497,6 +338,7 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         """
         pass
 
+    @abstractmethod
     def potential_energy(self, Q: NaturalCoordinates) -> Union[np.ndarray, MX]:
         """
         This function computes the potential energy of the system
@@ -532,8 +374,31 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
+    @abstractmethod
     def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates):
+        """
+        This function returns the marker constraints of all segments, denoted Phi_r
+        as a function of the natural coordinates Q.
+
+        markers : np.ndarray | MX
+            The markers positions [3,nb_markers]
+
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+            Rigid body constraints of the segment [nb_markers x 3, 1]
+        """
         pass
 
+    @abstractmethod
     def markers_constraints_jacobian(self):
+        """
+        This function returns the Jacobian matrix the markers constraints, denoted k_m.
+
+        Returns
+        -------
+            Joint constraints of the marker [nb_markers x 3, nb_Q]
+        """
         pass

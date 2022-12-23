@@ -6,6 +6,7 @@ class CartesianVector(np.ndarray):
     """
     Class used to create a natural vector, a vector that is expressed in the natural coordinate system of a segment
     """
+
     def __new__(cls, input_array: np.ndarray | list | tuple):
         """
         Create a new instance of the class.

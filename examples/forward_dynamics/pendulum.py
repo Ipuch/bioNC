@@ -39,7 +39,7 @@ if __name__ == "__main__":
             child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
             theta=[np.pi / 2, np.pi / 2],
         )
-        )
+    )
     print(model.joints)
 
     model.nb_joints()
@@ -50,7 +50,6 @@ if __name__ == "__main__":
 
     model.joint_constraints(Q)
     model.joint_constraints_jacobian(Q)
-
 
     # u as y-axis
     # Qi = SegmentNaturalCoordinates.from_components(

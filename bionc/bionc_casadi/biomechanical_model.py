@@ -106,7 +106,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         for joint_name, joint in self.joints.items():
             idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
-            Q_parent = None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)  # if the joint is a joint with the ground, the parent is None
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
             Q_child = Q.vector(self.segments[joint.child.name].index)
             Phi_k[idx] = joint.constraint(Q_parent, Q_child)
 
@@ -140,8 +142,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             idx_col_child = slice(
                 12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
             )
-            Q_parent = None if joint.parent is None else Q.vector(
-                self.segments[joint.parent.name].index)  # if the joint is a joint with the ground, the parent is None
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
             K_k[idx_row, idx_col_child] = joint.child_constraint_jacobian(Q_parent)
 
             nb_constraints += self.joints[joint_name].nb_constraints

@@ -330,6 +330,7 @@ class GroundJoint:
     """
     The public interface to joints with the ground as parent segment.
     """
+
     class Hinge(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
@@ -387,7 +388,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [5, 1]
             """
             constraint = np.zeros(self.nb_constraints)
-            constraint[:3] = - Q_child.rp
+            constraint[:3] = -Q_child.rp
 
             for i in range(2):
                 constraint[i + 3] = np.dot(
@@ -405,9 +406,7 @@ class GroundJoint:
             K_k_child[:3, 3:6] = -np.eye(3)
 
             for i in range(2):
-                K_k_child[i + 3, :] = np.squeeze(
-                    (self.parent_vector[i]).T @ self.child_vector[i].interpolate().rot
-                )
+                K_k_child[i + 3, :] = np.squeeze((self.parent_vector[i]).T @ self.child_vector[i].interpolate().rot)
 
             return K_k_child
 
@@ -425,7 +424,6 @@ class GroundJoint:
             """
 
             return self.child_constraint_jacobian(Q_parent)
-
 
         # def to_mx(self):
         #     """

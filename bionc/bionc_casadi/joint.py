@@ -90,9 +90,9 @@ class Joint(JointBase):
 
             for i in range(2):
                 K_k_parent[i + 3, :] = (
-                        transpose(self.parent_vector[i].interpolate().rot)
-                        @ self.child_vector[i].interpolate().rot
-                        @ Q_child
+                    transpose(self.parent_vector[i].interpolate().rot)
+                    @ self.child_vector[i].interpolate().rot
+                    @ Q_child
                 )
 
             return K_k_parent
@@ -103,8 +103,8 @@ class Joint(JointBase):
 
             for i in range(2):
                 K_k_child[i + 3, :] = (
-                        transpose(self.parent_vector[i].interpolate().rot @ Q_parent)
-                        @ self.child_vector[i].interpolate().rot
+                    transpose(self.parent_vector[i].interpolate().rot @ Q_parent)
+                    @ self.child_vector[i].interpolate().rot
                 )
 
             return K_k_child
@@ -199,7 +199,7 @@ class Joint(JointBase):
             K_k_parent[:3, 6:9] = MX.eye(3)
 
             K_k_parent[3, :] = (
-                    transpose(self.parent_vector.interpolate().rot) @ self.child_vector.interpolate().rot @ Q_child
+                transpose(self.parent_vector.interpolate().rot) @ self.child_vector.interpolate().rot @ Q_child
             )
 
             return K_k_parent
@@ -208,7 +208,7 @@ class Joint(JointBase):
             K_k_child = MX.zeros((self.nb_constraints, 12))
             K_k_child[:3, 3:6] = -np.eye(3)
             K_k_child[3, :] = (
-                    transpose(self.parent_vector.interpolate().rot @ Q_parent) @ self.child_vector.interpolate().rot
+                transpose(self.parent_vector.interpolate().rot @ Q_parent) @ self.child_vector.interpolate().rot
             )
 
             return K_k_child
@@ -283,6 +283,7 @@ class GroundJoint:
     """
     The public interface to joints with the ground as parent segment.
     """
+
     class Hinge(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
@@ -340,7 +341,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [5, 1]
             """
             constraint = MX.zeros(self.nb_constraints)
-            constraint[:3] = - Q_child.rp
+            constraint[:3] = -Q_child.rp
 
             for i in range(2):
                 constraint[i + 3] = dot(
@@ -376,4 +377,3 @@ class GroundJoint:
             """
 
             return self.child_constraint_jacobian(Q_parent)
-

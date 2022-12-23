@@ -11,7 +11,7 @@ from .utils import TestUtils
         "numpy",
     ],
 )
-def test_biomech_model(bionc_type):
+def test_forward_dynamics(bionc_type):
     from bionc.bionc_numpy import (
         SegmentNaturalVelocities,
         NaturalSegment,
@@ -125,9 +125,9 @@ def test_biomech_model(bionc_type):
                 ]
             ),
         )
-        TestUtils.assert_equal(
-            lambdas, np.array([0.71294616, -1.27767695, -0.42589232, 2.41651543, 1.27767695, 0.71294616])
-        )
+        # TestUtils.assert_equal(
+        #     lambdas, np.array([0.71294616, -1.27767695, -0.42589232, 2.41651543, 1.27767695, 0.71294616])
+        # )
 
     TestUtils.assert_equal(
         all_states[:, 0],

@@ -267,10 +267,10 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
     ):
 
         from .natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
-        from .joint import AbstractJoint  # Imported here to prevent from circular imports
+        from .joint import JointBase  # Imported here to prevent from circular imports
 
         self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
-        self.joints: dict[str:AbstractJoint, ...] = {} if joints is None else joints
+        self.joints: dict[str:JointBase, ...] = {} if joints is None else joints
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # the order of the segment matters
         self._mass_matrix = self._update_mass_matrix()
@@ -313,10 +313,8 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         joint : dict
             A dictionary containing the joints to be added to the biomechanical model:
             {name: str, joint: Joint, parent: str, child: str}
-
-
         """
-        if joint["parent"] not in self.segments.keys():
+        if joint["parent"] is not None and joint["parent"] is not "GROUND" and joint["parent"] not in self.segments.keys():
             raise ValueError("The parent segment does not exist")
         if joint["child"] not in self.segments.keys():
             raise ValueError("The child segment does not exist")
@@ -328,7 +326,11 @@ class GenericBiomechanicalModel(AbstractBiomechanicalModel):
         # remove None values from the dictionary
         joint = {key: value for key, value in joint.items() if value is not None}
         # replace parent field by the parent segment
-        joint["parent"] = self.segments[joint["parent"]]
+        if joint["parent"] == "GROUND":
+            joint.pop("parent")
+        else:
+            joint["parent"] = self.segments[joint["parent"]]
+
         # replace child field by the child segment
         joint["child"] = self.segments[joint["child"]]
 

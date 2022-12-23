@@ -7,7 +7,7 @@ Inverse and Forward approach are implemented.
 | Type | Status |
 |---|---|
 | License | <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a> |
-| Continuous integration | [![Build status](https://ci.appveyor.com/api/projects/status/axakr33c79eo0xal/branch/main?svg=true)](https://ci.appveyor.com/project/Ipuch/bionc/branch/main) |
+| Continuous integration | [![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/) |
 | Code coverage | [![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) |
 
 # Table of Contents

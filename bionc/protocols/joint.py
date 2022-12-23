@@ -4,40 +4,7 @@ from .natural_segment import AbstractNaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 
 
-class AbstractJoint(ABC):
-    """
-    This class is made to handle the kinematics of a joint
-
-    Methods
-    -------
-    constraints(self, Q_parent: NaturalCoordinates, Q_child: NaturalCoordinates)
-        Returns the constraints of the joint, this defect function should be zero when the joint is in a valid position
-
-    """
-
-    @abstractmethod
-    def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
-        """
-        This function returns the constraints of the joint, denoted Phi_k as a function of the natural coordinates Q.
-
-        Returns
-        -------
-            Constraints of the joint
-        """
-
-    @abstractmethod
-    def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
-        """
-        This function returns the constraint Jacobians of the joint, denoted K_k
-        as a function of the natural coordinates Q_parent and Q_child.
-
-        Returns
-        -------
-            Constraint Jacobians of the joint [3, 2 * nbQ]
-        """
-
-
-class JointBase(AbstractJoint):
+class JointBase(ABC):
     """
     This class is made to handle the kinematics of a joint
 

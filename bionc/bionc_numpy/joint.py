@@ -4,7 +4,7 @@ import numpy as np
 from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.joint import JointBase
-from ..utils.enums import NaturalAxis
+from ..utils.enums import NaturalAxis, CartesianAxis
 from .natural_vector import NaturalVector
 
 

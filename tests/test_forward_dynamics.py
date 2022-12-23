@@ -19,7 +19,7 @@ def test_biomech_model(bionc_type):
     )
 
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/forward_dynamics.py")
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/drop_the_box.py")
 
     # Let's create a segment
     my_segment = NaturalSegment(

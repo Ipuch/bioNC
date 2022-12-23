@@ -113,11 +113,7 @@ class GenericBiomechanicalModel(ABC):
             A dictionary containing the joints to be added to the biomechanical model:
             {name: str, joint: Joint, parent: str, child: str}
         """
-        if (
-            joint["parent"] is not None
-            and joint["parent"] != "GROUND"
-            and joint["parent"] not in self.segments.keys()
-        ):
+        if joint["parent"] is not None and joint["parent"] != "GROUND" and joint["parent"] not in self.segments.keys():
             raise ValueError("The parent segment does not exist")
         if joint["child"] not in self.segments.keys():
             raise ValueError("The child segment does not exist")

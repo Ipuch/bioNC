@@ -388,7 +388,8 @@ class GroundJoint:
                 Kinematic constraints of the joint [5, 1]
             """
             constraint = np.zeros(self.nb_constraints)
-            constraint[:3] = -Q_child.rp
+            constraint[:3] = -Q_child.rp  # NOTE: only fixed with the origin of the inertial coordinate system
+            # todo: extend to any point of the inertial coordinate system
 
             for i in range(2):
                 constraint[i + 3] = np.dot(

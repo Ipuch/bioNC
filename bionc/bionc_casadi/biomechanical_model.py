@@ -534,4 +534,3 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             nb_constraints += 6
 
         return Kdot
-

@@ -115,13 +115,61 @@ def RK4(t: np.ndarray, f, y0: np.ndarray, args=()) -> np.ndarray:
     return y
 
 
+def post_computations(segment: NaturalSegment, time_steps: np.ndarray, all_states: np.ndarray, dynamics):
+    """
+    This function computes:
+     - the rigid body constraint error
+     - the rigid body constraint jacobian derivative error
+     - the lagrange multipliers of the rigid body constraint
+     - the center of mass position
+
+    Parameters
+    ----------
+    segment : NaturalSegment
+        The segment to be simulated
+    time_steps : np.ndarray
+        The time steps of the simulation
+    all_states : np.ndarray
+        The states of the system at each time step X = [Q, Qdot]
+    dynamics : Callable
+        The dynamics of the system, f(t, X) = [Xdot, lambdas]
+
+    Returns
+    -------
+    tuple:
+        rigid_body_constraint_error : np.ndarray
+            The rigid body constraint error at each time step
+        rigid_body_constraint_jacobian_derivative_error : np.ndarray
+            The rigid body constraint jacobian derivative error at each time step
+        lambdas : np.ndarray
+            The lagrange multipliers of the rigid body constraint at each time step
+        center_of_mass : np.ndarray
+            The center of mass position at each time step
+    """
+    # compute the quantities of interest after the integration
+    all_lambdas = np.zeros((11, len(time_steps)))
+    defects = np.zeros((6, len(time_steps)))
+    defects_dot = np.zeros((6, len(time_steps)))
+    center_of_mass = np.zeros((3, len(time_steps)))
+    for i in range(len(time_steps)):
+        defects[:, i] = segment.rigid_body_constraint(SegmentNaturalCoordinates(all_states[0:12, i]))
+        defects_dot[:, i] = segment.rigid_body_constraint_derivative(
+            SegmentNaturalCoordinates(all_states[0:12, i]),
+            SegmentNaturalVelocities(all_states[12:24, i]),
+        )
+        all_lambdas[:, i:i+1] = dynamics(time_steps[i], all_states[:, i])[1]
+        center_of_mass[:, i] = segment.natural_center_of_mass.interpolate() @ all_states[0:12, i]
+
+    return defects, defects_dot, all_lambdas, center_of_mass
+
+
 if __name__ == "__main__":
 
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
-    model["box"] = NaturalSegment(
-        name="box",
+    model["pendulum"] = NaturalSegment(
+        name="pendulum",
         alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
         beta=np.pi / 2,
         gamma=np.pi / 2,
@@ -138,7 +186,7 @@ if __name__ == "__main__":
             name="hinge",
             joint_type=JointType.GROUND_REVOLUTE,
             parent="GROUND",
-            child="box",
+            child="pendulum",
             parent_axis=[CartesianAxis.X, CartesianAxis.X],
             child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
             theta=[np.pi / 2, np.pi / 2],
@@ -160,44 +208,49 @@ if __name__ == "__main__":
     model.holonomic_constraints(Q)
     K = model.holonomic_constraints_jacobian(Q)
     print(K)
-    from matplotlib import pyplot as plt
+    # from matplotlib import pyplot as plt
+    #
+    # plt.spy(K)
+    # plt.show()
+    #
+    # plt.figure()
+    # plt.spy(model.mass_matrix)
+    # plt.show()
+    #
+    # plt.figure()
+    # G = model.mass_matrix
+    # K = model.rigid_body_constraints_jacobian(Q)
+    # Kdot = model.rigid_body_constraint_jacobian_derivative(Qdot)
+    #
+    # upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
+    # lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
+    # KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
+    # plt.spy(KKT_matrix)
+    # plt.show()
+    #
+    # print("done")
 
-    plt.spy(K)
-    plt.show()
-
-    plt.figure()
-    plt.spy(model.mass_matrix)
-    plt.show()
-
-    plt.figure()
-    G = model.mass_matrix
-    K = model.rigid_body_constraints_jacobian(Q)
-    Kdot = model.rigid_body_constraint_jacobian_derivative(Qdot)
-
-    upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
-    lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
-    KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
-    plt.spy(KKT_matrix)
-    plt.show()
-
-    print("done")
-
-    t_final = 2
+    t_final = 20
     time_steps, all_states, dynamics = drop_the_pendulum(
         model=model,
         Q_init=Q,
         Qdot_init=Qdot,
         t_final=t_final,
     )
-    #
-    # defects, defects_dot, all_lambdas, center_of_mass = post_computations(my_segment, time_steps, all_states, dynamics)
-    #
-    # from viz import plot_series, animate_natural_segment
-    #
-    # # Plot the results
-    # plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
-    # plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
-    # plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
-    #
-    # # animate the motion
-    # animate_natural_segment(time_steps, all_states, center_of_mass, t_final)
+
+    defects, defects_dot, all_lambdas, center_of_mass = post_computations(
+        segment=model["pendulum"],
+        time_steps=time_steps,
+        all_states=all_states,
+        dynamics=dynamics,
+    )
+
+    from viz import plot_series, animate_natural_segment
+
+    # Plot the results
+    plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
+    plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
+    plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+
+    # animate the motion
+    animate_natural_segment(time_steps, all_states, center_of_mass, t_final)

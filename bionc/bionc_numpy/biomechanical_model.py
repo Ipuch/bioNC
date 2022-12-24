@@ -293,6 +293,28 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return markers
 
+    def center_of_mass_position(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the position of the center of mass of each segment as a function of the natural coordinates Q
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+        np.ndarray
+            The position of the center of mass [3, nbSegments]
+            in the global coordinate system/ inertial coordinate system
+        """
+        com = np.zeros((3, self.nb_segments(), 1))
+        for i, segment in enumerate(self.segments.values()):
+            position = segment.center_of_mass_position(Q.vector(i))
+            com[:, i:i+1, 0] = position if len(position.shape) == 2 else position[:, np.newaxis]
+
+        return com
+
     def markers_constraints(
         self, markers: np.ndarray, Q: NaturalCoordinates, only_technical: bool = True
     ) -> np.ndarray:

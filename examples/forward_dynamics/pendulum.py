@@ -245,12 +245,13 @@ if __name__ == "__main__":
         dynamics=dynamics,
     )
 
-    from viz import plot_series, animate_natural_segment
+    from viz import plot_series, animate_natural_segment, cheap_animation
 
     # Plot the results
-    plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
-    plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
-    plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+    # plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
+    # plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
+    # plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
 
     # animate the motion
-    animate_natural_segment(time_steps, all_states, center_of_mass, t_final)
+    cheap_animation(model, NaturalCoordinates(all_states[:12, :]))
+    # animate_natural_segment(time_steps, all_states, center_of_mass, t_final)

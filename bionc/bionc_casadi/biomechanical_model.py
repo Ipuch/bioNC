@@ -151,7 +151,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return K_k
 
-    def joint_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
+    def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
         """
         This function returns the derivative of the Jacobian matrix of the joint constraints denoted K_k_dot
 

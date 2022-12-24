@@ -480,8 +480,8 @@ class GroundJoint:
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
             """
-            This function returns the kinematic constraints of the joint, denoted K_k
-            as a function of the natural coordinates Q_parent and Q_child.
+            This function returns the kinematic constraints of the joint, denoted K_kdot
+            as a function of the natural velocities Qdot_parent and Qdot_child.
 
             Returns
             -------

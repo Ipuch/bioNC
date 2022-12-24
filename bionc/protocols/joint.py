@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from .natural_segment import AbstractNaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_velocities import SegmentNaturalVelocities
 
 
 class JointBase(ABC):
@@ -84,5 +85,29 @@ class JointBase(ABC):
         Returns
         -------
             Constraint Jacobians of the joint [n, nbQ]
+        """
+        pass
+
+    @abstractmethod
+    def parent_constraint_jacobian_derivative(self, Qdot_child: SegmentNaturalVelocities):
+        """
+        This function returns the derivative of the parent constraint Jacobians of the joint, denoted K_k
+        as a function of the natural velocities Qdot_child.
+
+        Returns
+        -------
+            derivative of Constraint Jacobians of the joint [n, 12]
+        """
+        pass
+
+    @abstractmethod
+    def child_constraint_jacobian_derivative(self, Qdot_parent: SegmentNaturalVelocities):
+        """
+        This function returns the derivative of the child constraint Jacobians of the joint, denoted K_k
+        as a function of the natural velocities Qdot_parent.
+
+        Returns
+        -------
+            derivative of Constraint Jacobians of the joint [n, 12]
         """
         pass

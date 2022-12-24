@@ -324,7 +324,7 @@ class GenericBiomechanicalModel(ABC):
         pass
 
     @abstractmethod
-    def joint_constraint_jacobian_derivative(self, Qdot: NaturalVelocities):
+    def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities):
         """
         This function returns the derivative of the Jacobian matrix of the joint constraints denoted Kk_dot
 

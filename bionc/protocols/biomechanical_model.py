@@ -485,3 +485,14 @@ class GenericBiomechanicalModel(ABC):
             Joint constraints of the holonomic constraints [nb_holonomic_constraints, 12 * nb_segments]
         """
         pass
+
+    @abstractmethod
+    def weight(self):
+        """
+        This function returns the weights caused by the gravity forces on each segment
+
+        Returns
+        -------
+            The weight of each segment [12 * nb_segments, 1]
+        """
+        pass

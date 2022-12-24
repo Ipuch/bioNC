@@ -534,3 +534,18 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             nb_constraints += 6
 
         return Kdot
+
+    def weight(self) -> MX:
+        """
+        This function returns the weights caused by the gravity forces on each segment
+
+        Returns
+        -------
+            The weight of each segment [12 * nb_segments, 1]
+        """
+        weight_vector = MX.zeros((self.nb_segments() * 12, 1))
+        for i in range(self.nb_segments()):
+            idx = slice(12 * i, 12 * (i + 1))
+            weight_vector[idx] = self.segments[i].weight()
+
+        return weight_vector

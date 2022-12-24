@@ -51,6 +51,13 @@ if __name__ == "__main__":
     model.joint_constraints(Q)
     model.joint_constraints_jacobian(Q)
 
+    model.holonomic_constraints(Q)
+    phi = model.holonomic_constraints_jacobian(Q)
+    print(phi)
+    from matplotlib import pyplot as plt
+    plt.spy(phi)
+    plt.show()
+
     # u as y-axis
     # Qi = SegmentNaturalCoordinates.from_components(
     #     u=[0, 1, 0], rp=[0, 0, 0], rd=[0, 0, -1], w=[1, 0, 0]

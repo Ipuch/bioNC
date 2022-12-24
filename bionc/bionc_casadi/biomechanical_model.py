@@ -476,3 +476,62 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             nb_constraints += 6
 
         return K
+
+    def holonomic_constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
+        """
+        This function returns the Jacobian matrix the holonomic constraints, denoted Kdot.
+        They are organized as follow, for each segment, the rows of the matrix are:
+        [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+
+        Parameters
+        ----------
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Holonomic constraints jacobian derivative [nb_holonomic_constraints, 12 * nb_segments]
+        """
+
+        # first we compute the rigid body constraints jacobian
+        rigid_body_constraints_jacobian_dot = self.rigid_body_constraint_jacobian_derivative(Qdot)
+
+        # then we compute the holonomic constraints jacobian
+        nb_constraints = 0
+        Kdot = MX.zeros((self.nb_holonomic_constraints(), 12 * self.nb_segments()))
+        for i in range(self.nb_segments()):
+
+            # add the joint constraints first
+            joints = self.joints_from_child_index(i)
+            if len(joints) != 0:
+                for j in joints:
+                    idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
+
+                    if j.parent is not None:  # If the joint is not a ground joint
+                        idx_col_parent = slice(
+                            12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1)
+                        )
+                        Qdot_child = Qdot.vector(self.segments[j.child.name].index)
+                        Kdot[idx_row, idx_col_parent] = j.parent_constraint_jacobian_derivative(Qdot_child)
+
+                    idx_col_child = slice(
+                        12 * self.segments[j.child.name].index, 12 * (self.segments[j.child.name].index + 1)
+                    )
+                    Qdot_parent = (
+                        None if j.parent is None else Qdot.vector(self.segments[j.parent.name].index)
+                    )  # if the joint is a joint with the ground, the parent is None
+                    Kdot[idx_row, idx_col_child] = j.child_constraint_jacobian_derivative(Qdot_parent)
+
+                    nb_constraints += j.nb_constraints
+
+            # add the rigid body constraint
+            idx_row = slice(nb_constraints, nb_constraints + 6)
+            idx_rigid_body_constraint = slice(6 * i, 6 * (i + 1))
+            idx_segment = slice(12 * i, 12 * (i + 1))
+
+            Kdot[idx_row, idx_segment] = rigid_body_constraints_jacobian_dot[idx_rigid_body_constraint, idx_segment]
+
+            nb_constraints += 6
+
+        return Kdot
+

@@ -626,6 +626,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         # solve the linear system Ax = B with numpy
         x = np.linalg.solve(KKT_matrix, B)
-        Qddoti = x[0:self.nb_Qddot()]
-        lambda_i = x[self.nb_Qddot():]
+        Qddoti = x[0 : self.nb_Qddot()]
+        lambda_i = x[self.nb_Qddot() :]
         return NaturalAccelerations(Qddoti), lambda_i

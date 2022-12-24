@@ -490,7 +490,7 @@ class NaturalSegment(GenericNaturalSegment):
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return (self.natural_center_of_mass.interlopate().T * self.mass) @ MX([0, 0, -9.81])
+        return (self.natural_center_of_mass.interpolate().T * self.mass) @ MX([0, 0, -9.81])
 
     def differential_algebraic_equation(
         self,

@@ -8957,3 +8957,40 @@ def test_biomech_model_mass(bionc_type):
         ]
     )
     TestUtils.assert_equal(model.mass_matrix, G)
+
+    P = model.weight()
+
+    assert P.shape[0] == 24
+
+    TestUtils.assert_equal(
+        P,
+        np.array(
+            [
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [-9.81],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [-9.81],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+                [0.0],
+            ]
+        ),
+        squeeze=False,
+    )

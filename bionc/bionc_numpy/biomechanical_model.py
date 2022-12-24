@@ -1,13 +1,10 @@
-from typing import Callable
-
 import numpy as np
 from numpy import transpose
 
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
+from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
-
-# from .joint import GroundJoint
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -607,19 +604,28 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Qddot : NaturalAccelerations
                 The natural accelerations [12 * nb_segments, 1]
         """
-        # compute the holonomic constraints
-        phi = self.holonomic_constraints(Q)
-
-        # compute the holonomic constraints jacobian
+        G = self.mass_matrix
         K = self.holonomic_constraints_jacobian(Q)
+        Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
-        # compute the holonomic constraints jacobian derivative
-        Kdot = self.holonomic_constraints_jacobian_dot(Q, Qdot)
+        # if stabilization is not None:
+        #     biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+        #         "beta"
+        #     ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
-        # compute the inertia matrix
-        M = self.inertia_matrix(Q)
+        # KKT system
+        # [G, K.T] [Qddot]  = [forces]
+        # [K, 0  ] [lambda] = [biais]
+        upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
+        lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
+        KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
-        # compute the joint torques
-        tau = M @ Qddot.vector() + K.T @ phi + Kdot.T @ Qdot.vector()
+        forces = self.weight()
+        biais = -Kdot @ Qdot
+        B = np.concatenate([forces, biais], axis=0)
 
-        return tau
+        # solve the linear system Ax = B with numpy
+        x = np.linalg.solve(KKT_matrix, B)
+        Qddoti = x[0:self.nb_Qddot()]
+        lambda_i = x[self.nb_Qddot():]
+        return NaturalAccelerations(Qddoti), lambda_i

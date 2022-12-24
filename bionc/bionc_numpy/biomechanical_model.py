@@ -513,10 +513,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         return K
 
     def forward_dynamics(
-            self,
-            Q: NaturalCoordinates,
-            Qdot: NaturalCoordinates,
-            # external_forces: ExternalForces
+        self,
+        Q: NaturalCoordinates,
+        Qdot: NaturalCoordinates,
+        # external_forces: ExternalForces
     ) -> np.ndarray:
         """
         This function computes the forward dynamics of the system, i.e. the acceleration of the segments

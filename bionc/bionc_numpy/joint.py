@@ -105,9 +105,7 @@ class Joint:
             K_k_parent_dot = np.zeros((self.nb_constraints, 12))
             for i in range(2):
                 K_k_parent_dot[i + 3, :] = np.squeeze(
-                    self.parent_vector[i].interpolate().rot.T
-                    @ self.child_vector[i].interpolate().rot
-                    @ Qdot_child
+                    self.parent_vector[i].interpolate().rot.T @ self.child_vector[i].interpolate().rot @ Qdot_child
                 )
 
             return K_k_parent_dot
@@ -116,8 +114,7 @@ class Joint:
             K_k_child_dot = np.zeros((self.nb_constraints, 12))
             for i in range(2):
                 K_k_child_dot[i + 3, :] = np.squeeze(
-                    (self.parent_vector[i].interpolate().rot @ Qdot_parent).T
-                    @ self.child_vector[i].interpolate().rot
+                    (self.parent_vector[i].interpolate().rot @ Qdot_parent).T @ self.child_vector[i].interpolate().rot
                 )
 
             return K_k_child_dot
@@ -149,7 +146,9 @@ class Joint:
             tuple[np.ndarray, np.ndarray]
                 joint constraints jacobian derivative of the parent and child segment [5, 12] and [5, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(Qdot_parent)
+            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(
+                Qdot_parent
+            )
 
         def to_mx(self):
             """
@@ -302,7 +301,9 @@ class Joint:
                 joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
             """
 
-            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(Qdot_parent)
+            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(
+                Qdot_parent
+            )
 
         def to_mx(self):
             """
@@ -396,7 +397,9 @@ class Joint:
             tuple[np.ndarray, np.ndarray]
                 joint constraints jacobian of the parent and child segment [3, 12] and [3, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(Qdot_parent)
+            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(
+                Qdot_parent
+            )
 
         def to_mx(self):
             """

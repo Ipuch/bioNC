@@ -72,12 +72,12 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Parameters
         ----------
         Qdot : NaturalVelocities
-            The natural velocities of the segment [12, 1]
+            The natural velocities of the segment [12 * nb_segments, 1]
 
         Returns
         -------
         MX
-            The derivative of the Jacobian matrix of the rigid body constraints [6, 12]
+            The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
         """
 
         Kr_dot = MX.zeros((6 * self.nb_segments(), Qdot.shape[0]))
@@ -150,6 +150,45 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             nb_constraints += self.joints[joint_name].nb_constraints
 
         return K_k
+
+    def joint_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
+        """
+        This function returns the derivative of the Jacobian matrix of the joint constraints denoted K_k_dot
+
+        Parameters
+        ----------
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+        MX
+            The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
+        """
+
+        K_k_dot = MX.zeros((self.nb_joint_constraints(), Q.shape[0]))
+        nb_constraints = 0
+        for joint_name, joint in self.joints.items():
+            idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
+
+            if joint.parent is not None:  # If the joint is not a ground joint
+                idx_col_parent = slice(
+                    12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
+                )
+                Qdot_child = Qdot.vector(self.segments[joint.child.name].index)
+                K_k_dot[idx_row, idx_col_parent] = joint.parent_constraint_jacobian_derivative(Qdot_child)
+
+            idx_col_child = slice(
+                12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
+            )
+            Qdot_parent = (
+                None if joint.parent is None else Qdot.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
+            K_k_dot[idx_row, idx_col_child] = joint.child_constraint_jacobian_derivative(Qdot_parent)
+
+            nb_constraints += self.joints[joint_name].nb_constraints
+
+        return K_k_dot
 
     def _update_mass_matrix(self):
         """
@@ -356,7 +395,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         nb_constraints = 0
         # two steps in order to get a jacobian as diagonal as possible
         # it follows the order of the segments
-        # for i in range(self.nb_segments()):
         for i, segment in enumerate(self.segments):
             # add the joint constraints first
             joints = self.joints_from_child_index(i)

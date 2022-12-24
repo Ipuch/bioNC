@@ -391,7 +391,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         nb_constraints = 0
         # two steps in order to get a jacobian as diagonal as possible
         # it follows the order of the segments
-        # for i in range(self.nb_segments()):
         for i, segment in enumerate(self.segments):
             # add the joint constraints first
             joints = self.joints_from_child_index(i)
@@ -473,3 +472,41 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             nb_constraints += 6
 
         return K
+
+    def forward_dynamics(
+            self,
+            Q: NaturalCoordinates,
+            Qdot: NaturalCoordinates,
+            # external_forces: ExternalForces
+    ) -> np.ndarray:
+        """
+        This function computes the forward dynamics of the system, i.e. the acceleration of the segments
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+        Qdot : NaturalCoordinates
+            The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Qddot : NaturalAccelerations
+                The natural accelerations [12 * nb_segments, 1]
+        """
+        # compute the holonomic constraints
+        phi = self.holonomic_constraints(Q)
+
+        # compute the holonomic constraints jacobian
+        K = self.holonomic_constraints_jacobian(Q)
+
+        # compute the holonomic constraints jacobian derivative
+        Kdot = self.holonomic_constraints_jacobian_dot(Q, Qdot)
+
+        # compute the inertia matrix
+        M = self.inertia_matrix(Q)
+
+        # compute the joint torques
+        tau = M @ Qddot.vector() + K.T @ phi + Kdot.T @ Qdot.vector()
+
+        return tau

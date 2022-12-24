@@ -290,14 +290,12 @@ class GenericBiomechanicalModel(ABC):
         Parameters
         ----------
         Qdot : NaturalVelocities
-            The natural velocities of the segment [nb_segments * 12, 1]
+            The natural velocities of the segment [12 * nb_segments, 1]
 
         Returns
         -------
-        np.ndarray
-            The derivative of the Jacobian matrix of the rigid body constraints [6, 12]
+            The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
         """
-
         pass
 
     @abstractmethod
@@ -323,6 +321,22 @@ class GenericBiomechanicalModel(ABC):
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
 
+        pass
+
+    @abstractmethod
+    def joint_constraint_jacobian_derivative(self, Qdot: NaturalVelocities):
+        """
+        This function returns the derivative of the Jacobian matrix of the joint constraints denoted Kk_dot
+
+        Parameters
+        ----------
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
+        """
         pass
 
     @abstractmethod

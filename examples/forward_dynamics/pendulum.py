@@ -157,7 +157,7 @@ def post_computations(segment: NaturalSegment, time_steps: np.ndarray, all_state
             SegmentNaturalCoordinates(all_states[0:12, i]),
             SegmentNaturalVelocities(all_states[12:24, i]),
         )
-        all_lambdas[:, i:i+1] = dynamics(time_steps[i], all_states[:, i])[1]
+        all_lambdas[:, i : i + 1] = dynamics(time_steps[i], all_states[:, i])[1]
         center_of_mass[:, i] = segment.natural_center_of_mass.interpolate() @ all_states[0:12, i]
 
     return defects, defects_dot, all_lambdas, center_of_mass

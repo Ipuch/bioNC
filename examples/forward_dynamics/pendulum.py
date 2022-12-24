@@ -55,6 +55,7 @@ if __name__ == "__main__":
     phi = model.holonomic_constraints_jacobian(Q)
     print(phi)
     from matplotlib import pyplot as plt
+
     plt.spy(phi)
     plt.show()
 

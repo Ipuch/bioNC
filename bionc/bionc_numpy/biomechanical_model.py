@@ -448,8 +448,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
                     if j.parent is not None:  # If the joint is not a ground joint
                         idx_col_parent = slice(
-                            12 * self.segments[j.parent.name].index,
-                            12 * (self.segments[j.parent.name].index + 1)
+                            12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1)
                         )
                         Q_child = Q.vector(self.segments[j.child.name].index)
                         K[idx_row, idx_col_parent] = j.parent_constraint_jacobian(Q_child)

@@ -409,7 +409,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
             # add the rigid body constraint
             idx = slice(nb_constraints, nb_constraints + 6)
-            idx_segment = slice(12 * i, 12 * (i + 1))
+            idx_segment = slice(6 * i, 6 * (i + 1))
             phi[idx, 0] = rigid_body_constraints[idx_segment]
 
             nb_constraints += 6
@@ -466,8 +466,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
             # add the rigid body constraint
             idx_row = slice(nb_constraints, nb_constraints + 6)
+            idx_rigid_body_constraint = slice(6 * i, 6 * (i + 1))
             idx_segment = slice(12 * i, 12 * (i + 1))
-            K[idx_row, idx_segment] = rigid_body_constraints_jacobian[idx_segment, idx_segment]
+
+            K[idx_row, idx_segment] = rigid_body_constraints_jacobian[idx_rigid_body_constraint, idx_segment]
 
             nb_constraints += 6
 

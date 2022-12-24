@@ -334,3 +334,108 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             marker_count += nb_segment_markers
 
         return km
+
+    def holonomic_constraints(self, Q: NaturalCoordinates) -> MX:
+        """
+        This function returns the holonomic constraints of the system, denoted Phi_h
+        as a function of the natural coordinates Q. They are organized as follow, for each segment:
+            [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Holonomic constraints of the segment [nb_holonomic_constraints, 1]
+        """
+        rigid_body_constraints = self.rigid_body_constraints(Q)
+
+        phi = MX.zeros((self.nb_holonomic_constraints(), 1))
+        nb_constraints = 0
+        # two steps in order to get a jacobian as diagonal as possible
+        # it follows the order of the segments
+        # for i in range(self.nb_segments()):
+        for i, segment in enumerate(self.segments):
+            # add the joint constraints first
+            joints = self.joints_from_child_index(i)
+            if len(joints) != 0:
+                for j in joints:
+                    idx = slice(nb_constraints, nb_constraints + j.nb_constraints)
+
+                    Q_parent = (
+                        None if j.parent is None else Q.vector(self.segments[j.parent.name].index)
+                    )  # if the joint is a joint with the ground, the parent is None
+                    Q_child = Q.vector(self.segments[j.child.name].index)
+                    phi[idx, 0] = j.constraint(Q_parent, Q_child)
+
+                    nb_constraints += j.nb_constraints
+
+            # add the rigid body constraint
+            idx = slice(nb_constraints, nb_constraints + 6)
+            idx_segment = slice(6 * i, 6 * (i + 1))
+            phi[idx, 0] = rigid_body_constraints[idx_segment]
+
+            nb_constraints += 6
+
+        return phi
+
+    def holonomic_constraints_jacobian(self, Q: NaturalCoordinates) -> MX:
+        """
+        This function returns the Jacobian matrix the holonomic constraints, denoted K.
+        They are organized as follow, for each segmen, the rows of the matrix are:
+        [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Joint constraints of the holonomic constraints [nb_holonomic_constraints, 12 * nb_segments]
+        """
+
+        # first we compute the rigid body constraints jacobian
+        rigid_body_constraints_jacobian = self.rigid_body_constraints_jacobian(Q)
+
+        # then we compute the holonomic constraints jacobian
+        nb_constraints = 0
+        K = MX.zeros((self.nb_holonomic_constraints(), 12 * self.nb_segments()))
+        for i in range(self.nb_segments()):
+
+            # add the joint constraints first
+            joints = self.joints_from_child_index(i)
+            if len(joints) != 0:
+                for j in joints:
+                    idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
+
+                    if j.parent is not None:  # If the joint is not a ground joint
+                        idx_col_parent = slice(
+                            12 * self.segments[j.parent.name].index,
+                            12 * (self.segments[j.parent.name].index + 1)
+                        )
+                        Q_child = Q.vector(self.segments[j.child.name].index)
+                        K[idx_row, idx_col_parent] = j.parent_constraint_jacobian(Q_child)
+
+                    idx_col_child = slice(
+                        12 * self.segments[j.child.name].index, 12 * (self.segments[j.child.name].index + 1)
+                    )
+                    Q_parent = (
+                        None if j.parent is None else Q.vector(self.segments[j.parent.name].index)
+                    )  # if the joint is a joint with the ground, the parent is None
+                    K[idx_row, idx_col_child] = j.child_constraint_jacobian(Q_parent)
+
+                    nb_constraints += j.nb_constraints
+
+            # add the rigid body constraint
+            idx_row = slice(nb_constraints, nb_constraints + 6)
+            idx_rigid_body_constraint = slice(6 * i, 6 * (i + 1))
+            idx_segment = slice(12 * i, 12 * (i + 1))
+
+            K[idx_row, idx_segment] = rigid_body_constraints_jacobian[idx_rigid_body_constraint, idx_segment]
+
+            nb_constraints += 6
+
+        return K

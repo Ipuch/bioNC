@@ -436,38 +436,38 @@ class GenericBiomechanicalModel(ABC):
         """
         pass
 
-    # @abstractmethod
-    # def holononmic_constraints(self, Q: NaturalCoordinates):
-    #     """
-    #     This function returns the holonomic constraints of the system, denoted Phi_h
-    #     as a function of the natural coordinates Q. They are organized as follow, for each segment:
-    #         [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
-    #
-    #     Parameters
-    #     ----------
-    #     Q : NaturalCoordinates
-    #         The natural coordinates of the segment [12 * nb_segments, 1]
-    #
-    #     Returns
-    #     -------
-    #         Holonomic constraints of the segment [nb_holonomic_constraints, 1]
-    #     """
-    #     pass
-    #
-    # @abstractmethod
-    # def holonomic_constraints_jacobian(self, Q: NaturalCoordinates):
-    #     """
-    #     This function returns the Jacobian matrix the holonomic constraints, denoted k_h.
-    #     They are organized as follow, for each segmen, the rows of the matrix are:
-    #     [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
-    #
-    #     Parameters
-    #     ----------
-    #     Q : NaturalCoordinates
-    #         The natural coordinates of the segment [12 * nb_segments, 1]
-    #
-    #     Returns
-    #     -------
-    #         Joint constraints of the holonomic constraints [nb_holonomic_constraints, 12 * nb_segments]
-    #     """
-    #     pass
+    @abstractmethod
+    def holonomic_constraints(self, Q: NaturalCoordinates):
+        """
+        This function returns the holonomic constraints of the system, denoted Phi_h
+        as a function of the natural coordinates Q. They are organized as follow, for each segment:
+            [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Holonomic constraints of the segment [nb_holonomic_constraints, 1]
+        """
+        pass
+
+    @abstractmethod
+    def holonomic_constraints_jacobian(self, Q: NaturalCoordinates):
+        """
+        This function returns the Jacobian matrix the holonomic constraints, denoted k_h.
+        They are organized as follow, for each segmen, the rows of the matrix are:
+        [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Joint constraints of the holonomic constraints [nb_holonomic_constraints, 12 * nb_segments]
+        """
+        pass

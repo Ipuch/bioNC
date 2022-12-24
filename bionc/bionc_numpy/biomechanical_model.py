@@ -579,9 +579,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The weight of each segment [12 * nb_segments, 1]
         """
         weight_vector = np.zeros((self.nb_segments() * 12, 1))
-        for i in range(self.nb_segments()):
+
+        for i, segment in enumerate(self.segments.values()):
             idx = slice(12 * i, 12 * (i + 1))
-            weight_vector[idx] = self.segments[i].weight()
+            weight_vector[idx, 0] = segment.weight()
 
         return weight_vector
 

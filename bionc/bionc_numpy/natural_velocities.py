@@ -91,7 +91,8 @@ class NaturalVelocities(np.ndarray):
         """
         Create a new instance of the class.
         """
-
+        if input_array.shape.__len__() == 1:
+            input_array = input_array[:, np.newaxis]
         return np.asarray(input_array).view(cls)
 
     @classmethod
@@ -110,7 +111,7 @@ class NaturalVelocities(np.ndarray):
         return cls(input_array)
 
     def to_array(self):
-        return np.array(self)
+        return np.array(self).squeeze()
 
     def nb_qdoti(self):
         return self.shape[0] // 12

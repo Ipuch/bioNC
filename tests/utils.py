@@ -32,21 +32,20 @@ class TestUtils:
         ).expand()
 
     @staticmethod
-    def mx_to_array(mx: MX, squeeze: bool = True) -> np.ndarray:
+    def mx_to_array(mx: MX, squeeze: bool = True, expand: bool = True) -> np.ndarray:
         """
         Convert a casadi MX to a numpy array if it is only numeric values
         """
-        val = (
-            Function(
-                "f",
-                [],
-                [mx],
-                [],
-                ["f"],
-            )
-            .expand()()["f"]
-            .toarray()
+        val = Function(
+            "f",
+            [],
+            [mx],
+            [],
+            ["f"],
         )
+        if expand:
+            val = val.expand()
+        val = val()["f"].toarray()
 
         return val.squeeze() if squeeze else val
 
@@ -58,18 +57,22 @@ class TestUtils:
             return value
 
     @staticmethod
-    def mx_assert_equal(mx: MX, expected: Any, decimal: int = 6, squeeze: bool = True):
+    def mx_assert_equal(mx: MX, expected: Any, decimal: int = 6, squeeze: bool = True, expand: bool = True):
         """
         Assert that a casadi MX is equal to a numpy array if it is only numeric values
         """
-        np.testing.assert_almost_equal(TestUtils.mx_to_array(mx, squeeze=squeeze), expected, decimal=decimal)
+        np.testing.assert_almost_equal(
+            TestUtils.mx_to_array(mx, squeeze=squeeze, expand=expand), expected, decimal=decimal
+        )
 
     @staticmethod
-    def assert_equal(value: Union[MX, np.ndarray], expected: Any, decimal: int = 6, squeeze: bool = True):
+    def assert_equal(
+        value: Union[MX, np.ndarray], expected: Any, decimal: int = 6, squeeze: bool = True, expand: bool = True
+    ):
         """
         Assert that a casadi MX or numpy array is equal to a numpy array if it is only numeric values
         """
         if isinstance(value, MX):
-            TestUtils.mx_assert_equal(value, expected, decimal=decimal, squeeze=squeeze)
+            TestUtils.mx_assert_equal(value, expected, decimal=decimal, squeeze=squeeze, expand=expand)
         else:
             np.testing.assert_almost_equal(value, expected, decimal=decimal)

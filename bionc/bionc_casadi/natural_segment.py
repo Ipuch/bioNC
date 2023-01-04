@@ -331,7 +331,7 @@ class NaturalSegment(GenericNaturalSegment):
             Derivative of the rigid body constraints [6 x 1 x N_frame]
         """
 
-        return self.rigid_body_constraint_jacobian(Qi) @ Qdoti.to_vector()
+        return self.rigid_body_constraint_jacobian(Qi) @ Qdoti
 
     @staticmethod
     def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> MX:
@@ -426,6 +426,17 @@ class NaturalSegment(GenericNaturalSegment):
         """
         return self._natural_center_of_mass
 
+    def center_of_mass_position(self, Qi: SegmentNaturalCoordinates) -> MX:
+        """
+        This function returns the position of the center of mass of the segment in the global coordinate system.
+
+        Returns
+        -------
+        MX
+            Position of the center of mass of the segment in the global coordinate system [3x1]
+        """
+        return self.natural_center_of_mass.interpolate() @ Qi
+
     def _update_mass_matrix(self) -> MX:
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.
@@ -490,7 +501,7 @@ class NaturalSegment(GenericNaturalSegment):
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return (self.natural_center_of_mass.interlopate().T * self.mass) @ MX([0, 0, -9.81])
+        return (self.natural_center_of_mass.interpolate().T * self.mass) @ MX([0, 0, -9.81])
 
     def differential_algebraic_equation(
         self,

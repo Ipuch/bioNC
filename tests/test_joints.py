@@ -135,6 +135,37 @@ def test_joints(bionc_type, joint_type: JointType):
             ),
             decimal=6,
         )
+        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian_dot,
+            np.vstack(
+                (
+                    np.zeros((3, 12)),
+                    np.array(
+                        [
+                            [-0.1, -1.1, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                            [0.0, 0.0, 0.0, 1.7, 2.0, 5.3, -1.7, -2.0, -5.3, 0.0, 0.0, 0.0],
+                        ]
+                    ),
+                )
+            ),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian_dot,
+            np.vstack(
+                (
+                    np.zeros((3, 12)),
+                    np.array(
+                        [
+                            [0.0, 0.0, 0.0, 1.0, 2.0, 3.05, -1.0, -2.0, -3.05, 0.0, 0.0, 0.0],
+                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.1, -1.0, -1.0],
+                        ]
+                    ),
+                )
+            ),
+            decimal=6,
+        )
 
     elif joint_type == JointType.UNIVERSAL:
         TestUtils.assert_equal(
@@ -167,6 +198,37 @@ def test_joints(bionc_type, joint_type: JointType):
             ),
             decimal=6,
         )
+
+        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian_dot,
+            np.vstack(
+                (
+                    np.zeros((3, 12)),
+                    np.array(
+                        [
+                            [1.7, 2.0, 5.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                        ]
+                    ),
+                )
+            ),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian_dot,
+            np.vstack(
+                (
+                    np.zeros((3, 12)),
+                    np.array(
+                        [
+                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.05],
+                        ]
+                    ),
+                )
+            ),
+            decimal=6,
+        )
+
     elif joint_type == JointType.SPHERICAL:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
@@ -196,6 +258,19 @@ def test_joints(bionc_type, joint_type: JointType):
             ),
             decimal=6,
         )
+
+        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian_dot,
+            np.zeros((3, 12)),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian_dot,
+            np.zeros((3, 12)),
+            decimal=6,
+        )
+
     elif joint_type == JointType.GROUND_REVOLUTE:
 
         TestUtils.assert_equal(
@@ -215,5 +290,12 @@ def test_joints(bionc_type, joint_type: JointType):
                     [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
                 ]
             ),
+            decimal=6,
+        )
+
+        child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        TestUtils.assert_equal(
+            child_jacobian_dot,
+            np.zeros((5, 12)),
             decimal=6,
         )

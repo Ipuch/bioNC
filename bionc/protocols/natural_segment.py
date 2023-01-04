@@ -306,6 +306,16 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
+    def center_of_mass_position(self, Qi: SegmentNaturalCoordinates):
+        """
+        This function returns the position of the center of mass of the segment in the global coordinate system.
+
+        Returns
+        -------
+            Position of the center of mass of the segment in the global coordinate system [3x1]
+        """
+
+    @abstractmethod
     def _update_mass_matrix(self):
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.

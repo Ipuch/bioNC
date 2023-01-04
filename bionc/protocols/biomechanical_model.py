@@ -222,6 +222,26 @@ class GenericBiomechanicalModel(ABC):
         """
         return 12 * self.nb_segments()
 
+    def joints_from_child_index(self, child_index: int) -> list:
+        """
+        This function returns the joints that have the given child index
+
+        Parameters
+        ----------
+        child_index : int
+            The child index
+
+        Returns
+        -------
+        list[JointBase]
+            The joints that have the given child index
+        """
+        joints = []
+        for joint in self.joints.values():
+            if joint.child.index == child_index:
+                joints.append(joint)
+        return joints
+
     @property
     def mass_matrix(self):
         """
@@ -250,6 +270,24 @@ class GenericBiomechanicalModel(ABC):
         pass
 
     @abstractmethod
+    def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates):
+        """
+        This function returns the derivative of the rigid body constraints denoted Phi_r_dot
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the model
+        Qdot : NaturalVelocities
+            The natural velocities of the model
+
+        Returns
+        -------
+            Derivative of the rigid body constraints
+        """
+        pass
+
+    @abstractmethod
     def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates):
         """
         This function returns the rigid body constraints of all segments, denoted K_r
@@ -270,14 +308,12 @@ class GenericBiomechanicalModel(ABC):
         Parameters
         ----------
         Qdot : NaturalVelocities
-            The natural velocities of the segment [nb_segments * 12, 1]
+            The natural velocities of the segment [12 * nb_segments, 1]
 
         Returns
         -------
-        np.ndarray
-            The derivative of the Jacobian matrix of the rigid body constraints [6, 12]
+            The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
         """
-
         pass
 
     @abstractmethod
@@ -303,6 +339,22 @@ class GenericBiomechanicalModel(ABC):
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
 
+        pass
+
+    @abstractmethod
+    def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities):
+        """
+        This function returns the derivative of the Jacobian matrix of the joint constraints denoted Kk_dot
+
+        Parameters
+        ----------
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
+        """
         pass
 
     @abstractmethod
@@ -370,6 +422,24 @@ class GenericBiomechanicalModel(ABC):
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
 
     @abstractmethod
+    def markers(self, Q: NaturalCoordinates):
+        """
+        This function returns the position of the markers of the system as a function of the natural coordinates Q
+        also referred as forward kinematics
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+            The position of the markers [3, nbMarkers, nbFrames]
+            in the global coordinate system/ inertial coordinate system
+        """
+        pass
+
+    @abstractmethod
     def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates):
         """
         This function returns the marker constraints of all segments, denoted Phi_r
@@ -395,5 +465,93 @@ class GenericBiomechanicalModel(ABC):
         Returns
         -------
             Joint constraints of the marker [nb_markers x 3, nb_Q]
+        """
+        pass
+
+    @abstractmethod
+    def holonomic_constraints(self, Q: NaturalCoordinates):
+        """
+        This function returns the holonomic constraints of the system, denoted Phi_h
+        as a function of the natural coordinates Q. They are organized as follow, for each segment:
+            [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Holonomic constraints of the segment [nb_holonomic_constraints, 1]
+        """
+        pass
+
+    @abstractmethod
+    def holonomic_constraints_jacobian(self, Q: NaturalCoordinates):
+        """
+        This function returns the Jacobian matrix the holonomic constraints, denoted k_h.
+        They are organized as follow, for each segmen, the rows of the matrix are:
+        [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Joint constraints of the holonomic constraints [nb_holonomic_constraints, 12 * nb_segments]
+        """
+        pass
+
+    @abstractmethod
+    def weight(self):
+        """
+        This function returns the weights caused by the gravity forces on each segment
+
+        Returns
+        -------
+            The weight of each segment [12 * nb_segments, 1]
+        """
+        pass
+
+    @abstractmethod
+    def forward_dynamics(
+        self,
+        Q: NaturalCoordinates,
+        Qdot: NaturalCoordinates,
+        # external_forces: ExternalForces
+    ):
+        """
+        This function computes the forward dynamics of the system, i.e. the acceleration of the segments
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+        Qdot : NaturalCoordinates
+            The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Qddot : NaturalAccelerations
+                The natural accelerations [12 * nb_segments, 1]
+        """
+        pass
+
+    @abstractmethod
+    def center_of_mass_position(self, Q: NaturalCoordinates):
+        """
+        This function returns the position of the center of mass of each segment as a function of the natural coordinates Q
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+            The position of the center of mass [3, nbSegments]
+            in the global coordinate system/ inertial coordinate system
         """
         pass

@@ -201,7 +201,8 @@ class NaturalCoordinates(np.ndarray):
         """
         Create a new instance of the class.
         """
-
+        if input_array.shape.__len__() == 1:
+            input_array = input_array[:, np.newaxis]
         return np.asarray(input_array).view(cls)
 
     @classmethod

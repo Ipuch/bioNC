@@ -21,7 +21,7 @@ Inverse and Forward approach are implemented.
 [Mathematical backends](#mathematical-backends)
 [Natural coordinates reminders](#natural-coordinates-reminders)
 
-[A more in depth look at the `bioptim` API](#a-more-in-depth-look-at-the-bioptim-api)
+[A more in depth look at the `bionc` API](#a-more-in-depth-look-at-the-bionc-api)
  todo
 
 # Installation - from source

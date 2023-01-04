@@ -472,6 +472,17 @@ class NaturalSegment(GenericNaturalSegment):
         """
         return self._natural_center_of_mass
 
+    def center_of_mass_position(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+        """
+        This function returns the position of the center of mass of the segment in the global coordinate system.
+
+        Returns
+        -------
+        np.ndarray
+            Position of the center of mass of the segment in the global coordinate system [3x1]
+        """
+        return np.array(self.natural_center_of_mass.interpolate() @ Qi.to_array())
+
     def _update_mass_matrix(self) -> np.ndarray:
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.

@@ -514,3 +514,27 @@ class GenericBiomechanicalModel(ABC):
             The weight of each segment [12 * nb_segments, 1]
         """
         pass
+
+    @abstractmethod
+    def forward_dynamics(
+        self,
+        Q: NaturalCoordinates,
+        Qdot: NaturalCoordinates,
+        # external_forces: ExternalForces
+    ):
+        """
+        This function computes the forward dynamics of the system, i.e. the acceleration of the segments
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+        Qdot : NaturalCoordinates
+            The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Qddot : NaturalAccelerations
+                The natural accelerations [12 * nb_segments, 1]
+        """
+        pass

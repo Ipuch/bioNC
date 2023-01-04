@@ -174,12 +174,13 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
     return defects, defects_dot, joint_defects, all_lambdas
 
 
-if __name__ == "__main__":
-
+def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
+    """ Build a n-link pendulum model """
+    if nb_segments < 1:
+        raise ValueError("The number of segment must be greater than 1")
     # Let's create a model
     model = BiomechanicalModel()
     # number of segments
-    nb_segments = 20
     # fill the biomechanical model with the segment
     for i in range(nb_segments):
         name=f"pendulum_{i}"
@@ -219,10 +220,18 @@ if __name__ == "__main__":
                 theta=[np.pi / 2, np.pi / 2],
             )
         )
-    print(model.joints)
+    return model
 
-    model.nb_joints()
-    model.nb_joint_constraints()
+
+if __name__ == "__main__":
+
+    # Let's create a model
+    nb_segments = 20
+    model = build_n_link_pendulum(nb_segment=nb_segments)
+
+    print(model.joints)
+    print(model.nb_joints())
+    print(model.nb_joint_constraints())
 
     tuple_of_Q = [SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i-1, 0], w=[0, 0, 1])
                   for i in range(0, nb_segments)]

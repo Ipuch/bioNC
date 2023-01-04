@@ -1,9 +1,10 @@
 import numpy as np
-from casadi import MX, transpose
+from casadi import MX, transpose, horzcat, vertcat, solve
 import pickle
 
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
+from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 
 
@@ -567,3 +568,52 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             weight_vector[idx] = segment.weight()
 
         return weight_vector
+
+    def forward_dynamics(
+        self,
+        Q: NaturalCoordinates,
+        Qdot: NaturalCoordinates,
+        # external_forces: ExternalForces
+    ):
+        """
+        This function computes the forward dynamics of the system, i.e. the acceleration of the segments
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+        Qdot : NaturalCoordinates
+            The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            Qddot : NaturalAccelerations
+                The natural accelerations [12 * nb_segments, 1]
+            lagrange_multipliers : MX
+                The lagrange multipliers [nb_holonomic_constraints, 1]
+        """
+        G = self.mass_matrix
+        K = self.holonomic_constraints_jacobian(Q)
+        Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
+
+        # if stabilization is not None:
+        #     biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+        #         "beta"
+        #     ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
+
+        # KKT system
+        # [G, K.T] [Qddot]  = [forces]
+        # [K, 0  ] [lambda] = [biais]
+        upper_KKT_matrix = horzcat(G, K.T)
+        lower_KKT_matrix = horzcat(K, np.zeros((K.shape[0], K.shape[0])))
+        KKT_matrix = vertcat(upper_KKT_matrix, lower_KKT_matrix)
+
+        forces = self.weight()
+        biais = -Kdot @ Qdot
+        B = vertcat(forces, biais)
+
+        # solve the linear system Ax = B with casadi symbolic qr
+        x = solve(KKT_matrix, B, "symbolicqr")
+        Qddot = x[0: self.nb_Qddot()]
+        lagrange_multipliers = x[self.nb_Qddot():]
+        return NaturalAccelerations(Qddot), lagrange_multipliers

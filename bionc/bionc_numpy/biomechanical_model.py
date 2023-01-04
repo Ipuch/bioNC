@@ -308,10 +308,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The position of the center of mass [3, nbSegments]
             in the global coordinate system/ inertial coordinate system
         """
-        com = np.zeros((3, self.nb_segments(), 1))
+        com = np.zeros((3, self.nb_segments(), Q.shape[1]))
         for i, segment in enumerate(self.segments.values()):
             position = segment.center_of_mass_position(Q.vector(i))
-            com[:, i:i+1, 0] = position if len(position.shape) == 2 else position[:, np.newaxis]
+            com[:, i, :] = position if len(position.shape) == 2 else position[:, np.newaxis]
 
         return com
 

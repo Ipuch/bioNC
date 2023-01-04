@@ -245,8 +245,8 @@ def cheap_animation(model: BiomechanicalModel, Q: NaturalCoordinates):
             markers_size=0.02,
             markers_opacity=1,
         ))
-        center_of_mass_locations[:, i_s : i_s + 1 , :] = model.center_of_mass_position(Q)
 
+    center_of_mass_locations[:, :, :] = model.center_of_mass_position(Q)
     center_of_mass_locations = Markers(center_of_mass_locations)
     # Animate all this
     i = 0

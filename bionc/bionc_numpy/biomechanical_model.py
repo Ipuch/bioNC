@@ -185,7 +185,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
         """
 
-        K_k_dot = np.zeros((self.nb_joint_constraints(), Q.shape[0]))
+        K_k_dot = np.zeros((self.nb_joint_constraints(), Qdot.shape[0]))
         nb_constraints = 0
         for joint_name, joint in self.joints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)

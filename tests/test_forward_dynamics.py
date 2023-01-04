@@ -470,7 +470,9 @@ def test_forward_dynamics_n_pendulum(bionc_type):
     if bionc_type == "numpy":
         TestUtils.assert_equal(
             lagrange_multipliers[:3, 0],
-            lagrange_multipliers_expected[:3, 0], # only the three first values tested because hard to test it on cross plateforms
+            lagrange_multipliers_expected[
+                :3, 0
+            ],  # only the three first values tested because hard to test it on cross plateforms
             decimal=3,
             squeeze=False,
             expand=False,

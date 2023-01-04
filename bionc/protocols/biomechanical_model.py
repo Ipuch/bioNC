@@ -270,6 +270,24 @@ class GenericBiomechanicalModel(ABC):
         pass
 
     @abstractmethod
+    def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates):
+        """
+        This function returns the derivative of the rigid body constraints denoted Phi_r_dot
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the model
+        Qdot : NaturalVelocities
+            The natural velocities of the model
+
+        Returns
+        -------
+            Derivative of the rigid body constraints
+        """
+        pass
+
+    @abstractmethod
     def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates):
         """
         This function returns the rigid body constraints of all segments, denoted K_r

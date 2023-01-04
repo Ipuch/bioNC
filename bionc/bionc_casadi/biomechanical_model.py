@@ -46,6 +46,24 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return Phi_r
 
+    def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates) -> MX:
+        """
+        This function returns the derivative of the rigid body constraints of all segments, denoted Phi_r_dot
+        as a function of the natural coordinates Q and Qdot.
+
+        Returns
+        -------
+        MX
+            Derivative of the rigid body constraints of the segment [6 * nb_segments, 1]
+        """
+
+        Phi_r_dot = MX.zeros(6 * self.nb_segments())
+        for i, segment_name in enumerate(self.segments):
+            idx = slice(6 * i, 6 * (i + 1))
+            Phi_r_dot[idx] = self.segments[segment_name].rigid_body_constraint_derivative(Q.vector(i), Qdot.vector(i))
+
+        return Phi_r_dot
+
     def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates) -> MX:
         """
         This function returns the rigid body constraints of all segments, denoted K_r

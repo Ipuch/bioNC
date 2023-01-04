@@ -331,7 +331,7 @@ class NaturalSegment(GenericNaturalSegment):
             Derivative of the rigid body constraints [6 x 1 x N_frame]
         """
 
-        return self.rigid_body_constraint_jacobian(Qi) @ Qdoti.to_vector()
+        return self.rigid_body_constraint_jacobian(Qi) @ Qdoti
 
     @staticmethod
     def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> MX:

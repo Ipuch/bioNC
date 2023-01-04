@@ -2563,6 +2563,15 @@ def test_biomech_model(bionc_type):
         ),
         decimal=6,
     )
+    # rigidbodycosntraint_derivative
+    TestUtils.assert_equal(
+        natural_model.rigid_body_constraints_derivative(Q, Qdot),
+        np.array([28.605, -10.3, 41.71, 4.02, -14.46, 63.4, 32.4,
+               -10.68, 46.04, 4.02, -14.74, 67.86, 36.26, -11.32,
+               50.9, 4.08, -15.48, 73.86, 41.7, -11.26, 56.68,
+               4.02, -15.32, 79.84])
+    )
+
 
     # Test rigid body constraints
     Q1 = SegmentNaturalCoordinates.from_components(

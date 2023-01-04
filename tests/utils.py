@@ -36,14 +36,12 @@ class TestUtils:
         """
         Convert a casadi MX to a numpy array if it is only numeric values
         """
-        val = (
-            Function(
-                "f",
-                [],
-                [mx],
-                [],
-                ["f"],
-            )
+        val = Function(
+            "f",
+            [],
+            [mx],
+            [],
+            ["f"],
         )
         if expand:
             val = val.expand()
@@ -63,10 +61,14 @@ class TestUtils:
         """
         Assert that a casadi MX is equal to a numpy array if it is only numeric values
         """
-        np.testing.assert_almost_equal(TestUtils.mx_to_array(mx, squeeze=squeeze, expand=expand), expected, decimal=decimal)
+        np.testing.assert_almost_equal(
+            TestUtils.mx_to_array(mx, squeeze=squeeze, expand=expand), expected, decimal=decimal
+        )
 
     @staticmethod
-    def assert_equal(value: Union[MX, np.ndarray], expected: Any, decimal: int = 6, squeeze: bool = True, expand: bool = True):
+    def assert_equal(
+        value: Union[MX, np.ndarray], expected: Any, decimal: int = 6, squeeze: bool = True, expand: bool = True
+    ):
         """
         Assert that a casadi MX or numpy array is equal to a numpy array if it is only numeric values
         """

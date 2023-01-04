@@ -159,8 +159,8 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
     for i in range(len(time_steps)):
         defects[:, i] = model.rigid_body_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
         defects_dot[:, i] = model.rigid_body_constraints_derivative(
-            NaturalCoordinates(all_states[idx_coordinates, i]),
-            NaturalVelocities(all_states[idx_velocities, i]))
+            NaturalCoordinates(all_states[idx_coordinates, i]), NaturalVelocities(all_states[idx_velocities, i])
+        )
 
         joint_defects[:, i] = model.joint_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
         # todo : to be implemented
@@ -175,7 +175,7 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
 
 
 def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
-    """ Build a n-link pendulum model """
+    """Build a n-link pendulum model"""
     if nb_segments < 1:
         raise ValueError("The number of segment must be greater than 1")
     # Let's create a model
@@ -183,7 +183,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
     # number of segments
     # fill the biomechanical model with the segment
     for i in range(nb_segments):
-        name=f"pendulum_{i}"
+        name = f"pendulum_{i}"
         model[name] = NaturalSegment(
             name=name,
             alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates an orthogonal coordinate system
@@ -233,12 +233,16 @@ if __name__ == "__main__":
     print(model.nb_joints())
     print(model.nb_joint_constraints())
 
-    tuple_of_Q = [SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i-1, 0], w=[0, 0, 1])
-                  for i in range(0, nb_segments)]
+    tuple_of_Q = [
+        SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i - 1, 0], w=[0, 0, 1])
+        for i in range(0, nb_segments)
+    ]
     Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
 
-    tuple_of_Qdot = [SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
-                        for i in range(0, nb_segments)]
+    tuple_of_Qdot = [
+        SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
+        for i in range(0, nb_segments)
+    ]
     Qdot = NaturalVelocities.from_qdoti(tuple(tuple_of_Qdot))
 
     print(model.joint_constraints(Q))
@@ -295,4 +299,4 @@ if __name__ == "__main__":
     plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
 
     # animate the motion
-    cheap_animation(model, NaturalCoordinates(all_states[:(12 * nb_segments), :]))
+    cheap_animation(model, NaturalCoordinates(all_states[: (12 * nb_segments), :]))

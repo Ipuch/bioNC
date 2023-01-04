@@ -614,6 +614,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         # solve the linear system Ax = B with casadi symbolic qr
         x = solve(KKT_matrix, B, "symbolicqr")
-        Qddot = x[0: self.nb_Qddot()]
-        lagrange_multipliers = x[self.nb_Qddot():]
+        Qddot = x[0 : self.nb_Qddot()]
+        lagrange_multipliers = x[self.nb_Qddot() :]
         return NaturalAccelerations(Qddot), lagrange_multipliers

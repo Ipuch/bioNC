@@ -159,8 +159,8 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
     for i in range(len(time_steps)):
         defects[:, i] = model.rigid_body_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
         defects_dot[:, i] = model.rigid_body_constraints_derivative(
-            NaturalCoordinates(all_states[idx_coordinates, i]),
-            NaturalVelocities(all_states[idx_velocities, i]))
+            NaturalCoordinates(all_states[idx_coordinates, i]), NaturalVelocities(all_states[idx_velocities, i])
+        )
 
         joint_defects[:, i] = model.joint_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
         # todo : to be implemented

@@ -233,17 +233,21 @@ def cheap_animation(model: BiomechanicalModel, Q: NaturalCoordinates):
 
     ground_frame = VtkGroundFrame(vtkWindow)
     frames = []
-    for s in range(Q.nb_qi()):
+    for s in range(model.nb_segments()):
         frames.append(VtkFrameModel(vtkWindow))
-        center_of_mass = []
-    for segment in model.segments.values():
+
+    center_of_mass = []
+    center_of_mass_locations = np.zeros((3, model.nb_segments(), Q.shape[1]))
+    for i_s in range(model.nb_segments()):
         center_of_mass.append(VtkModel(
             vtkWindow,
             markers_color=(1, 0, 0),
             markers_size=0.02,
             markers_opacity=1,
         ))
+        center_of_mass_locations[:, i_s : i_s + 1 , :] = model.center_of_mass_position(Q)
 
+    center_of_mass_locations = Markers(center_of_mass_locations)
     # Animate all this
     i = 0
     while vtkWindow.is_active:
@@ -251,11 +255,9 @@ def cheap_animation(model: BiomechanicalModel, Q: NaturalCoordinates):
         ground_frame.update_frame()
         for s in range(Q.nb_qi()):
             frames[s].update_frame(Q.vector(s)[:, i:i + 1])
-        # it doesnt work because it should be initialized before the display loop with all the frames
-        # Markers([3,n,nframes])
-        center_of_mass_locations = Markers(model.center_of_mass_position(Q[:, i:i + 1]))
+
         for s, com in enumerate(center_of_mass):
-            com.update_markers(center_of_mass_locations[:, s, 0])
+            com.update_markers(center_of_mass_locations[:, s:s+1, i])
 
         # Update window
         vtkWindow.update_frame()

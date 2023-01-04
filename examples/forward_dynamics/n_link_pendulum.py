@@ -178,40 +178,59 @@ if __name__ == "__main__":
 
     # Let's create a model
     model = BiomechanicalModel()
+    # number of segments
+    nb_segments = 20
     # fill the biomechanical model with the segment
-    model["pendulum"] = NaturalSegment(
-        name="pendulum",
-        alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
-        beta=np.pi / 2,
-        gamma=np.pi / 2,
-        length=1,
-        mass=1,
-        center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
-        inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
-    )
+    for i in range(nb_segments):
+        name=f"pendulum_{i}"
+        model[name] = NaturalSegment(
+            name=name,
+            alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates an orthogonal coordinate system
+            beta=np.pi / 2,
+            gamma=np.pi / 2,
+            length=1,
+            mass=1,
+            center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
+            inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+        )
     # add a revolute joint (still experimental)
     # if you want to add a revolute joint,
     # you need to ensure that x is always orthogonal to u and v
     model._add_joint(
         dict(
-            name="hinge",
+            name="hinge_0",
             joint_type=JointType.GROUND_REVOLUTE,
             parent="GROUND",
-            child="pendulum",
+            child="pendulum_0",
             parent_axis=[CartesianAxis.X, CartesianAxis.X],
             child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
             theta=[np.pi / 2, np.pi / 2],
         )
     )
+    for i in range(1, nb_segments):
+        model._add_joint(
+            dict(
+                name=f"hinge_{i}",
+                joint_type=JointType.REVOLUTE,
+                parent=f"pendulum_{i - 1}",
+                child=f"pendulum_{i}",
+                parent_axis=[NaturalAxis.U, NaturalAxis.U],
+                child_axis=[NaturalAxis.V, NaturalAxis.W],
+                theta=[np.pi / 2, np.pi / 2],
+            )
+        )
     print(model.joints)
 
     model.nb_joints()
     model.nb_joint_constraints()
 
-    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
-    Q = NaturalCoordinates(Qi)
-    Qdoti = SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
-    Qdot = NaturalVelocities(Qdoti)
+    tuple_of_Q = [SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i-1, 0], w=[0, 0, 1])
+                  for i in range(0, nb_segments)]
+    Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
+
+    tuple_of_Qdot = [SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
+                        for i in range(0, nb_segments)]
+    Qdot = NaturalVelocities.from_qdoti(tuple(tuple_of_Qdot))
 
     print(model.joint_constraints(Q))
     print(model.joint_constraints_jacobian(Q))
@@ -219,28 +238,29 @@ if __name__ == "__main__":
     print(model.holonomic_constraints_jacobian(Q))
 
     # one can comment this section if he doesn't to display the matrices
-    # from matplotlib import pyplot as plt
-    #
-    # plt.spy(K)
-    # plt.show()
-    #
-    # plt.figure()
-    # plt.spy(model.mass_matrix)
-    # plt.show()
-    #
-    # plt.figure()
-    # G = model.mass_matrix
-    # K = model.rigid_body_constraints_jacobian(Q)
-    # Kdot = model.rigid_body_constraint_jacobian_derivative(Qdot)
-    #
-    # upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
-    # lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
-    # KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
-    # plt.spy(KKT_matrix)
-    # plt.show()
+    from matplotlib import pyplot as plt
 
-    # The actual simulation
-    t_final = 5
+    K = model.joint_constraints_jacobian(Q)
+    plt.spy(K)
+    plt.show()
+
+    plt.figure()
+    plt.spy(model.mass_matrix)
+    plt.show()
+
+    plt.figure()
+    G = model.mass_matrix
+    K = model.rigid_body_constraints_jacobian(Q)
+    Kdot = model.rigid_body_constraint_jacobian_derivative(Qdot)
+    upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
+    lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
+    KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
+
+    plt.spy(KKT_matrix)
+    plt.show()
+
+    # actual simulation
+    t_final = 20  # seconds
     time_steps, all_states, dynamics = drop_the_pendulum(
         model=model,
         Q_init=Q,
@@ -266,4 +286,4 @@ if __name__ == "__main__":
     plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
 
     # animate the motion
-    cheap_animation(model, NaturalCoordinates(all_states[:12, :]))
+    cheap_animation(model, NaturalCoordinates(all_states[:(12 * nb_segments), :]))

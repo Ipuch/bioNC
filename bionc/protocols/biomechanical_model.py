@@ -538,3 +538,20 @@ class GenericBiomechanicalModel(ABC):
                 The natural accelerations [12 * nb_segments, 1]
         """
         pass
+
+    @abstractmethod
+    def center_of_mass_position(self, Q: NaturalCoordinates):
+        """
+        This function returns the position of the center of mass of each segment as a function of the natural coordinates Q
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+
+        Returns
+        -------
+            The position of the center of mass [3, nbSegments]
+            in the global coordinate system/ inertial coordinate system
+        """
+        pass

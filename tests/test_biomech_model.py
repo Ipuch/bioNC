@@ -9058,3 +9058,17 @@ def test_biomech_model_mass(bionc_type):
         ),
         squeeze=False,
     )
+
+    # position of the center of mass
+    com_expected = np.array([[[1.1],
+        [1.5]],
+       [[1. ],
+        [1. ]],
+       [[3.1],
+        [3.2]]])
+    com_expected = com_expected.squeeze() if bionc_type=="casadi" else com_expected
+
+    TestUtils.assert_equal(
+        model.center_of_mass_position(Q),
+        com_expected,
+    )

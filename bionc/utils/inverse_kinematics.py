@@ -38,7 +38,7 @@ class InverseKinematics:
         self.biomechanical_model = biomechanical_model
         self.markers = markers
 
-        # self.Q_init = np.zeros(self.biomechanical_model.nb_Q(), self.markers.shape[2])
+        # self.Q_init = np.zeros(self.biomechanical_model.nb_Q, self.markers.shape[2])
         self.Q_init = self.biomechanical_model.Q_from_xp(markers)
 
     def solve(self, method: InverseKinematicsMethods = InverseKinematicsMethods.NEWTON_RAPHSON):

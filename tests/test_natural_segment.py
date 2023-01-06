@@ -206,7 +206,7 @@ def test_marker_features(bionc_type):
         w=[1, 2, 5],
     )
 
-    TestUtils.assert_equal(my_segment.nb_markers(), 2)
+    TestUtils.assert_equal(my_segment.nb_markers, 2)
     TestUtils.assert_equal(
         my_segment.marker_constraints(
             marker_locations=np.array([[1, 2, 3], [1, 2, 3]]).T,
@@ -217,7 +217,7 @@ def test_marker_features(bionc_type):
 
     with pytest.raises(
         ValueError,
-        # match=f"marker_locations should be of shape (3, {my_segment.nb_markers()})"  # don't know why this doesn't work
+        # match=f"marker_locations should be of shape (3, {my_segment.nb_markers})"  # don't know why this doesn't work
     ):
         my_segment.marker_constraints(
             marker_locations=np.array([[1, 2, 3]]).T,

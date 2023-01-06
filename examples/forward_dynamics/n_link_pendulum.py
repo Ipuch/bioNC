@@ -67,8 +67,8 @@ def drop_the_pendulum(
     # Create the forward dynamics function Callable (f(t, x) -> xdot)
     def dynamics(t, states):
 
-        idx_coordinates = slice(0, model.nb_Q())
-        idx_velocities = slice(model.nb_Q(), model.nb_Q() + model.nb_Qdot())
+        idx_coordinates = slice(0, model.nb_Q)
+        idx_velocities = slice(model.nb_Q, model.nb_Q + model.nb_Qdot)
 
         qddot, lambdas = model.forward_dynamics(
             NaturalCoordinates(states[idx_coordinates]),
@@ -146,15 +146,15 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
         lambdas : np.ndarray
             The lagrange multipliers of the rigid body constraint at each time step
     """
-    idx_coordinates = slice(0, model.nb_Q())
-    idx_velocities = slice(model.nb_Q(), model.nb_Q() + model.nb_Qdot())
+    idx_coordinates = slice(0, model.nb_Q)
+    idx_velocities = slice(model.nb_Q, model.nb_Q + model.nb_Qdot)
 
     # compute the quantities of interest after the integration
-    all_lambdas = np.zeros((model.nb_holonomic_constraints(), len(time_steps)))
-    defects = np.zeros((model.nb_rigid_body_constraints(), len(time_steps)))
-    defects_dot = np.zeros((model.nb_rigid_body_constraints(), len(time_steps)))
-    joint_defects = np.zeros((model.nb_joint_constraints(), len(time_steps)))
-    joint_defects_dot = np.zeros((model.nb_joint_constraints(), len(time_steps)))
+    all_lambdas = np.zeros((model.nb_holonomic_constraints, len(time_steps)))
+    defects = np.zeros((model.nb_rigid_body_constraints, len(time_steps)))
+    defects_dot = np.zeros((model.nb_rigid_body_constraints, len(time_steps)))
+    joint_defects = np.zeros((model.nb_joint_constraints, len(time_steps)))
+    joint_defects_dot = np.zeros((model.nb_joint_constraints, len(time_steps)))
 
     for i in range(len(time_steps)):
         defects[:, i] = model.rigid_body_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
@@ -230,8 +230,8 @@ if __name__ == "__main__":
     model = build_n_link_pendulum(nb_segment=nb_segments)
 
     print(model.joints)
-    print(model.nb_joints())
-    print(model.nb_joint_constraints())
+    print(model.nb_joints)
+    print(model.nb_joint_constraints)
 
     tuple_of_Q = [
         SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i - 1, 0], w=[0, 0, 1])

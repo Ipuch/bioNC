@@ -31,7 +31,7 @@ class NaturalSegment(GenericNaturalSegment):
 
     add_natural_marker()
         This function adds a marker to the segment
-    nb_markers()
+    nb_markers
         This function returns the number of markers in the segment
     marker_constraints()
         This function returns the defects of the marker constraints of the segment, denoted Phi_m
@@ -574,17 +574,6 @@ class NaturalSegment(GenericNaturalSegment):
         marker.parent_name = self.name
         self._markers.append(marker)
 
-    def nb_markers(self) -> int:
-        """
-        Returns the number of markers of the natural segment
-
-        Returns
-        -------
-        int
-            Number of markers of the segment
-        """
-        return len(self._markers)
-
     def markers(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
         This function returns the position of the markers of the system as a function of the natural coordinates Q
@@ -604,7 +593,7 @@ class NaturalSegment(GenericNaturalSegment):
         if not isinstance(Qi, SegmentNaturalCoordinates):
             Qi = SegmentNaturalCoordinates(Qi)
 
-        markers = MX.zeros((3, self.nb_markers()))
+        markers = MX.zeros((3, self.nb_markers))
         for i, marker in enumerate(self._markers):
             markers[:, i] = marker.position_in_global(Qi)
 
@@ -630,7 +619,7 @@ class NaturalSegment(GenericNaturalSegment):
         MX
             The defects of the marker constraints of the segment (3 x N_markers)
         """
-        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
         markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
 
         if marker_locations.shape != (3, nb_markers):
@@ -657,7 +646,7 @@ class NaturalSegment(GenericNaturalSegment):
         MX
             The jacobian of the marker constraints of the segment (3 x N_markers)
         """
-        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
         markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
         return vertcat(*[-marker.interpolation_matrix for marker in markers]) if nb_markers > 0 else MX.zeros((0, 12))
 

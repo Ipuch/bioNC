@@ -40,7 +40,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Rigid body constraints of the segment [6 * nb_segments, 1]
         """
 
-        Phi_r = MX.zeros(6 * self.nb_segments())
+        Phi_r = MX.zeros(6 * self.nb_segments)
         for i, segment_name in enumerate(self.segments):
             idx = slice(6 * i, 6 * (i + 1))
             Phi_r[idx] = self.segments[segment_name].rigid_body_constraint(Q.vector(i))
@@ -58,7 +58,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Derivative of the rigid body constraints of the segment [6 * nb_segments, 1]
         """
 
-        Phi_r_dot = MX.zeros(6 * self.nb_segments())
+        Phi_r_dot = MX.zeros(6 * self.nb_segments)
         for i, segment_name in enumerate(self.segments):
             idx = slice(6 * i, 6 * (i + 1))
             Phi_r_dot[idx] = self.segments[segment_name].rigid_body_constraint_derivative(Q.vector(i), Qdot.vector(i))
@@ -76,7 +76,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Rigid body constraints of the segment [6 * nb_segments, nbQ]
         """
 
-        K_r = MX.zeros((6 * self.nb_segments(), Q.shape[0]))
+        K_r = MX.zeros((6 * self.nb_segments, Q.shape[0]))
         for i, segment_name in enumerate(self.segments):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
@@ -99,7 +99,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
         """
 
-        Kr_dot = MX.zeros((6 * self.nb_segments(), Qdot.shape[0]))
+        Kr_dot = MX.zeros((6 * self.nb_segments, Qdot.shape[0]))
         for i, segment_name in enumerate(self.segments):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
@@ -120,7 +120,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
 
-        Phi_k = MX.zeros(self.nb_joint_constraints())
+        Phi_k = MX.zeros(self.nb_joint_constraints)
         nb_constraints = 0
         for joint_name, joint in self.joints.items():
             idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
@@ -146,7 +146,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Joint constraints of the segment [nb_joint_constraints, nbQ]
         """
 
-        K_k = MX.zeros((self.nb_joint_constraints(), Q.shape[0]))
+        K_k = MX.zeros((self.nb_joint_constraints, Q.shape[0]))
         nb_constraints = 0
         for joint_name, joint in self.joints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
@@ -185,7 +185,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
         """
 
-        K_k_dot = MX.zeros((self.nb_joint_constraints(), Qdot.shape[0]))
+        K_k_dot = MX.zeros((self.nb_joint_constraints, Qdot.shape[0]))
         nb_constraints = 0
         for joint_name, joint in self.joints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
@@ -218,7 +218,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         MX
             generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
         """
-        G = MX.zeros((12 * self.nb_segments(), 12 * self.nb_segments()))
+        G = MX.zeros((12 * self.nb_segments, 12 * self.nb_segments))
         for i, segment_name in enumerate(self.segments):
             Gi = self.segments[segment_name].mass_matrix
             if Gi is None:
@@ -302,7 +302,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The position of the markers [3, nbMarkers, nbFrames]
             in the global coordinate system/ inertial coordinate system
         """
-        markers = MX.zeros((3, self.nb_markers(), Q.shape[1]))
+        markers = MX.zeros((3, self.nb_markers, Q.shape[1]))
         nb_markers = 0
         for _, segment in self.segments.items():
             idx = slice(nb_markers, nb_markers + segment.nb_markers)
@@ -326,7 +326,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The position of the center of mass [3, nbSegments]
             in the global coordinate system/ inertial coordinate system
         """
-        com = MX.zeros((3, self.nb_segments()))
+        com = MX.zeros((3, self.nb_segments))
         for i, segment in enumerate(self.segments.values()):
             position = segment.center_of_mass_position(Q.vector(i))
             com[:, i] = position
@@ -354,12 +354,12 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         if not isinstance(markers, MX):
             markers = MX(markers)
 
-        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
         if markers.shape[1] != nb_markers:
             raise ValueError(
                 f"markers should have {nb_markers} columns. "
                 f"And should include the following markers: "
-                f"{self.marker_names_technical() if only_technical else self.marker_names()}"
+                f"{self.marker_names_technical if only_technical else self.marker_names}"
             )
 
         phi_m = MX.zeros((nb_markers * 3, 1))
@@ -367,7 +367,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         for i_segment, name in enumerate(self.segments):
             nb_segment_markers = (
-                self.segments[name].nb_markers_technical() if only_technical else self.segments[name].nb_markers()
+                self.segments[name].nb_markers_technical if only_technical else self.segments[name].nb_markers
             )
             if nb_segment_markers == 0:
                 continue
@@ -398,13 +398,13 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         MX
             Joint constraints of the marker [nb_markers x 3, nb_Q]
         """
-        nb_markers = self.nb_markers_technical() if only_technical else self.nb_markers()
+        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
 
-        km = MX.zeros((3 * nb_markers, 12 * self.nb_segments()))
+        km = MX.zeros((3 * nb_markers, 12 * self.nb_segments))
         marker_count = 0
         for i_segment, name in enumerate(self.segments):
             nb_segment_markers = (
-                self.segments[name].nb_markers_technical() if only_technical else self.segments[name].nb_markers()
+                self.segments[name].nb_markers_technical if only_technical else self.segments[name].nb_markers
             )
             if nb_segment_markers == 0:
                 continue
@@ -432,7 +432,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
         rigid_body_constraints = self.rigid_body_constraints(Q)
 
-        phi = MX.zeros((self.nb_holonomic_constraints(), 1))
+        phi = MX.zeros((self.nb_holonomic_constraints, 1))
         nb_constraints = 0
         # two steps in order to get a jacobian as diagonal as possible
         # it follows the order of the segments
@@ -481,8 +481,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         # then we compute the holonomic constraints jacobian
         nb_constraints = 0
-        K = MX.zeros((self.nb_holonomic_constraints(), 12 * self.nb_segments()))
-        for i in range(self.nb_segments()):
+        K = MX.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
+        for i in range(self.nb_segments):
 
             # add the joint constraints first
             joints = self.joints_from_child_index(i)
@@ -539,8 +539,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         # then we compute the holonomic constraints jacobian
         nb_constraints = 0
-        Kdot = MX.zeros((self.nb_holonomic_constraints(), 12 * self.nb_segments()))
-        for i in range(self.nb_segments()):
+        Kdot = MX.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
+        for i in range(self.nb_segments):
 
             # add the joint constraints first
             joints = self.joints_from_child_index(i)
@@ -584,7 +584,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         -------
             The weight of each segment [12 * nb_segments, 1]
         """
-        weight_vector = MX.zeros((self.nb_segments() * 12, 1))
+        weight_vector = MX.zeros((self.nb_segments * 12, 1))
         for i, segment in enumerate(self.segments.values()):
             idx = slice(12 * i, 12 * (i + 1))
             weight_vector[idx] = segment.weight()
@@ -636,6 +636,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         # solve the linear system Ax = B with casadi symbolic qr
         x = solve(KKT_matrix, B, "symbolicqr")
-        Qddot = x[0 : self.nb_Qddot()]
-        lagrange_multipliers = x[self.nb_Qddot() :]
+        Qddot = x[0 : self.nb_Qddot]
+        lagrange_multipliers = x[self.nb_Qddot :]
         return NaturalAccelerations(Qddot), lagrange_multipliers

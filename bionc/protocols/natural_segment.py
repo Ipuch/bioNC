@@ -46,7 +46,7 @@ class AbstractNaturalSegment(ABC):
 
     add_natural_marker()
         This function adds a marker to the segment
-    nb_markers()
+    nb_markers
         This function returns the number of markers in the segment
     marker_constraints()
         This function returns the defects of the marker constraints of the segment, denoted Phi_m
@@ -863,15 +863,19 @@ class GenericNaturalSegment(AbstractNaturalSegment):
         marker.parent_name = self.name
         self._markers.append(marker)
 
+    @property
     def nb_markers(self) -> int:
         return len(self._markers)
 
+    @property
     def nb_markers_technical(self) -> int:
-        return len(self.marker_names_technical())
+        return len(self.marker_names_technical)
 
+    @property
     def marker_names(self) -> list[str]:
         return [marker.name for marker in self._markers]
 
+    @property
     def marker_names_technical(self) -> list[str]:
         return [marker.name for marker in self._markers if marker.is_technical]
 

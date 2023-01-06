@@ -45,17 +45,17 @@ def test_biomech_model(bionc_type):
         natural_model = natural_model.to_mx()
 
     # Test model
-    assert natural_model.nb_segments() == 4
-    assert natural_model.nb_markers() == 16
-    assert natural_model.nb_markers_technical() == 11
-    assert natural_model.nb_joints() == 3
-    assert natural_model.nb_joint_constraints() == 9
-    assert natural_model.nb_rigid_body_constraints() == 6 * 4
-    assert natural_model.nb_holonomic_constraints() == 9 + 6 * 4
+    assert natural_model.nb_segments == 4
+    assert natural_model.nb_markers == 16
+    assert natural_model.nb_markers_technical == 11
+    assert natural_model.nb_joints == 3
+    assert natural_model.nb_joint_constraints == 9
+    assert natural_model.nb_rigid_body_constraints == 6 * 4
+    assert natural_model.nb_holonomic_constraints == 9 + 6 * 4
 
-    assert natural_model.nb_Q() == 48
-    assert natural_model.nb_Qdot() == 48
-    assert natural_model.nb_Qddot() == 48
+    assert natural_model.nb_Q == 48
+    assert natural_model.nb_Qdot == 48
+    assert natural_model.nb_Qddot == 48
 
     # Test rigid body constraints
     Q1 = SegmentNaturalCoordinates.from_components(
@@ -3547,7 +3547,7 @@ def test_biomech_model(bionc_type):
 
     holonomic_constraints = natural_model.holonomic_constraints(Q)
 
-    assert holonomic_constraints.shape[0] == natural_model.nb_holonomic_constraints()
+    assert holonomic_constraints.shape[0] == natural_model.nb_holonomic_constraints
 
     TestUtils.assert_equal(
         holonomic_constraints,
@@ -3592,8 +3592,8 @@ def test_biomech_model(bionc_type):
     )
 
     holonomic_constraints_jacobian = natural_model.holonomic_constraints_jacobian(Q)
-    assert holonomic_constraints_jacobian.shape[0] == natural_model.nb_holonomic_constraints()
-    assert holonomic_constraints_jacobian.shape[1] == natural_model.nb_Q()
+    assert holonomic_constraints_jacobian.shape[0] == natural_model.nb_holonomic_constraints
+    assert holonomic_constraints_jacobian.shape[1] == natural_model.nb_Q
 
     TestUtils.assert_equal(
         holonomic_constraints_jacobian,
@@ -5254,8 +5254,8 @@ def test_biomech_model(bionc_type):
     )
 
     holonomic_constraints_jacobian_dot = natural_model.holonomic_constraints_jacobian_derivative(Qdot)
-    assert holonomic_constraints_jacobian_dot.shape[0] == natural_model.nb_holonomic_constraints()
-    assert holonomic_constraints_jacobian_dot.shape[1] == natural_model.nb_Q()
+    assert holonomic_constraints_jacobian_dot.shape[0] == natural_model.nb_holonomic_constraints
+    assert holonomic_constraints_jacobian_dot.shape[1] == natural_model.nb_Q
 
     TestUtils.assert_equal(
         holonomic_constraints_jacobian_dot,
@@ -6934,7 +6934,7 @@ def test_biomech_model(bionc_type):
         "RTAR",
         "ANKLE_JOINT",
     ]
-    assert natural_model.marker_names() == marker_names
+    assert natural_model.marker_names == marker_names
     # check the list of marker names
     marker_names_technical = [
         "RFWT",
@@ -6949,7 +6949,7 @@ def test_biomech_model(bionc_type):
         "RTARI",
         "RTAR",
     ]
-    assert natural_model.marker_names_technical() == marker_names_technical
+    assert natural_model.marker_names_technical == marker_names_technical
 
     filename = "natural_model.nc"
     if bionc_type == "numpy":
@@ -7031,7 +7031,7 @@ def test_markers_constraint(bionc_type):
     Q = NaturalCoordinates.from_qi((Q1, Q3, Q2, Q4))
 
     marker_data = np.repeat(
-        0.02 + np.linspace(0, 1, natural_model.nb_markers_technical())[:, np.newaxis].T, axis=0, repeats=3
+        0.02 + np.linspace(0, 1, natural_model.nb_markers_technical)[:, np.newaxis].T, axis=0, repeats=3
     )
 
     TestUtils.assert_equal(

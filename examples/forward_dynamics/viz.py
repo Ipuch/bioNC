@@ -267,12 +267,12 @@ def cheap_animation(model: BiomechanicalModel, Q: NaturalCoordinates):
 
     ground_frame = VtkGroundFrame(vtkWindow)
     frames = []
-    for s in range(model.nb_segments()):
+    for s in range(model.nb_segments):
         frames.append(VtkFrameModel(vtkWindow))
 
     center_of_mass = []
-    center_of_mass_locations = np.zeros((3, model.nb_segments(), Q.shape[1]))
-    for i_s in range(model.nb_segments()):
+    center_of_mass_locations = np.zeros((3, model.nb_segments, Q.shape[1]))
+    for i_s in range(model.nb_segments):
         center_of_mass.append(
             VtkModel(
                 vtkWindow,

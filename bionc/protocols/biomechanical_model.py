@@ -135,54 +135,61 @@ class GenericBiomechanicalModel(ABC):
 
         self.joints[joint["name"]] = joint_type.value(**joint)
 
+    @property
     def nb_segments(self) -> int:
         """
         This function returns the number of segments in the model
         """
         return len(self.segments)
 
+    @property
     def nb_markers(self) -> int:
         """
         This function returns the number of markers in the model
         """
         nb_markers = 0
         for key in self.segments:
-            nb_markers += self.segments[key].nb_markers()
+            nb_markers += self.segments[key].nb_markers
         return nb_markers
 
+    @property
     def nb_markers_technical(self) -> int:
         """
         This function returns the number of technical markers in the model
         """
         nb_markers = 0
         for key in self.segments:
-            nb_markers += self.segments[key].nb_markers_technical()
+            nb_markers += self.segments[key].nb_markers_technical
         return nb_markers
 
+    @property
     def marker_names(self) -> list[str]:
         """
         This function returns the names of the markers in the model
         """
         marker_names = []
         for key in self.segments:
-            marker_names += self.segments[key].marker_names()
+            marker_names += self.segments[key].marker_names
         return marker_names
 
+    @property
     def marker_names_technical(self) -> list[str]:
         """
         This function returns the names of the technical markers in the model
         """
         marker_names = []
         for key in self.segments:
-            marker_names += self.segments[key].marker_names_technical()
+            marker_names += self.segments[key].marker_names_technical
         return marker_names
 
+    @property
     def nb_joints(self) -> int:
         """
         This function returns the number of joints in the model
         """
         return len(self.joints)
 
+    @property
     def nb_joint_constraints(self) -> int:
         """
         This function returns the number of joint constraints in the model
@@ -192,35 +199,40 @@ class GenericBiomechanicalModel(ABC):
             nb_joint_constraints += joint.nb_constraints
         return nb_joint_constraints
 
+    @property
     def nb_rigid_body_constraints(self) -> int:
         """
         This function returns the number of rigid body constraints in the model
         """
-        return 6 * self.nb_segments()
+        return 6 * self.nb_segments
 
+    @property
     def nb_holonomic_constraints(self) -> int:
         """
         This function returns the number of holonomic constraints in the model
         """
-        return self.nb_joint_constraints() + self.nb_rigid_body_constraints()
+        return self.nb_joint_constraints + self.nb_rigid_body_constraints
 
+    @property
     def nb_Q(self) -> int:
         """
         This function returns the number of generalized coordinates in the model
         """
-        return 12 * self.nb_segments()
+        return 12 * self.nb_segments
 
+    @property
     def nb_Qdot(self) -> int:
         """
         This function returns the number of generalized velocities in the model
         """
-        return 12 * self.nb_segments()
+        return 12 * self.nb_segments
 
+    @property
     def nb_Qddot(self) -> int:
         """
         This function returns the number of generalized accelerations in the model
         """
-        return 12 * self.nb_segments()
+        return 12 * self.nb_segments
 
     def joints_from_child_index(self, child_index: int) -> list:
         """

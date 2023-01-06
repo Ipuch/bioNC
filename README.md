@@ -64,23 +64,23 @@ todo
 
 # Natural coordinates reminders
 
-The ``i``-th body in a biomechanism with ``N`` bodies has generalized coordinates:  
+The $i$-th body in a biomechanism with $N$ bodies has generalized coordinates:  
 
 ```math 
-Q_i = (u_{i}, r_p_{i}, r_d_{i}, w_{i}) \in \mathbf{R}^3 \times \mathbf{R}^3 \times \mathbf{R}^3 \times \mathbf{R}^3,
+Q_i = (u_{i}, r_{p_{i}}, r_{d_{i}}, w_{i}) \in \mathbf{R}^3 \times \mathbf{R}^3 \times \mathbf{R}^3 \times \mathbf{R}^3,
 ``` 
 
 represented in natural coordinates. 
 
-- ``u``: is the proximal vector in the global coordinate system.
-- ``r_p``: the position of the proximal point in the global coordinate system.
-- ``r_d``:  the position of the distal point in the global coordinate system.
-- ``w``: is the distal vector in the global coordinate system.
+- $u$: is the proximal vector in the global coordinate system.
+- $r_p$: the position of the proximal point in the global coordinate system.
+- $r_d$:  the position of the distal point in the global coordinate system.
+- $w$: is the distal vector in the global coordinate system.
 
 The biomechanism generalized coordinates:   
 
 ```math 
-Q = (Q_1, \dots, Q_N}).
+Q = (Q_1, \dots, Q_N).
 ```
 
 is the concatentation of all body coordinates.

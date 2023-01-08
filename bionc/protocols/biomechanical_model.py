@@ -415,7 +415,7 @@ class GenericBiomechanicalModel(ABC):
         """
         pass
 
-    def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities) -> np.ndarray:
+    def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities):
         """
         This function returns the lagrangian of the system as a function of the natural coordinates Q and Qdot
 
@@ -432,6 +432,24 @@ class GenericBiomechanicalModel(ABC):
         """
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
+
+    def energy(self, Q: NaturalCoordinates, Qdot: NaturalVelocities):
+        """
+        This function returns the total energy of the model from current Q and Qdot
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            The energy of the system
+        """
+
+        return self.kinetic_energy(Qdot) + self.potential_energy(Q)
 
     @abstractmethod
     def markers(self, Q: NaturalCoordinates):

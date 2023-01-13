@@ -107,6 +107,13 @@ def test_graph():
     assert model.children("pendulum_4") == []
     assert model.children("pendulum_5") == []
 
+    assert model.children(0) == [1, 4, 5]
+    assert model.children(1) == [2, 3]
+    assert model.children(2) == []
+    assert model.children(3) == []
+    assert model.children(4) == []
+    assert model.children(5) == []
+
     with pytest.raises(AttributeError):
         model.parents("pendulum_0")
 
@@ -115,5 +122,11 @@ def test_graph():
     assert model.parents("pendulum_3") == [1]
     assert model.parents("pendulum_4") == [0]
     assert model.parents("pendulum_5") == [0]
-    model.parents(2)
-    model.segment_subtrees()
+
+    assert model.parents(1) == [0]
+    assert model.parents(2) == [1]
+    assert model.parents(3) == [1]
+    assert model.parents(4) == [0]
+    assert model.parents(5) == [0]
+
+    assert model.segment_subtrees() == [[0, 1, 2, 3, 4, 5], [1, 2, 3], [2], [3], [4], [5]]

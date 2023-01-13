@@ -2,6 +2,7 @@ from bionc import BiomechanicalModel, JointType, NaturalAxis, CartesianAxis, Nat
 import numpy as np
 import pytest
 
+
 def build_model() -> BiomechanicalModel:
     # Let's create a model
     model = BiomechanicalModel()

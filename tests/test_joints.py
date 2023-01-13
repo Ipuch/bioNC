@@ -78,7 +78,12 @@ def test_joints(bionc_type, joint_type: JointType):
         #                         parent_axis=NaturalAxis.V, child_axis=NaturalAxis.W,
         #                         theta=0.4)
     elif joint_type == JointType.SPHERICAL:
-        joint = Joint.Spherical(name="spherical", parent=box, child=bbox, index=0,)
+        joint = Joint.Spherical(
+            name="spherical",
+            parent=box,
+            child=bbox,
+            index=0,
+        )
     elif joint_type == JointType.GROUND_REVOLUTE:
         joint = GroundJoint.Hinge(
             name="hinge",

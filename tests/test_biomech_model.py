@@ -2628,7 +2628,7 @@ def test_biomech_model(bionc_type):
         assert j.name == natural_model.joint_names[i]
 
     with pytest.raises(ValueError, match=f"No joint with index {natural_model.nb_joints+1}"):
-        natural_model.joint_from_index(natural_model.nb_joints+1)
+        natural_model.joint_from_index(natural_model.nb_joints + 1)
 
     Q = NaturalCoordinates.from_qi((Q1, Q3, Q2, Q4))
 

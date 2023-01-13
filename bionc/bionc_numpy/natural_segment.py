@@ -12,10 +12,10 @@ from ..bionc_numpy.homogenous_transform import HomogeneousTransform
 from ..bionc_numpy.natural_marker import NaturalMarker
 from ..bionc_numpy.natural_vector import NaturalVector
 
-from ..protocols.natural_segment import GenericNaturalSegment
+from ..protocols.natural_segment import AbstractNaturalSegment
 
 
-class NaturalSegment(GenericNaturalSegment):
+class NaturalSegment(AbstractNaturalSegment):
     """
         Class used to define anatomical segment based on natural coordinate.
 
@@ -108,7 +108,7 @@ class NaturalSegment(GenericNaturalSegment):
         # list of markers embedded in the segment
         self._markers = []
 
-    def to_mx(self) -> GenericNaturalSegment:
+    def to_mx(self) -> AbstractNaturalSegment:
         """
         This function returns the segment in MX format
         """

@@ -203,10 +203,12 @@ if __name__ == "__main__":
             theta=[np.pi / 2, np.pi / 2],
         )
     )
-    print(model.joints)
 
-    model.nb_joints
-    model.nb_joint_constraints
+    model.save("pendulum.nmod")
+
+    print(model.joints)
+    print(model.nb_joints)
+    print(model.nb_joint_constraints)
 
     Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
     Q = NaturalCoordinates(Qi)

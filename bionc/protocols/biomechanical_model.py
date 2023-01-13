@@ -132,8 +132,94 @@ class GenericBiomechanicalModel(ABC):
 
         # replace child field by the child segment
         joint["child"] = self.segments[joint["child"]]
+        joint["index"] = self.nb_joints
 
         self.joints[joint["name"]] = joint_type.value(**joint)
+
+    def children(self, segment: str | int) -> list[int]:
+        """
+        This function returns the children of the given segment
+
+        Parameters
+        ----------
+        segment : str | int
+            The segment for which the children are returned
+
+        Returns
+        -------
+        list[int]
+            The children of the given segment
+        """
+        children = []
+        if isinstance(segment, str):
+            segment = self.segments[segment]
+        elif isinstance(segment, int):
+            segment = self.segment_from_index(segment)
+        for joint in self.joints.values():
+            if joint.parent == segment:
+                children.append(joint.child.index)
+        return children
+
+    def parents(self, segment: str | int) -> list[int]:
+        """
+        This function returns the parents of the given segment
+
+        Parameters
+        ----------
+        segment : str | int
+            The segment for which the parents are returned
+
+        Returns
+        -------
+        list[int]
+            The parents of the given segment
+        """
+        parents = []
+        if isinstance(segment, str):
+            segment = self.segments[segment]
+        elif isinstance(segment, int):
+            segment = self.segment_from_index(segment)
+        for joint in self.joints.values():
+            if joint.child == segment:
+                parents.append(joint.parent.index)
+        return parents
+
+    def segment_subtrees(self) -> list[list[int]]:
+        """
+        This function returns the subtrees of the segments
+
+        Returns
+        -------
+        list[list[int]]
+            The subtrees of the segments
+        """
+        subtrees = []
+        for segment in self.segments.values():
+            subtrees.append(self.segment_subtree(segment))
+        return subtrees
+
+    def segment_subtree(self, segment: str | int) -> list[int]:
+        """
+        This function returns the subtree of the given segment
+
+        Parameters
+        ----------
+        segment : str | int
+            The segment for which the subtree is returned
+
+        Returns
+        -------
+        list[int]
+            The subtree of the given segment
+        """
+        if isinstance(segment, str):
+            segment = self.segments[segment]
+        elif isinstance(segment, int):
+            segment = self.segment_from_index(segment)
+        subtree = [segment.index]
+        for child in self.children(segment):
+            subtree += self.segment_subtree(child)
+        return subtree
 
     @property
     def nb_segments(self) -> int:
@@ -195,9 +281,16 @@ class GenericBiomechanicalModel(ABC):
         This function returns the number of joint constraints in the model
         """
         nb_joint_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for _, joint in self.joints.items():
             nb_joint_constraints += joint.nb_constraints
         return nb_joint_constraints
+
+    @property
+    def joint_names(self) -> list[str]:
+        """
+        This function returns the names of the joints in the model
+        """
+        return list(self.joints.keys())
 
     @property
     def nb_rigid_body_constraints(self) -> int:
@@ -234,6 +327,25 @@ class GenericBiomechanicalModel(ABC):
         """
         return 12 * self.nb_segments
 
+    def joint_from_index(self, index: int):
+        """
+        This function returns the joint with the given index
+
+        Parameters
+        ----------
+        index : int
+            The index of the joint
+
+        Returns
+        -------
+        Joint
+            The joint with the given index
+        """
+        for joint in self.joints.values():
+            if joint.index == index:
+                return joint
+        raise ValueError("No joint with index " + str(index))
+
     def joints_from_child_index(self, child_index: int) -> list:
         """
         This function returns the joints that have the given child index
@@ -253,6 +365,25 @@ class GenericBiomechanicalModel(ABC):
             if joint.child.index == child_index:
                 joints.append(joint)
         return joints
+
+    def segment_from_index(self, index: int):
+        """
+        This function returns the segment with the given index
+
+        Parameters
+        ----------
+        index : int
+            The index of the segment
+
+        Returns
+        -------
+        Segment
+            The segment with the given index
+        """
+        for segment in self.segments.values():
+            if segment.index == index:
+                return segment
+        raise ValueError(f"The segment index does not exist, the model has only {self.nb_segments} segments")
 
     @property
     def mass_matrix(self):
@@ -415,7 +546,7 @@ class GenericBiomechanicalModel(ABC):
         """
         pass
 
-    def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities) -> np.ndarray:
+    def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities):
         """
         This function returns the lagrangian of the system as a function of the natural coordinates Q and Qdot
 
@@ -432,6 +563,24 @@ class GenericBiomechanicalModel(ABC):
         """
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
+
+    def energy(self, Q: NaturalCoordinates, Qdot: NaturalVelocities):
+        """
+        This function returns the total energy of the model from current Q and Qdot
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+        Qdot : NaturalVelocities
+            The natural velocities of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            The energy of the system
+        """
+
+        return self.kinetic_energy(Qdot) + self.potential_energy(Q)
 
     @abstractmethod
     def markers(self, Q: NaturalCoordinates):

@@ -1,9 +1,5 @@
 import numpy as np
-import pytest
 from bionc import (
-    NaturalAccelerations,
-    SegmentNaturalAccelerations,
-    bionc_numpy as bionc_np,
     bionc_casadi as bionc_mx,
 )
 

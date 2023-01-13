@@ -29,9 +29,10 @@ class Joint:
             parent_axis: tuple[NaturalAxis] | list[NaturalAxis],
             child_axis: tuple[NaturalAxis] | list[NaturalAxis],
             theta: tuple[float] | list[float] | np.ndarray | MX,
+            index: int,
         ):
 
-            super(Joint.Hinge, self).__init__(name, parent, child)
+            super(Joint.Hinge, self).__init__(name, parent, child, index)
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:
@@ -198,8 +199,9 @@ class Joint:
             parent_axis: NaturalAxis,
             child_axis: NaturalAxis,
             theta: float | np.ndarray | MX,
+            index: int,
         ):
-            super(Joint.Universal, self).__init__(name, parent, child)
+            super(Joint.Universal, self).__init__(name, parent, child, index)
 
             self.parent_axis = parent_axis
             self.parent_vector = NaturalVector.axis(self.parent_axis)
@@ -305,9 +307,10 @@ class Joint:
             name: str,
             parent: NaturalSegment,
             child: NaturalSegment,
+            index: int,
         ):
 
-            super(Joint.Spherical, self).__init__(name, parent, child)
+            super(Joint.Spherical, self).__init__(name, parent, child, index)
             self.nb_constraints = 3
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
@@ -393,8 +396,9 @@ class GroundJoint:
             parent_axis: tuple[CartesianAxis] | list[CartesianAxis],
             child_axis: tuple[NaturalAxis] | list[NaturalAxis],
             theta: tuple[float] | list[float] | np.ndarray = None,
+            index: int = None,
         ):
-            super(GroundJoint.Hinge, self).__init__(name, None, child)
+            super(GroundJoint.Hinge, self).__init__(name, None, child, index)
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:

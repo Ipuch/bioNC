@@ -61,7 +61,7 @@ def test_joints(bionc_type, joint_type: JointType):
         child_axis = NaturalAxis.V, NaturalAxis.W
         theta = np.pi / 3, 3 * np.pi / 4
         joint = Joint.Hinge(
-            name="hinge", parent=box, child=bbox, parent_axis=parent_axis, child_axis=child_axis, theta=theta
+            name="hinge", parent=box, child=bbox, index=0, parent_axis=parent_axis, child_axis=child_axis, theta=theta
         )
 
     elif joint_type == JointType.UNIVERSAL:
@@ -69,6 +69,7 @@ def test_joints(bionc_type, joint_type: JointType):
             name="universal",
             parent=box,
             child=bbox,
+            index=0,
             parent_axis=NaturalAxis.U,
             child_axis=NaturalAxis.W,
             theta=0.4,
@@ -77,11 +78,12 @@ def test_joints(bionc_type, joint_type: JointType):
         #                         parent_axis=NaturalAxis.V, child_axis=NaturalAxis.W,
         #                         theta=0.4)
     elif joint_type == JointType.SPHERICAL:
-        joint = Joint.Spherical(name="spherical", parent=box, child=bbox)
+        joint = Joint.Spherical(name="spherical", parent=box, child=bbox, index=0,)
     elif joint_type == JointType.GROUND_REVOLUTE:
         joint = GroundJoint.Hinge(
             name="hinge",
             child="box",
+            index=0,
             parent_axis=[CartesianAxis.X, CartesianAxis.X],
             child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
             theta=[np.pi / 2, np.pi / 2],

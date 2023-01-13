@@ -17,6 +17,8 @@ class JointBase(ABC):
         The parent segment of the joint
     child : NaturalSegment
         The child segment of the joint
+    index : int
+        The index of the joint in the model
 
     Methods
     -------
@@ -36,10 +38,12 @@ class JointBase(ABC):
         name: str,
         parent: AbstractNaturalSegment,
         child: AbstractNaturalSegment,
+        index: int,
     ):
         self.name = name
         self.parent = parent
         self.child = child
+        self.index = index
 
     @abstractmethod
     def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):

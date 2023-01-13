@@ -11,12 +11,12 @@ from ..bionc_casadi.homogenous_transform import HomogeneousTransform
 from ..bionc_casadi.natural_marker import NaturalMarker
 from ..bionc_casadi.natural_vector import NaturalVector
 
-from ..protocols.natural_segment import GenericNaturalSegment
+from ..protocols.natural_segment import AbstractNaturalSegment
 
 from .utils import to_numeric_MX
 
 
-class NaturalSegment(GenericNaturalSegment):
+class NaturalSegment(AbstractNaturalSegment):
     """
         Class used to define anatomical segment based on natural coordinate.
 

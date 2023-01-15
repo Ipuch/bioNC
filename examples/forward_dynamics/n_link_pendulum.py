@@ -227,7 +227,7 @@ if __name__ == "__main__":
 
     # Let's create a model
     nb_segments = 20
-    model = build_n_link_pendulum(nb_segment=nb_segments)
+    model = build_n_link_pendulum(nb_segments=nb_segments)
 
     print(model.joints)
     print(model.nb_joints)
@@ -254,14 +254,16 @@ if __name__ == "__main__":
     from matplotlib import pyplot as plt
 
     K = model.joint_constraints_jacobian(Q)
-    plt.spy(K)
-    plt.show()
-
-    plt.figure()
-    plt.spy(model.mass_matrix)
-    plt.show()
-
-    plt.figure()
+    # subplot with 3 columns and 1 row
+    fig, axs = plt.subplots(1, 3)
+    # spy(K) on axis (0,0)
+    axs[0].spy(K)
+    # title of the axis (0,0)
+    axs[0].set_title("Constraint Jacobian K")
+    #
+    axs[1].spy(model.mass_matrix)
+    axs[1].set_title("Mass matrix M")
+    #
     G = model.mass_matrix
     K = model.rigid_body_constraints_jacobian(Q)
     Kdot = model.rigid_body_constraint_jacobian_derivative(Qdot)
@@ -269,11 +271,12 @@ if __name__ == "__main__":
     lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
     KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
-    plt.spy(KKT_matrix)
+    axs[2].spy(KKT_matrix)
+    axs[2].set_title("KKT matrix")
     plt.show()
 
     # actual simulation
-    t_final = 20  # seconds
+    t_final = 10  # seconds
     time_steps, all_states, dynamics = drop_the_pendulum(
         model=model,
         Q_init=Q,

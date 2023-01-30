@@ -410,8 +410,6 @@ class GenericBiomechanicalModel(ABC):
             Rigid body constraints of the segment [6 * nb_segments, 1]
         """
 
-        pass
-
     @abstractmethod
     def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates):
         """
@@ -428,7 +426,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             Derivative of the rigid body constraints
         """
-        pass
 
     @abstractmethod
     def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates):
@@ -441,7 +438,6 @@ class GenericBiomechanicalModel(ABC):
         np.ndarray
             Rigid body constraints of the segment [6 * nb_segments, nbQ]
         """
-        pass
 
     @abstractmethod
     def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
@@ -457,7 +453,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
         """
-        pass
 
     @abstractmethod
     def joint_constraints(self, Q: NaturalCoordinates):
@@ -470,8 +465,6 @@ class GenericBiomechanicalModel(ABC):
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
 
-        pass
-
     @abstractmethod
     def joint_constraints_jacobian(self, Q: NaturalCoordinates):
         """
@@ -481,8 +474,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
-
-        pass
 
     @abstractmethod
     def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities):
@@ -498,7 +489,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
         """
-        pass
 
     @abstractmethod
     def _update_mass_matrix(self):
@@ -510,7 +500,6 @@ class GenericBiomechanicalModel(ABC):
         np.ndarray
             generalized mass matrix of the segment [12 * nb_segments, 12 * nb_segment]
         """
-        pass
 
     @abstractmethod
     def kinetic_energy(self, Qdot: NaturalVelocities) -> Union[np.ndarray, MX]:
@@ -527,7 +516,6 @@ class GenericBiomechanicalModel(ABC):
         Union[np.ndarray, MX]
             The kinetic energy of the system
         """
-        pass
 
     @abstractmethod
     def potential_energy(self, Q: NaturalCoordinates) -> Union[np.ndarray, MX]:
@@ -544,7 +532,6 @@ class GenericBiomechanicalModel(ABC):
         Union[np.ndarray, MX]
             The potential energy of the system
         """
-        pass
 
     def lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities):
         """
@@ -598,7 +585,6 @@ class GenericBiomechanicalModel(ABC):
             The position of the markers [3, nbMarkers, nbFrames]
             in the global coordinate system/ inertial coordinate system
         """
-        pass
 
     @abstractmethod
     def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates):
@@ -616,7 +602,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             Rigid body constraints of the segment [nb_markers x 3, 1]
         """
-        pass
 
     @abstractmethod
     def markers_constraints_jacobian(self):
@@ -627,7 +612,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             Joint constraints of the marker [nb_markers x 3, nb_Q]
         """
-        pass
 
     @abstractmethod
     def holonomic_constraints(self, Q: NaturalCoordinates):
@@ -645,7 +629,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             Holonomic constraints of the segment [nb_holonomic_constraints, 1]
         """
-        pass
 
     @abstractmethod
     def holonomic_constraints_jacobian(self, Q: NaturalCoordinates):
@@ -663,7 +646,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             Joint constraints of the holonomic constraints [nb_holonomic_constraints, 12 * nb_segments]
         """
-        pass
 
     @abstractmethod
     def weight(self):
@@ -674,7 +656,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             The weight of each segment [12 * nb_segments, 1]
         """
-        pass
 
     @abstractmethod
     def forward_dynamics(
@@ -698,7 +679,6 @@ class GenericBiomechanicalModel(ABC):
             Qddot : NaturalAccelerations
                 The natural accelerations [12 * nb_segments, 1]
         """
-        pass
 
     @abstractmethod
     def center_of_mass_position(self, Q: NaturalCoordinates):
@@ -715,4 +695,3 @@ class GenericBiomechanicalModel(ABC):
             The position of the center of mass [3, nbSegments]
             in the global coordinate system/ inertial coordinate system
         """
-        pass

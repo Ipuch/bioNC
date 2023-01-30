@@ -14,9 +14,9 @@ def cheap_markers_animation(xp_markers: np.ndarray, model_markers: np.ndarray):
     Parameters
     ----------
     xp_markers: np.ndarray
-        Markers position in the experimental space
+        Markers position in the experimental space in red
     model_markers: np.ndarray
-        Markers position in the model space
+        Markers position in the model space in green
     """
 
     pyo_xp_markers = Markers(xp_markers)

@@ -375,7 +375,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             marker_idx = slice(marker_count, marker_count + nb_segment_markers)
 
             markers_temp = markers[:, marker_idx]
-            phi_m[constraint_idx] = self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment))[
+            phi_m[constraint_idx] = self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment), only_technical=only_technical)[
                 :
             ]  # [:] to flatten the array
 

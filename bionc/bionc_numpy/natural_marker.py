@@ -8,8 +8,6 @@ from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_markers import AbstractNaturalMarker
 from .natural_vector import NaturalVector
 
-# todo: need a list of markers MarkerList
-
 
 class NaturalMarker(AbstractNaturalMarker):
     """
@@ -233,12 +231,14 @@ class Marker:
         is_anatomical: bool = False,
     ):
         """
+        This class defines a marker in the global coordinate system (inertial)
+
         Parameters
         ----------
         name
             The name of the new marker
         position
-            The 3d position of the marker in the orhtogonal coordinate system (XYZ1 x time)) that defines the marker
+            The 3d position of the marker in the orthogonal coordinate system (XYZ1 x time) that defines the marker
         is_technical
             If the marker should be flagged as a technical marker
         is_anatomical

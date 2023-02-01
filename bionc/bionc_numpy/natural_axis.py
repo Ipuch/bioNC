@@ -22,4 +22,4 @@ class Axis:
         """
         start = self.start_point.position
         end = self.end_point.position
-        return end - start
+        return (end - start) / np.linalg.norm(end[:3] - start[:3], axis=0)

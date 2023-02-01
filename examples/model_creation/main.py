@@ -142,16 +142,22 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     )
 
     model["PELVIS"].add_marker(
-        MarkerTemplate(name="RFWT", function=right_hip_joint, parent_name="PELVIS", is_technical=True)
+        MarkerTemplate(name="RFWT", parent_name="PELVIS", is_technical=True)
     )
     model["PELVIS"].add_marker(
-        MarkerTemplate(name="LFWT", function=left_hip_joint, parent_name="PELVIS", is_technical=True)
+        MarkerTemplate(name="LFWT", parent_name="PELVIS", is_technical=True)
     )
     model["PELVIS"].add_marker(
-        MarkerTemplate(name="RBWT", function=right_hip_joint, parent_name="PELVIS", is_technical=True)
+        MarkerTemplate(name="RBWT", parent_name="PELVIS", is_technical=True)
     )
     model["PELVIS"].add_marker(
-        MarkerTemplate(name="LBWT", function=left_hip_joint, parent_name="PELVIS", is_technical=True)
+        MarkerTemplate(name="LBWT", parent_name="PELVIS", is_technical=True)
+    )
+    model["PELVIS"].add_marker(
+        MarkerTemplate(name="RIGHT_HIP_JOINT", function=right_hip_joint, parent_name="PELVIS", is_technical=False, is_anatomical=True)
+    )
+    model["PELVIS"].add_marker(
+        MarkerTemplate(name="LEFT_HIP_JOINT", function=left_hip_joint, parent_name="PELVIS", is_technical=False, is_anatomical=True)
     )
 
     model["THIGH"] = SegmentTemplate(
@@ -326,6 +332,8 @@ def main():
 
     # compute the natural coordinates
     Qxp = model.Q_from_markers(markers_xp[:, :, 0:2])
+    print(markers_xp[:, :, 0:2])
+    print(Qxp[:, 0])
 
     # compute model markers location based on the natural coordinates
     markers_model = model.markers(Qxp)
@@ -335,6 +343,7 @@ def main():
     # display the experimental markers in red and the model markers in green
     # almost superimposed because the model is well defined on the experimental data
     cheap_markers_animation(markers_model, markers_xp)
+    # cheap_markers_animation(markers_model, np.zeros(markers_xp.shape))
 
     # remove the c3d file
     os.remove(filename)

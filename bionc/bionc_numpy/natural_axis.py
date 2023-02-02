@@ -28,7 +28,12 @@ class Axis:
         return (end - start) / np.linalg.norm(end[:3] - start[:3], axis=0)
 
     @classmethod
-    def from_data(cls, data: Data, function: Callable, kinematic_chain: BiomechanicalModel,) -> "Axis":
+    def from_data(
+        cls,
+        data: Data,
+        function: Callable,
+        kinematic_chain: BiomechanicalModel,
+    ) -> "Axis":
         """
         Compute the axis from actual data
 

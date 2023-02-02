@@ -142,23 +142,23 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         )
     )
 
+    model["PELVIS"].add_marker(MarkerTemplate(name="RFWT", parent_name="PELVIS", is_technical=True))
+    model["PELVIS"].add_marker(MarkerTemplate(name="LFWT", parent_name="PELVIS", is_technical=True))
+    model["PELVIS"].add_marker(MarkerTemplate(name="RBWT", parent_name="PELVIS", is_technical=True))
+    model["PELVIS"].add_marker(MarkerTemplate(name="LBWT", parent_name="PELVIS", is_technical=True))
     model["PELVIS"].add_marker(
-        MarkerTemplate(name="RFWT", parent_name="PELVIS", is_technical=True)
+        MarkerTemplate(
+            name="RIGHT_HIP_JOINT",
+            function=right_hip_joint,
+            parent_name="PELVIS",
+            is_technical=False,
+            is_anatomical=True,
+        )
     )
     model["PELVIS"].add_marker(
-        MarkerTemplate(name="LFWT", parent_name="PELVIS", is_technical=True)
-    )
-    model["PELVIS"].add_marker(
-        MarkerTemplate(name="RBWT", parent_name="PELVIS", is_technical=True)
-    )
-    model["PELVIS"].add_marker(
-        MarkerTemplate(name="LBWT", parent_name="PELVIS", is_technical=True)
-    )
-    model["PELVIS"].add_marker(
-        MarkerTemplate(name="RIGHT_HIP_JOINT", function=right_hip_joint, parent_name="PELVIS", is_technical=False, is_anatomical=True)
-    )
-    model["PELVIS"].add_marker(
-        MarkerTemplate(name="LEFT_HIP_JOINT", function=left_hip_joint, parent_name="PELVIS", is_technical=False, is_anatomical=True)
+        MarkerTemplate(
+            name="LEFT_HIP_JOINT", function=left_hip_joint, parent_name="PELVIS", is_technical=False, is_anatomical=True
+        )
     )
 
     model["THIGH"] = SegmentTemplate(
@@ -169,7 +169,9 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
             #     # lateral epicondyle
             #     end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI"),
             # ),
-            u_axis=AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNI", "RKNE")),
+            u_axis=AxisFunctionTemplate(
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNI", "RKNE")
+            ),
             # todo: it needs to receive directly a the function to define the normal to the plane
             proximal_point=right_hip_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
@@ -200,7 +202,9 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
             #     # lateral epicondyle
             #     end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI"),
             # ),
-            AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI")),
+            AxisFunctionTemplate(
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI")
+            ),
             proximal_point=right_knee_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI"),

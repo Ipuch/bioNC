@@ -118,14 +118,15 @@ class VtkGroundFrame:
 
 
 class Viz:
-    def __init__(self,
-                 model: BiomechanicalModel,
-                 show_ground_frame: bool = True,
-                 show_frames: bool = True,
-                 show_model_markers: bool = True,
-                 show_xp_markers: bool = True,
-                 show_center_of_mass: bool = True,
-                 ):
+    def __init__(
+        self,
+        model: BiomechanicalModel,
+        show_ground_frame: bool = True,
+        show_frames: bool = True,
+        show_model_markers: bool = True,
+        show_xp_markers: bool = True,
+        show_center_of_mass: bool = True,
+    ):
         self.model = model
         self.show_ground_frame = show_ground_frame
         self.show_frames = show_frames
@@ -137,17 +138,17 @@ class Viz:
         self.vtkWindow = VtkWindow(background_color=(0.5, 0.5, 0.5))
 
         if self.show_ground_frame:
-            self.ground_frame = VtkGroundFrame(self.vtkWindow )
+            self.ground_frame = VtkGroundFrame(self.vtkWindow)
         if self.show_frames:
             self.frames = []
             for s in range(model.nb_segments):
-                self.frames.append(VtkFrameModel(self.vtkWindow ))
+                self.frames.append(VtkFrameModel(self.vtkWindow))
         if self.show_center_of_mass:
             self.center_of_mass = []
             for i_s in range(model.nb_segments):
                 self.center_of_mass.append(
                     VtkModel(
-                        self.vtkWindow ,
+                        self.vtkWindow,
                         markers_color=(1, 0, 0),
                         markers_size=0.02,
                         markers_opacity=1,
@@ -155,14 +156,14 @@ class Viz:
                 )
         if self.show_model_markers:
             self.vtkModelModel = VtkModel(
-                self.vtkWindow ,
+                self.vtkWindow,
                 markers_color=(0, 1, 0),
                 markers_size=0.02,
                 markers_opacity=1,
             )
         if self.show_xp_markers:
             self.vtkModelReal = VtkModel(
-                self.vtkWindow ,
+                self.vtkWindow,
                 markers_color=(1, 0, 0),
                 markers_size=0.02,
                 markers_opacity=1,

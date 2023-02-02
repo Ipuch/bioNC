@@ -37,3 +37,5 @@ from numpy import ndarray
 # global variable to store the type of the math interface
 casadi_type = MX_type
 numpy_type = ndarray
+
+from .viz import Viz

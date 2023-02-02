@@ -169,7 +169,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
             #     # lateral epicondyle
             #     end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI"),
             # ),
-            u_axis=AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI")),
+            u_axis=AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNI", "RKNE")),
             # todo: it needs to receive directly a the function to define the normal to the plane
             proximal_point=right_hip_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
@@ -193,12 +193,14 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
     model["SHANK"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
-            u_axis=AxisTemplate(
-                start=right_knee_joint,
-                # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
-                # lateral epicondyle
-                end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI"),
-            ),
+            u_axis=
+            # AxisTemplate(
+            #     start=right_knee_joint,
+            #     # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
+            #     # lateral epicondyle
+            #     end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI"),
+            # ),
+            AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI")),
             proximal_point=right_knee_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI"),
@@ -219,10 +221,9 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     model["FOOT"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
-                start=right_ankle_joint,
+                start="RHEE",
                 # u_axis is defined from calcaneous (CAL) to the middle of M1 and M5
-                end=lambda m, bio: (m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2)
-                / np.linalg.norm(m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2),
+                end=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RTARI", "RTAR"),
             ),
             proximal_point=right_ankle_joint,
             #  middle of M1 and M5
@@ -345,7 +346,7 @@ def main():
 
     # display the experimental markers in red and the model markers in green
     # almost superimposed because the model is well defined on the experimental data
-    cheap_animation(model, Qxp[:,0:1], markers_xp[:, :, 0:1])
+    cheap_animation(model, Qxp[:, 0:1], markers_xp[:, :, 0:1])
     # cheap_markers_animation(markers_model, np.zeros(markers_xp.shape))
 
     # remove the c3d file

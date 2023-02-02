@@ -189,6 +189,7 @@ def cheap_animation(model: BiomechanicalModel, Q: NaturalCoordinates, markers_xp
         vtkWindow.update_frame()
         i = (i + 1) % Q.shape[1]
 
+
 def cheap_markers_animation(xp_markers: np.ndarray, model_markers: np.ndarray):
     """
     This function is a cheap animation of markers

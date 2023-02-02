@@ -64,4 +64,4 @@ class AxisFunctionTemplate:
         parent_scs
             The transformation from global to local
         """
-        return self.axis_function(data, kinematic_chain)
+        return Axis.from_data(data, self.axis_function, kinematic_chain)

@@ -1,5 +1,6 @@
 from .model_creation import (
     AxisTemplate,
+    AxisFunctionTemplate,
     MarkerTemplate,
     SegmentTemplate,
     NaturalSegmentTemplate,

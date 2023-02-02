@@ -7,6 +7,7 @@ from pyomeca import Markers
 
 from bionc import (
     AxisTemplate,
+    AxisFunctionTemplate,
     BiomechanicalModelTemplate,
     MarkerTemplate,
     SegmentTemplate,
@@ -162,12 +163,14 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
     model["THIGH"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
-            u_axis=AxisTemplate(
-                start=right_hip_joint,
-                # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
-                # lateral epicondyle
-                end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI"),
-            ),
+            # u_axis=AxisTemplate(
+            #     start=right_hip_joint,
+            #     # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
+            #     # lateral epicondyle
+            #     end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI"),
+            # ),
+            u_axis=AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI")),
+            # todo: it needs to receive directly a the function to define the normal to the plane
             proximal_point=right_hip_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RKNE", "RKNI"),
@@ -338,11 +341,11 @@ def main():
     # compute model markers location based on the natural coordinates
     markers_model = model.markers(Qxp)
 
-    from viz import cheap_markers_animation
+    from viz import cheap_animation
 
     # display the experimental markers in red and the model markers in green
     # almost superimposed because the model is well defined on the experimental data
-    cheap_markers_animation(markers_model, markers_xp)
+    cheap_animation(model, Qxp[:,0:1], markers_xp[:, :, 0:1])
     # cheap_markers_animation(markers_model, np.zeros(markers_xp.shape))
 
     # remove the c3d file

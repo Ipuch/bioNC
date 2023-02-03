@@ -164,7 +164,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
             proximal_point=right_hip_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RKNE", "RKNI"),
-            w_axis=AxisTemplate(start="RKNE", end="RKNI"),
+            w_axis=AxisTemplate(start="RKNI", end="RKNE"),
         )
     )
 
@@ -173,8 +173,8 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
             name="HIP_CENTER", function=right_hip_joint, parent_name="THIGH", is_technical=False, is_anatomical=True
         )
     )
-    model["THIGH"].add_marker(MarkerTemplate("RKNI", parent_name="THIGH", is_technical=True))
     model["THIGH"].add_marker(MarkerTemplate("RKNE", parent_name="THIGH", is_technical=True))
+    model["THIGH"].add_marker(MarkerTemplate("RKNI", parent_name="THIGH", is_technical=True))
     model["THIGH"].add_marker(
         MarkerTemplate(
             "KNEE_JOINT", function=right_knee_joint, parent_name="THIGH", is_technical=False, is_anatomical=True
@@ -316,7 +316,6 @@ def main():
     # Create the model from a c3d file and markers as template
     model = model_creation_from_measured_data(filename)
 
-    # display the experimental markers and model
     # load experimental markers
     markers_xp = Markers.from_c3d(filename).to_numpy()
 

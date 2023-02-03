@@ -31,7 +31,6 @@ class Joint:
             theta: tuple[float] | list[float] | np.ndarray | MX,
             index: int,
         ):
-
             super(Joint.Hinge, self).__init__(name, parent, child, index)
 
             # check size and type of parent axis
@@ -309,7 +308,6 @@ class Joint:
             child: NaturalSegment,
             index: int,
         ):
-
             super(Joint.Spherical, self).__init__(name, parent, child, index)
             self.nb_constraints = 3
 

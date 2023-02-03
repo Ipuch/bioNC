@@ -287,7 +287,6 @@ def cheap_animation(model: BiomechanicalModel, Q: NaturalCoordinates):
     # Animate all this
     i = 0
     while vtkWindow.is_active:
-
         ground_frame.update_frame()
         for s in range(Q.nb_qi()):
             frames[s].update_frame(Q.vector(s)[:, i : i + 1])

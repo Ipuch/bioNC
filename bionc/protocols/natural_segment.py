@@ -46,7 +46,6 @@ class AbstractNaturalSegment(ABC):
         inertia: Union[MX, np.ndarray] = None,
         index: int = None,
     ):
-
         self._name = name
         self._index = index
 

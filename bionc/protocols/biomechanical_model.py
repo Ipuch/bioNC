@@ -27,7 +27,6 @@ class GenericBiomechanicalModel(ABC):
         segments: dict[str:Any, ...] = None,
         joints: dict[str:Any, ...] = None,
     ):
-
         from .natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
         from .joint import JointBase  # Imported here to prevent from circular imports
 

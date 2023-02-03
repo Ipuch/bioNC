@@ -256,7 +256,6 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
 
 def generate_c3d_file():
-
     # Load an empty c3d structure
     c3d = ezc3d.c3d()
 

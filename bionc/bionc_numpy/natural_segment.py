@@ -69,7 +69,6 @@ class NaturalSegment(AbstractNaturalSegment):
         center_of_mass: np.ndarray = None,
         inertia: np.ndarray = None,
     ):
-
         self._name = name
         self._index = index
 

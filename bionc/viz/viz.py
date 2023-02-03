@@ -251,7 +251,6 @@ def cheap_markers_animation(xp_markers: np.ndarray, model_markers: np.ndarray):
     # Animate all this
     i = 0
     while vtkWindow.is_active:
-
         vtkModelReal.update_markers(pyo_xp_markers[:, :, i])
         vtkModelModel.update_markers(pyo_model_markers[:, :, i])
 

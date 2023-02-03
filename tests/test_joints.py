@@ -279,7 +279,6 @@ def test_joints(bionc_type, joint_type: JointType):
         )
 
     elif joint_type == JointType.GROUND_REVOLUTE:
-
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
             np.array([-1.5, -1.1, -3.2, -0.1, 1.7]),

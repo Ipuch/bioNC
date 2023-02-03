@@ -66,7 +66,6 @@ def drop_the_pendulum(
 
     # Create the forward dynamics function Callable (f(t, x) -> xdot)
     def dynamics(t, states):
-
         idx_coordinates = slice(0, model.nb_Q)
         idx_velocities = slice(model.nb_Q, model.nb_Q + model.nb_Qdot)
 
@@ -224,7 +223,6 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
 
 
 if __name__ == "__main__":
-
     # Let's create a model
     nb_segments = 20
     model = build_n_link_pendulum(nb_segments=nb_segments)

@@ -12,7 +12,6 @@ class GenericData:
     """
 
     def __init__(self, markers: np.ndarray, markers_names: tuple[str, ...]):
-
         if markers.shape[0] == 3:
             markers = np.concatenate((markers, np.ones((1, markers.shape[1], markers.shape[2]))), axis=0)
 

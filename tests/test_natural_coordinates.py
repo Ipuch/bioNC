@@ -6,7 +6,6 @@ from bionc import (
 
 
 def test_SegmentNaturalCoordinates():
-
     Qi = bionc_np.SegmentNaturalCoordinates.from_components(
         u=np.array([0, 0, 0]),
         rp=np.array([4, 5, 6]),

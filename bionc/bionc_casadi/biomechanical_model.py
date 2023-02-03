@@ -485,7 +485,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         nb_constraints = 0
         K = MX.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i in range(self.nb_segments):
-
             # add the joint constraints first
             joints = self.joints_from_child_index(i)
             if len(joints) != 0:
@@ -543,7 +542,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         nb_constraints = 0
         Kdot = MX.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i in range(self.nb_segments):
-
             # add the joint constraints first
             joints = self.joints_from_child_index(i)
             if len(joints) != 0:

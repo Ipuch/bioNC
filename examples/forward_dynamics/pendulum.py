@@ -66,7 +66,6 @@ def drop_the_pendulum(
 
     # Create the forward dynamics function Callable (f(t, x) -> xdot)
     def dynamics(t, states):
-
         idx_coordinates = slice(0, model.nb_Q)
         idx_velocities = slice(model.nb_Q, model.nb_Q + model.nb_Qdot)
 
@@ -175,7 +174,6 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
 
 
 if __name__ == "__main__":
-
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment

@@ -183,8 +183,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
     model["SHANK"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
-            u_axis=
-            AxisFunctionTemplate(
+            u_axis=AxisFunctionTemplate(
                 function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI")
             ),
             proximal_point=right_knee_joint,

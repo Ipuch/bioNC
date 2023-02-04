@@ -180,8 +180,8 @@ def main():
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
 
-    optimizer = "ipopt"
-    # optimizer = "sqpmethod"
+    optimizer = "ipopt" # tend to find low cost functions but flips axis.
+    optimizer = "sqpmethod"
 
     # Generate c3d file
     filename = module.generate_c3d_file()
@@ -193,7 +193,7 @@ def main():
     markers = np.repeat(markers, 50, axis=2)
     markers = markers + np.random.normal(0, 0.01, markers.shape)
     # markers = markers[:, :, 0:1]
-    ik_solver = InverseKinematics(model_numpy, markers, solve_frame_per_frame=False)
+    ik_solver = InverseKinematics(model_numpy, markers, solve_frame_per_frame=True)
     import time
     tic = time.time()
     Qopt = ik_solver.solve(method=optimizer)

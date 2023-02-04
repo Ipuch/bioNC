@@ -159,7 +159,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     model["THIGH"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisFunctionTemplate(
-                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNI", "RKNE")
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI")
             ),
             proximal_point=right_hip_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle

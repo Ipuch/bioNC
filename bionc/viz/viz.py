@@ -2,8 +2,8 @@
 Example script for animating markers
 """
 from enum import Enum
-
-from bionc import BiomechanicalModel, NaturalCoordinates, SegmentNaturalCoordinates
+from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 import numpy as np
 from pyomeca import Markers
 from bioviz.biorbd_vtk import VtkModel, VtkWindow
@@ -185,9 +185,8 @@ class Viz:
             raise ValueError(
                 f"Q and markers_xp must have the same number of frames. Q.shape[1]={Q.shape[1]} and markers_xp.shape[2]={markers_xp.shape[2]}"
             )
-
-        if not isinstance(Q, NaturalCoordinates):
-            Q = NaturalCoordinates(Q)
+        from ..bionc_numpy import NaturalCoordinates
+        Q = NaturalCoordinates(Q)
 
         if self.show_xp_markers:
             pyo_xp_markers = Markers(markers_xp)

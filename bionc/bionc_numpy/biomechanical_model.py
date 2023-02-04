@@ -5,6 +5,7 @@ from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
+from .inverse_kinematics import InverseKinematics
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -667,3 +668,26 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Qddoti = x[0 : self.nb_Qddot]
         lambda_i = x[self.nb_Qddot :]
         return NaturalAccelerations(Qddoti), lambda_i
+
+    def inverse_kinematics(
+            self,
+            experimental_markers: np.ndarray | str,
+            solve_frame_per_frame: bool = True,
+            ) -> InverseKinematics:
+        """
+        This is an interface to the inverse kinematics class. It allows to build an inverse kinematics object with the current model.
+
+        Parameters
+        ----------
+        experimental_markers : np.ndarray | str
+            The experimental markers positions. If it is a string, it is the path to the file containing the markers positions
+        solve_frame_per_frame : bool
+            If True, the inverse kinematics is solved frame per frame. If False, the inverse kinematics is solved for the whole sequence at once
+
+        Returns
+        -------
+        InverseKinematics
+            The inverse kinematics object
+        """
+        return InverseKinematics(self, experimental_markers, solve_frame_per_frame)
+

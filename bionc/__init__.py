@@ -39,3 +39,4 @@ casadi_type = MX_type
 numpy_type = ndarray
 
 from .viz import Viz
+from .bionc_numpy import InverseKinematics

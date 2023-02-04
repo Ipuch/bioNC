@@ -94,8 +94,7 @@ def test_model_creation():
             length=0.3531381284447682,
             gamma=1.5707963267948966,
             beta=1.5707963267948966,
-            alpha=1.8364466144343754
-,
+            alpha=1.8364466144343754,
         ),
         THIGH=dict(
             length=0.39649708859834826,
@@ -119,7 +118,6 @@ def test_model_creation():
         np.testing.assert_almost_equal(s.gamma, prop[key]["gamma"])
         np.testing.assert_almost_equal(s.beta, prop[key]["beta"])
         np.testing.assert_almost_equal(s.alpha, prop[key]["alpha"])
-
 
     # remove the c3d file
     os.remove(filename)

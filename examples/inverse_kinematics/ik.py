@@ -20,6 +20,9 @@ from tests.utils import TestUtils
 bionc = TestUtils.bionc_folder()
 module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
 
+optimizer = "ipopt"
+# optimizer = "sqpmethod"
+
 # Generate c3d file
 filename = module.generate_c3d_file()
 # Generate model
@@ -42,7 +45,6 @@ Q = NaturalCoordinates(vertcat(*Q_sym))
 phim = model_mx.markers_constraints(markers[:3, :, 0], Q, only_technical=True)
 error_m = 1 / 2 * phim.T @ phim
 # Constraints
-# Constraints
 phir = model_mx.rigid_body_constraints(Q)
 phik = model_mx.joint_constraints(Q)
 
@@ -52,11 +54,28 @@ nlp = dict(
     g=vertcat(phir, phik),
 )
 
+if optimizer == "sqpmethod":
+    options = {
+        "beta": 0.8,
+        "c1": 0.0001,
+        "hessian_approximation": "exact",
+        "lbfgs_memory": 10,
+        "max_iter": 50,
+        "max_iter_ls": 3,
+        "merit_memory": 4,
+        "print_header": True,
+        "print_time": True,
+        "qpsol": "qpoases",
+        "tol_du": 0.1,
+        "tol_pr": 0.1,
+    }
+else:
+    options = {}
 S = nlpsol(
     "S",
-    # 'sqpmethod',
-    "ipopt",
+    optimizer,
     nlp,
+    options,
 )
 name_technical = model_numpy.marker_names_technical
 name_all = model_numpy.marker_names
@@ -64,8 +83,8 @@ name_all = model_numpy.marker_names
 idx_technical = [name_all.index(name) for name in name_technical]
 
 # Display the initial guess
-bionc_viz = Viz(model_numpy, show_center_of_mass=False)
-bionc_viz.animate(NaturalCoordinatesNumpy(Q1), markers_xp=markers[:3, :, 1:2])
+# bionc_viz = Viz(model_numpy, show_center_of_mass=False)
+# bionc_viz.animate(NaturalCoordinatesNumpy(Q1), markers_xp=markers[:3, :, 1:2])
 
 # Solve the problem
 r = S(
@@ -76,7 +95,7 @@ r = S(
 
 Qopt = r["x"]
 markers_model = model_numpy.markers(NaturalCoordinatesNumpy(Qopt))[:, idx_technical, :]
-print("Error on markers: ", np.linalg.norm(markers_model - markers[:3, idx_technical, 0]))
+print("Error on markers: ", np.linalg.norm(markers_model - markers[:3, :, 0:1], axis=0))
 print("Error on rigid body constraints: ", model_numpy.rigid_body_constraints(NaturalCoordinatesNumpy(Qopt.toarray())))
 print("Error on joint constraints: ", model_numpy.joint_constraints(NaturalCoordinatesNumpy(Qopt.toarray())))
 

@@ -169,17 +169,26 @@ class Viz:
                 markers_opacity=1,
             )
 
-    def animate(self, Q: NaturalCoordinates, markers_xp):
+    def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp):
         """
         This function is a cheap animation of markers
 
         Parameters
         ----------
-        Q : NaturalCoordinates
-            The natural coordinates of the segment
+        Q : NaturalCoordinates | np.ndarray
+            The natural coordinates of the segment of shape (n_dofs, n_frames)
         markers_xp : np.ndarray
-            The experimental markers measured in global frame
+            The experimental markers measured in global frame of shape (3, n_markers, n_frames)
         """
+
+        if Q.shape[1] != markers_xp.shape[2]:
+            raise ValueError(
+                f"Q and markers_xp must have the same number of frames. Q.shape[1]={Q.shape[1]} and markers_xp.shape[2]={markers_xp.shape[2]}"
+            )
+
+        if not isinstance(Q, NaturalCoordinates):
+            Q = NaturalCoordinates(Q)
+
         if self.show_xp_markers:
             pyo_xp_markers = Markers(markers_xp)
         if self.show_model_markers:

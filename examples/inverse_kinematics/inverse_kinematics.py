@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import vertcat, nlpsol, horzcat
+from casadi import vertcat, nlpsol, horzcat, MX, Function
 import ezc3d
 from pathlib import Path
 from pyomeca import Markers
@@ -34,9 +34,12 @@ class InverseKinematics:
         self,
         model: BiomechanicalModel,
         experimental_markers: np.ndarray | str,
+        solve_frame_per_frame: bool = True,
     ):
-        self.frame_per_frame = None
-        self.Qopt = None
+        self.frame_per_frame = solve_frame_per_frame
+
+        if not isinstance(model, BiomechanicalModel):
+            raise ValueError("model must be a BiomechanicalModel")
         self.model = model
         self.model_mx = model.to_mx()
 
@@ -57,65 +60,67 @@ class InverseKinematics:
         self.nb_frames = self.experimental_markers.shape[2]
         self.nb_markers = self.experimental_markers.shape[1]
 
+        self.Qopt = None
+        self.Q_sym, self.vert_Q_sym = self._declare_sym_Q()
+        self.makers_sym = MX.sym("markers", (3, self.nb_markers))
+        objective_sym = self._objective(self.Q_sym, self.makers_sym)
+        self.objective_function = Function("objective_function", [self.Q_sym, self.makers_sym], [objective_sym]).expand()
+
     def solve(
         self,
         method: str = "ipopt",
-        frame_per_frame: bool = True,
+        options: dict = None,
     ):
+
         if method == "sqpmethod":
-            options = {
-                "beta": 0.8,
-                "c1": 0.0001,
-                "hessian_approximation": "exact",
-                "lbfgs_memory": 10,
-                "max_iter": 50,
-                "max_iter_ls": 3,
-                "merit_memory": 4,
-                "print_header": True,
-                "print_time": True,
-                "qpsol": "qpoases",
-                "tol_du": 0.1,
-                "tol_pr": 0.1,
-                "qpsol_options": {"error_on_fail": False},
-            }
+            if options is None:
+                options = {
+                    "beta": 0.8,  # default value
+                    "c1": 0.0001,  # default value
+                    # "hessian_approximation": "exact",
+                    "hessian_approximation": "limited-memory", # faster but might fail to converge
+                    "lbfgs_memory": 10,
+                    "max_iter": 50,
+                    "max_iter_ls": 3,
+                    "merit_memory": 4,
+                    "print_header": False,
+                    "print_time": True,
+                    "qpsol": "qpoases",
+                    "tol_du": 0.1,
+                    "tol_pr": 0.1,
+                    "qpsol_options": {"error_on_fail": False},
+
+                }
         elif method == "ipopt":
-            options = {}
+            if options is None:
+                options = {
+                    "ipopt.hessian_approximation": "exact",  # recommended
+                    "ipopt.warm_start_init_point": "no",
+                    "ipopt.print_level": 0,
+                    "ipopt.print_timing_statistics": "no",
+                           }
         else:
             raise ValueError("method must be 'sqpmethod' or 'ipopt'")
 
-        self.frame_per_frame = frame_per_frame
-        Q, vert_Q = self._declare_sym_Q()
-
-        if frame_per_frame:
+        if self.frame_per_frame:
             Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
             lbg = np.zeros(self.model.nb_holonomic_constraints)
             ubg = np.zeros(self.model.nb_holonomic_constraints)
-            constraints = self._constraints(Q)
-            print(constraints)
+            constraints = self._constraints(self.Q_sym)
+            nlp = dict(
+                x=self.vert_Q_sym,
+                g=constraints,
+            )
             for f in range(self.nb_frames):
-                objective = self._objective(Q, self.experimental_markers[:, :, f : f + 1])
-                nlp = dict(
-                    x=vert_Q,
-                    f=objective,
-                    g=constraints,
-                )
+                nlp["f"] = self.objective_function(self.Q_sym, self.experimental_markers[:, :, f])
                 Q_init = self.Q_init[:, f : f + 1]
-                bionc_viz = Viz(
-                    self.model,
-                    show_center_of_mass=False,  # no center of mass in this example
-                    show_xp_markers=True,
-                    show_model_markers=True,
-                )
-                bionc_viz.animate(
-                    NaturalCoordinatesNumpy(Q_init), markers_xp=self.experimental_markers[:, :, f : f + 1]
-                )
                 r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
                 Qopt[:, f : f + 1] = r["x"].toarray()
         else:
-            constraints = self._constraints(Q)
-            objective = self._objective(Q, self.experimental_markers)
+            constraints = self._constraints(self.Q_sym)
+            objective = self._objective(self.Q_sym, self.experimental_markers)
             nlp = dict(
-                x=vert_Q,
+                x=self.vert_Q_sym,
                 f=objective,
                 g=constraints,
             )
@@ -146,7 +151,8 @@ class InverseKinematics:
         nb_frames = 1 if self.frame_per_frame else self.nb_frames
         for f in range(nb_frames):
             Q_f = NaturalCoordinates(Q[:, f])
-            phim = self.model_mx.markers_constraints(experimental_markers[:3, :, f], Q_f, only_technical=True)
+            xp_markers = experimental_markers[:3, :, f] if isinstance(experimental_markers, np.ndarray) else experimental_markers
+            phim = self.model_mx.markers_constraints(xp_markers, Q_f, only_technical=True)
             error_m += 1 / 2 * phim.T @ phim
         return error_m
 
@@ -167,7 +173,7 @@ class InverseKinematics:
             show_xp_markers=True,
             show_model_markers=True,
         )
-        bionc_viz.animate(NaturalCoordinatesNumpy(self.Qopt), markers_xp=self.experimental_markers)
+        bionc_viz.animate(self.Qopt, markers_xp=self.experimental_markers)
 
 
 def main():
@@ -184,19 +190,17 @@ def main():
     model_numpy = model
 
     markers = Markers.from_c3d(filename).to_numpy()[:3, :, :]
-    # markers = np.repeat(markers, 20, axis=2)
-    markers = markers[:, :, 0:1]
-    ik_solver = InverseKinematics(model_numpy, markers)
-    Qopt = ik_solver.solve(method=optimizer, frame_per_frame=True)
+    markers = np.repeat(markers, 50, axis=2)
+    markers = markers + np.random.normal(0, 0.01, markers.shape)
+    # markers = markers[:, :, 0:1]
+    ik_solver = InverseKinematics(model_numpy, markers, solve_frame_per_frame=False)
+    import time
+    tic = time.time()
+    Qopt = ik_solver.solve(method=optimizer)
+    toc = time.time()
+    print(f"Time to solve: {toc - tic}")
     print(Qopt)
-    # ik_solver.animate()
-    bionc_viz = Viz(
-        model_numpy,
-        show_center_of_mass=False,  # no center of mass in this example
-        show_xp_markers=True,
-        show_model_markers=True,
-    )
-    bionc_viz.animate(NaturalCoordinatesNumpy(Qopt), markers_xp=markers[:3, :, 0:1])
+    ik_solver.animate()
 
 
 if __name__ == "__main__":

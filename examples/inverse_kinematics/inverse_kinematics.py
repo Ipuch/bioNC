@@ -62,7 +62,6 @@ class InverseKinematics:
         method: str = "ipopt",
         frame_per_frame: bool = True,
     ):
-
         if method == "sqpmethod":
             options = {
                 "beta": 0.8,
@@ -94,12 +93,12 @@ class InverseKinematics:
             constraints = self._constraints(Q)
             print(constraints)
             for f in range(self.nb_frames):
-                objective = self._objective(Q, self.experimental_markers[:, :, f: f + 1])
+                objective = self._objective(Q, self.experimental_markers[:, :, f : f + 1])
                 nlp = dict(
-                        x=vert_Q,
-                        f=objective,
-                        g=constraints,
-                    )
+                    x=vert_Q,
+                    f=objective,
+                    g=constraints,
+                )
                 Q_init = self.Q_init[:, f : f + 1]
                 bionc_viz = Viz(
                     self.model,
@@ -107,7 +106,9 @@ class InverseKinematics:
                     show_xp_markers=True,
                     show_model_markers=True,
                 )
-                bionc_viz.animate(NaturalCoordinatesNumpy(Q_init), markers_xp=self.experimental_markers[:, :, f: f + 1])
+                bionc_viz.animate(
+                    NaturalCoordinatesNumpy(Q_init), markers_xp=self.experimental_markers[:, :, f : f + 1]
+                )
                 r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
                 Qopt[:, f : f + 1] = r["x"].toarray()
         else:
@@ -196,6 +197,7 @@ def main():
         show_model_markers=True,
     )
     bionc_viz.animate(NaturalCoordinatesNumpy(Qopt), markers_xp=markers[:3, :, 0:1])
+
 
 if __name__ == "__main__":
     main()

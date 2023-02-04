@@ -186,6 +186,7 @@ class Viz:
                 f"Q and markers_xp must have the same number of frames. Q.shape[1]={Q.shape[1]} and markers_xp.shape[2]={markers_xp.shape[2]}"
             )
         from ..bionc_numpy import NaturalCoordinates
+
         Q = NaturalCoordinates(Q)
 
         if self.show_xp_markers:

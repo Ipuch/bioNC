@@ -211,7 +211,7 @@ class InverseKinematics:
         return Qopt
 
     def _declare_sym_Q(self) -> tuple[MX, MX]:
-        """ Declares the symbolic variables for the natural coordinates and handle single frame or multi frames """
+        """Declares the symbolic variables for the natural coordinates and handle single frame or multi frames"""
         Q_sym = []
         nb_frames = 1 if self._frame_per_frame else self.nb_frames
         for f in range(nb_frames):
@@ -224,7 +224,7 @@ class InverseKinematics:
         return Q, vert_Q
 
     def _objective(self, Q, experimental_markers) -> MX:
-        """ Computes the objective function and handle single frame or multi frames """
+        """Computes the objective function and handle single frame or multi frames"""
         error_m = 0
         nb_frames = 1 if self._frame_per_frame else self.nb_frames
         for f in range(nb_frames):
@@ -237,7 +237,7 @@ class InverseKinematics:
         return error_m
 
     def _constraints(self, Q) -> MX:
-        """ Computes the constraints and handle single frame or multi frames """
+        """Computes the constraints and handle single frame or multi frames"""
         nb_frames = 1 if self._frame_per_frame else self.nb_frames
         phir = []
         phik = []

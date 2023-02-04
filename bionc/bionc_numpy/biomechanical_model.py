@@ -670,10 +670,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         return NaturalAccelerations(Qddoti), lambda_i
 
     def inverse_kinematics(
-            self,
-            experimental_markers: np.ndarray | str,
-            solve_frame_per_frame: bool = True,
-            ) -> InverseKinematics:
+        self,
+        experimental_markers: np.ndarray | str,
+        solve_frame_per_frame: bool = True,
+    ) -> InverseKinematics:
         """
         This is an interface to the inverse kinematics class. It allows to build an inverse kinematics object with the current model.
 
@@ -690,4 +690,3 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The inverse kinematics object
         """
         return InverseKinematics(self, experimental_markers, solve_frame_per_frame)
-

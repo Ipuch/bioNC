@@ -53,4 +53,3 @@ if __name__ == "__main__":
         show_model_markers=True,
     )
     viz.animate(Qopt, markers_xp=markers)
-

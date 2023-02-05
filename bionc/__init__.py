@@ -38,5 +38,5 @@ from numpy import ndarray
 casadi_type = MX_type
 numpy_type = ndarray
 
-from .viz import Viz
+from .anim8 import Viz
 from .bionc_numpy import InverseKinematics

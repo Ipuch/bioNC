@@ -1,1 +1,1 @@
-from .viz import Viz
+from .animations import Viz

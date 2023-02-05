@@ -45,4 +45,4 @@ def main():
 
 if __name__ == "__main__":
     ik_solver, _, _ = main()
-    ik_solver.animate()
+    # ik_solver.animate()

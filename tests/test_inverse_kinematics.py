@@ -9,7 +9,7 @@ def test_ik_example():
     module = TestUtils.load_module(bionc + "/examples/inverse_kinematics/inverse_kinematics.py")
 
     np.random.seed(42)
-    ik_solver, Q_sqp, Q_ipopt = module.main()
+    ik_solver, Q_sqp, Q_ipopt, _, _ = module.main()
 
     # Test Q with numpy
     np.testing.assert_almost_equal(

@@ -1,7 +1,7 @@
 """
 This example shows how to use the InverseKinematics class to solve an inverse kinematics problem.
 """
-from bionc import InverseKinematics
+from bionc import InverseKinematics, Viz
 import numpy as np
 from pyomeca import Markers
 from tests.utils import TestUtils
@@ -40,9 +40,17 @@ def main():
     print(f"Time to solve 200 frames with sqpmethod: {toc0 - tic0}")
     print(f"time to solve 200 frames with ipopt: {toc1 - tic1}")
 
-    return ik_solver, Qopt_sqp, Qopt_ipopt
+    return ik_solver, Qopt_sqp, Qopt_ipopt, model, markers
 
 
 if __name__ == "__main__":
-    ik_solver, _, _ = main()
-    # ik_solver.animate()
+    ik_solver, Qopt, _, model, markers = main()
+
+    viz = Viz(
+        model,
+        show_center_of_mass=False,  # no center of mass in this example
+        show_xp_markers=True,
+        show_model_markers=True,
+    )
+    viz.animate(Qopt, markers_xp=markers)
+

@@ -6,7 +6,7 @@ from ..bionc_casadi import (
     NaturalCoordinates,
     SegmentNaturalCoordinates,
 )
-# from ..viz import Viz
+
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 
 
@@ -246,14 +246,5 @@ class InverseKinematics:
             phir.append(self._model_mx.rigid_body_constraints(Q_f))
             phik.append(self._model_mx.joint_constraints(Q_f))
         return vertcat(*phir, *phik)
-
-    # def animate(self):
-    #     bionc_viz = Viz(
-    #         self.model,
-    #         show_center_of_mass=False,  # no center of mass in this example
-    #         show_xp_markers=True,
-    #         show_model_markers=True,
-    #     )
-    #     bionc_viz.animate(self.Qopt, markers_xp=self.experimental_markers)
 
     # todo: def sol() -> dict that returns the details of the inverse kinematics such as all the metrics, etc...

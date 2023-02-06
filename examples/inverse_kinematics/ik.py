@@ -87,4 +87,4 @@ r = S(
 Qopt = r["x"].toarray()
 
 bionc_viz = Viz(model_numpy, show_center_of_mass=False)
-bionc_viz.animate(NaturalCoordinatesNumpy(Qopt), markers_xp=markers[:3, :, 1:2])
+bionc_viz.animate(NaturalCoordinatesNumpy(Qopt), markers_xp=markers[:3, :, 0:1])

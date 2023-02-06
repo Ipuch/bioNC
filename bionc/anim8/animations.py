@@ -3,7 +3,7 @@ Example script for animating markers
 """
 from enum import Enum
 
-from bioviz.biorbd_vtk import VtkModel, VtkWindow
+from bioviz import VtkModel, VtkWindow
 import numpy as np
 from pyomeca import Markers
 

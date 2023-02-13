@@ -8,7 +8,6 @@ from .utils import TestUtils
     ["numpy", "casadi"],
 )
 def test_natural_vector(bionc_type):
-
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
             NaturalVector,

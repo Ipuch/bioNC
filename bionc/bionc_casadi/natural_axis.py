@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import MX
+from casadi import MX, norm_1
 from .natural_marker import Marker
 
 
@@ -22,4 +22,4 @@ class Axis:
         """
         start = self.start_point.position
         end = self.end_point.position
-        return end - start
+        return (end - start) / norm_1(end[:3] - start[:3])

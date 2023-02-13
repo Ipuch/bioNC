@@ -7,7 +7,6 @@ from .utils import TestUtils
 
 
 def test_SegmentNaturalCoordinates_casadi():
-
     Qi = bionc_mx.SegmentNaturalCoordinates.from_components(
         u=np.array([0, 0, 0]),
         rp=np.array([4, 5, 6]),

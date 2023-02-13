@@ -69,7 +69,6 @@ class NaturalSegment(AbstractNaturalSegment):
         center_of_mass: np.ndarray = None,
         inertia: np.ndarray = None,
     ):
-
         self._name = name
         self._index = index
 
@@ -180,12 +179,12 @@ class NaturalSegment(AbstractNaturalSegment):
 
         Q = SegmentNaturalCoordinates(Q)
 
-        u, rp, rd, w = Q.to_components()
+        u, v, w = Q.to_uvw()
 
-        length = np.linalg.norm(rp - rd, axis=0)
-        alpha = np.arccos(np.sum((rp - rd) * w, axis=0) / length)
+        length = np.linalg.norm(v, axis=0)
+        alpha = np.arccos(np.sum(v * w, axis=0) / length)
         beta = np.arccos(np.sum(u * w, axis=0))
-        gamma = np.arccos(np.sum(u * (rp - rd), axis=0) / length)
+        gamma = np.arccos(np.sum(u * v, axis=0) / length)
 
         return alpha, beta, gamma, length
 

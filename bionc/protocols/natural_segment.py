@@ -46,7 +46,6 @@ class AbstractNaturalSegment(ABC):
         inertia: Union[MX, np.ndarray] = None,
         index: int = None,
     ):
-
         self._name = name
         self._index = index
 
@@ -152,7 +151,6 @@ class AbstractNaturalSegment(ABC):
         tuple
             The parameters of the segment (alpha, beta, gamma, length)
         """
-        pass
 
     @property
     def name(self):
@@ -246,7 +244,6 @@ class AbstractNaturalSegment(ABC):
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
         Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
         """
-        pass
 
     @abstractmethod
     def segment_coordinates_system(self, Q: SegmentNaturalCoordinates) -> HomogeneousTransform:
@@ -258,7 +255,6 @@ class AbstractNaturalSegment(ABC):
         Q: SegmentNaturalCoordinates
             The natural coordinates of the segment
         """
-        pass
 
     @abstractmethod
     def location_from_homogenous_transform(
@@ -274,21 +270,18 @@ class AbstractNaturalSegment(ABC):
             Homogenous transform of the segment Ti which transforms from the local frame (Oi, Xi, Yi, Zi)
             to the global frame (Xi, Yi, Zi)
         """
-        pass
 
     @abstractmethod
     def rigid_body_constraint(self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]) -> MX:
         """
         This function returns the rigid body constraints of the segment, denoted phi_r.
         """
-        pass
 
     @staticmethod
     def rigid_body_constraint_jacobian(Qi: SegmentNaturalCoordinates):
         """
         This function returns the Jacobian matrix of the rigid body constraints denoted K_r
         """
-        pass
 
     @abstractmethod
     def rigid_body_constraint_derivative(
@@ -306,14 +299,12 @@ class AbstractNaturalSegment(ABC):
         Qdoti : SegmentNaturalVelocities
             The natural velocities of the segment
         """
-        pass
 
     @staticmethod
     def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities):
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
         """
-        pass
 
     @abstractmethod
     def _pseudo_inertia_matrix(self):
@@ -321,7 +312,6 @@ class AbstractNaturalSegment(ABC):
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
         It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
         """
-        pass
 
     @abstractmethod
     def _natural_center_of_mass(self):
@@ -329,21 +319,18 @@ class AbstractNaturalSegment(ABC):
         This function computes the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
         """
-        pass
 
     @abstractmethod
     def _update_mass_matrix(self):
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.
         """
-        pass
 
     @abstractmethod
     def weight(self):
         """
         This function returns the weight applied on the segment through gravity force.
         """
-        pass
 
     @abstractmethod
     def differential_algebraic_equation(
@@ -368,7 +355,6 @@ class AbstractNaturalSegment(ABC):
             * beta: float
                 Stabilization parameter for the constraint derivative
         """
-        pass
 
     def add_natural_marker(self, marker: AbstractNaturalMarker):
         """
@@ -415,14 +401,12 @@ class AbstractNaturalSegment(ABC):
         Qi: SegmentNaturalCoordinates
             Natural coordinates of the segment
         """
-        pass
 
     @abstractmethod
     def markers_jacobian(self):
         """
         This function returns the marker jacobian of the segment
         """
-        pass
 
     @abstractmethod
     def potential_energy(self, Qi: SegmentNaturalCoordinates):
@@ -438,7 +422,6 @@ class AbstractNaturalSegment(ABC):
         -------
             Potential energy of the segment
         """
-        pass
 
     @abstractmethod
     def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
@@ -455,4 +438,3 @@ class AbstractNaturalSegment(ABC):
         float
             Kinetic energy of the segment
         """
-        pass

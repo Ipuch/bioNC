@@ -156,7 +156,6 @@ def post_computations(segment: NaturalSegment, time_steps: np.ndarray, all_state
 
 
 if __name__ == "__main__":
-
     # Let's create a segment
     my_segment = NaturalSegment(
         name="box",

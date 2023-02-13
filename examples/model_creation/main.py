@@ -7,6 +7,7 @@ from pyomeca import Markers
 
 from bionc import (
     AxisTemplate,
+    AxisFunctionTemplate,
     BiomechanicalModelTemplate,
     MarkerTemplate,
     SegmentTemplate,
@@ -117,8 +118,6 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     left_hip_joint = lambda m, bio: harrington2007(m["RFWT"], m["LFWT"], m["RBWT"], m["LBWT"])[1]
     right_knee_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RKNI", "RKNE")
     right_ankle_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI")
-    # m['R_HJC'] = right_hip_joint
-    # m['L_HJC'] = left_hip_joint
 
     model["PELVIS"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
@@ -130,37 +129,37 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
             # middle of the right and left posterior superior iliac spine
             # or sacroiliac joint
             proximal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RBWT", "LBWT"),
-            # Hip joint center projected in the sagittal plane of the pelvis ==> NO
+            # Hip joint center projected in the sagittal plane of the pelvis
             # middle of the right and left hip joint center
-            # todo: how to compute the sagittal plane of the pelvis?
-            # We do not need it
             distal_point=lambda m, bio: right_hip_joint(m, bio),
             # normal to the sagittal plane of the pelvis
-            # todo
             w_axis=AxisTemplate(start=left_hip_joint, end=right_hip_joint),
         )
     )
 
+    model["PELVIS"].add_marker(MarkerTemplate(name="RFWT", parent_name="PELVIS", is_technical=True))
+    model["PELVIS"].add_marker(MarkerTemplate(name="LFWT", parent_name="PELVIS", is_technical=True))
+    model["PELVIS"].add_marker(MarkerTemplate(name="RBWT", parent_name="PELVIS", is_technical=True))
+    model["PELVIS"].add_marker(MarkerTemplate(name="LBWT", parent_name="PELVIS", is_technical=True))
     model["PELVIS"].add_marker(
-        MarkerTemplate(name="RFWT", function=right_hip_joint, parent_name="PELVIS", is_technical=True)
+        MarkerTemplate(
+            name="RIGHT_HIP_JOINT",
+            function=right_hip_joint,
+            parent_name="PELVIS",
+            is_technical=False,
+            is_anatomical=True,
+        )
     )
     model["PELVIS"].add_marker(
-        MarkerTemplate(name="LFWT", function=left_hip_joint, parent_name="PELVIS", is_technical=True)
-    )
-    model["PELVIS"].add_marker(
-        MarkerTemplate(name="RBWT", function=right_hip_joint, parent_name="PELVIS", is_technical=True)
-    )
-    model["PELVIS"].add_marker(
-        MarkerTemplate(name="LBWT", function=left_hip_joint, parent_name="PELVIS", is_technical=True)
+        MarkerTemplate(
+            name="LEFT_HIP_JOINT", function=left_hip_joint, parent_name="PELVIS", is_technical=False, is_anatomical=True
+        )
     )
 
     model["THIGH"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
-            u_axis=AxisTemplate(
-                start=right_hip_joint,
-                # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
-                # lateral epicondyle
-                end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI"),
+            u_axis=AxisFunctionTemplate(
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RKNE", "RKNI")
             ),
             proximal_point=right_hip_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
@@ -174,8 +173,8 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
             name="HIP_CENTER", function=right_hip_joint, parent_name="THIGH", is_technical=False, is_anatomical=True
         )
     )
-    model["THIGH"].add_marker(MarkerTemplate("RKNI", parent_name="THIGH", is_technical=True))
     model["THIGH"].add_marker(MarkerTemplate("RKNE", parent_name="THIGH", is_technical=True))
+    model["THIGH"].add_marker(MarkerTemplate("RKNI", parent_name="THIGH", is_technical=True))
     model["THIGH"].add_marker(
         MarkerTemplate(
             "KNEE_JOINT", function=right_knee_joint, parent_name="THIGH", is_technical=False, is_anatomical=True
@@ -184,16 +183,13 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
     model["SHANK"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
-            u_axis=AxisTemplate(
-                start=right_knee_joint,
-                # u_axis is defined from the normal of the plane formed by the hip center, the medial epicondyle and the
-                # lateral epicondyle
-                end=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI"),
+            u_axis=AxisFunctionTemplate(
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RANE", "RANI")
             ),
             proximal_point=right_knee_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI"),
-            w_axis=AxisTemplate(start="RANE", end="RANI"),
+            w_axis=AxisTemplate(start="RANI", end="RANE"),
         )
     )
     model["SHANK"].add_marker(
@@ -209,11 +205,10 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
     model["FOOT"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
+            # u_axis is defined from calcaneous (CAL) to the middle of M1 and M5
             u_axis=AxisTemplate(
-                start=right_ankle_joint,
-                # u_axis is defined from calcaneous (CAL) to the middle of M1 and M5
-                end=lambda m, bio: (m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2)
-                / np.linalg.norm(m["RHEE"] - (m["RTARI"] + m["RTAR"]) / 2),
+                start="RHEE",
+                end=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RTARI", "RTAR"),
             ),
             proximal_point=right_ankle_joint,
             #  middle of M1 and M5
@@ -261,7 +256,6 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
 
 def generate_c3d_file():
-
     # Load an empty c3d structure
     c3d = ezc3d.c3d()
 
@@ -320,21 +314,18 @@ def main():
     # Create the model from a c3d file and markers as template
     model = model_creation_from_measured_data(filename)
 
-    # display the experimental markers and model
     # load experimental markers
     markers_xp = Markers.from_c3d(filename).to_numpy()
 
     # compute the natural coordinates
     Qxp = model.Q_from_markers(markers_xp[:, :, 0:2])
 
-    # compute model markers location based on the natural coordinates
-    markers_model = model.markers(Qxp)
-
-    from viz import cheap_markers_animation
+    from bionc import Viz
 
     # display the experimental markers in red and the model markers in green
     # almost superimposed because the model is well defined on the experimental data
-    cheap_markers_animation(markers_model, markers_xp)
+    bionc_viz = Viz(model, show_center_of_mass=False)
+    bionc_viz.animate(Qxp, markers_xp=markers_xp)
 
     # remove the c3d file
     os.remove(filename)

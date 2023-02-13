@@ -86,43 +86,38 @@ def test_model_creation():
     prop = dict(
         FOOT=dict(
             length=0.13890177648456653,
-            gamma=0.8567148572956443,
-            beta=1.7556031976569564,
-            alpha=1.591624071977332,
+            gamma=2.8023850029735424,
+            beta=1.4427339691370815,
+            alpha=1.7427162708100972,
         ),
         SHANK=dict(
             length=0.3531381284447682,
-            gamma=1.7873340587846938,
-            beta=1.4399616784423517,
-            alpha=1.54503182793888,
+            gamma=1.5707963267948966,
+            beta=1.5707963267948966,
+            alpha=1.8364466144343754,
         ),
         THIGH=dict(
             length=0.39649708859834826,
-            gamma=2.3049927484597585,
-            beta=1.7463313954337523,
-            alpha=1.5377930856781998,
+            gamma=1.5707963267948966,
+            beta=1.5707963267948966,
+            alpha=1.2764237629305433,
         ),
         PELVIS=dict(
             length=0.1769530640303529,
-            gamma=1.7254699225736285,
-            beta=1.5730692288960397,
-            alpha=1.6366548320164234,
+            gamma=2.4511071335377275,
+            beta=1.6390207184266778,
+            alpha=1.976263241165896,
         ),
     )
 
     # verify segments values are NaturalSegment objects
     for s, key in zip(model.segments.values(), model.segments.keys()):
         assert isinstance(s, NaturalSegment)
-
+        print(s.name)
         np.testing.assert_almost_equal(s.length, prop[key]["length"])
         np.testing.assert_almost_equal(s.gamma, prop[key]["gamma"])
         np.testing.assert_almost_equal(s.beta, prop[key]["beta"])
         np.testing.assert_almost_equal(s.alpha, prop[key]["alpha"])
-
-    # todo: test the markers and global matrices of the model
-    # rigidbody constraints
-    # joint constraints
-    # markers constraints
 
     # remove the c3d file
     os.remove(filename)

@@ -9,7 +9,6 @@ from .utils import TestUtils
     ["numpy", "casadi"],
 )
 def test_segment_marker(bionc_type):
-
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
             SegmentNaturalCoordinates,

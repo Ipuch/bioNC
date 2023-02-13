@@ -76,7 +76,6 @@ class MarkerTemplate:
 
     @staticmethod
     def normal_to(m, bio, mk1: np.ndarray | str, mk2: np.ndarray | str, mk3: np.ndarray | str) -> np.ndarray:
-
         if isinstance(mk1, str):
             mk1 = m[mk1]
         if isinstance(mk2, str):

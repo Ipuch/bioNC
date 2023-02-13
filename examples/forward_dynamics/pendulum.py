@@ -66,7 +66,6 @@ def drop_the_pendulum(
 
     # Create the forward dynamics function Callable (f(t, x) -> xdot)
     def dynamics(t, states):
-
         idx_coordinates = slice(0, model.nb_Q)
         idx_velocities = slice(model.nb_Q, model.nb_Q + model.nb_Qdot)
 
@@ -175,7 +174,6 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
 
 
 if __name__ == "__main__":
-
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
@@ -242,7 +240,7 @@ if __name__ == "__main__":
     # plt.show()
 
     # The actual simulation
-    t_final = 5
+    t_final = 10
     time_steps, all_states, dynamics = drop_the_pendulum(
         model=model,
         Q_init=Q,
@@ -257,7 +255,7 @@ if __name__ == "__main__":
         dynamics=dynamics,
     )
 
-    from viz import plot_series, cheap_animation
+    from viz import plot_series
 
     # Plot the results
     # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
@@ -268,4 +266,7 @@ if __name__ == "__main__":
     plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
 
     # animate the motion
-    cheap_animation(model, NaturalCoordinates(all_states[:12, :]))
+    from bionc import Viz
+
+    viz = Viz(model)
+    viz.animate(all_states[:12, :], None)

@@ -183,6 +183,7 @@ class Viz:
             The experimental markers measured in global frame of shape (3, n_markers, n_frames)
         """
         from ..bionc_numpy import NaturalCoordinates
+
         Q = NaturalCoordinates(Q)
 
         if markers_xp is not None:

@@ -301,5 +301,6 @@ if __name__ == "__main__":
 
     # animate the motion
     from bionc import Viz
+
     viz = Viz(model)
     viz.animate(NaturalCoordinates(all_states[: (12 * nb_segments), :]), None)

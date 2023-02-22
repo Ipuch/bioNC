@@ -12,17 +12,13 @@ Inverse and Forward approach are implemented.
 
 # Table of Contents
 
-[Installation - from source](#installation---from-source)
+-[Installation - from source](#installation---from-source)
 
-[A first practical example](#a-first-practical-example)
-- [The import](#the-import)
-- [Building a model from scratch](#building-a-model-from-scratch)
-- [Building a model from a c3d file](#building-a-model-from-a-c3d-file)
-[Mathematical backends](#mathematical-backends)
-[Natural coordinates reminders](#natural-coordinates-reminders)
+-[A first practical example](#a-first-practical-example)
 
-[A more in depth look at the `bionc` API](#a-more-in-depth-look-at-the-bionc-api)
- todo
+-[Mathematical backends](#mathematical-backends)
+
+-[Natural coordinates reminders](#natural-coordinates-reminders)
 
 # Installation - from source
 One can install the package from source using the following command:
@@ -33,34 +29,10 @@ One can install the package from source using the following command:
 # A first practical example
 The easiest way to learn bionc is to dive into it.
 So let's build our first model.
-Please note that this tutorial is designed to recreate example which builds a lower limb model (Pelvis, Thigh, Shank, Foot).
-
-## The import
-The first step is to import the classes we will need.
-```python
-from bionc import (
-    AxisTemplate,
-    BiomechanicalModelTemplate,
-    MarkerTemplate,
-    SegmentTemplate,
-    NaturalSegmentTemplate,
-    C3dData,
-    BiomechanicalModel,
-    JointType,
-)
-```
-
-## Building a model from scratch
-
-todo
-
-## Building a model from a c3d file
-
-todo
+Please note that this tutorial is designed to recreate example which builds a lower limb model (Pelvis, Thigh, Shank, Foot). You can have look to [https://github.com/Ipuch/bioNC/blob/main/examples/model_creation/main.py](https://github.com/Ipuch/bioNC/blob/main/examples/model_creation/main.py)
 
 # Mathematical backends
 This toolbox support two mathematical backends: `numpy` and `casadi`.
-todo
 
 # Natural coordinates reminders
 

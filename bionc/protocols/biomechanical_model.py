@@ -50,7 +50,14 @@ class GenericBiomechanicalModel(ABC):
         NaturalSegment
             The segment with the given name
         """
-        return self.segments[name]
+        if name=="ground":
+            for segment in self.segments.values():
+                if segment.is_ground:
+                    return segment
+            else:
+                raise ValueError("No ground segment found")
+        else:
+            return self.segments[name]
 
     def __setitem__(self, name: str, segment: Any):
         """
@@ -67,6 +74,8 @@ class GenericBiomechanicalModel(ABC):
             segment.set_index(len(self.segments))
             self.segments[name] = segment
             self._update_mass_matrix()  # Update the generalized mass matrix
+            if name=="ground":
+                self.set_ground_segment(name)
         else:
             raise ValueError("The name of the segment does not match the name of the segment")
 
@@ -101,6 +110,22 @@ class GenericBiomechanicalModel(ABC):
             model = pickle.load(file)
 
         return model
+
+    def set_ground_segment(self, name: str):
+        """
+        This function sets the ground segment of the model
+
+        Parameters
+        ----------
+        name : str
+            The name of the ground segment
+        """
+        # remove the ground segment from the previous ground segment
+        for segment in self.segments.values():
+            segment._set_is_ground(False)
+
+        # set the new ground segment
+        self[name]._set_is_ground(True)
 
     def _add_joint(self, joint: dict):
         """

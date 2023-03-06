@@ -45,6 +45,7 @@ class AbstractNaturalSegment(ABC):
         center_of_mass: Union[MX, np.ndarray] = None,
         inertia: Union[MX, np.ndarray] = None,
         index: int = None,
+        is_ground: bool = False,
     ):
         self._name = name
         self._index = index
@@ -82,6 +83,11 @@ class AbstractNaturalSegment(ABC):
 
         # list of markers embedded in the segment
         self._markers = []
+        # list of vectors embedded in the segment
+        self._vectors = []
+
+        # to know if the segment is the ground
+        self._is_ground = is_ground
 
     def set_name(self, name: str):
         """
@@ -104,6 +110,12 @@ class AbstractNaturalSegment(ABC):
             Index of the segment
         """
         self._index = index
+
+    def _set_is_ground(self, is_ground: bool):
+        """
+        This function sets the segment as the ground
+        """
+        self._is_ground = is_ground
 
     @classmethod
     def from_experimental_Q(

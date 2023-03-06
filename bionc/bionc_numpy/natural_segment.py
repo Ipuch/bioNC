@@ -9,7 +9,7 @@ from ..bionc_numpy.natural_coordinates import SegmentNaturalCoordinates
 from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities
 from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
-from ..bionc_numpy.natural_marker import NaturalMarker
+from ..bionc_numpy.natural_marker import NaturalMarker, SegmentNaturalVector
 from ..bionc_numpy.natural_vector import NaturalVector
 
 from ..protocols.natural_segment import AbstractNaturalSegment
@@ -55,6 +55,12 @@ class NaturalSegment(AbstractNaturalSegment):
         center of mass of the segment in Segment Coordinate System
     _inertia: np.ndarray
         inertia matrix of the segment in Segment Coordinate System
+    _markers : list
+        list of markers in the segment
+    _vector : list
+        list of vectors in the segment
+    _is_ground_segment : bool
+        boolean to indicate if the segment is the ground segment
     """
 
     def __init__(
@@ -68,6 +74,7 @@ class NaturalSegment(AbstractNaturalSegment):
         mass: Union[float, np.float64] = None,
         center_of_mass: np.ndarray = None,
         inertia: np.ndarray = None,
+        is_ground: bool = False,
     ):
         self._name = name
         self._index = index
@@ -106,6 +113,11 @@ class NaturalSegment(AbstractNaturalSegment):
 
         # list of markers embedded in the segment
         self._markers = []
+        # list of vectors embedded in the segment
+        self._vectors = []
+
+        # to know if the segment is the ground
+        self._is_ground = is_ground
 
     def to_mx(self) -> AbstractNaturalSegment:
         """
@@ -623,6 +635,90 @@ class NaturalSegment(AbstractNaturalSegment):
 
         marker.parent_name = self.name
         self._markers.append(marker)
+
+    def add_natural_vector(self, vector: SegmentNaturalVector):
+        """
+        Add a new vector to the segment
+
+        Parameters
+        ----------
+        vector
+            The vector to add
+        """
+        if vector.parent_name is not None and vector.parent_name != self.name:
+            raise ValueError(
+                "The marker name should be the same as the 'key'. Alternatively, marker.name can be left undefined"
+            )
+
+        vector.parent_name = self.name
+        self._vectors.append(vector)
+
+    def add_natural_marker_from_segment_coordinates(
+            self,
+            name: str,
+            location: np.ndarray,
+            is_distal_location: bool = False,
+            is_technical: bool = True,
+            is_anatomical: bool = False,
+    ):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        name: str
+            The name of the marker
+        location: np.ndarray
+            The location of the marker in the segment coordinate system
+        is_distal_location: bool
+            The location of the distal marker in the segment coordinate system
+        is_technical: bool
+            True if the marker is technical, False otherwise
+        is_anatomical: bool
+            True if the marker is anatomical, False otherwise
+        """
+
+        location = self.transformation_matrix @ location
+        if is_distal_location:
+            location += np.array([0, -1, 0])
+
+        natural_marker = NaturalMarker(
+            name=name,
+            parent_name=self.name,
+            position=location,
+            is_technical=is_technical,
+            is_anatomical=is_anatomical,
+        )
+        self.add_natural_marker(natural_marker)
+
+    def add_natural_vector_from_segment_coordinates(
+            self,
+            name: str,
+            direction: np.ndarray,
+            normalize: bool = True,
+    ):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        name: str
+            The name of the vector
+        direction: np.ndarray
+            The location of the vector in the segment coordinate system
+        normalize: bool
+            True if the vector should be normalized, False otherwise
+        """
+
+        direction = direction / np.linalg.norm(direction) if normalize else direction
+        direction = self.transformation_matrix @ direction
+
+        natural_vector = SegmentNaturalVector(
+            name=name,
+            parent_name=self.name,
+            direction=direction,
+        )
+        self.add_natural_vector(natural_vector)
 
     def markers(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """

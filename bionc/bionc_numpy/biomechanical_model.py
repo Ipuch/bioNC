@@ -42,13 +42,13 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
 
         Phi_r = np.zeros(6 * self.nb_segments)
-        for i, segment_name in enumerate(self.segments):
+        for i, segment in enumerate(self.segments_no_ground.values()):
             idx = slice(6 * i, 6 * (i + 1))
-            Phi_r[idx] = self.segments[segment_name].rigid_body_constraint(Q.vector(i))
+            Phi_r[idx] = segment.rigid_body_constraint(Q.vector(i))
 
         return Phi_r
 
-    def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates) -> np.ndarray:
+    def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalVelocities) -> np.ndarray:
         """
         This function returns the derivative of the rigid body constraints of all segments, denoted Phi_r_dot
         as a function of the natural coordinates Q and Qdot.
@@ -60,9 +60,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
 
         Phi_r_dot = np.zeros(6 * self.nb_segments)
-        for i, segment_name in enumerate(self.segments):
+        for i, segment in enumerate(self.segments_no_ground.values()):
             idx = slice(6 * i, 6 * (i + 1))
-            Phi_r_dot[idx] = self.segments[segment_name].rigid_body_constraint_derivative(Q.vector(i), Qdot.vector(i))
+            Phi_r_dot[idx] = segment.rigid_body_constraint_derivative(Q.vector(i), Qdot.vector(i))
 
         return Phi_r_dot
 
@@ -78,10 +78,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
 
         K_r = np.zeros((6 * self.nb_segments, Q.shape[0]))
-        for i, segment_name in enumerate(self.segments):
+        for i, segment in enumerate(self.segments_no_ground.values()):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
-            K_r[idx_row, idx_col] = self.segments[segment_name].rigid_body_constraint_jacobian(Q.vector(i))
+            K_r[idx_row, idx_col] = segment.rigid_body_constraint_jacobian(Q.vector(i))
 
         return K_r
 
@@ -101,12 +101,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
 
         Kr_dot = np.zeros((6 * self.nb_segments, Qdot.shape[0]))
-        for i, segment_name in enumerate(self.segments):
+        for i, segment in enumerate(self.segments_no_ground.values()):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
-            Kr_dot[idx_row, idx_col] = self.segments[segment_name].rigid_body_constraint_jacobian_derivative(
-                Qdot.vector(i)
-            )
+            Kr_dot[idx_row, idx_col] = segment.rigid_body_constraint_jacobian_derivative(Qdot.vector(i))
 
         return Kr_dot
 
@@ -220,14 +218,14 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             generalized mass matrix of the segment [12 * nbSegment x 12 * * nbSegment]
         """
         G = np.zeros((12 * self.nb_segments, 12 * self.nb_segments))
-        for i, segment_name in enumerate(self.segments):
-            Gi = self.segments[segment_name].mass_matrix
+        for i, segment in enumerate(self.segments_no_ground.values()):
+            Gi = segment.mass_matrix
             if Gi is None:
                 # mass matrix is None if one the segment doesn't have any inertial properties
                 self._mass_matrix = None
                 return
             idx = slice(12 * i, 12 * (i + 1))
-            G[idx, idx] = self.segments[segment_name].mass_matrix
+            G[idx, idx] = segment.mass_matrix
 
         self._mass_matrix = G
 
@@ -263,8 +261,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The potential energy of the system
         """
         E = 0
-        for i, segment_name in enumerate(self.segments):
-            E += self.segments[segment_name].potential_energy(Q.vector(i))
+        for i, segment in enumerate(self.segments_no_ground.values()):
+            E += segment.potential_energy(Q.vector(i))
 
         return E
 
@@ -305,7 +303,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
         markers = np.zeros((3, self.nb_markers, Q.shape[1]))
         nb_markers = 0
-        for _, segment in self.segments.items():
+        for segment in self.segments_no_ground.values():
             idx = slice(nb_markers, nb_markers + segment.nb_markers)
             markers[:, idx, :] = segment.markers(Q.vector(segment.index))
             nb_markers += segment.nb_markers
@@ -328,7 +326,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             in the global coordinate system/ inertial coordinate system
         """
         com = np.zeros((3, self.nb_segments, Q.shape[1]))
-        for i, segment in enumerate(self.segments.values()):
+        for i, segment in enumerate(self.segments_no_ground.values()):
             position = segment.center_of_mass_position(Q.vector(i))
             com[:, i, :] = position if len(position.shape) == 2 else position[:, np.newaxis]
 
@@ -365,9 +363,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         phi_m = np.zeros((nb_markers * 3))
         marker_count = 0
 
-        for i_segment, name in enumerate(self.segments):
+        for i_segment, segment in enumerate(self.segments_no_ground.values()):
             nb_segment_markers = (
-                self.segments[name].nb_markers_technical if only_technical else self.segments[name].nb_markers
+                segment.nb_markers_technical if only_technical else segment.nb_markers
             )
             if nb_segment_markers == 0:
                 continue
@@ -376,7 +374,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
             markers_temp = markers[:, marker_idx]
             phi_m[constraint_idx] = (
-                self.segments[name].marker_constraints(markers_temp, Q.vector(i_segment)).flatten("F")
+                segment.marker_constraints(markers_temp, Q.vector(i_segment)).flatten("F")
             )
 
             marker_count += nb_segment_markers
@@ -402,15 +400,15 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         km = np.zeros((3 * nb_markers, 12 * self.nb_segments))
         marker_count = 0
-        for i_segment, name in enumerate(self.segments):
+        for i_segment, segment in enumerate(self.segments_no_ground.values()):
             nb_segment_markers = (
-                self.segments[name].nb_markers_technical if only_technical else self.segments[name].nb_markers
+                segment.nb_markers_technical if only_technical else segment.nb_markers
             )
             if nb_segment_markers == 0:
                 continue
             constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
             segment_idx = slice(12 * i_segment, 12 * (i_segment + 1))
-            km[constraint_idx, segment_idx] = self.segments[name].markers_jacobian()
+            km[constraint_idx, segment_idx] = segment.markers_jacobian()
             marker_count += nb_segment_markers
 
         return km
@@ -442,8 +440,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Q = []
 
-        for name in self.segments:
-            Q.append(self.segments[name]._Qi_from_markers(marker_data, self))
+        for segment in self.segments_no_ground.values():
+            Q.append(segment._Qi_from_markers(marker_data, self))
 
         return NaturalCoordinates.from_qi(tuple(Q))
 
@@ -468,7 +466,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         nb_constraints = 0
         # two steps in order to get a jacobian as diagonal as possible
         # it follows the order of the segments
-        for i, segment in enumerate(self.segments):
+        for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
             joints = self.joints_from_child_index(i)
             if len(joints) != 0:
@@ -514,7 +512,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         # then we compute the holonomic constraints jacobian
         nb_constraints = 0
         K = np.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
-        for i in range(self.nb_segments):
+        for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
             joints = self.joints_from_child_index(i)
             if len(joints) != 0:
@@ -616,7 +614,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
         weight_vector = np.zeros((self.nb_segments * 12, 1))
 
-        for i, segment in enumerate(self.segments.values()):
+        for i, segment in enumerate(self.segments_no_ground.values()):
             idx = slice(12 * i, 12 * (i + 1))
             weight_vector[idx, 0] = segment.weight()
 

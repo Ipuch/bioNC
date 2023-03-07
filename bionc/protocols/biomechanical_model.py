@@ -50,7 +50,7 @@ class GenericBiomechanicalModel(ABC):
         NaturalSegment
             The segment with the given name
         """
-        if name=="ground":
+        if name == "ground":
             for segment in self.segments.values():
                 if segment.is_ground:
                     return segment
@@ -74,7 +74,7 @@ class GenericBiomechanicalModel(ABC):
             segment.set_index(len(self.segments))
             self.segments[name] = segment
             self._update_mass_matrix()  # Update the generalized mass matrix
-            if name=="ground":
+            if name in ("ground","GROUND","Ground"):
                 self.set_ground_segment(name)
         else:
             raise ValueError("The name of the segment does not match the name of the segment")
@@ -126,6 +126,48 @@ class GenericBiomechanicalModel(ABC):
 
         # set the new ground segment
         self[name]._set_is_ground(True)
+
+        # reindex the segments
+        count = 0
+        for i, segment in enumerate(self.segments.values()):
+            if segment._is_ground:
+                count -= 1
+            segment.set_index(i + count)
+
+        # reindex the joints
+        for i, joint in enumerate(self.joints.values()):
+            if (joint.parent is not None and joint.parent.name == name) or joint.child.name == name:
+                raise ValueError("The ground segment cannot be a parent or a child of a joint")
+
+        self._update_mass_matrix()
+
+    @property
+    def has_ground_segment(self) -> bool:
+        """
+        This function returns true if the model has a ground segment
+
+        Returns
+        -------
+        bool
+            True if the model has a ground segment
+        """
+        for segment in self.segments.values():
+            if segment._is_ground:
+                return True
+        else:
+            return False
+
+    @property
+    def segments_no_ground(self):
+        """
+        This function returns the dictionary of all the segments except the ground segment
+
+        Returns
+        -------
+        dict[str: NaturalSegment, ...]
+            The dictionary of all the segments except the ground segment
+        """
+        return {name: segment for name, segment in self.segments.items() if not segment._is_ground}
 
     def _add_joint(self, joint: dict):
         """
@@ -250,7 +292,7 @@ class GenericBiomechanicalModel(ABC):
         """
         This function returns the number of segments in the model
         """
-        return len(self.segments)
+        return len(self.segments) - 1 if self.has_ground_segment else len(self.segments)
 
     @property
     def nb_markers(self) -> int:
@@ -258,7 +300,7 @@ class GenericBiomechanicalModel(ABC):
         This function returns the number of markers in the model
         """
         nb_markers = 0
-        for key in self.segments:
+        for key in self.segments_no_ground:
             nb_markers += self.segments[key].nb_markers
         return nb_markers
 
@@ -268,7 +310,7 @@ class GenericBiomechanicalModel(ABC):
         This function returns the number of technical markers in the model
         """
         nb_markers = 0
-        for key in self.segments:
+        for key in self.segments_no_ground:
             nb_markers += self.segments[key].nb_markers_technical
         return nb_markers
 
@@ -278,7 +320,7 @@ class GenericBiomechanicalModel(ABC):
         This function returns the names of the markers in the model
         """
         marker_names = []
-        for key in self.segments:
+        for key in self.segments_no_ground:
             marker_names += self.segments[key].marker_names
         return marker_names
 
@@ -288,7 +330,7 @@ class GenericBiomechanicalModel(ABC):
         This function returns the names of the technical markers in the model
         """
         marker_names = []
-        for key in self.segments:
+        for key in self.segments_no_ground:
             marker_names += self.segments[key].marker_names_technical
         return marker_names
 
@@ -298,6 +340,23 @@ class GenericBiomechanicalModel(ABC):
         This function returns the number of joints in the model
         """
         return len(self.joints)
+
+    def remove_joint(self, name: str):
+        """
+        This function removes a joint from the model
+
+        Parameters
+        ----------
+        name : str
+            The name of the joint to be removed
+        """
+        if name not in self.joints.keys():
+            raise ValueError("The joint does not exist")
+        joint_index_to_remove = self.joints[name].index
+        self.joints.pop(name)
+        for joint in self.joints.values():
+            if joint.index > joint_index_to_remove:
+                joint.index -= 1
 
     @property
     def nb_joint_constraints(self) -> int:
@@ -658,7 +717,7 @@ class GenericBiomechanicalModel(ABC):
     def holonomic_constraints_jacobian(self, Q: NaturalCoordinates):
         """
         This function returns the Jacobian matrix the holonomic constraints, denoted k_h.
-        They are organized as follow, for each segmen, the rows of the matrix are:
+        They are organized as follow, for each segment, the rows of the matrix are:
         [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
 
         Parameters

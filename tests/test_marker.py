@@ -74,3 +74,53 @@ def test_segment_marker(bionc_type):
     TestUtils.assert_equal(
         segment_marker.position_in_global(Qi=Qi), np.array([3.0, 4.0, 10.0])[:, np.newaxis], squeeze=False
     )
+
+
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_segment_vector(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            SegmentNaturalCoordinates,
+            SegmentNaturalVector,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            SegmentNaturalCoordinates,
+            SegmentNaturalVector,
+        )
+
+    with pytest.raises(ValueError, match="The input array must have 3 elements"):
+        SegmentNaturalVector(
+            name="my_marker",
+            parent_name="Thigh",
+            direction=np.zeros(2),
+        )
+
+    segment_marker = SegmentNaturalVector(
+        name="my_marker",
+        parent_name="Thigh",
+        direction=np.ones(3),
+    )
+
+    TestUtils.assert_equal(segment_marker.position, np.ones(3))
+    TestUtils.assert_equal(
+        segment_marker.interpolation_matrix,
+        np.array([[ 1.,  0.,  0.,  1.,  0.,  0., -1., -0., -0.,  1.,  0.,  0.],
+                  [ 0.,  1.,  0.,  0.,  1.,  0., -0., -1., -0.,  0.,  1.,  0.],
+                  [ 0.,  0.,  1.,  0.,  0.,  1., -0., -0., -1.,  0.,  0.,  1.]]),
+    )
+
+    Qi = SegmentNaturalCoordinates.from_components(
+        u=[1, 2, 3],
+        rp=[1, 1, 3],
+        rd=[1, 2, 4],
+        w=[1, 2, 5],
+    )
+
+    TestUtils.assert_equal(
+        segment_marker.position_in_global(Qi=Qi), np.array([2., 3., 7.])[:, np.newaxis], squeeze=False
+    )

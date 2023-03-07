@@ -103,9 +103,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         for i, segment in enumerate(self.segments_no_ground.values()):
             idx_row = slice(6 * i, 6 * (i + 1))
             idx_col = slice(12 * i, 12 * (i + 1))
-            Kr_dot[idx_row, idx_col] = segment.rigid_body_constraint_jacobian_derivative(
-                Qdot.vector(i)
-            )
+            Kr_dot[idx_row, idx_col] = segment.rigid_body_constraint_jacobian_derivative(Qdot.vector(i))
 
         return Kr_dot
 
@@ -366,9 +364,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         marker_count = 0
 
         for i_segment, segment in enumerate(self.segments_no_ground.values()):
-            nb_segment_markers = (
-                segment.nb_markers_technical if only_technical else self.segments[name].nb_markers
-            )
+            nb_segment_markers = segment.nb_markers_technical if only_technical else self.segments[name].nb_markers
             if nb_segment_markers == 0:
                 continue
             constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
@@ -405,9 +401,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         km = MX.zeros((3 * nb_markers, 12 * self.nb_segments))
         marker_count = 0
         for i_segment, segment in enumerate(self.segments_no_ground.values()):
-            nb_segment_markers = (
-                segment.nb_markers_technical if only_technical else segment.nb_markers
-            )
+            nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
             if nb_segment_markers == 0:
                 continue
             constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)

@@ -58,7 +58,7 @@ def test_ground_segment(bionc_type):
     assert model.segments["pendulum_3"].index == 2
 
     Q = NaturalCoordinates(np.linspace(0, 0.24, 3 * 12))
-    Qdot = NaturalVelocities(np.linspace(0, 0.02, 3  * 12))
+    Qdot = NaturalVelocities(np.linspace(0, 0.02, 3 * 12))
 
     assert model.rigid_body_constraints(Q).shape[0] == 6 * 3
     assert model.rigid_body_constraints_derivative(Q, Qdot).shape[0] == 6 * 3
@@ -90,9 +90,3 @@ def test_ground_segment(bionc_type):
         TestUtils.assert_equal(sum1(model.weight()), np.array([-29.43]))
     else:
         TestUtils.assert_equal(sum(model.weight()), np.array([-29.43]))
-
-
-
-
-
-

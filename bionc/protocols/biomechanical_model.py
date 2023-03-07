@@ -74,7 +74,7 @@ class GenericBiomechanicalModel(ABC):
             segment.set_index(len(self.segments))
             self.segments[name] = segment
             self._update_mass_matrix()  # Update the generalized mass matrix
-            if name in ("ground","GROUND","Ground"):
+            if name in ("ground", "GROUND", "Ground"):
                 self.set_ground_segment(name)
         else:
             raise ValueError("The name of the segment does not match the name of the segment")

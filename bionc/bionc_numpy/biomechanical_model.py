@@ -364,18 +364,14 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         marker_count = 0
 
         for i_segment, segment in enumerate(self.segments_no_ground.values()):
-            nb_segment_markers = (
-                segment.nb_markers_technical if only_technical else segment.nb_markers
-            )
+            nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
             if nb_segment_markers == 0:
                 continue
             constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
             marker_idx = slice(marker_count, marker_count + nb_segment_markers)
 
             markers_temp = markers[:, marker_idx]
-            phi_m[constraint_idx] = (
-                segment.marker_constraints(markers_temp, Q.vector(i_segment)).flatten("F")
-            )
+            phi_m[constraint_idx] = segment.marker_constraints(markers_temp, Q.vector(i_segment)).flatten("F")
 
             marker_count += nb_segment_markers
 
@@ -401,9 +397,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         km = np.zeros((3 * nb_markers, 12 * self.nb_segments))
         marker_count = 0
         for i_segment, segment in enumerate(self.segments_no_ground.values()):
-            nb_segment_markers = (
-                segment.nb_markers_technical if only_technical else segment.nb_markers
-            )
+            nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
             if nb_segment_markers == 0:
                 continue
             constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)

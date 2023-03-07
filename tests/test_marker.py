@@ -76,7 +76,6 @@ def test_segment_marker(bionc_type):
     )
 
 
-
 @pytest.mark.parametrize(
     "bionc_type",
     ["numpy", "casadi"],
@@ -109,9 +108,13 @@ def test_segment_vector(bionc_type):
     TestUtils.assert_equal(segment_marker.position, np.ones(3))
     TestUtils.assert_equal(
         segment_marker.interpolation_matrix,
-        np.array([[ 1.,  0.,  0.,  1.,  0.,  0., -1., -0., -0.,  1.,  0.,  0.],
-                  [ 0.,  1.,  0.,  0.,  1.,  0., -0., -1., -0.,  0.,  1.,  0.],
-                  [ 0.,  0.,  1.,  0.,  0.,  1., -0., -0., -1.,  0.,  0.,  1.]]),
+        np.array(
+            [
+                [1.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, -0.0, -0.0, 1.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0, 1.0, 0.0, -0.0, -1.0, -0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0, 0.0, 1.0, -0.0, -0.0, -1.0, 0.0, 0.0, 1.0],
+            ]
+        ),
     )
 
     Qi = SegmentNaturalCoordinates.from_components(
@@ -122,5 +125,5 @@ def test_segment_vector(bionc_type):
     )
 
     TestUtils.assert_equal(
-        segment_marker.position_in_global(Qi=Qi), np.array([2., 3., 7.])[:, np.newaxis], squeeze=False
+        segment_marker.position_in_global(Qi=Qi), np.array([2.0, 3.0, 7.0])[:, np.newaxis], squeeze=False
     )

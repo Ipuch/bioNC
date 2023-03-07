@@ -601,12 +601,12 @@ class NaturalSegment(AbstractNaturalSegment):
         self._vectors.append(vector)
 
     def add_natural_marker_from_segment_coordinates(
-            self,
-            name: str,
-            location: np.ndarray,
-            is_distal_location: bool = False,
-            is_technical: bool = True,
-            is_anatomical: bool = False,
+        self,
+        name: str,
+        location: np.ndarray,
+        is_distal_location: bool = False,
+        is_technical: bool = True,
+        is_anatomical: bool = False,
     ):
         """
         Add a new marker to the segment
@@ -639,10 +639,10 @@ class NaturalSegment(AbstractNaturalSegment):
         self.add_natural_marker(natural_marker)
 
     def add_natural_vector_from_segment_coordinates(
-            self,
-            name: str,
-            direction: np.ndarray,
-            normalize: bool = True,
+        self,
+        name: str,
+        direction: np.ndarray,
+        normalize: bool = True,
     ):
         """
         Add a new marker to the segment

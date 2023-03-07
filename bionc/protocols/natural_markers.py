@@ -80,6 +80,7 @@ class AbstractSegmentNaturalVector(ABC):
     Class used to create a segment vector for the natural segments
 
     """
+
     def position_in_global(self, Qi: SegmentNaturalCoordinates):
         """
         This function computes the position of the vector in the global coordinate system

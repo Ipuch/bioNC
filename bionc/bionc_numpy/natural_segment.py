@@ -59,8 +59,10 @@ class NaturalSegment(AbstractNaturalSegment):
         list of markers in the segment
     _vector : list
         list of vectors in the segment
-    _is_ground_segment : bool
-        boolean to indicate if the segment is the ground segment
+    _index : int
+        index of the segment in the model
+    _is_ground : bool
+        is_ground to indicate if the segment is the ground segment
     """
 
     def __init__(

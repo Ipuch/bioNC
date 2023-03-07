@@ -354,10 +354,7 @@ class SegmentNaturalVector(AbstractSegmentNaturalVector):
 
     Methods
     -------
-    from_data()
-        Creates a segment marker from the data
-    constraint()
-        Computes the constraint for the marker given the segment natural coordinates and experimental marker location
+
 
     Attributes
     ----------

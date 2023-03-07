@@ -5,8 +5,12 @@ from bionc.bionc_numpy import (
     NaturalSegment,
     JointType,
 )
+from bionc.bionc_casadi import (
+    BiomechanicalModel,
+    NaturalSegment,
+    # JointType,
+)
 from bionc import NaturalAxis, CartesianAxis
-
 
 # Let's create a model
 model = BiomechanicalModel()
@@ -100,7 +104,6 @@ model["SHANK"].add_natural_marker_from_segment_coordinates(
     is_technical=False,
     is_anatomical=True,
 )
-
 model["SHANK"].add_natural_vector_from_segment_coordinates(
     name="medial_normal_shank",
     direction=np.array([0.0128, -0.0261, -0.0001]),
@@ -111,7 +114,6 @@ model["SHANK"].add_natural_vector_from_segment_coordinates(
     direction=np.array([0.0675, 0.9896, -0.1273]),
     normalize=True,
 )
-
 
 print(model)
 # # add a revolute joint (still experimental)

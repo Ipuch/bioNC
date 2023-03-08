@@ -77,6 +77,21 @@ class AbstractNaturalMarker(ABC):
         The constraint for the marker
         """
 
+    @abstractmethod
+    def position_in_global(self, Q_parent):
+        """
+        This function computes the location of the marker in the global coordinate system
+
+        Parameters
+        ----------
+        Qi
+            The segment natural coordinates
+
+        Returns
+        -------
+        The location of the marker in the global/inertial coordinate system
+        """
+
 
 class AbstractSegmentNaturalVector(ABC):
     """

@@ -394,6 +394,21 @@ class AbstractNaturalSegment(ABC):
         marker.parent_name = self.name
         self._markers.append(marker)
 
+    def marker_from_name(self, marker_name: str) -> AbstractNaturalMarker:
+        """
+        This function returns the marker with the given name
+
+        Parameters
+        ----------
+        marker_name: str
+            Name of the marker
+        """
+        for marker in self._markers:
+            if marker.name == marker_name:
+                return marker
+
+        raise ValueError(f"No marker with name {marker_name} was found")
+
     @property
     def nb_markers(self) -> int:
         return len(self._markers)

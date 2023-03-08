@@ -77,47 +77,25 @@ class NaturalSegment(AbstractNaturalSegment):
         inertia: Union[MX, np.ndarray] = None,
         is_ground: bool = False,
     ):
-        self._name = name
-        self._index = index
 
-        self._length = MX(length)
-        self._alpha = MX(alpha)
-        self._beta = MX(beta)
-        self._gamma = MX(gamma)
+        if not isinstance(alpha, MX) and not isinstance(beta, MX) and not isinstance(gamma, MX):
+            self._angle_sanity_check(alpha, beta, gamma)
 
-        # todo: sanity check to make sure u, v or w are not collinear
-        # todo: implement all the transformations matrix according the Ph.D thesis of Alexandre Naaim
-        self._transformation_matrix = self._transformation_matrix()
+        if inertia is not None:
+            inertia = MX(inertia)
+        if center_of_mass is not None:
+            center_of_mass = MX(center_of_mass)
 
-        self._mass = mass
-        if center_of_mass is None:
-            self._center_of_mass = center_of_mass
-            self._natural_center_of_mass = None
-        else:
-            if center_of_mass.shape[0] != 3:
-                raise ValueError("Center of mass must be 3x1")
-            self._center_of_mass = MX(center_of_mass)
-            self._natural_center_of_mass = self._natural_center_of_mass()
-
-        if inertia is None:
-            self._inertia = inertia
-            self._inertia_in_natural_coordinates_system = None
-            self._interpolation_matrix_inertia = None
-            self._mass_matrix = None
-        else:
-            if inertia.shape != (3, 3):
-                raise ValueError("Inertia matrix must be 3x3")
-            self._inertia = MX(inertia)
-            self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
-            self._mass_matrix = self._update_mass_matrix()
-
-        # list of markers embedded in the segment
-        self._markers = []
-        # list of vectors embedded in the segment
-        self._vectors = []
-
-        # to know if the segment is the ground
-        self._is_ground = is_ground
+        super().__init__(name=name,
+                         alpha=MX(alpha),
+                            beta=MX(beta),
+                            gamma=MX(gamma),
+                            length=MX(length),
+                         mass=mass,
+                         center_of_mass=center_of_mass,
+                         inertia=inertia,
+                         index=index,
+                         is_ground=is_ground)
 
     @classmethod
     def from_experimental_Q(

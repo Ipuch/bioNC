@@ -89,6 +89,15 @@ class AbstractNaturalSegment(ABC):
         # to know if the segment is the ground
         self._is_ground = is_ground
 
+    @staticmethod
+    def _angle_sanity_check(alpha: np.ndarray, beta: np.ndarray, gamma: np.ndarray):
+        """
+        This function checks if angles would produce a singular transformation matrix
+        """
+        if 1 - np.cos(beta) ** 2 - (np.cos(alpha) - np.cos(beta) * np.cos(gamma)) / np.sin(beta) ** 2 < 1:
+            raise ValueError(f"The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment")
+
+
     def set_name(self, name: str):
         """
         This function sets the name of the segment

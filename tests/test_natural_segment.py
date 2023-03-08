@@ -378,3 +378,33 @@ def test_marker_add_from_scs(bionc_type):
         my_segment.markers(Qi=Qi),
         markers_positions.squeeze() if bionc_type == "casadi" else markers_positions,
     )
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_angle_sanity_check(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+        )
+
+    with pytest.raises(
+            ValueError,
+            match="The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment"):
+        bbox = NaturalSegment(
+            name="bbox",
+            alpha=np.pi / 5,
+            beta=np.pi / 3,
+            gamma=np.pi / 2.1,
+            length=1.5,
+            mass=1.1,
+            center_of_mass=np.array([0.1, 0.11, 0.111]),  # scs
+            inertia=np.array([[1.1, 0, 0], [0, 1.2, 0], [0, 0, 1.3]]),  # scs
+        )

@@ -256,8 +256,9 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self._transformation_matrix @ np.concatenate((Q.u[:,np.newaxis], Q.v[:,np.newaxis], Q.w[:,np.newaxis]), axis=1),
-            translation=Q.rp[:,np.newaxis],
+            rotation=self._transformation_matrix
+            @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
+            translation=Q.rp[:, np.newaxis],
         )
 
     def location_from_homogenous_transform(

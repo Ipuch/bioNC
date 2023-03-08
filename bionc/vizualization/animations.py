@@ -179,10 +179,10 @@ class Viz:
             for i, joint in enumerate(model.joints.values()):
                 if isinstance(joint, Joint.ConstantLength):
                     self.vtkJoints = VtkModel(
-                            self.vtkWindow,
-                            ligament_color=(0.9, 0.9, 0.05),
-                            ligament_opacity=1,
-                        )
+                        self.vtkWindow,
+                        ligament_color=(0.9, 0.9, 0.05),
+                        ligament_opacity=1,
+                    )
 
     def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp=None):
         """
@@ -225,7 +225,7 @@ class Viz:
                     origin = joint.parent_point.position_in_global(Q.vector(joint.parent.index)[:, 0:1])
                     insert = joint.child_point.position_in_global(Q.vector(joint.child.index)[:, 0:1])
                     ligament = np.concatenate((origin, insert), axis=1)
-                    ligament = np.concatenate((ligament, np.ones((1,ligament.shape[1]))), axis=0)[:,:,np.newaxis]
+                    ligament = np.concatenate((ligament, np.ones((1, ligament.shape[1]))), axis=0)[:, :, np.newaxis]
                     all_ligament.append(Mesh(vertex=ligament))
 
         # Animate all this

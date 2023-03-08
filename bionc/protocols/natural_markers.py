@@ -21,6 +21,9 @@ class AbstractNaturalMarker(ABC):
 
     """
 
+    def __init__(self):
+        self.name = None
+
     @abstractmethod
     def from_data(
         cls,
@@ -80,6 +83,9 @@ class AbstractSegmentNaturalVector(ABC):
     Class used to create a segment vector for the natural segments
 
     """
+
+    def __init__(self):
+        self.name = None
 
     def position_in_global(self, Qi: SegmentNaturalCoordinates):
         """

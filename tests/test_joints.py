@@ -381,11 +381,13 @@ def test_joints(bionc_type, joint_type: JointType):
             parent_jacobian,
             parent_jacobian_res,
             decimal=6,
+            squeeze=False,
         )
         TestUtils.assert_equal(
             child_jacobian,
             child_jacobian_res,
             decimal=6,
+            squeeze=False,
         )
 
         parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
@@ -393,11 +395,13 @@ def test_joints(bionc_type, joint_type: JointType):
             parent_jacobian_dot,
             parent_jacobian_res,
             decimal=6,
+            squeeze=False,
         )
         TestUtils.assert_equal(
             child_jacobian_dot,
             child_jacobian_res,
             decimal=6,
+            squeeze=False,
         )
 
     elif joint_type == JointType.GROUND_REVOLUTE:

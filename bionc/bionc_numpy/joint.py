@@ -559,16 +559,19 @@ class Joint:
             JointBase
                 The joint as a mx joint
             """
-            raise NotImplementedError("TODO")
-            # todo: implement this
-            # from ..bionc_casadi.joint import Joint as CasadiJoint
-            #
-            # return CasadiJoint.Spherical(
-            #     name=self.name,
-            #     parent=self.parent.to_mx(),
-            #     child=self.child.to_mx(),
-            #     index=self.index,
-            # )
+
+            from ..bionc_casadi.joint import Joint as CasadiJoint
+
+            return CasadiJoint.SphereOnPlane(
+                name=self.name,
+                parent=self.parent.to_mx(),
+                child=self.child.to_mx(),
+                index=self.index,
+                sphere_radius=self.sphere_radius,
+                sphere_center=self.sphere_center.name,
+                plane_point=self.plane_point.name,
+                plane_normal=self.plane_normal.name,
+            )
 
     class ConstantLength(JointBase):
         def __init__(

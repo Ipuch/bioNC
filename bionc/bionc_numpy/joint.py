@@ -698,25 +698,26 @@ class Joint:
 
             return K_k_parent_dot, K_k_child_dot
 
-    def to_mx(self):
-        """
-        This function returns the joint as a mx joint
+        def to_mx(self):
+            """
+            This function returns the joint as a mx joint
 
-        Returns
-        -------
-        JointBase
-            The joint as a mx joint
-        """
-        raise NotImplementedError("TODO")
-        # todo: implement this
-        # from ..bionc_casadi.joint import Joint as CasadiJoint
-        #
-        # return CasadiJoint.Spherical(
-        #     name=self.name,
-        #     parent=self.parent.to_mx(),
-        #     child=self.child.to_mx(),
-        #     index=self.index,
-        # )
+            Returns
+            -------
+            JointBase
+                The joint as a mx joint
+            """
+            from ..bionc_casadi.joint import Joint as CasadiJoint
+
+            return CasadiJoint.ConstantLength(
+                name=self.name,
+                parent=self.parent.to_mx(),
+                child=self.child.to_mx(),
+                index=self.index,
+                length=self.length,
+                parent_point=self.parent_point.name,
+                child_point=self.child_point.name,
+            )
 
 
 class GroundJoint:

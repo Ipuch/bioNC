@@ -92,6 +92,7 @@ class InverseKinematics:
         self,
         model: BiomechanicalModel,
         experimental_markers: np.ndarray | str,
+        Q_init: np.ndarray | NaturalCoordinates = None,
         solve_frame_per_frame: bool = True,
     ):
         self._frame_per_frame = solve_frame_per_frame
@@ -114,7 +115,11 @@ class InverseKinematics:
         else:
             raise ValueError("experimental_markers must be a numpy array or a path to a c3d file")
 
-        self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
+        if Q_init is None:
+            self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
+        else:
+            self.Q_init = Q_init
+
         self.Qopt = None
 
         self.nb_frames = self.experimental_markers.shape[2]

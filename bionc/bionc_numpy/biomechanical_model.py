@@ -664,6 +664,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
     def inverse_kinematics(
         self,
         experimental_markers: np.ndarray | str,
+        Q_init: NaturalCoordinates = None,
         solve_frame_per_frame: bool = True,
     ) -> InverseKinematics:
         """
@@ -673,6 +674,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         ----------
         experimental_markers : np.ndarray | str
             The experimental markers positions. If it is a string, it is the path to the file containing the markers positions
+        Q_init : NaturalCoordinates
+            The initial guess for the inverse kinematics. If None, the initial guess is the zero vector
         solve_frame_per_frame : bool
             If True, the inverse kinematics is solved frame per frame. If False, the inverse kinematics is solved for the whole sequence at once
 
@@ -681,4 +684,4 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         InverseKinematics
             The inverse kinematics object
         """
-        return InverseKinematics(self, experimental_markers, solve_frame_per_frame)
+        return InverseKinematics(self, experimental_markers, Q_init, solve_frame_per_frame)

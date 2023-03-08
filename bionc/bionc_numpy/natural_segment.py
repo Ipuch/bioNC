@@ -112,6 +112,8 @@ class NaturalSegment(AbstractNaturalSegment):
         )
         for marker in self._markers:
             natural_segment.add_natural_marker(marker.to_mx())
+        for vector in self._vectors:
+            natural_segment.add_natural_vector(vector.to_mx())
 
         return natural_segment
 

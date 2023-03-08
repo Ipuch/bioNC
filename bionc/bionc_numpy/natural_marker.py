@@ -412,6 +412,10 @@ class SegmentNaturalVector(AbstractSegmentNaturalVector):
         """
         This function converts the vector to a mx vector
         """
-        from ..bionc_casadi import NaturalMarker as SegmentMarkerMX
+        from ..bionc_casadi import SegmentNaturalVector as SegmentNaturalVectorMX
 
-        NotImplementedError("This function is not implemented yet")
+        return SegmentNaturalVectorMX(
+            name=self.name,
+            parent_name=self.parent_name,
+            direction=self.position,
+        )

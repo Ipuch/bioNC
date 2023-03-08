@@ -44,8 +44,8 @@ def test_joints(bionc_type, joint_type: JointType):
 
     bbox = NaturalSegment(
         name="bbox",
-        alpha=np.pi / 5,
-        beta=np.pi / 3,
+        alpha=np.pi / 1.9,
+        beta=np.pi / 2.3,
         gamma=np.pi / 2.1,
         length=1.5,
         mass=1.1,
@@ -74,9 +74,6 @@ def test_joints(bionc_type, joint_type: JointType):
             child_axis=NaturalAxis.W,
             theta=0.4,
         )
-        # joint = Joint.Universal(name="universal", parent=box, child=bbox,
-        #                         parent_axis=NaturalAxis.V, child_axis=NaturalAxis.W,
-        #                         theta=0.4)
     elif joint_type == JointType.SPHERICAL:
         joint = Joint.Spherical(
             name="spherical",
@@ -92,6 +89,26 @@ def test_joints(bionc_type, joint_type: JointType):
             parent_axis=[CartesianAxis.X, CartesianAxis.X],
             child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
             theta=[np.pi / 2, np.pi / 2],
+        )
+    elif joint_type == JointType.CONSTANT_LENGTH:
+        box.add_natural_marker_from_segment_coordinates(
+            name="P1",
+            location=[0.1, 0.2, 0.3],
+            is_anatomical=True,
+        )
+        bbox.add_natural_marker_from_segment_coordinates(
+            name="P2",
+            location=[0.2, 0.04, 0.05],
+            is_anatomical=True,
+        )
+        joint = Joint.ConstantLength(
+            name="constant_length",
+            parent=box,
+            child=bbox,
+            parent_point="P1",
+            child_point="P2",
+            length=1.5,
+            index=0,
         )
     else:
         raise ValueError("Joint type not tested yet")
@@ -237,6 +254,48 @@ def test_joints(bionc_type, joint_type: JointType):
         )
 
     elif joint_type == JointType.SPHERICAL:
+        TestUtils.assert_equal(
+            joint.constraint(Q1, Q2),
+            np.array([-0.3, 0.9, 0.9]),
+            decimal=6,
+        )
+        parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )
+
+        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian_dot,
+            np.zeros((3, 12)),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian_dot,
+            np.zeros((3, 12)),
+            decimal=6,
+        )
+
+    elif joint_type == JointType.CONSTANT_LENGTH:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
             np.array([-0.3, 0.9, 0.9]),

@@ -94,9 +94,10 @@ class AbstractNaturalSegment(ABC):
         """
         This function checks if angles would produce a singular transformation matrix
         """
-        if 1 - np.cos(beta) ** 2 - (np.cos(alpha) - np.cos(beta) * np.cos(gamma)) / np.sin(beta) ** 2 < 1:
-            raise ValueError(f"The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment")
-
+        if 1 - np.cos(beta) ** 2 - (np.cos(alpha) - np.cos(beta) * np.cos(gamma)) / np.sin(beta) ** 2 < 0:
+            raise ValueError(
+                f"The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment"
+            )
 
     def set_name(self, name: str):
         """

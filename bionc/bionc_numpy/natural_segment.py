@@ -64,32 +64,34 @@ class NaturalSegment(AbstractNaturalSegment):
     _is_ground : bool
         is_ground to indicate if the segment is the ground segment
     """
-    def __init__(
-            self,
-            name: str = None,
-            alpha: Union[np.ndarray, float, np.float64] = np.pi / 2,
-            beta: Union[np.ndarray, float, np.float64] = np.pi / 2,
-            gamma: Union[np.ndarray, float, np.float64] = np.pi / 2,
-            length: Union[np.ndarray, float, np.float64] = None,
-            mass: Union[np.ndarray, float, np.float64] = None,
-            center_of_mass: np.ndarray = None,
-            inertia: np.ndarray = None,
-            index: int = None,
-            is_ground: bool = False,
-    ):
 
+    def __init__(
+        self,
+        name: str = None,
+        alpha: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        beta: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        gamma: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        length: Union[np.ndarray, float, np.float64] = None,
+        mass: Union[np.ndarray, float, np.float64] = None,
+        center_of_mass: np.ndarray = None,
+        inertia: np.ndarray = None,
+        index: int = None,
+        is_ground: bool = False,
+    ):
         self._angle_sanity_check(alpha, beta, gamma)
 
-        super().__init__(name=name,
-                         alpha=alpha,
-                         beta=beta,
-                         gamma=gamma,
-                         length=length,
-                         mass=mass,
-                         center_of_mass=center_of_mass,
-                         inertia=inertia,
-                         index=index,
-                         is_ground=is_ground)
+        super().__init__(
+            name=name,
+            alpha=alpha,
+            beta=beta,
+            gamma=gamma,
+            length=length,
+            mass=mass,
+            center_of_mass=center_of_mass,
+            inertia=inertia,
+            index=index,
+            is_ground=is_ground,
+        )
 
     def to_mx(self) -> AbstractNaturalSegment:
         """

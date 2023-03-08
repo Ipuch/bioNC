@@ -77,7 +77,6 @@ class NaturalSegment(AbstractNaturalSegment):
         inertia: Union[MX, np.ndarray] = None,
         is_ground: bool = False,
     ):
-
         if not isinstance(alpha, MX) and not isinstance(beta, MX) and not isinstance(gamma, MX):
             self._angle_sanity_check(alpha, beta, gamma)
 
@@ -86,16 +85,18 @@ class NaturalSegment(AbstractNaturalSegment):
         if center_of_mass is not None:
             center_of_mass = MX(center_of_mass)
 
-        super().__init__(name=name,
-                         alpha=MX(alpha),
-                            beta=MX(beta),
-                            gamma=MX(gamma),
-                            length=MX(length),
-                         mass=mass,
-                         center_of_mass=center_of_mass,
-                         inertia=inertia,
-                         index=index,
-                         is_ground=is_ground)
+        super().__init__(
+            name=name,
+            alpha=MX(alpha),
+            beta=MX(beta),
+            gamma=MX(gamma),
+            length=MX(length),
+            mass=mass,
+            center_of_mass=center_of_mass,
+            inertia=inertia,
+            index=index,
+            is_ground=is_ground,
+        )
 
     @classmethod
     def from_experimental_Q(

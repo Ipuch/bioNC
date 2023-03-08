@@ -494,7 +494,9 @@ class Joint:
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
-            K_k_child = (self.plane_normal.interpolation_matrix @ Q_child).T @ self.sphere_center.interpolation_matrix.to_array()
+            K_k_child = (
+                self.plane_normal.interpolation_matrix @ Q_child
+            ).T @ self.sphere_center.interpolation_matrix.to_array()
 
             return K_k_child
 
@@ -505,7 +507,8 @@ class Joint:
             child_point_velocity = self.plane_point.interpolation_matrix.to_array() @ Qdot_child
 
             K_k_parent_dot = (
-                -(self.plane_normal.interpolation_matrix @ Qdot_child).T @ self.plane_point.interpolation_matrix.to_array()
+                -(self.plane_normal.interpolation_matrix @ Qdot_child).T
+                @ self.plane_point.interpolation_matrix.to_array()
                 + (parent_point_velocity - child_point_velocity).T @ self.plane_normal.interpolation_matrix
             )
 

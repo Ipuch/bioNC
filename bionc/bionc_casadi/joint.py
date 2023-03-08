@@ -374,7 +374,7 @@ class Joint:
             return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(
                 Qdot_parent
             )
-        
+
     class SphereOnPlane(JointBase):
         """
         This class represents a sphere-on-plane joint: parent is the sphere, and child is the plane.

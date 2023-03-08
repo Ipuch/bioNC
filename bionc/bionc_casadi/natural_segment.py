@@ -604,7 +604,7 @@ class NaturalSegment(AbstractNaturalSegment):
             True if the marker is anatomical, False otherwise
         """
 
-        location = self.transformation_matrix @ location
+        location = to_numeric_MX(inv(self.transformation_matrix)) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 
@@ -637,7 +637,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = self.transformation_matrix @ direction
+        direction = to_numeric_MX(inv(self.transformation_matrix)) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,

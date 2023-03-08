@@ -256,8 +256,8 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self._transformation_matrix @ np.concatenate((Q.u, Q.v, Q.w), axis=1),
-            translation=Q.rp,
+            rotation=self._transformation_matrix @ np.concatenate((Q.u[:,np.newaxis], Q.v[:,np.newaxis], Q.w[:,np.newaxis]), axis=1),
+            translation=Q.rp[:,np.newaxis],
         )
 
     def location_from_homogenous_transform(
@@ -652,7 +652,7 @@ class NaturalSegment(AbstractNaturalSegment):
             True if the marker is anatomical, False otherwise
         """
 
-        location = self.transformation_matrix @ location
+        location = inv(self.transformation_matrix) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 
@@ -685,7 +685,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = self.transformation_matrix @ direction
+        direction = inv(self.transformation_matrix) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,

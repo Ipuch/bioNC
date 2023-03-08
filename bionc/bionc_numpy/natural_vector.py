@@ -134,7 +134,7 @@ class InterpolationMatrix(AbstractInterpolationMatrix, np.ndarray):
         rotation_interpolation_matrix[0:3, 6:9] = self[0:3, 6:9]
         rotation_interpolation_matrix[0:3, 9:12] = self[0:3, 9:12]
 
-        return rotation_interpolation_matrix
+        return np.array(rotation_interpolation_matrix)
 
     @property
     def trans(self) -> np.ndarray:
@@ -145,4 +145,7 @@ class InterpolationMatrix(AbstractInterpolationMatrix, np.ndarray):
         translation_interpolation_matrix[0:3, 6:9] = 0
         translation_interpolation_matrix[0:3, 9:12] = 0
 
-        return translation_interpolation_matrix
+        return np.array(translation_interpolation_matrix)
+
+    def to_array(self):
+        return np.array(self)

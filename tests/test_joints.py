@@ -110,6 +110,32 @@ def test_joints(bionc_type, joint_type: JointType):
             length=1.5,
             index=0,
         )
+    elif joint_type == JointType.SPHERE_ON_PLANE:
+        box.add_natural_marker_from_segment_coordinates(
+            name="SPHERE_CENTER",
+            location=np.array([0.1, 0.2, 0.3]),
+            is_anatomical=True,
+        )
+        bbox.add_natural_marker_from_segment_coordinates(
+            name="PLANE_POINT",
+            location=np.array([0.2, 0.04, 0.05]),
+            is_anatomical=True,
+        )
+        bbox.add_natural_vector_from_segment_coordinates(
+            name="PLANE_NORMAL",
+            direction=np.array([0.2, 0.04, 0.05]),
+            normalize=True,
+        )
+        joint = Joint.SphereOnPlane(
+            name="constant_length",
+            parent=box,
+            child=bbox,
+            sphere_radius=0.02,
+            sphere_center="SPHERE_CENTER",
+            plane_point="PLANE_POINT",
+            plane_normal="PLANE_NORMAL",
+            index=0,
+        )
     else:
         raise ValueError("Joint type not tested yet")
 
@@ -298,42 +324,79 @@ def test_joints(bionc_type, joint_type: JointType):
     elif joint_type == JointType.CONSTANT_LENGTH:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            np.array([-0.3, 0.9, 0.9]),
+            -2.2268202329241826,
             decimal=6,
         )
         parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        parent_jacobian_res = np.array([[ 0.14471581,  0.03917453,  0.16649716,  1.73658967,  0.47009436,
+         1.99796594, -0.28943161, -0.07834906, -0.33299432,  0.43414742,
+         0.11752359,  0.49949148]])
+
+        child_jacobian_res =  np.array([[ 1.40678676e-01,  2.36089035e-03, -2.03939179e-01,
+         7.61248370e-01,  1.27753827e-02, -1.10356716e+00,
+        -5.78549890e-02, -9.70930982e-04,  8.38712678e-02,
+         6.20317725e-02,  1.04102638e-03, -8.99262708e-02]])
+
         TestUtils.assert_equal(
             parent_jacobian,
-            np.array(
-                [
-                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
-                    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
-                ]
-            ),
+            parent_jacobian_res,
             decimal=6,
         )
         TestUtils.assert_equal(
             child_jacobian,
-            np.array(
-                [
-                    [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                    [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                    [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                ]
-            ),
+            child_jacobian_res,
             decimal=6,
         )
 
         parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
         TestUtils.assert_equal(
             parent_jacobian_dot,
-            np.zeros((3, 12)),
+            parent_jacobian_res,
             decimal=6,
         )
         TestUtils.assert_equal(
             child_jacobian_dot,
-            np.zeros((3, 12)),
+            child_jacobian_res,
+            decimal=6,
+        )
+
+    elif joint_type == JointType.SPHERE_ON_PLANE:
+        TestUtils.assert_equal(
+            joint.constraint(Q1, Q2),
+            1.7484589974450258,
+            decimal=6,
+        )
+        parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        parent_jacobian_res = np.array([[-0.73656513, -0.48743281, -0.49076582,
+                            -2.31099651, -2.60951802, -5.08350697,
+                             0.30291703,  0.2004598 ,  0.20183052,
+                            -0.32478583, -0.2149318 , -0.21640148]])
+
+        child_jacobian_res = np.array([[ 0.20080795,  0.24090582,  0.48816764,
+                             2.40969538,  2.89086986,  5.85801174,
+                            -0.4016159 , -0.48181164, -0.97633529,
+                             0.60242384,  0.72271747,  1.46450293]])
+
+        TestUtils.assert_equal(
+            parent_jacobian,
+            parent_jacobian_res,
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian,
+            child_jacobian_res,
+            decimal=6,
+        )
+
+        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        TestUtils.assert_equal(
+            parent_jacobian_dot,
+            parent_jacobian_res,
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian_dot,
+            child_jacobian_res,
             decimal=6,
         )
 

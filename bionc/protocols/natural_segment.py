@@ -5,7 +5,7 @@ from casadi import MX
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
 from .homogenous_transform import HomogeneousTransform
-from .natural_markers import AbstractNaturalMarker
+from .natural_markers import AbstractNaturalMarker, AbstractSegmentNaturalVector
 
 
 class AbstractNaturalSegment(ABC):
@@ -409,6 +409,21 @@ class AbstractNaturalSegment(ABC):
                 return marker
 
         raise ValueError(f"No marker with name {marker_name} was found")
+
+    def vector_from_name(self, vector_name: str) -> AbstractSegmentNaturalVector:
+        """
+        This function returns the vector with the given name
+
+        Parameters
+        ----------
+        vector_name: str
+            Name of the vector
+        """
+        for vector in self._vectors:
+            if vector.name == vector_name:
+                return vector
+
+        raise ValueError(f"No vector with name {vector_name} was found")
 
     @property
     def nb_markers(self) -> int:

@@ -2,7 +2,6 @@ import numpy as np
 
 from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_marker import SegmentNaturalVector, NaturalMarker
 from .natural_velocities import SegmentNaturalVelocities
 from ..protocols.joint import JointBase
 from ..utils.enums import NaturalAxis, CartesianAxis
@@ -436,7 +435,7 @@ class Joint:
             parent: NaturalSegment,
             child: NaturalSegment,
             index: int,
-            radius: float = None,
+            sphere_radius: float = None,
             sphere_center: str = None,
             plane_point: str = None,
             plane_normal: str = None,
@@ -444,8 +443,8 @@ class Joint:
             super(Joint.SphereOnPlane, self).__init__(name, parent, child, index)
             self.nb_constraints = 1
 
-            if radius is None:
-                raise ValueError("radius must be specified for joint SphereOnPlane")
+            if sphere_radius is None:
+                raise ValueError("sphere_radius must be specified for joint SphereOnPlane")
             if sphere_center is None:
                 raise ValueError("sphere_center must be specified for joint SphereOnPlane")
             if plane_point is None:
@@ -453,10 +452,10 @@ class Joint:
             if plane_normal is None:
                 raise ValueError("plane_normal must be specified for joint SphereOnPlane")
 
-            self.radius = radius
+            self.sphere_radius = sphere_radius
             self.sphere_center = parent.marker_from_name(sphere_center)
             self.plane_point = child.marker_from_name(plane_point)
-            self.plane_normal = child.marker_from_name(plane_normal)
+            self.plane_normal = child.vector_from_name(plane_normal)
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """
@@ -469,11 +468,11 @@ class Joint:
                 Kinematic constraints of the joint [1, 1]
             """
 
-            parent_point_location = self.sphere_center.interpolation_matrix @ Q_parent
-            child_point_location = self.plane_point.interpolation_matrix @ Q_child
-            normal_orientation = self.plane_normal.interpolation_matrix @ Q_child
+            parent_point_location = self.sphere_center.interpolation_matrix.to_array() @ Q_parent.to_array()
+            child_point_location = self.plane_point.interpolation_matrix.to_array() @ Q_child.to_array()
+            normal_orientation = self.plane_normal.interpolation_matrix @ Q_child.to_array()
 
-            constraint = np.dot(parent_point_location - child_point_location, normal_orientation) - self.radius
+            constraint = (parent_point_location - child_point_location).T @ normal_orientation - self.sphere_radius
 
             return constraint
 
@@ -482,8 +481,8 @@ class Joint:
             Q_parent: SegmentNaturalCoordinates,
             Q_child: SegmentNaturalCoordinates,
         ) -> np.ndarray:
-            parent_point_location = self.sphere_center.interpolation_matrix @ Q_parent
-            child_point_location = self.plane_point.interpolation_matrix @ Q_child
+            parent_point_location = self.sphere_center.interpolation_matrix.to_array() @ Q_parent
+            child_point_location = self.plane_point.interpolation_matrix.to_array() @ Q_child
 
             K_k_parent = (
                 -(self.plane_normal.interpolation_matrix @ Q_child).T @ self.plane_point.interpolation_matrix
@@ -495,18 +494,18 @@ class Joint:
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
-            K_k_child = (self.plane_normal.interpolation_matrix @ Q_child).T @ self.sphere_center.interpolation_matrix
+            K_k_child = (self.plane_normal.interpolation_matrix @ Q_child).T @ self.sphere_center.interpolation_matrix.to_array()
 
             return K_k_child
 
         def parent_constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> np.ndarray:
-            parent_point_velocity = self.sphere_center.interpolation_matrix @ Qdot_parent
-            child_point_velocity = self.plane_point.interpolation_matrix @ Qdot_child
+            parent_point_velocity = self.sphere_center.interpolation_matrix.to_array() @ Qdot_parent
+            child_point_velocity = self.plane_point.interpolation_matrix.to_array() @ Qdot_child
 
             K_k_parent_dot = (
-                -(self.plane_normal.interpolation_matrix @ Qdot_child).T @ self.plane_point.interpolation_matrix
+                -(self.plane_normal.interpolation_matrix @ Qdot_child).T @ self.plane_point.interpolation_matrix.to_array()
                 + (parent_point_velocity - child_point_velocity).T @ self.plane_normal.interpolation_matrix
             )
 
@@ -517,7 +516,7 @@ class Joint:
         ) -> np.ndarray:
             K_k_child_dot = (
                 self.plane_normal.interpolation_matrix @ Qdot_child
-            ).T @ self.sphere_center.interpolation_matrix
+            ).T @ self.sphere_center.interpolation_matrix.to_array()
 
             return K_k_child_dot
 
@@ -606,8 +605,8 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [3, 1]
             """
-            parent_point_location = self.parent_point.interpolation_matrix @ Q_parent
-            child_point_location = self.child_point.interpolation_matrix @ Q_child
+            parent_point_location = self.parent_point.position_in_global(Q_parent)
+            child_point_location = self.child_point.position_in_global(Q_child)
 
             constraint = np.sum(parent_point_location - child_point_location) ** 2 - self.length**2
 
@@ -616,46 +615,46 @@ class Joint:
         def parent_constraint_jacobian(
             self, Q_child: SegmentNaturalCoordinates, Q_parent: SegmentNaturalCoordinates
         ) -> np.ndarray:
-            parent_point_location = self.parent_point.interpolation_matrix @ Q_parent
-            child_point_location = self.child_point.interpolation_matrix @ Q_child
+            parent_point_location = self.parent_point.position_in_global(Q_parent)
+            child_point_location = self.child_point.position_in_global(Q_child)
 
             K_k_parent = 2 * (parent_point_location - child_point_location).T @ self.parent_point.interpolation_matrix
 
-            return K_k_parent
+            return np.array(K_k_parent)
 
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
-            parent_point_location = self.parent_point.interpolation_matrix @ Q_parent
-            child_point_location = self.child_point.interpolation_matrix @ Q_child
+            parent_point_location = self.parent_point.position_in_global(Q_parent)
+            child_point_location = self.child_point.position_in_global(Q_child)
 
             K_k_child = -2 * (parent_point_location - child_point_location).T @ self.child_point.interpolation_matrix
 
-            return K_k_child
+            return np.array(K_k_child)
 
         def parent_constraint_jacobian_derivative(
             self, Qdot_child: SegmentNaturalVelocities, Qdot_parent: SegmentNaturalVelocities
         ) -> np.ndarray:
-            parent_point_location = self.parent_point.interpolation_matrix @ Qdot_parent
-            child_point_location = self.child_point.interpolation_matrix @ Qdot_child
+            parent_point_location = self.parent_point.position_in_global(Qdot_parent)
+            child_point_location = self.child_point.position_in_global(Qdot_child)
 
             K_k_child_dot = (
                 2 * (parent_point_location - child_point_location).T @ self.parent_point.interpolation_matrix
             )
 
-            return K_k_child_dot
+            return np.array(K_k_child_dot)
 
         def child_constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> np.ndarray:
-            parent_point_location = self.parent_point.interpolation_matrix @ Qdot_parent
-            child_point_location = self.child_point.interpolation_matrix @ Qdot_child
+            parent_point_location = self.parent_point.position_in_global(Qdot_parent)
+            child_point_location = self.child_point.position_in_global(Qdot_child)
 
             K_k_parent_dot = (
                 -2 * (parent_point_location - child_point_location).T @ self.child_point.interpolation_matrix
             )
 
-            return K_k_parent_dot
+            return np.array(K_k_parent_dot)
 
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates

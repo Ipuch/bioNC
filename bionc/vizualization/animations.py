@@ -131,6 +131,7 @@ class Viz:
         show_center_of_mass: bool = True,
         show_joints: bool = True,
         size_model_marker: bool = 0.02,
+        size_xp_marker: bool = 0.02,
     ):
         self.model = model
         self.show_ground_frame = show_ground_frame
@@ -171,7 +172,7 @@ class Viz:
             self.vtkModelReal = VtkModel(
                 self.vtkWindow,
                 markers_color=(1, 0, 0),
-                markers_size=0.02,
+                markers_size=size_xp_marker,
                 markers_opacity=1,
             )
         if self.show_joints:

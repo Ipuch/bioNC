@@ -614,7 +614,7 @@ class Joint:
             parent_point_location = self.parent_point.position_in_global(Q_parent)
             child_point_location = self.child_point.position_in_global(Q_child)
 
-            constraint = np.sum(parent_point_location - child_point_location) ** 2 - self.length**2
+            constraint = np.sum((parent_point_location - child_point_location) ** 2) - self.length**2
 
             return constraint
 

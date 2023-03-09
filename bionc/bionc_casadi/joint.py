@@ -1,4 +1,4 @@
-from casadi import MX, dot, cos, transpose, sum1
+from casadi import MX, dot, cos, transpose, sumsqr
 import numpy as np
 
 from .natural_segment import NaturalSegment
@@ -539,7 +539,7 @@ class Joint:
             parent_point_location = self.parent_point.position_in_global(Q_parent)
             child_point_location = self.child_point.position_in_global(Q_child)
 
-            constraint = sum1(parent_point_location - child_point_location) ** 2 - self.length**2
+            constraint = sumsqr(parent_point_location - child_point_location) - self.length**2
 
             return constraint
 

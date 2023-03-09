@@ -28,10 +28,10 @@ def create_knee_model() -> BiomechanicalModel:
     # fill the biomechanical model with the segment
     model["THIGH"] = NaturalSegment(
         name="THIGH",
-        alpha=103.42850151901055 * np.pi / 180,
-        beta=101.68512120130346 * np.pi / 180,
-        gamma=89.99891614467779 * np.pi / 180,
-        length=0.3964720545006924,
+        alpha=89.15807479515183 * np.pi / 180,
+        beta=89.99767608318231 * np.pi / 180,
+        gamma=89.99418352863022 * np.pi / 180,
+        length=0.3460518602753062,
         mass=6,
         center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
@@ -103,10 +103,10 @@ def create_knee_model() -> BiomechanicalModel:
 
     model["SHANK"] = NaturalSegment(
         name="SHANK",
-        alpha=89.15807479515183 * np.pi / 180,
-        beta=89.99767608318231 * np.pi / 180,
-        gamma=89.99418352863022 * np.pi / 180,
-        length=0.3460518602753062,
+        alpha=103.42850151901055 * np.pi / 180,
+        beta=101.68512120130346 * np.pi / 180,
+        gamma=89.99891614467779 * np.pi / 180,
+        length=0.3964720545006924,
         mass=4,
         center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
@@ -190,40 +190,40 @@ def create_knee_model() -> BiomechanicalModel:
     #         plane_point="medial_contact_shank",
     #     )
     # )
+    model._add_joint(
+        dict(
+            name="lateral_knee",
+            joint_type=JointType.SPHERE_ON_PLANE,
+            parent="THIGH",
+            child="SHANK",
+            sphere_radius=0.0283,
+            sphere_center="lateral_centre_femur",
+            plane_normal="lateral_normal_shank",
+            plane_point="lateral_contact_shank",
+        )
+    )
     # model._add_joint(
     #     dict(
-    #         name="lateral_knee",
-    #         joint_type=JointType.SPHERE_ON_PLANE,
+    #         name="ACL",
+    #         joint_type=JointType.CONSTANT_LENGTH,
     #         parent="THIGH",
     #         child="SHANK",
-    #         sphere_radius=0.0283,
-    #         sphere_center="lateral_centre_femur",
-    #         plane_normal="lateral_normal_shank",
-    #         plane_point="lateral_contact_shank",
+    #         length=0.0405,
+    #         parent_point="ACL_femur",
+    #         child_point="ACL_shank",
     #     )
     # )
-    model._add_joint(
-        dict(
-            name="ACL",
-            joint_type=JointType.CONSTANT_LENGTH,
-            parent="THIGH",
-            child="SHANK",
-            length=0.0405,
-            parent_point="ACL_femur",
-            child_point="ACL_shank",
-        )
-    )
-    model._add_joint(
-        dict(
-            name="PCL",
-            joint_type=JointType.CONSTANT_LENGTH,
-            parent="THIGH",
-            child="SHANK",
-            length=0.0433,
-            parent_point="PCL_femur",
-            child_point="PCL_shank",
-        )
-    )
+    # model._add_joint(
+    #     dict(
+    #         name="PCL",
+    #         joint_type=JointType.CONSTANT_LENGTH,
+    #         parent="THIGH",
+    #         child="SHANK",
+    #         length=0.0433,
+    #         parent_point="PCL_femur",
+    #         child_point="PCL_shank",
+    #     )
+    # )
     model._add_joint(
         dict(
             name="MCL",
@@ -231,7 +231,6 @@ def create_knee_model() -> BiomechanicalModel:
             parent="THIGH",
             child="SHANK",
             length=0.1297,
-            # length=0.1,
             parent_point="MCL_femur",
             child_point="MCL_shank",
         )

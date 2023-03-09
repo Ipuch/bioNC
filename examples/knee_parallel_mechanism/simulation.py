@@ -12,9 +12,16 @@ Q1 = SegmentNaturalCoordinates(
     np.array([0.9376, 0.3445, 0.0466, 0.0571, 0.4334, 0.1486, 0.1936, 0.0612, 0.1536, -0.1557, -0.2918, 0.9437])
 )
 
+# from bionc.bionc_numpy import NaturalSegment
+#
+# NaturalSegment.parameters_from_Q(Q0)
+#
 Q = NaturalCoordinates.from_qi((Q0, Q1))
 
 model = create_knee_model()
+
+# viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=False, size_xp_marker=0.005)
+# viz.animate(Q)
 
 print(model.rigid_body_constraints(NaturalCoordinates(Q)))
 print(model.joint_constraints(NaturalCoordinates(Q)))
@@ -43,16 +50,12 @@ xp_markers = np.concatenate(
     axis=1,
 )[:, :, np.newaxis]
 
-ik = model.inverse_kinematics(experimental_markers=xp_markers, Q_init=Q)
-# Q_opt = ik.solve(method="sqpmethod"
+ik = model.inverse_kinematics(experimental_markers=xp_markers, Q_init=Q+2)
 Q_opt = ik.solve(method="ipopt")
+# Q_opt = ik.solve(method="sqpmethod")
 print(Q - Q_opt)
 print(model.rigid_body_constraints(NaturalCoordinates(Q_opt)))
 print(model.joint_constraints(NaturalCoordinates(Q_opt)))
-
-mx_model = model.to_mx()
-j_constraints = mx_model.joint_constraints(NaturalCoordinates(Q_opt))
-print(to_numeric_MX(j_constraints))
 
 
 viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=False, size_xp_marker=0.005)

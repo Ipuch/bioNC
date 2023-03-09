@@ -526,7 +526,7 @@ class Joint:
             self.parent_point = parent.marker_from_name(parent_point)
             self.child_point = child.marker_from_name(child_point)
 
-        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k
             as a function of the natural coordinates Q_parent and Q_child.

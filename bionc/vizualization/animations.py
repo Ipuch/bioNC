@@ -258,8 +258,8 @@ class Viz:
                         ligament = np.concatenate((origin, insert), axis=1)
                         ligament = np.concatenate((ligament, np.ones((1, ligament.shape[1]))), axis=0)[:, :, np.newaxis]
                         all_ligament.append(Mesh(vertex=ligament))
-
-                self.vtkJoints.update_ligament(all_ligament)
+                if len(all_ligament) > 0:
+                    self.vtkJoints.update_ligament(all_ligament)
 
             # Update window
             self.vtkWindow.update_frame()

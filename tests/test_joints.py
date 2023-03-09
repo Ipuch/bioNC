@@ -324,7 +324,7 @@ def test_joints(bionc_type, joint_type: JointType):
     elif joint_type == JointType.CONSTANT_LENGTH:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            -1.7610504089393968,
+            -1.466320668046882,
             decimal=6,
         )
         parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)

@@ -150,20 +150,22 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         for joint_name, joint in self.joints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
-            if joint.parent is not None:  # If the joint is not a ground joint
-                idx_col_parent = slice(
-                    12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
-                )
-                Q_child = Q.vector(self.segments[joint.child.name].index)
-                K_k[idx_row, idx_col_parent] = joint.parent_constraint_jacobian(Q_child)
-
             idx_col_child = slice(
                 12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
             )
+            idx_col_parent = slice(
+                12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
+            ) if joint.parent is not None else None
+
             Q_parent = (
                 None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
             )  # if the joint is a joint with the ground, the parent is None
-            K_k[idx_row, idx_col_child] = joint.child_constraint_jacobian(Q_parent)
+            Q_child = Q.vector(self.segments[joint.child.name].index)
+
+            if joint.parent is not None:  # If the joint is not a ground joint
+                K_k[idx_row, idx_col_parent] = joint.parent_constraint_jacobian(Q_parent, Q_child)
+
+            K_k[idx_row, idx_col_child] = joint.child_constraint_jacobian(Q_parent, Q_child)
 
             nb_constraints += self.joints[joint_name].nb_constraints
 
@@ -189,20 +191,22 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         for joint_name, joint in self.joints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
-            if joint.parent is not None:  # If the joint is not a ground joint
-                idx_col_parent = slice(
-                    12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
-                )
-                Qdot_child = Qdot.vector(self.segments[joint.child.name].index)
-                K_k_dot[idx_row, idx_col_parent] = joint.parent_constraint_jacobian_derivative(Qdot_child)
-
+            idx_col_parent = slice(
+                12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
+            )
             idx_col_child = slice(
                 12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
             )
+
             Qdot_parent = (
                 None if joint.parent is None else Qdot.vector(self.segments[joint.parent.name].index)
             )  # if the joint is a joint with the ground, the parent is None
-            K_k_dot[idx_row, idx_col_child] = joint.child_constraint_jacobian_derivative(Qdot_parent)
+            Qdot_child = Qdot.vector(self.segments[joint.child.name].index)
+
+            if joint.parent is not None:  # If the joint is not a ground joint
+                K_k_dot[idx_row, idx_col_parent] = joint.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+            K_k_dot[idx_row, idx_col_child] = joint.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
             nb_constraints += self.joints[joint_name].nb_constraints
 
@@ -513,20 +517,22 @@ class BiomechanicalModel(GenericBiomechanicalModel):
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
 
-                    if j.parent is not None:  # If the joint is not a ground joint
-                        idx_col_parent = slice(
-                            12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1)
-                        )
-                        Q_child = Q.vector(self.segments[j.child.name].index)
-                        K[idx_row, idx_col_parent] = j.parent_constraint_jacobian(Q_child)
-
                     idx_col_child = slice(
                         12 * self.segments[j.child.name].index, 12 * (self.segments[j.child.name].index + 1)
                     )
+                    idx_col_parent = slice(
+                        12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1)
+                    ) if j.parent is not None else None
+
                     Q_parent = (
                         None if j.parent is None else Q.vector(self.segments[j.parent.name].index)
                     )  # if the joint is a joint with the ground, the parent is None
-                    K[idx_row, idx_col_child] = j.child_constraint_jacobian(Q_parent)
+                    Q_child = Q.vector(self.segments[j.child.name].index)
+
+                    K[idx_row, idx_col_child] = j.child_constraint_jacobian(Q_child, Q_parent)
+
+                    if j.parent is not None:  # If the joint is not a ground joint
+                        K[idx_row, idx_col_parent] = j.parent_constraint_jacobian(Q_parent, Q_child)
 
                     nb_constraints += j.nb_constraints
 
@@ -570,20 +576,22 @@ class BiomechanicalModel(GenericBiomechanicalModel):
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
 
-                    if j.parent is not None:  # If the joint is not a ground joint
-                        idx_col_parent = slice(
-                            12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1)
-                        )
-                        Qdot_child = Qdot.vector(self.segments[j.child.name].index)
-                        Kdot[idx_row, idx_col_parent] = j.parent_constraint_jacobian_derivative(Qdot_child)
-
                     idx_col_child = slice(
                         12 * self.segments[j.child.name].index, 12 * (self.segments[j.child.name].index + 1)
                     )
+                    idx_col_parent = slice(
+                        12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1)
+                    ) if j.parent is not None else None
+
                     Qdot_parent = (
                         None if j.parent is None else Qdot.vector(self.segments[j.parent.name].index)
                     )  # if the joint is a joint with the ground, the parent is None
-                    Kdot[idx_row, idx_col_child] = j.child_constraint_jacobian_derivative(Qdot_parent)
+                    Qdot_child = Qdot.vector(self.segments[j.child.name].index)
+
+                    Kdot[idx_row, idx_col_child] = j.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+                    if j.parent is not None:  # If the joint is not a ground joint
+                        Kdot[idx_row, idx_col_parent] = j.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
                     nb_constraints += j.nb_constraints
 

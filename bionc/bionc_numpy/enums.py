@@ -9,6 +9,7 @@ class JointType(Enum):
 
     # WELD = "not implemented yet"
     GROUND_REVOLUTE = GroundJoint.Hinge
+    GROUND_SPHERICAL = GroundJoint.Spherical
     CONSTANT_LENGTH = Joint.ConstantLength
     REVOLUTE = Joint.Hinge
     # PRISMATIC = "not implemented yet"

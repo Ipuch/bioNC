@@ -490,3 +490,9 @@ class AbstractNaturalSegment(ABC):
         float
             Kinetic energy of the segment
         """
+
+    def to_mx(self):
+        """
+        This function returns the segment as a MX object
+        """
+        raise NotImplementedError("This function is only implemented for the bionc_casadi")

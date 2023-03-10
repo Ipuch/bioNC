@@ -671,9 +671,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         biais = -Kdot @ Qdot
 
         if stabilization is not None:
-            biais -= stabilization["alpha"] * self.holonomic_constraints(Q) + stabilization[
-                "beta"
-            ] * self.holonomic_constraints_derivative(Qdot)
+            raise NotImplementedError("Stabilization is not implemented yet")
+            # biais -= stabilization["alpha"] * self.holonomic_constraints(Q) + stabilization[
+            #     "beta"
+            # ] * self.holonomic_constraints_derivative(Qdot)
 
         B = np.concatenate([forces, biais], axis=0)
 

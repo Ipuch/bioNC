@@ -155,9 +155,9 @@ class Joint:
             tuple[np.ndarray, np.ndarray]
                 joint constraints jacobian derivative of the parent and child segment [5, 12] and [5, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child), self.child_constraint_jacobian_derivative(
+            return self.parent_constraint_jacobian_derivative(
                 Qdot_parent, Qdot_child
-            )
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
         def to_mx(self):
             """
@@ -320,9 +320,9 @@ class Joint:
                 joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
             """
 
-            return self.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child), self.child_constraint_jacobian_derivative(
+            return self.parent_constraint_jacobian_derivative(
                 Qdot_parent, Qdot_child
-            )
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
         def to_mx(self):
             """
@@ -426,9 +426,9 @@ class Joint:
             tuple[np.ndarray, np.ndarray]
                 joint constraints jacobian of the parent and child segment [3, 12] and [3, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child), self.child_constraint_jacobian_derivative(
+            return self.parent_constraint_jacobian_derivative(
                 Qdot_parent, Qdot_child
-            )
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
         def to_mx(self):
             """
@@ -911,7 +911,6 @@ class GroundJoint:
             ground_application_point: np.ndarray = None,
             index: int = None,
         ):
-
             super(GroundJoint.Spherical, self).__init__(name, None, child, index)
             self.nb_constraints = 3
             self.ground_application_point = ground_application_point

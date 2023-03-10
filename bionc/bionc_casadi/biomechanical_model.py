@@ -492,9 +492,11 @@ class BiomechanicalModel(GenericBiomechanicalModel):
                     idx_col_child = slice(
                         12 * self.segments[j.child.name].index, 12 * (self.segments[j.child.name].index + 1)
                     )
-                    idx_col_parent = slice(
-                        12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1)
-                    ) if j.parent is not None else None
+                    idx_col_parent = (
+                        slice(12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1))
+                        if j.parent is not None
+                        else None
+                    )
 
                     Q_parent = (
                         None if j.parent is None else Q.vector(self.segments[j.parent.name].index)
@@ -551,9 +553,11 @@ class BiomechanicalModel(GenericBiomechanicalModel):
                     idx_col_child = slice(
                         12 * self.segments[j.child.name].index, 12 * (self.segments[j.child.name].index + 1)
                     )
-                    idx_col_parent = slice(
-                        12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1)
-                    )if j.parent is not None else None
+                    idx_col_parent = (
+                        slice(12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1))
+                        if j.parent is not None
+                        else None
+                    )
 
                     Qdot_parent = (
                         None if j.parent is None else Qdot.vector(self.segments[j.parent.name].index)

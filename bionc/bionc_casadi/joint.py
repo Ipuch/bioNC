@@ -165,9 +165,9 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian derivative of the parent and child segment [5, 12] and [5, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child), self.child_constraint_jacobian_derivative(
+            return self.parent_constraint_jacobian_derivative(
                 Qdot_parent, Qdot_child
-            )
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
     class Universal(JointBase):
         """
@@ -312,9 +312,9 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian derivative of the parent and child segment [4, 12] and [4, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child), self.child_constraint_jacobian_derivative(
+            return self.parent_constraint_jacobian_derivative(
                 Qdot_parent, Qdot_child
-            )
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
     class Spherical(JointBase):
         def __init__(
@@ -395,9 +395,9 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian of the parent and child segment [3, 12] and [3, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child), self.child_constraint_jacobian_derivative(
+            return self.parent_constraint_jacobian_derivative(
                 Qdot_parent, Qdot_child
-            )
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
     class SphereOnPlane(JointBase):
         """
@@ -790,7 +790,6 @@ class GroundJoint:
             ground_application_point: np.ndarray = None,
             index: int = None,
         ):
-
             super(GroundJoint.Spherical, self).__init__(name, None, child, index)
             self.nb_constraints = 3
             self.ground_application_point = MX(ground_application_point)
@@ -834,9 +833,7 @@ class GroundJoint:
 
             return K_k_child
 
-        def constraint_jacobian(
-            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
-        ) -> MX:
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
             as a function of the natural coordinates Q_parent and Q_child.

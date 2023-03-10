@@ -523,7 +523,7 @@ def test_joints(bionc_type, joint_type: JointType):
         child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
         TestUtils.assert_equal(
             child_jacobian_dot,
-            np.zeros((5, 12)),
+            np.zeros((3, 12)),
             decimal=6,
         )
 

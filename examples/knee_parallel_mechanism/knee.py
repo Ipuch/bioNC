@@ -33,7 +33,7 @@ def create_knee_model() -> BiomechanicalModel:
         gamma=89.99418352863022 * np.pi / 180,
         length=0.3460518602753062,
         mass=6,
-        center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
+        center_of_mass=np.array([0, -0.1, 0]),  # in segment coordinates system
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
         # is_ground=True,
     )
@@ -108,7 +108,7 @@ def create_knee_model() -> BiomechanicalModel:
         gamma=89.99891614467779 * np.pi / 180,
         length=0.3964720545006924,
         mass=4,
-        center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
+        center_of_mass=np.array([0, -0.1, 0]),  # in segment coordinates system
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
     )
 

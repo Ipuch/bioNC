@@ -53,8 +53,8 @@ print(model.rigid_body_constraints(NaturalCoordinates(Q_opt)))
 print(model.joint_constraints(NaturalCoordinates(Q_opt)))
 
 
-# viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=True, size_xp_marker=0.005)
-# viz.animate(Q_opt, markers_xp=xp_markers)
+viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=True, size_xp_marker=0.005)
+viz.animate(Q_opt, markers_xp=xp_markers)
 
 # simulation
 

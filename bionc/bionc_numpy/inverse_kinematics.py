@@ -40,6 +40,10 @@ def _solve_nlp(method: str, nlp: dict, Q_init: np.ndarray, lbg: np.ndarray, ubg:
         options,
     )
     r = S(x0=Q_init, lbg=lbg, ubg=ubg)
+
+    if S.stats()["success"] is False:
+        print("Inverse Kinematics failed to converge")
+
     return r
 
 

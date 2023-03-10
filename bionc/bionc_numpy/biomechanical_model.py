@@ -633,6 +633,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
         # external_forces: ExternalForces
+        stabilization: dict = None,
     ) -> np.ndarray:
         """
         This function computes the forward dynamics of the system, i.e. the acceleration of the segments
@@ -643,6 +644,12 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+        stabilization: dict
+            Dictionary containing the Baumgarte's stabilization parameters:
+            * alpha: float
+                Stabilization parameter for the constraint
+            * beta: float
+                Stabilization parameter for the constraint derivative
 
         Returns
         -------
@@ -653,11 +660,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = self.holonomic_constraints_jacobian(Q)
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
-        # if stabilization is not None:
-        #     biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
-        #         "beta"
-        #     ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
-
         # KKT system
         # [G, K.T] [Qddot]  = [forces]
         # [K, 0  ] [lambda] = [biais]
@@ -667,6 +669,12 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         forces = self.weight()
         biais = -Kdot @ Qdot
+
+        if stabilization is not None:
+            biais -= stabilization["alpha"] * self.holonomic_constraints(Q) + stabilization[
+                "beta"
+            ] * self.holonomic_constraints_derivative(Qdot)
+
         B = np.concatenate([forces, biais], axis=0)
 
         # solve the linear system Ax = B with numpy

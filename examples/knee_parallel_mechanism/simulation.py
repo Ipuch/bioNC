@@ -65,7 +65,7 @@ tuple_of_Qdot = [
 Qdot = NaturalVelocities.from_qdoti(tuple(tuple_of_Qdot))
 
 # actual simulation
-t_final = 0.4  # seconds
+t_final = 1  # seconds
 time_steps, all_states, dynamics = forward_integration(
     model=model,
     Q_init=NaturalCoordinates(Q_opt),
@@ -81,23 +81,22 @@ defects, defects_dot, joint_defects, all_lambdas = post_computations(
     dynamics=dynamics,
 )
 
-# plot results
-import matplotlib.pyplot as plt
-
-plt.figure()
-for i in range(0, model.nb_rigid_body_constraints):
-    plt.plot(time_steps, defects[i, :], marker="o")
-plt.show()
-
-plt.figure()
-for i in range(0, model.nb_joint_constraints):
-    plt.plot(time_steps, joint_defects[i, :], marker="o")
-plt.show()
+# # plot results
+# import matplotlib.pyplot as plt
+# plt.figure()
+# for i in range(0, model.nb_rigid_body_constraints):
+#     plt.plot(time_steps, defects[i, :], marker="o")
+# plt.show()
+#
+# plt.figure()
+# for i in range(0, model.nb_joint_constraints):
+#     plt.plot(time_steps, joint_defects[i, :], marker="o")
+# plt.show()
 
 # plt.plot(time_steps, defects_dot)
 # plt.plot(time_steps, joint_defects)
 # plt.legend(["defects", "defects_dot", "joint_defects"])
-plt.show()
+# plt.show()
 
-# viz = Viz(model)
-# viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
+viz = Viz(model)
+viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)

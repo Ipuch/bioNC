@@ -66,6 +66,7 @@ def forward_integration(
         qddot, lambdas = model.forward_dynamics(
             NaturalCoordinates(states[idx_coordinates]),
             NaturalVelocities(states[idx_velocities]),
+            stabilization=dict(alpha=0.5, beta=0.5),
         )
         return np.concatenate((states[idx_velocities], qddot.to_array()), axis=0), lambdas
 

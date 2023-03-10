@@ -90,6 +90,13 @@ def test_joints(bionc_type, joint_type: JointType):
             child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
             theta=[np.pi / 2, np.pi / 2],
         )
+    elif joint_type == JointType.GROUND_SPHERICAL:
+        joint = GroundJoint.Spherical(
+            name="spherical",
+            child="box",
+            index=0,
+            ground_application_point=np.array([0.1, 0.2, 0.3]),
+        )
     elif joint_type == JointType.CONSTANT_LENGTH:
         box.add_natural_marker_from_segment_coordinates(
             name="P1",
@@ -493,3 +500,33 @@ def test_joints(bionc_type, joint_type: JointType):
             np.zeros((5, 12)),
             decimal=6,
         )
+
+    elif joint_type == JointType.GROUND_SPHERICAL:
+        TestUtils.assert_equal(
+            joint.constraint(Q1, Q2),
+            np.array([-1.4, -0.9, -2.9]),
+            decimal=6,
+        )
+        child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        TestUtils.assert_equal(
+            child_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )
+
+        child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        TestUtils.assert_equal(
+            child_jacobian_dot,
+            np.zeros((5, 12)),
+            decimal=6,
+        )
+
+        assert joint.parent_constraint_jacobian(Q1, Q2) is None
+        assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
+        

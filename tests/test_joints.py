@@ -529,4 +529,3 @@ def test_joints(bionc_type, joint_type: JointType):
 
         assert joint.parent_constraint_jacobian(Q1, Q2) is None
         assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
-        

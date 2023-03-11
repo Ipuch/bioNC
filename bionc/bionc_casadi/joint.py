@@ -917,9 +917,7 @@ class GroundJoint:
 
             return K_k_child
 
-        def constraint_jacobian(
-            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
-        ) -> MX:
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
             as a function of the natural coordinates Q_parent and Q_child.

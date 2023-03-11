@@ -545,7 +545,7 @@ def test_joints(bionc_type, joint_type: JointType):
     elif joint_type == JointType.GROUND_WELD:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            np.array([-1.3  , -1.9  , -2.9  , -1.29 , -1.06 , -3.147, -1.38 , -2.159, -4.148, -1.47 , -1.958, -5.249]),
+            np.array([-1.3, -1.9, -2.9, -1.29, -1.06, -3.147, -1.38, -2.159, -4.148, -1.47, -1.958, -5.249]),
             decimal=6,
         )
         child_jacobian = joint.constraint_jacobian(Q1, Q2)

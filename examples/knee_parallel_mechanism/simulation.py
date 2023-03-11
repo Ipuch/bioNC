@@ -82,6 +82,7 @@ defects, defects_dot, joint_defects, all_lambdas = post_computations(
 
 # plot results
 import matplotlib.pyplot as plt
+
 plt.figure()
 for i in range(0, model.nb_rigid_body_constraints):
     plt.plot(time_steps, defects[i, :], marker="o", label=f"defects {i}")

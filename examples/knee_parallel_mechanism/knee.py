@@ -197,7 +197,6 @@ def create_knee_model() -> BiomechanicalModel:
         )
     )
 
-
     model._add_joint(
         dict(
             name="SPHERICAL_KNEE",

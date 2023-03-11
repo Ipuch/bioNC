@@ -1001,3 +1001,107 @@ class GroundJoint:
                 ground_application_point=self.ground_application_point,
                 index=self.index,
             )
+
+    class Weld(JointBase):
+        """
+        This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
+        defined by two angles.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            child: NaturalSegment,
+            Q_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
+            index: int = None,
+        ):
+            super(GroundJoint.Weld, self).__init__(name, None, child, index)
+
+            # check size and type of parent axis
+            self.Q_child_ref = SegmentNaturalCoordinates(Q_child_ref)
+            self.nb_constraints = 12
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            np.ndarray
+                Kinematic constraints of the joint [12, 1]
+            """
+
+            return self.Q_child_ref.vector - Q_child.vector
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
+            K_k_child = -np.eye(self.nb_constraints)
+
+            return K_k_child
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            K_k_child = np.zeros((self.nb_constraints, 12))
+
+            return K_k_child
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            np.ndarray
+                joint constraints jacobian of the child segment [12, 12]
+            """
+
+            return self.child_constraint_jacobian(Q_parent, Q_child)
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_kdot
+            as a function of the natural velocities Qdot_parent and Qdot_child.
+
+            Returns
+            -------
+            MX
+                joint constraints jacobian of the child segment [12, 12]
+            """
+
+            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+        def to_mx(self):
+            """
+            This function returns the joint as a mx joint
+
+            Returns
+            -------
+            JointBase
+                The joint as a mx joint
+            """
+            from ..bionc_casadi.joint import GroundJoint as CasadiGroundJoint
+
+            return CasadiGroundJoint.Weld(
+                name=self.name,
+                child=self.child.to_mx(),
+                index=self.index,
+                Q_child_ref=self.Q_child_ref,
+            )

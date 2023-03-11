@@ -639,9 +639,7 @@ class Joint:
             child_point_location = self.child_point.position_in_global(Q_child)
 
             constraint = np.sum((parent_point_location - child_point_location) ** 2) - self.length**2
-            print(self.name, "expected", self.length)
-            print(self.name, "length", np.linalg.norm(parent_point_location - child_point_location))
-            print(self.name, "diff", np.linalg.norm(parent_point_location - child_point_location) - self.length)
+
             return constraint
 
         def parent_constraint_jacobian(

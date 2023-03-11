@@ -45,9 +45,9 @@ xp_markers = np.concatenate(
     axis=1,
 )[:, :, np.newaxis]
 
-ik = model.inverse_kinematics(experimental_markers=xp_markers, Q_init=Q + 2)
-Q_opt = ik.solve(method="ipopt")
-# Q_opt = ik.solve(method="sqpmethod")
+ik = model.inverse_kinematics(experimental_markers=xp_markers, Q_init=Q)
+Q_opt = ik.solve(method="sqpmethod")
+
 print(Q - Q_opt)
 print(model.rigid_body_constraints(NaturalCoordinates(Q_opt)))
 print(model.joint_constraints(NaturalCoordinates(Q_opt)))
@@ -56,8 +56,7 @@ print(model.joint_constraints(NaturalCoordinates(Q_opt)))
 viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=True, size_xp_marker=0.005)
 viz.animate(Q_opt, markers_xp=xp_markers)
 
-# simulation
-
+# simulation in forward dynamics
 tuple_of_Qdot = [
     SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
     for i in range(0, model.nb_segments)
@@ -81,22 +80,21 @@ defects, defects_dot, joint_defects, all_lambdas = post_computations(
     dynamics=dynamics,
 )
 
-# # plot results
-# import matplotlib.pyplot as plt
-# plt.figure()
-# for i in range(0, model.nb_rigid_body_constraints):
-#     plt.plot(time_steps, defects[i, :], marker="o")
-# plt.show()
-#
-# plt.figure()
-# for i in range(0, model.nb_joint_constraints):
-#     plt.plot(time_steps, joint_defects[i, :], marker="o")
-# plt.show()
+# plot results
+import matplotlib.pyplot as plt
+plt.figure()
+for i in range(0, model.nb_rigid_body_constraints):
+    plt.plot(time_steps, defects[i, :], marker="o", label=f"defects {i}")
+plt.title("Rigid body constraints")
+plt.legend()
 
-# plt.plot(time_steps, defects_dot)
-# plt.plot(time_steps, joint_defects)
-# plt.legend(["defects", "defects_dot", "joint_defects"])
-# plt.show()
+plt.figure()
+for i in range(0, model.nb_joint_constraints):
+    plt.plot(time_steps, joint_defects[i, :], marker="o", label=f"joint_defects {i}")
+plt.title("Joint constraints")
+plt.legend()
+plt.show()
 
+# animation
 viz = Viz(model)
 viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)

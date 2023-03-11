@@ -99,7 +99,7 @@ def RK4(t: np.ndarray, f, y0: np.ndarray, args=()) -> np.ndarray:
     y = np.zeros((len(y0), n))
     y[:, 0] = y0
     for i in range(n - 1):
-        print(i)
+        print(f"frame {i}")
         h = t[i + 1] - t[i]
         yi = np.squeeze(y[:, i])
         k1 = f(t[i], yi, *args)

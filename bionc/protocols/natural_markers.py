@@ -21,6 +21,9 @@ class AbstractNaturalMarker(ABC):
 
     """
 
+    def __init__(self):
+        self.name = None
+
     @abstractmethod
     def from_data(
         cls,
@@ -72,4 +75,43 @@ class AbstractNaturalMarker(ABC):
         Returns
         -------
         The constraint for the marker
+        """
+
+    @abstractmethod
+    def position_in_global(self, Q_parent):
+        """
+        This function computes the location of the marker in the global coordinate system
+
+        Parameters
+        ----------
+        Qi
+            The segment natural coordinates
+
+        Returns
+        -------
+        The location of the marker in the global/inertial coordinate system
+        """
+
+
+class AbstractSegmentNaturalVector(ABC):
+    """
+    Class used to create a segment vector for the natural segments
+
+    """
+
+    def __init__(self):
+        self.name = None
+
+    def position_in_global(self, Qi: SegmentNaturalCoordinates):
+        """
+        This function computes the position of the vector in the global coordinate system
+
+        Parameters
+        ----------
+        Qi : SegmentNaturalCoordinates
+            The segment natural coordinates
+
+        Returns
+        -------
+        The position of the vector in the global coordinate system
         """

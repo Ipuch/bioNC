@@ -9,7 +9,7 @@ from ..bionc_numpy.natural_coordinates import SegmentNaturalCoordinates
 from ..bionc_numpy.natural_velocities import SegmentNaturalVelocities
 from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
-from ..bionc_numpy.natural_marker import NaturalMarker
+from ..bionc_numpy.natural_marker import NaturalMarker, SegmentNaturalVector
 from ..bionc_numpy.natural_vector import NaturalVector
 
 from ..protocols.natural_segment import AbstractNaturalSegment
@@ -55,57 +55,43 @@ class NaturalSegment(AbstractNaturalSegment):
         center of mass of the segment in Segment Coordinate System
     _inertia: np.ndarray
         inertia matrix of the segment in Segment Coordinate System
+    _markers : list
+        list of markers in the segment
+    _vector : list
+        list of vectors in the segment
+    _index : int
+        index of the segment in the model
+    _is_ground : bool
+        is_ground to indicate if the segment is the ground segment
     """
 
     def __init__(
         self,
         name: str = None,
-        index: int = None,
-        alpha: Union[float, np.float64] = np.pi / 2,
-        beta: Union[float, np.float64] = np.pi / 2,
-        gamma: Union[float, np.float64] = np.pi / 2,
-        length: Union[float, np.float64] = None,
-        mass: Union[float, np.float64] = None,
+        alpha: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        beta: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        gamma: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        length: Union[np.ndarray, float, np.float64] = None,
+        mass: Union[np.ndarray, float, np.float64] = None,
         center_of_mass: np.ndarray = None,
         inertia: np.ndarray = None,
+        index: int = None,
+        is_ground: bool = False,
     ):
-        self._name = name
-        self._index = index
+        self._angle_sanity_check(alpha, beta, gamma)
 
-        self._length = length
-        self._alpha = alpha
-        self._beta = beta
-        self._gamma = gamma
-
-        self._experimental_Q_function = None
-        # todo: sanity check to make sure u, v or w are not collinear
-        # todo: implement all the transformations matrix according the Ph.D thesis of Alexandre Naaim
-        self._transformation_matrix = self._transformation_matrix()
-
-        self._mass = mass
-        if center_of_mass is None:
-            self._center_of_mass = center_of_mass
-            self._natural_center_of_mass = None
-        else:
-            if center_of_mass.shape[0] != 3:
-                raise ValueError("Center of mass must be 3x1")
-            self._center_of_mass = center_of_mass
-            self._natural_center_of_mass = self._natural_center_of_mass()
-
-        if inertia is None:
-            self._inertia = inertia
-            self._inertia_in_natural_coordinates_system = None
-            self._interpolation_matrix_inertia = None
-            self._mass_matrix = None
-        else:
-            if inertia.shape != (3, 3):
-                raise ValueError("Inertia matrix must be 3x3")
-            self._inertia = inertia
-            self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
-            self._mass_matrix = self._update_mass_matrix()
-
-        # list of markers embedded in the segment
-        self._markers = []
+        super().__init__(
+            name=name,
+            alpha=alpha,
+            beta=beta,
+            gamma=gamma,
+            length=length,
+            mass=mass,
+            center_of_mass=center_of_mass,
+            inertia=inertia,
+            index=index,
+            is_ground=is_ground,
+        )
 
     def to_mx(self) -> AbstractNaturalSegment:
         """
@@ -126,6 +112,8 @@ class NaturalSegment(AbstractNaturalSegment):
         )
         for marker in self._markers:
             natural_segment.add_natural_marker(marker.to_mx())
+        for vector in self._vectors:
+            natural_segment.add_natural_vector(vector.to_mx())
 
         return natural_segment
 
@@ -270,8 +258,9 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self._transformation_matrix @ np.concatenate((Q.u, Q.v, Q.w), axis=1),
-            translation=Q.rp,
+            rotation=self._transformation_matrix
+            @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
+            translation=Q.rp[:, np.newaxis],
         )
 
     def location_from_homogenous_transform(
@@ -623,6 +612,90 @@ class NaturalSegment(AbstractNaturalSegment):
 
         marker.parent_name = self.name
         self._markers.append(marker)
+
+    def add_natural_vector(self, vector: SegmentNaturalVector):
+        """
+        Add a new vector to the segment
+
+        Parameters
+        ----------
+        vector
+            The vector to add
+        """
+        if vector.parent_name is not None and vector.parent_name != self.name:
+            raise ValueError(
+                "The marker name should be the same as the 'key'. Alternatively, marker.name can be left undefined"
+            )
+
+        vector.parent_name = self.name
+        self._vectors.append(vector)
+
+    def add_natural_marker_from_segment_coordinates(
+        self,
+        name: str,
+        location: np.ndarray,
+        is_distal_location: bool = False,
+        is_technical: bool = True,
+        is_anatomical: bool = False,
+    ):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        name: str
+            The name of the marker
+        location: np.ndarray
+            The location of the marker in the segment coordinate system
+        is_distal_location: bool
+            The location of the distal marker in the segment coordinate system
+        is_technical: bool
+            True if the marker is technical, False otherwise
+        is_anatomical: bool
+            True if the marker is anatomical, False otherwise
+        """
+
+        location = inv(self.transformation_matrix) @ location
+        if is_distal_location:
+            location += np.array([0, -1, 0])
+
+        natural_marker = NaturalMarker(
+            name=name,
+            parent_name=self.name,
+            position=location,
+            is_technical=is_technical,
+            is_anatomical=is_anatomical,
+        )
+        self.add_natural_marker(natural_marker)
+
+    def add_natural_vector_from_segment_coordinates(
+        self,
+        name: str,
+        direction: np.ndarray,
+        normalize: bool = True,
+    ):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        name: str
+            The name of the vector
+        direction: np.ndarray
+            The location of the vector in the segment coordinate system
+        normalize: bool
+            True if the vector should be normalized, False otherwise
+        """
+
+        direction = direction / np.linalg.norm(direction) if normalize else direction
+        direction = inv(self.transformation_matrix) @ direction
+
+        natural_vector = SegmentNaturalVector(
+            name=name,
+            parent_name=self.name,
+            direction=direction,
+        )
+        self.add_natural_vector(natural_vector)
 
     def markers(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """

@@ -3,12 +3,13 @@ Example script for animating markers
 """
 from enum import Enum
 
-from bioviz import VtkModel, VtkWindow
+from bioviz import VtkModel, VtkWindow, Mesh
 import numpy as np
 from pyomeca import Markers
 
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from ..bionc_numpy.joint import Joint
 
 
 class NaturalVectorColors(Enum):
@@ -128,6 +129,9 @@ class Viz:
         show_model_markers: bool = True,
         show_xp_markers: bool = True,
         show_center_of_mass: bool = True,
+        show_joints: bool = True,
+        size_model_marker: bool = 0.02,
+        size_xp_marker: bool = 0.02,
     ):
         self.model = model
         self.show_ground_frame = show_ground_frame
@@ -135,6 +139,7 @@ class Viz:
         self.show_model_markers = show_model_markers
         self.show_xp_markers = show_xp_markers
         self.show_center_of_mass = show_center_of_mass
+        self.show_joints = show_joints
 
         # Create a windows with a nice gray background
         self.vtkWindow = VtkWindow(background_color=(0.5, 0.5, 0.5))
@@ -151,7 +156,7 @@ class Viz:
                 self.center_of_mass.append(
                     VtkModel(
                         self.vtkWindow,
-                        markers_color=(1, 0, 0),
+                        markers_color=(0, 0, 0),
                         markers_size=0.02,
                         markers_opacity=1,
                     )
@@ -160,16 +165,25 @@ class Viz:
             self.vtkModelModel = VtkModel(
                 self.vtkWindow,
                 markers_color=(0, 1, 0),
-                markers_size=0.02,
+                markers_size=size_model_marker,
                 markers_opacity=1,
             )
         if self.show_xp_markers:
             self.vtkModelReal = VtkModel(
                 self.vtkWindow,
                 markers_color=(1, 0, 0),
-                markers_size=0.02,
+                markers_size=size_xp_marker,
                 markers_opacity=1,
             )
+        if self.show_joints:
+            self.vtkJoints = []
+            for i, joint in enumerate(model.joints.values()):
+                if isinstance(joint, Joint.ConstantLength):
+                    self.vtkJoints = VtkModel(
+                        self.vtkWindow,
+                        ligament_color=(0.9, 0.9, 0.05),
+                        ligament_opacity=1,
+                    )
 
     def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp=None):
         """
@@ -205,6 +219,16 @@ class Viz:
             center_of_mass_locations[:, :, :] = self.model.center_of_mass_position(Q)
             center_of_mass_locations = Markers(center_of_mass_locations)
 
+        if self.show_joints:
+            all_ligament = []
+            for i, joint in enumerate(self.model.joints.values()):
+                if isinstance(joint, Joint.ConstantLength):
+                    origin = joint.parent_point.position_in_global(Q.vector(joint.parent.index)[:, 0:1])
+                    insert = joint.child_point.position_in_global(Q.vector(joint.child.index)[:, 0:1])
+                    ligament = np.concatenate((origin, insert), axis=1)
+                    ligament = np.concatenate((ligament, np.ones((1, ligament.shape[1]))), axis=0)[:, :, np.newaxis]
+                    all_ligament.append(Mesh(vertex=ligament))
+
         # Animate all this
         i = 0
         while self.vtkWindow.is_active:
@@ -224,6 +248,18 @@ class Viz:
             if self.show_center_of_mass:
                 for s, com in enumerate(self.center_of_mass):
                     com.update_markers(center_of_mass_locations[:, s : s + 1, i])
+
+            if self.show_joints:
+                all_ligament = []
+                for j, joint in enumerate(self.model.joints.values()):
+                    if isinstance(joint, Joint.ConstantLength):
+                        origin = joint.parent_point.position_in_global(Q.vector(joint.parent.index)[:, i : i + 1])
+                        insert = joint.child_point.position_in_global(Q.vector(joint.child.index)[:, i : i + 1])
+                        ligament = np.concatenate((origin, insert), axis=1)
+                        ligament = np.concatenate((ligament, np.ones((1, ligament.shape[1]))), axis=0)[:, :, np.newaxis]
+                        all_ligament.append(Mesh(vertex=ligament))
+                if len(all_ligament) > 0:
+                    self.vtkJoints.update_ligament(all_ligament)
 
             # Update window
             self.vtkWindow.update_frame()

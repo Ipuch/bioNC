@@ -1,4 +1,4 @@
-from casadi import MX, dot, cos, transpose
+from casadi import MX, dot, cos, transpose, sumsqr
 import numpy as np
 
 from .natural_segment import NaturalSegment
@@ -85,7 +85,9 @@ class Joint:
 
             return constraint
 
-        def parent_constraint_jacobian(self, Q_child: SegmentNaturalCoordinates) -> MX:
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
             K_k_parent = MX.zeros((self.nb_constraints, 12))
             K_k_parent[:3, 6:9] = MX.eye(3)
 
@@ -98,7 +100,9 @@ class Joint:
 
             return K_k_parent
 
-        def child_constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates) -> MX:
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
             K_k_child = MX.zeros((self.nb_constraints, 12))
             K_k_child[:3, 3:6] = -MX.eye(3)
 
@@ -110,7 +114,9 @@ class Joint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(self, Qdot_child: SegmentNaturalVelocities) -> MX:
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
             K_k_parent_dot = MX.zeros((self.nb_constraints, 12))
             for i in range(2):
                 K_k_parent_dot[i + 3, :] = (
@@ -121,7 +127,9 @@ class Joint:
 
             return K_k_parent_dot
 
-        def child_constraint_jacobian_derivative(self, Qdot_parent: SegmentNaturalVelocities) -> MX:
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
             K_k_child_dot = MX.zeros((self.nb_constraints, 12))
             for i in range(2):
                 K_k_child_dot[i + 3, :] = (
@@ -143,7 +151,7 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian of the parent and child segment [5, 12] and [5, 12]
             """
-            return self.parent_constraint_jacobian(Q_child), self.child_constraint_jacobian(Q_parent)
+            return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
         def constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
@@ -157,9 +165,9 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian derivative of the parent and child segment [5, 12] and [5, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(
-                Qdot_parent
-            )
+            return self.parent_constraint_jacobian_derivative(
+                Qdot_parent, Qdot_child
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
     class Universal(JointBase):
         """
@@ -233,7 +241,9 @@ class Joint:
 
             return constraint
 
-        def parent_constraint_jacobian(self, Q_child: SegmentNaturalCoordinates) -> MX:
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
             K_k_parent = MX.zeros((self.nb_constraints, 12))
             K_k_parent[:3, 6:9] = MX.eye(3)
 
@@ -243,7 +253,9 @@ class Joint:
 
             return K_k_parent
 
-        def child_constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates) -> MX:
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
             K_k_child = MX.zeros((self.nb_constraints, 12))
             K_k_child[:3, 3:6] = -MX.eye(3)
             K_k_child[3, :] = (
@@ -252,7 +264,9 @@ class Joint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(self, Qdot_child: SegmentNaturalVelocities) -> MX:
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
             K_k_parent = MX.zeros((self.nb_constraints, 12))
 
             K_k_parent[3, :] = (
@@ -261,7 +275,9 @@ class Joint:
 
             return K_k_parent
 
-        def child_constraint_jacobian_derivative(self, Qdot_parent: SegmentNaturalVelocities) -> MX:
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
             K_k_child = MX.zeros((self.nb_constraints, 12))
 
             K_k_child[3, :] = (
@@ -282,7 +298,7 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
             """
-            return self.parent_constraint_jacobian(Q_child), self.child_constraint_jacobian(Q_parent)
+            return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
         def constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
@@ -296,9 +312,9 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian derivative of the parent and child segment [4, 12] and [4, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(
-                Qdot_parent
-            )
+            return self.parent_constraint_jacobian_derivative(
+                Qdot_parent, Qdot_child
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
     class Spherical(JointBase):
         def __init__(
@@ -325,23 +341,31 @@ class Joint:
 
             return constraint
 
-        def parent_constraint_jacobian(self, Q_child: SegmentNaturalCoordinates) -> MX:
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
             K_k_parent = MX.zeros((self.nb_constraints, 12))
             K_k_parent[:3, 6:9] = MX.eye(3)
 
             return K_k_parent
 
-        def child_constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates) -> MX:
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
             K_k_child = MX.zeros((self.nb_constraints, 12))
             K_k_child[:3, 3:6] = -MX.eye(3)
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(self, Qdot_child: SegmentNaturalVelocities) -> MX:
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
             K_k_parent = MX.zeros((self.nb_constraints, 12))
             return K_k_parent
 
-        def child_constraint_jacobian_derivative(self, Qdot_parent: SegmentNaturalVelocities) -> MX:
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
             K_k_child = MX.zeros((self.nb_constraints, 12))
             return K_k_child
 
@@ -357,7 +381,7 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian of the parent and child segment [3, 12] and [3, 12]
             """
-            return self.parent_constraint_jacobian(Q_child), self.child_constraint_jacobian(Q_parent)
+            return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
         def constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
@@ -371,9 +395,257 @@ class Joint:
             tuple[MX, MX]
                 joint constraints jacobian of the parent and child segment [3, 12] and [3, 12]
             """
-            return self.parent_constraint_jacobian_derivative(Qdot_child), self.child_constraint_jacobian_derivative(
-                Qdot_parent
+            return self.parent_constraint_jacobian_derivative(
+                Qdot_parent, Qdot_child
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+    class SphereOnPlane(JointBase):
+        """
+        This class represents a sphere-on-plane joint: parent is the sphere, and child is the plane.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            index: int,
+            sphere_radius: float = None,
+            sphere_center: str = None,
+            plane_point: str = None,
+            plane_normal: str = None,
+        ):
+            super(Joint.SphereOnPlane, self).__init__(name, parent, child, index)
+            self.nb_constraints = 1
+
+            if sphere_radius is None:
+                raise ValueError("sphere_radius must be specified for joint SphereOnPlane")
+            if sphere_center is None:
+                raise ValueError("sphere_center must be specified for joint SphereOnPlane")
+            if plane_point is None:
+                raise ValueError("plane_point must be specified for joint SphereOnPlane")
+            if plane_normal is None:
+                raise ValueError("plane_normal must be specified for joint SphereOnPlane")
+
+            self.sphere_radius = sphere_radius
+            self.sphere_center = parent.marker_from_name(sphere_center)
+            self.plane_point = child.marker_from_name(plane_point)
+            self.plane_normal = child.vector_from_name(plane_normal)
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                Kinematic constraints of the joint [1, 1]
+            """
+
+            parent_point_location = self.sphere_center.interpolation_matrix @ Q_parent
+            child_point_location = self.plane_point.interpolation_matrix @ Q_child
+            normal_orientation = self.plane_normal.interpolation_matrix @ Q_child
+
+            constraint = (parent_point_location - child_point_location).T @ normal_orientation - self.sphere_radius
+
+            return constraint
+
+        def parent_constraint_jacobian(
+            self,
+            Q_parent: SegmentNaturalCoordinates,
+            Q_child: SegmentNaturalCoordinates,
+        ) -> MX:
+            parent_point_location = self.sphere_center.interpolation_matrix @ Q_parent
+            child_point_location = self.plane_point.interpolation_matrix @ Q_child
+
+            K_k_parent = (
+                -(self.plane_normal.interpolation_matrix @ Q_child).T @ self.plane_point.interpolation_matrix
+                + (parent_point_location - child_point_location).T @ self.plane_normal.interpolation_matrix
             )
+
+            return K_k_parent
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            K_k_child = (self.plane_normal.interpolation_matrix @ Q_child).T @ self.sphere_center.interpolation_matrix
+
+            return K_k_child
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            parent_point_velocity = self.sphere_center.interpolation_matrix @ Qdot_parent
+            child_point_velocity = self.plane_point.interpolation_matrix @ Qdot_child
+
+            K_k_parent_dot = (
+                -(self.plane_normal.interpolation_matrix @ Qdot_child).T @ self.plane_point.interpolation_matrix
+                + (parent_point_velocity - child_point_velocity).T @ self.plane_normal.interpolation_matrix
+            )
+
+            return K_k_parent_dot
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            K_k_child_dot = (
+                self.plane_normal.interpolation_matrix @ Qdot_child
+            ).T @ self.sphere_center.interpolation_matrix
+
+            return K_k_child_dot
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                joint constraints jacobian of the parent and child segment [1, 12] and [1, 12]
+            """
+            return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                joint constraints jacobian of the parent and child segment [1, 12] and [1, 12]
+            """
+            return self.parent_constraint_jacobian_derivative(
+                Qdot_parent, Qdot_child
+            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+    class ConstantLength(JointBase):
+        def __init__(
+            self,
+            name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            index: int,
+            length: float = None,
+            parent_point: str = None,
+            child_point: str = None,
+        ):
+            super(Joint.ConstantLength, self).__init__(name, parent, child, index)
+
+            if length is None:
+                raise ValueError("length must be provided")
+            if parent_point is None:
+                raise ValueError("parent_point must be provided")
+            if child_point is None:
+                raise ValueError("child_point must be provided")
+
+            self.nb_constraints = 1
+            self.length = length
+            self.parent_point = parent.marker_from_name(parent_point)
+            self.child_point = child.marker_from_name(child_point)
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                Kinematic constraints of the joint [3, 1]
+            """
+            parent_point_location = self.parent_point.position_in_global(Q_parent)
+            child_point_location = self.child_point.position_in_global(Q_child)
+
+            constraint = sumsqr(parent_point_location - child_point_location) - self.length**2
+
+            return constraint
+
+        def parent_constraint_jacobian(
+            self, Q_child: SegmentNaturalCoordinates, Q_parent: SegmentNaturalCoordinates
+        ) -> MX:
+            parent_point_location = self.parent_point.position_in_global(Q_parent)
+            child_point_location = self.child_point.position_in_global(Q_child)
+
+            K_k_parent = 2 * (parent_point_location - child_point_location).T @ self.parent_point.interpolation_matrix
+
+            return K_k_parent
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            parent_point_location = self.parent_point.position_in_global(Q_parent)
+            child_point_location = self.child_point.position_in_global(Q_child)
+
+            K_k_child = -2 * (parent_point_location - child_point_location).T @ self.child_point.interpolation_matrix
+
+            return K_k_child
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_child: SegmentNaturalVelocities, Qdot_parent: SegmentNaturalVelocities
+        ) -> MX:
+            parent_point_location = self.parent_point.position_in_global(Qdot_parent)
+            child_point_location = self.child_point.position_in_global(Qdot_child)
+
+            K_k_child_dot = (
+                2 * (parent_point_location - child_point_location).T @ self.parent_point.interpolation_matrix
+            )
+
+            return K_k_child_dot
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            parent_point_location = self.parent_point.position_in_global(Qdot_parent)
+            child_point_location = self.child_point.position_in_global(Qdot_child)
+
+            K_k_parent_dot = (
+                -2 * (parent_point_location - child_point_location).T @ self.child_point.interpolation_matrix
+            )
+
+            return K_k_parent_dot
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                Kinematic constraints of the joint [1, 12] for parent and child
+            """
+
+            K_k_parent = self.parent_constraint_jacobian(Q_parent, Q_child)
+            K_k_child = self.child_constraint_jacobian(Q_parent, Q_child)
+
+            return K_k_parent, K_k_child
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                Kinematic constraints of the joint [1, 12] for parent and child
+            """
+
+            K_k_parent_dot = self.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            K_k_child_dot = self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+            return K_k_parent_dot, K_k_child_dot
 
 
 class GroundJoint:
@@ -449,10 +721,14 @@ class GroundJoint:
 
             return constraint
 
-        def parent_constraint_jacobian(self, Q_child: SegmentNaturalCoordinates) -> MX:
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
             return None
 
-        def child_constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates) -> MX:
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
             K_k_child = MX.zeros((self.nb_constraints, 12))
             K_k_child[:3, 3:6] = -MX.eye(3)
 
@@ -461,10 +737,14 @@ class GroundJoint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(self, Qdot_child: SegmentNaturalVelocities) -> MX:
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
             return None
 
-        def child_constraint_jacobian_derivative(self, Qdot_parent: SegmentNaturalVelocities) -> MX:
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
             K_k_child = MX.zeros((self.nb_constraints, 12))
 
             return K_k_child
@@ -480,7 +760,7 @@ class GroundJoint:
                 joint constraints jacobian of the child segment [5, 12]
             """
 
-            return self.child_constraint_jacobian(Q_parent)
+            return self.child_constraint_jacobian(Q_parent, Q_child)
 
         def constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
@@ -495,4 +775,172 @@ class GroundJoint:
                 joint constraints jacobian of the child segment [5, 12]
             """
 
-            return self.child_constraint_jacobian_derivative(Qdot_parent)
+            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+    class Spherical(JointBase):
+        """
+        This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
+        defined by two angles.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            child: NaturalSegment,
+            ground_application_point: np.ndarray = None,
+            index: int = None,
+        ):
+            super(GroundJoint.Spherical, self).__init__(name, None, child, index)
+            self.nb_constraints = 3
+            self.ground_application_point = MX(ground_application_point)
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            np.ndarray
+                Kinematic constraints of the joint [3, 1]
+            """
+            constraint = self.ground_application_point - Q_child.rp
+
+            return constraint
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            K_k_child = np.zeros((self.nb_constraints, 12))
+            K_k_child[:3, 3:6] = -np.eye(3)
+
+            return K_k_child
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            K_k_child = np.zeros((self.nb_constraints, 12))
+
+            return K_k_child
+
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            np.ndarray
+                joint constraints jacobian of the child segment [3, 12]
+            """
+
+            return self.child_constraint_jacobian(Q_parent, Q_child)
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_kdot
+            as a function of the natural velocities Qdot_parent and Qdot_child.
+
+            Returns
+            -------
+            MX
+                joint constraints jacobian of the child segment [3, 12]
+            """
+
+            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+    class Weld(JointBase):
+        """
+        This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
+        defined by two angles.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            child: NaturalSegment,
+            Q_child_ref: SegmentNaturalCoordinates,
+            index: int = None,
+        ):
+            super(GroundJoint.Weld, self).__init__(name, None, child, index)
+
+            # check size and type of parent axis
+            self.Q_child_ref = Q_child_ref
+            self.nb_constraints = 12
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            np.ndarray
+                Kinematic constraints of the joint [12, 1]
+            """
+
+            return self.Q_child_ref - Q_child
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            K_k_child = -MX.eye(self.nb_constraints)
+
+            return K_k_child
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            K_k_child = MX.zeros((self.nb_constraints, 12))
+
+            return K_k_child
+
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                joint constraints jacobian of the child segment [12, 12]
+            """
+
+            return self.child_constraint_jacobian(Q_parent, Q_child)
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_kdot
+            as a function of the natural velocities Qdot_parent and Qdot_child.
+
+            Returns
+            -------
+            MX
+                joint constraints jacobian of the child segment [12, 12]
+            """
+
+            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)

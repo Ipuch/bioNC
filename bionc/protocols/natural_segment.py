@@ -5,7 +5,7 @@ from casadi import MX
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
 from .homogenous_transform import HomogeneousTransform
-from .natural_markers import AbstractNaturalMarker
+from .natural_markers import AbstractNaturalMarker, AbstractSegmentNaturalVector
 
 
 class AbstractNaturalSegment(ABC):
@@ -45,6 +45,7 @@ class AbstractNaturalSegment(ABC):
         center_of_mass: Union[MX, np.ndarray] = None,
         inertia: Union[MX, np.ndarray] = None,
         index: int = None,
+        is_ground: bool = False,
     ):
         self._name = name
         self._index = index
@@ -82,6 +83,21 @@ class AbstractNaturalSegment(ABC):
 
         # list of markers embedded in the segment
         self._markers = []
+        # list of vectors embedded in the segment
+        self._vectors = []
+
+        # to know if the segment is the ground
+        self._is_ground = is_ground
+
+    @staticmethod
+    def _angle_sanity_check(alpha: np.ndarray, beta: np.ndarray, gamma: np.ndarray):
+        """
+        This function checks if angles would produce a singular transformation matrix
+        """
+        if 1 - np.cos(beta) ** 2 - (np.cos(alpha) - np.cos(beta) * np.cos(gamma)) / np.sin(beta) ** 2 < 0:
+            raise ValueError(
+                f"The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment"
+            )
 
     def set_name(self, name: str):
         """
@@ -104,6 +120,12 @@ class AbstractNaturalSegment(ABC):
             Index of the segment
         """
         self._index = index
+
+    def _set_is_ground(self, is_ground: bool):
+        """
+        This function sets the segment as the ground
+        """
+        self._is_ground = is_ground
 
     @classmethod
     def from_experimental_Q(
@@ -373,6 +395,36 @@ class AbstractNaturalSegment(ABC):
         marker.parent_name = self.name
         self._markers.append(marker)
 
+    def marker_from_name(self, marker_name: str) -> AbstractNaturalMarker:
+        """
+        This function returns the marker with the given name
+
+        Parameters
+        ----------
+        marker_name: str
+            Name of the marker
+        """
+        for marker in self._markers:
+            if marker.name == marker_name:
+                return marker
+
+        raise ValueError(f"No marker with name {marker_name} was found")
+
+    def vector_from_name(self, vector_name: str) -> AbstractSegmentNaturalVector:
+        """
+        This function returns the vector with the given name
+
+        Parameters
+        ----------
+        vector_name: str
+            Name of the vector
+        """
+        for vector in self._vectors:
+            if vector.name == vector_name:
+                return vector
+
+        raise ValueError(f"No vector with name {vector_name} was found")
+
     @property
     def nb_markers(self) -> int:
         return len(self._markers)
@@ -438,3 +490,9 @@ class AbstractNaturalSegment(ABC):
         float
             Kinetic energy of the segment
         """
+
+    def to_mx(self):
+        """
+        This function returns the segment as a MX object
+        """
+        raise NotImplementedError("This function is only implemented for the bionc_casadi")

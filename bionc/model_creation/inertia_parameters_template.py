@@ -58,7 +58,7 @@ class InertiaParametersTemplate:
         mass
             The mass of the segment
         coef
-            The coefficient of the length of the segment that gives the radius of gyration about x, y and z
+            The coefficient of the length of the segment that gives the sphere_radius of gyration about x, y and z
         start
             The starting point of the segment
         end

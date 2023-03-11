@@ -54,7 +54,6 @@ class JointBase(ABC):
         -------
             Constraints of the joint
         """
-        pass
 
     @abstractmethod
     def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
@@ -66,10 +65,9 @@ class JointBase(ABC):
         -------
             Constraint Jacobians of the joint [n, 2 * nbQ]
         """
-        pass
 
     @abstractmethod
-    def parent_constraint_jacobian(self, Q_child: SegmentNaturalCoordinates):
+    def parent_constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
         """
         This function returns the parent constraint Jacobians of the joint, denoted K_k
         as a function of the natural coordinates Q_child.
@@ -78,10 +76,9 @@ class JointBase(ABC):
         -------
             Constraint Jacobians of the joint [n, nbQ]
         """
-        pass
 
     @abstractmethod
-    def child_constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates):
+    def child_constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
         """
         This function returns the child constraint Jacobians of the joint, denoted K_k
         as a function of the natural coordinates Q_parent.
@@ -90,10 +87,11 @@ class JointBase(ABC):
         -------
             Constraint Jacobians of the joint [n, nbQ]
         """
-        pass
 
     @abstractmethod
-    def parent_constraint_jacobian_derivative(self, Qdot_child: SegmentNaturalVelocities):
+    def parent_constraint_jacobian_derivative(
+        self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+    ):
         """
         This function returns the derivative of the parent constraint Jacobians of the joint, denoted K_k
         as a function of the natural velocities Qdot_child.
@@ -102,10 +100,11 @@ class JointBase(ABC):
         -------
             derivative of Constraint Jacobians of the joint [n, 12]
         """
-        pass
 
     @abstractmethod
-    def child_constraint_jacobian_derivative(self, Qdot_parent: SegmentNaturalVelocities):
+    def child_constraint_jacobian_derivative(
+        self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+    ):
         """
         This function returns the derivative of the child constraint Jacobians of the joint, denoted K_k
         as a function of the natural velocities Qdot_parent.
@@ -114,4 +113,3 @@ class JointBase(ABC):
         -------
             derivative of Constraint Jacobians of the joint [n, 12]
         """
-        pass

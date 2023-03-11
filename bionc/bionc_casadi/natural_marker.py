@@ -7,7 +7,7 @@ from .biomechanical_model import BiomechanicalModel
 from ..model_creation.protocols import Data
 
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
-from ..protocols.natural_markers import AbstractNaturalMarker
+from ..protocols.natural_markers import AbstractNaturalMarker, AbstractSegmentNaturalVector
 from .natural_vector import NaturalVector
 
 # todo: need a list of markers MarkerList
@@ -333,3 +333,64 @@ class Marker:
             return Marker(name=self.name, position=self.position - other.position)
         else:
             raise NotImplementedError(f"The subtraction for {type(other)} is not implemented")
+
+
+class SegmentNaturalVector(AbstractSegmentNaturalVector):
+    """
+    Class used to create a segment vector for the natural segments
+
+    Methods
+    -------
+
+
+    Attributes
+    ----------
+    name: str
+        The name of the marker
+    parent_name: str
+        The name of the parent segment on which the marker is attached
+    position: np.ndarray
+        The 3d position of the vector in the non orthogonal segment coordinate system
+    interpolation_matrix: np.ndarray
+        The interpolation matrix that is used to interpolate the vector in the global coordinate system
+    """
+
+    def __init__(
+        self,
+        name: str,
+        parent_name: str,
+        direction: tuple[int | float, int | float, int | float] | np.ndarray | NaturalVector = None,
+    ):
+        """
+        Parameters
+        ----------
+        name
+            The name of the new marker
+        parent_name
+            The name of the parent the marker is attached to
+        direction
+            The 3d position of the vector in the non orthogonal segment coordinate system
+        """
+        self.name = name
+        self.parent_name = parent_name
+
+        if not isinstance(direction, NaturalVector):
+            direction = NaturalVector(direction)
+
+        self.position = direction
+        self.interpolation_matrix = direction.interpolate().rot
+
+    def position_in_global(self, Qi: SegmentNaturalCoordinates) -> MX:
+        """
+        This function computes the position of the vector in the global coordinate system
+
+        Parameters
+        ----------
+        Qi : SegmentNaturalCoordinates
+            The segment natural coordinates
+
+        Returns
+        -------
+        The position of the vector in the global coordinate system
+        """
+        return self.interpolation_matrix @ Qi

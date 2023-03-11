@@ -870,7 +870,7 @@ class GroundJoint:
 
             Returns
             -------
-            MX
+            np.ndarray
                 joint constraints jacobian of the child segment [5, 12]
             """
 

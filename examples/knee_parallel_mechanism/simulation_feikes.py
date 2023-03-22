@@ -6,12 +6,8 @@ from utils import forward_integration, post_computations
 
 model = create_knee_model()
 
-Q0 = SegmentNaturalCoordinates(
-    np.array([1, 0, 0, 0, 0, 0, 0, -0.4, 0, 0, 0, 1])
-)
-Q1 = SegmentNaturalCoordinates(
-    np.array([1, 0, 0, 0, -0.4, 0, 0, -0.8, 0, 0, 0, 1])
-)
+Q0 = SegmentNaturalCoordinates(np.array([1, 0, 0, 0, 0, 0, 0, -0.4, 0, 0, 0, 1]))
+Q1 = SegmentNaturalCoordinates(np.array([1, 0, 0, 0, -0.4, 0, 0, -0.8, 0, 0, 0, 1]))
 
 Q = NaturalCoordinates.from_qi((Q0, Q1))
 print(model.rigid_body_constraints(NaturalCoordinates(Q)))
@@ -63,4 +59,3 @@ plt.show()
 # animation
 viz = Viz(model)
 viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
-

@@ -893,8 +893,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [12, 1]
             """
 
-            return vertcat(self.rp_child_ref - Q_child.rp,
-                                   self.rd_child_ref - Q_child.rd)
+            return vertcat(self.rp_child_ref - Q_child.rp, self.rd_child_ref - Q_child.rd)
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates

@@ -1032,8 +1032,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [12, 1]
             """
 
-            return np.concatenate((self.rp_child_ref - Q_child.rp,
-                                   self.rd_child_ref - Q_child.rd), axis=0)
+            return np.concatenate((self.rp_child_ref - Q_child.rp, self.rd_child_ref - Q_child.rd), axis=0)
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
@@ -1043,7 +1042,7 @@ class GroundJoint:
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
-            K_k_child = -np.eye(12)[3:9,:]
+            K_k_child = -np.eye(12)[3:9, :]
 
             return K_k_child
 

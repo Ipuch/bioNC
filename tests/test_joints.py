@@ -560,3 +560,19 @@ def test_joints(bionc_type, joint_type: JointType):
 
         assert joint.parent_constraint_jacobian(Q1, Q2) is None
         assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
+
+
+# def test_numpy_jacobian_from_casadi_derivatives()
+# todo:
+# # numpy version
+# Q_test = NaturalCoordinates(np.arange(24))
+# jacobian_numpy = model.joint_constraints_jacobian(Q_test)
+#
+# model_mx = model.to_mx()
+# sym = NaturalCoordinatesMX.sym(2)
+# j_constraints_sym = model_mx.joint_constraints(sym)
+# # jacobian
+# j_jacobian_sym = jacobian(j_constraints_sym, sym)
+# j_jacobian_func = Function("j_jacobian_func", [sym], [j_jacobian_sym])
+#
+# jacobian_mx = j_jacobian_func(np.arange(24)).toarray()

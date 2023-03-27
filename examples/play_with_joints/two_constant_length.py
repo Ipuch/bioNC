@@ -45,11 +45,31 @@ def build_two_link_segment():
         )
     )
 
+    model["segment_0"].add_natural_marker(
+        NaturalMarker(
+            name="point_AA",
+            parent_name="segment_0",
+            position=np.array([0, -1, 0.05]),
+            is_technical=True,
+            is_anatomical=False,
+        )
+    )
+
     model["segment_1"].add_natural_marker(
         NaturalMarker(
             name="point_B",
             parent_name="segment_1",
             position=np.array([0, 0, 0]),
+            is_technical=True,
+            is_anatomical=False,
+        )
+    )
+
+    model["segment_1"].add_natural_marker(
+        NaturalMarker(
+            name="point_BB",
+            parent_name="segment_1",
+            position=np.array([0, 0, 0.05]),
             is_technical=True,
             is_anatomical=False,
         )
@@ -80,6 +100,19 @@ def build_two_link_segment():
             child_point="point_B",
         )
     )
+
+    model._add_joint(
+        dict(
+            name=f"constant_length_2",
+            joint_type=JointType.CONSTANT_LENGTH,
+            parent=f"segment_0",
+            child=f"segment_1",
+            length=0.2,
+            parent_point="point_AA",
+            child_point="point_BB",
+        )
+    )
+
     return model
 
 
@@ -108,19 +141,6 @@ def main(initial_pose: str = "hanged"):
             ]
         )
     Q = NaturalCoordinates.from_qi((Q0, Q1))
-
-    # # numpy version
-    # Q_test = NaturalCoordinates(np.arange(24))
-    # jacobian_numpy = model.joint_constraints_jacobian(Q_test)
-    #
-    # model_mx = model.to_mx()
-    # sym = NaturalCoordinatesMX.sym(2)
-    # j_constraints_sym = model_mx.joint_constraints(sym)
-    # # jacobian
-    # j_jacobian_sym = jacobian(j_constraints_sym, sym)
-    # j_jacobian_func = Function("j_jacobian_func", [sym], [j_jacobian_sym])
-    #
-    # jacobian_mx = j_jacobian_func(np.arange(24)).toarray()
 
     print("--------------------")
     print("INITIAL CONSTRAINTS")
@@ -183,5 +203,5 @@ def main(initial_pose: str = "hanged"):
 
 
 if __name__ == "__main__":
-    # main("hanged")
-    main("ready_to_swing")
+    main("hanged")
+    # main("ready_to_swing")

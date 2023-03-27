@@ -6,8 +6,8 @@ from utils import forward_integration, post_computations
 
 model = create_knee_model()
 
-Q0 = SegmentNaturalCoordinates(np.array([0, 0, 1, 0, 0, 0, 0, -0.4, 0, -1, 0, 0]))
-Q1 = SegmentNaturalCoordinates(np.array([0, 0, 1, 0, -0.4, 0, 0, -0.8, 0, -1, 0, 0]))
+Q0 = SegmentNaturalCoordinates(np.array([1, 0, 0, 0, 0.0, 0, 0, 0.4, 0, 0, 0, 1]))
+Q1 = SegmentNaturalCoordinates(np.array([1, 0, 0, 0, 0.4, 0, 0, 0.8, 0, 0, 0, 1]))
 
 Q = NaturalCoordinates.from_qi((Q0, Q1))
 print(model.rigid_body_constraints(NaturalCoordinates(Q)))
@@ -24,13 +24,13 @@ tuple_of_Qdot = [
 Qdot = NaturalVelocities.from_qdoti(tuple(tuple_of_Qdot))
 
 # actual simulation
-t_final = 5  # seconds
+t_final = 0.5  # seconds
 time_steps, all_states, dynamics = forward_integration(
     model=model,
     Q_init=Q,
     Qdot_init=Qdot,
     t_final=t_final,
-    steps_per_second=100,
+    steps_per_second=1000,
 )
 
 defects, defects_dot, joint_defects, all_lambdas = post_computations(

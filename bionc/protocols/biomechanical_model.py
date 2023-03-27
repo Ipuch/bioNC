@@ -469,6 +469,17 @@ class GenericBiomechanicalModel(ABC):
         raise ValueError(f"The segment index does not exist, the model has only {self.nb_segments} segments")
 
     @property
+    def normalized_coordinates(self) -> tuple[tuple[int, ...]]:
+        idx = []
+        for i in range(self.nb_segments):
+            # create list from i* 12 to (i+1) * 12
+            segment_idx = [i for i in range(i * 12, (i + 1) * 12)]
+            idx.append(segment_idx[0:3])
+            idx.append(segment_idx[9:12])
+
+        return idx
+
+    @property
     def mass_matrix(self):
         """
         This function returns the generalized mass matrix of the system, denoted G

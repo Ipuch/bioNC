@@ -568,7 +568,7 @@ class Joint:
             return constraint
 
         def parent_constraint_jacobian(
-            self, Q_child: SegmentNaturalCoordinates, Q_parent: SegmentNaturalCoordinates
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> MX:
             parent_point_location = self.parent_point.position_in_global(Q_parent)
             child_point_location = self.child_point.position_in_global(Q_child)
@@ -588,7 +588,7 @@ class Joint:
             return K_k_child
 
         def parent_constraint_jacobian_derivative(
-            self, Qdot_child: SegmentNaturalVelocities, Qdot_parent: SegmentNaturalVelocities
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
             parent_point_location = self.parent_point.position_in_global(Qdot_parent)
             child_point_location = self.child_point.position_in_global(Qdot_child)

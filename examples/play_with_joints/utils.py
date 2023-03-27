@@ -77,7 +77,13 @@ def forward_integration(
     return time_steps, all_states, dynamics
 
 
-def RK4(t: np.ndarray, f, y0: np.ndarray, normalize_idx: tuple[tuple[int, ...]] = None, args=(), ) -> np.ndarray:
+def RK4(
+    t: np.ndarray,
+    f,
+    y0: np.ndarray,
+    normalize_idx: tuple[tuple[int, ...]] = None,
+    args=(),
+) -> np.ndarray:
     """
     Runge-Kutta 4th order method
 

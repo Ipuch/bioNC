@@ -71,12 +71,19 @@ def forward_integration(
         return np.concatenate((states[idx_velocities], qddot.to_array()), axis=0), lambdas
 
     # Solve the Initial Value Problem (IVP) for each time step
-    all_states = RK4(t=time_steps, f=lambda t, states: dynamics(t, states)[0], y0=states_0)
+    normalize_idx = model.normalized_coordinates
+    all_states = RK4(t=time_steps, f=lambda t, states: dynamics(t, states)[0], y0=states_0, normalize_idx=normalize_idx)
 
     return time_steps, all_states, dynamics
 
 
-def RK4(t: np.ndarray, f, y0: np.ndarray, args=()) -> np.ndarray:
+def RK4(
+    t: np.ndarray,
+    f,
+    y0: np.ndarray,
+    normalize_idx: tuple[tuple[int, ...]] = None,
+    args=(),
+) -> np.ndarray:
     """
     Runge-Kutta 4th order method
 
@@ -88,6 +95,8 @@ def RK4(t: np.ndarray, f, y0: np.ndarray, args=()) -> np.ndarray:
         function to be integrated in the form f(t, y, *args)
     y0 : np.ndarray
         initial conditions of states
+    normalize_idx : tuple(tuple)
+        indices of states to be normalized together
 
     Returns
     -------
@@ -99,7 +108,6 @@ def RK4(t: np.ndarray, f, y0: np.ndarray, args=()) -> np.ndarray:
     y = np.zeros((len(y0), n))
     y[:, 0] = y0
     for i in range(n - 1):
-        print(f"frame {i}")
         h = t[i + 1] - t[i]
         yi = np.squeeze(y[:, i])
         k1 = f(t[i], yi, *args)
@@ -107,6 +115,10 @@ def RK4(t: np.ndarray, f, y0: np.ndarray, args=()) -> np.ndarray:
         k3 = f(t[i] + h / 2.0, yi + k2 * h / 2.0, *args)
         k4 = f(t[i] + h, yi + k3 * h, *args)
         y[:, i + 1] = yi + (h / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
+
+        if normalize_idx is not None:
+            for idx in normalize_idx:
+                y[idx, i + 1] = y[idx, i + 1] / np.linalg.norm(y[idx, i + 1])
     return y
 
 

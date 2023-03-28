@@ -315,6 +315,13 @@ class GenericBiomechanicalModel(ABC):
         return nb_markers
 
     @property
+    def segment_names(self) -> list[str]:
+        """
+        This function returns the names of the segments in the model
+        """
+        return list(self.segments.keys())
+
+    @property
     def marker_names(self) -> list[str]:
         """
         This function returns the names of the markers in the model

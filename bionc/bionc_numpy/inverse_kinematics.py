@@ -133,6 +133,8 @@ class InverseKinematics:
         builds the constraints to satisfy
     animate()
         Animates the solution of the inverse kinematics
+    _active_direct_frame_constraints()
+        builds the constraints to ensure that the determinant of the matrix [u, v, w] is positive
     """
 
     def __init__(
@@ -156,7 +158,10 @@ class InverseKinematics:
         solve_frame_per_frame : bool
             If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
         active_direct_frame_constraints : bool
-            If True, the direct frame constraints are active, otherwise they are not
+            If True, the direct frame constraints are active, otherwise they are not.
+            It ensures that rigid body constraints lead to positive determinants or the matrix [u, v, w].
+        use_sx : bool
+            If True, the symbolic variables are SX, otherwise they are MX (SX are faster but take more memory)
         """
 
         self._frame_per_frame = solve_frame_per_frame

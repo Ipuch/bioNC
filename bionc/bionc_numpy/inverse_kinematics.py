@@ -47,6 +47,29 @@ def _solve_nlp(method: str, nlp: dict, Q_init: np.ndarray, lbg: np.ndarray, ubg:
     return r
 
 
+def sarrus(matrix: MX):
+    """
+    Computes the determinant of a 3x3 matrix using the Sarrus rule
+
+    Parameters
+    ----------
+    matrix : MX
+        The matrix to compute the determinant of
+
+    Returns
+    -------
+    The determinant of the matrix
+    """
+    return (
+        matrix[0, 0] * matrix[1, 1] * matrix[2, 2]
+        + matrix[0, 1] * matrix[1, 2] * matrix[2, 0]
+        + matrix[0, 2] * matrix[1, 0] * matrix[2, 1]
+        - matrix[0, 0] * matrix[1, 2] * matrix[2, 1]
+        - matrix[0, 1] * matrix[1, 0] * matrix[2, 2]
+        - matrix[0, 2] * matrix[1, 1] * matrix[2, 0]
+    )
+
+
 class InverseKinematics:
     """
     Inverse kinematics solver also known as Multibody Kinematics Optimization (MKO)
@@ -98,8 +121,25 @@ class InverseKinematics:
         experimental_markers: np.ndarray | str,
         Q_init: np.ndarray | NaturalCoordinates = None,
         solve_frame_per_frame: bool = True,
+        active_direct_frame_constraints: bool = False,
     ):
+        """
+        Parameters
+        ----------
+        model : BiomechanicalModel
+            The model considered (bionc.numpy)
+        experimental_markers : np.ndarray | str
+            The experimental markers (3xNxM numpy array), or a path to a c3d file
+        Q_init : np.ndarray | NaturalCoordinates
+            The initial guess for the inverse kinematics computed from the experimental markers
+        solve_frame_per_frame : bool
+            If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
+        active_direct_frame_constraints : bool
+            If True, the direct frame constraints are active, otherwise they are not
+        """
+
         self._frame_per_frame = solve_frame_per_frame
+        self._active_direct_frame_constraints = active_direct_frame_constraints
 
         if not isinstance(model, BiomechanicalModel):
             raise ValueError("model must be a BiomechanicalModel")
@@ -192,6 +232,11 @@ class InverseKinematics:
             lbg = np.zeros(self.model.nb_holonomic_constraints)
             ubg = np.zeros(self.model.nb_holonomic_constraints)
             constraints = self._constraints(self._Q_sym)
+            if self._active_direct_frame_constraints:
+                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
+                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments)))
+                # upper bounds infinity
+                ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
             nlp = dict(
                 x=self._vert_Q_sym,
                 g=constraints,
@@ -203,6 +248,8 @@ class InverseKinematics:
                 Qopt[:, f : f + 1] = r["x"].toarray()
         else:
             constraints = self._constraints(self._Q_sym)
+            if self._active_direct_frame_constraints:
+                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
             objective = self._objective(self._Q_sym, self.experimental_markers)
             nlp = dict(
                 x=self._vert_Q_sym,
@@ -212,6 +259,9 @@ class InverseKinematics:
             Q_init = self.Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
             lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
             ubg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
+            if self._active_direct_frame_constraints:
+                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
+                ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
             r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
             Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
 
@@ -255,5 +305,17 @@ class InverseKinematics:
             phir.append(self._model_mx.rigid_body_constraints(Q_f))
             phik.append(self._model_mx.joint_constraints(Q_f))
         return vertcat(*phir, *phik)
+
+    def _direct_frame_constraints(self, Q):
+        """Computes the direct frame constraints and handle single frame or multi frames"""
+        nb_frames = 1 if self._frame_per_frame else self.nb_frames
+        direct_frame_constraints = []
+        for f in range(nb_frames):
+            Q_f = NaturalCoordinates(Q[:, f])
+            for ii in range(self.model.nb_segments):
+                u, v, w = Q_f.vector(ii).to_uvw()
+                direct_frame_constraints.append(sarrus(horzcat(u, v, w)))
+        return vertcat(*direct_frame_constraints)
+
 
     # todo: def sol() -> dict that returns the details of the inverse kinematics such as all the metrics, etc...

@@ -248,3 +248,146 @@ class NaturalCoordinates(np.ndarray):
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
         return SegmentNaturalCoordinates(self[array_idx, :].to_array())
+
+
+class ExternalForce:
+    def __init__(self,
+                 application_point_in_local: np.ndarray,
+                 external_forces: np.ndarray):
+        self.application_point_in_local = application_point_in_local
+        self.external_forces = external_forces
+
+    @classmethod
+    def from_components(cls, application_point_in_global: np.ndarray, force: np.ndarray, torque: np.ndarray):
+        return cls(application_point_in_global, np.concatenate((torque, force)))
+
+    @property
+    def force(self):
+        return self.external_forces[3:6]
+
+    @property
+    def torque(self):
+        return self.external_forces[0:3]
+
+    @staticmethod
+    def compute_pseudo_interpolation_matrix(Qi: SegmentNaturalCoordinates):
+        """
+        Return the force moment transformation matrix
+        """
+        # default we apply force at the proximal point
+
+        left_interpolation_matrix = np.zeros((12, 3))
+
+        left_interpolation_matrix[9:12, 0] = Qi.u
+        left_interpolation_matrix[0:3, 1] = Qi.v
+        left_interpolation_matrix[3:6, 2] = -Qi.w
+        left_interpolation_matrix[6:9, 2] = Qi.w
+
+        # Matrix of lever arms for forces equivalent to moment at proximal endpoint, denoted Bstar
+        lever_arm_force_matrix = np.zeros((3, 3))
+
+        lever_arm_force_matrix[:, 0] = np.cross(Qi.w, Qi.u)
+        lever_arm_force_matrix[:, 1] = np.cross(Qi.u, Qi.v)
+        lever_arm_force_matrix[:, 2] = np.cross(-Qi.v, Qi.w)
+
+        return (left_interpolation_matrix @ lever_arm_force_matrix).T
+
+    def to_natural_force(self, Qi: SegmentNaturalCoordinates):
+        """
+        Apply external forces to the segment
+
+        Parameters
+        ----------
+        Qi: SegmentNaturalCoordinates
+            Segment natural coordinates
+
+        Returns
+        -------
+
+        """
+
+        pseudo_interpolation_matrix = self.compute_pseudo_interpolation_matrix(Qi)
+        point_interpolation_matrix = NaturalVector(self.application_point_in_local).interpolate()
+        application_point_in_global = np.array(point_interpolation_matrix @ Qi).squeeze()
+
+        fext = point_interpolation_matrix.T @ self.force
+        fext += pseudo_interpolation_matrix.T @ self.torque
+        fext += pseudo_interpolation_matrix.T @ np.cross(application_point_in_global - Qi.rp, self.force)
+
+        return np.array(fext)
+
+
+class ExternalForceList:
+    """
+    This class is made to handle all the external forces of each segment, if none are provided, it will be an empty list.
+    All segment forces are expressed in natural coordinates to be added to the equation of motion as:
+
+    Q @ Qddot + K^T @ lambda = Weight + f_ext
+
+    Attributes
+    ----------
+    external_forces : list
+        List of ExternalForces
+
+    Examples
+    --------
+    >>> from bionc import ExternalForceList, ExternalForce
+    >>> import numpy as np
+    >>> f_ext = ExternalForceList.empty_from_nb_segment(2)
+    >>> segment_force = ExternalForce(np.array([0,1,1.1]), np.zeros(12,1))
+    >>> f_ext.add_external_force(segment_index=0, external_force=segment_force)
+    """
+
+    def __init__(self, external_forces: list[list[ExternalForce, ...]] = None):
+
+        if external_forces is None:
+            raise ValueError("f_ext must be a list of ExternalForces, or use the classmethod"
+                             "NaturalExternalForceList.empty_from_nb_segment(nb_segment)")
+        self.external_forces = external_forces
+
+    @property
+    def nb_segments(self) -> int:
+        return len(self.external_forces)
+
+    @classmethod
+    def empty_from_nb_segment(cls, nb_segment: int):
+        """
+        Create an empty NaturalExternalForceList from the model size
+        """
+        return cls(external_forces=[[] for _ in range(nb_segment)])
+
+    def segment_external_forces(self, segment_index: int) -> list[ExternalForce]:
+        return self.external_forces[segment_index]
+
+    def add_external_force(self, segment_index: int, external_force: ExternalForce):
+        self.external_forces[segment_index].append(external_force)
+
+    def to_natural_external_forces(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        Converts and sums all the segment natural external forces to the full vector of natural external forces
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the model
+        """
+
+        if len(self.external_forces) != Q.nb_qi():
+            raise ValueError(
+                "The number of segment in the model and the number of segment in the external forces must be the same")
+
+        natural_external_forces = np.zeros((12 * Q.nb_qi(), 1))
+        for segment_index, segment_external_forces in enumerate(self.external_forces):
+            segment_natural_external_forces = np.zeros((12, 1))
+            slice_index = slice(segment_index * 12, (segment_index + 1) * 12)
+            for external_force in segment_external_forces:
+                segment_natural_external_forces += external_force.to_natural_force(Q.vector(segment_index))[:, np.newaxis]
+            natural_external_forces[slice_index, 0:1] = segment_natural_external_forces
+
+        return natural_external_forces
+
+    def __iter__(self):
+        return iter(self.external_forces)
+
+    def __len__(self):
+        return len(self.external_forces)

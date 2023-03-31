@@ -16,3 +16,4 @@ from .enums import JointType
 from .joint import Joint, GroundJoint
 from .natural_vector import NaturalVector
 from .inverse_kinematics import InverseKinematics
+from .natural_coordinates import ExternalForceList, ExternalForce

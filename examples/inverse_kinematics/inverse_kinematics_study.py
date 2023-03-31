@@ -25,26 +25,39 @@ def main():
     markers = markers + np.random.normal(0, 0.01, markers.shape)  # add noise
 
     # you can import the class from bionc
-    ik_solver = InverseKinematics(model, markers, solve_frame_per_frame=True)
-    # or you can use the model method
-    ik_solver = model.inverse_kinematics(markers, solve_frame_per_frame=True)
-
-    tic0 = time.time()
-    Qopt_sqp = ik_solver.solve(method="sqpmethod")  # tend to be faster (with limited-memory hessian approximation)
-    toc0 = time.time()
+    ik_solver = InverseKinematics(model, markers, solve_frame_per_frame=True, active_direct_frame_constraints=True, use_sx=True)
 
     tic1 = time.time()
-    Qopt_ipopt = ik_solver.solve(method="ipopt")  # tend to find lower cost functions but may flip axis.
+    Qopt_ipopt = ik_solver.solve(method="sqpmethod")  # tend to find lower cost functions but may flip axis.
     toc1 = time.time()
 
-    print(f"Time to solve 200 frames with sqpmethod: {toc0 - tic0}")
     print(f"time to solve 200 frames with ipopt: {toc1 - tic1}")
 
-    return ik_solver, Qopt_sqp, Qopt_ipopt, model, markers
+    return ik_solver, Qopt_ipopt, model, markers
 
 
 if __name__ == "__main__":
-    ik_solver, Qopt, _, model, markers = main()
+    ik_solver, Qopt, model, markers = main()
+
+    # display the results of the optimization
+    import matplotlib.pyplot as plt
+    plt.figure()
+    from bionc import NaturalCoordinates
+    det = np.zeros((model.nb_segments, Qopt.shape[1]))
+    for i in range(0, Qopt.shape[1]):
+        Qi = NaturalCoordinates(Qopt)[:, i:i+1]
+        for s in range(0, model.nb_segments):
+            u, v, w = Qi.vector(s).to_uvw()
+            matrix = np.concatenate((u[:,np.newaxis], v[:,np.newaxis], w[:,np.newaxis]), axis=1)
+            det[s, i] = np.linalg.det(matrix)
+            if det[s, i] < 0:
+                print(f"frame {i} segment {s} has a negative determinant")
+
+    plt.plot(det.T, label=model.segment_names, marker="o", ms=1.5)
+    # set ylim -5 5
+    plt.ylim(-5, 5)
+    plt.legend()
+    plt.show()
 
     viz = Viz(
         model,
@@ -52,4 +65,4 @@ if __name__ == "__main__":
         show_xp_markers=True,
         show_model_markers=True,
     )
-    viz.animate(Qopt, markers_xp=markers)
+    viz.animate(Qopt[:, 197:198], markers_xp=markers[:,:,197:198])

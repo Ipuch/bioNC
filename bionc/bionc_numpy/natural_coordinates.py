@@ -291,6 +291,16 @@ class ExternalForce:
     def compute_pseudo_interpolation_matrix(Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
         Return the force moment transformation matrix
+
+        Parameters
+        ----------
+        Qi : SegmentNaturalCoordinates
+            The natural coordinates of the segment
+
+        Returns
+        -------
+        np.ndarray
+            The force moment transformation matrix
         """
         # default we apply force at the proximal point
 
@@ -321,6 +331,8 @@ class ExternalForce:
 
         Returns
         -------
+        np.ndarray
+            The external forces adequately transformed for the equation of motion in natural coordinates
 
         """
 
@@ -354,7 +366,7 @@ class ExternalForceList:
     >>> from bionc import ExternalForceList, ExternalForce
     >>> import numpy as np
     >>> f_ext = ExternalForceList.empty_from_nb_segment(2)
-    >>> segment_force = ExternalForce(np.array([0,1,1.1]), np.zeros(12,1))
+    >>> segment_force = ExternalForce(force=np.array([0,1,1.1]), torque=np.zeros(3), application_point_in_local=np.array([0,0.5,0]))
     >>> f_ext.add_external_force(segment_index=0, external_force=segment_force)
     """
 

@@ -21,7 +21,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@master
       
       - name: Setup environment
         uses: conda-incubator/setup-miniconda@v2
@@ -48,7 +48,7 @@ jobs:
         if: matrix.label == 'linux-64'
 
       - name: Run the actual tests
-        run: pytest -v --color=yes --cov-report term-missing --cov=bionc tests
+        run: pytest -v --color=yes --cov-report=xml --cov=bionc tests
         if: matrix.label == 'osx-64'
 
 #      - name: Upload coverage to Codecov
@@ -60,7 +60,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-          directory: ./coverage
+          directory: ./coverage.xml
         if: matrix.label == 'linux-64'
 
 

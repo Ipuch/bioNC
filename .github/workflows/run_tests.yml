@@ -39,7 +39,7 @@ jobs:
           mamba list
           
       - name: Install extra dependencies
-        run: mamba install pytest-cov pytest pytest-cov codecov -cconda-forge
+        run: mamba install pytest-cov pytest codecov -cconda-forge
 
       - name: Run the actual tests on LINUX
         run: |
@@ -60,6 +60,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
+          directory: ./coverage
         if: matrix.label == 'linux-64'
 
 

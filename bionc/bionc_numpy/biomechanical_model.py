@@ -6,7 +6,7 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
-from .natural_coordinates import ExternalForceList
+from .external_force import ExternalForceList
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):

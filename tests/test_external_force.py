@@ -56,7 +56,7 @@ def test_external_force(bionc_type, external_force_tuple):
     "bionc_type",
     [
         "numpy",
-        # "casadi",
+        "casadi",
     ],
 )
 def test_external_force(bionc_type):
@@ -106,8 +106,8 @@ def test_external_force(bionc_type):
         rd=[0, -1, 0],
         w=[0, 0, 1],
     )
-    Q1 = Q0 + 0.1
-    Q2 = Q1 + 0.1
+    Q1 = SegmentNaturalCoordinates(Q0 + 0.1)
+    Q2 = SegmentNaturalCoordinates(Q1 + 0.1)
     Q = NaturalCoordinates.from_qi((Q0, Q1, Q2))
 
     pseudo_interpolation_matrix = force2.compute_pseudo_interpolation_matrix(Q2)
@@ -162,6 +162,7 @@ def test_external_force(bionc_type):
                 ],
             ]
         ),
+        expand=False,
     )
 
     TestUtils.assert_equal(
@@ -182,9 +183,11 @@ def test_external_force(bionc_type):
                 0.04612857,
             ]
         ),
+        expand=False,
     )
 
     TestUtils.assert_equal(
+        natural_forces,
         np.array(
             [
                 [0.0007],
@@ -225,5 +228,6 @@ def test_external_force(bionc_type):
                 [0.04612857],
             ]
         ),
-        natural_forces,
+        expand=False,
+        squeeze=False,
     )

@@ -220,10 +220,11 @@ if __name__ == "__main__":
     fext = ExternalForceList.empty_from_nb_segment(1)
     # then add a force
     force1 = ExternalForce.from_components(
+        # this force will prevent the pendulum to fall
         force=np.array([0, 0, 1 * 9.81]),
-        # force=np.array([0, 0, 0]),
         torque=np.array([0, 0, 0]),
         application_point_in_local=np.array([0, -0.5, 0]),
+        # this moment will prevent the pendulum to fall
         # force=np.array([0, 0, 0]),
         # torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
         # application_point_in_local=np.array([0, 0, 0]),

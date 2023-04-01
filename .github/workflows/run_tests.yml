@@ -52,7 +52,7 @@ jobs:
         if: matrix.label == 'osx-64'
 
       - name: Upload coverage to Codecov
-        run: codecov --token ${{ secrets.CODECOV_TOKEN }} --file coverage.xml 
+        run: codecov --token ${{ secrets.CODECOV_TOKEN }}
         if: matrix.label == 'linux-64'
 
 #      - name: Upload coverage to Codecov

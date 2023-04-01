@@ -20,3 +20,6 @@ jobs:
 #        chmod +x codecov
 #        ./codecov -t ${CODECOV_TOKEN}
     - uses: codecov/codecov-action@v3
+      name: Upload coverage to Codecov
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}

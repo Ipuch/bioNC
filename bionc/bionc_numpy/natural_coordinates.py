@@ -274,6 +274,7 @@ class ExternalForce:
     to_natural_force
         This function returns the external force in the natural coordinate format.
     """
+
     def __init__(self, application_point_in_local: np.ndarray, external_forces: np.ndarray):
         self.application_point_in_local = application_point_in_local
         self.external_forces = external_forces
@@ -301,12 +302,12 @@ class ExternalForce:
 
     @property
     def force(self) -> np.ndarray:
-        """ The force vector in the global coordinate system """
+        """The force vector in the global coordinate system"""
         return self.external_forces[3:6]
 
     @property
     def torque(self) -> np.ndarray:
-        """ The torque vector in the global coordinate system """
+        """The torque vector in the global coordinate system"""
         return self.external_forces[0:3]
 
     @staticmethod
@@ -414,7 +415,7 @@ class ExternalForceList:
 
     @property
     def nb_segments(self) -> int:
-        """ Returns the number of segments """
+        """Returns the number of segments"""
         return len(self.external_forces)
 
     @classmethod
@@ -425,7 +426,7 @@ class ExternalForceList:
         return cls(external_forces=[[] for _ in range(nb_segment)])
 
     def segment_external_forces(self, segment_index: int) -> list[ExternalForce]:
-        """ Returns the external forces of the segment """
+        """Returns the external forces of the segment"""
         return self.external_forces[segment_index]
 
     def add_external_force(self, segment_index: int, external_force: ExternalForce):

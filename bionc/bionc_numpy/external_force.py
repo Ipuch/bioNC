@@ -1,4 +1,5 @@
 import numpy as np
+
 # from .natural_coordinates import SegmentNaturalCoordinates
 # from .natural_vector import NaturalVector
 
@@ -7,7 +8,7 @@ def compute_pseudo_interpolation_matrix(Qi):
     """
     Return the pseudo interpolation matrix
     """
-    pseudo_interpolation_matrix = np.zeros((3,12))
+    pseudo_interpolation_matrix = np.zeros((3, 12))
 
     pseudo_interpolation_matrix[0, 9:12] = Qi.u
     pseudo_interpolation_matrix[1, 0:3] = Qi.v
@@ -22,7 +23,7 @@ def compute_force_moment_transformation_matrix(Qi):
     Return the force moment transformation matrix
     """
     # default we apply force at the proximal point
-    force_moment_transformation_matrix = np.zeros((3,12))
+    force_moment_transformation_matrix = np.zeros((3, 12))
 
     force_moment_transformation_matrix[:, 0] = np.cross(Qi.w, Qi.u)
     force_moment_transformation_matrix[:, 1] = np.cross(Qi.u, Qi.v)

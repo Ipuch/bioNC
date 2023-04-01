@@ -267,11 +267,11 @@ class InverseKinematics:
                 ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
             nlp = dict(
                 x=self._vert_Q_sym,
-                g=_mx_to_sx(constraints,[self._vert_Q_sym]) if self.use_sx else constraints,
+                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
             for f in range(self.nb_frames):
                 objective = self._objective_function(self._Q_sym, self.experimental_markers[:, :, f])
-                nlp["f"] = _mx_to_sx(objective,[self._vert_Q_sym]) if self.use_sx else objective
+                nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
                 Q_init = self.Q_init[:, f : f + 1]
                 r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
                 Qopt[:, f : f + 1] = r["x"].toarray()
@@ -282,8 +282,8 @@ class InverseKinematics:
             objective = self._objective(self._Q_sym, self.experimental_markers)
             nlp = dict(
                 x=self._vert_Q_sym,
-                f=_mx_to_sx(objective,[self._vert_Q_sym]) if self.use_sx else objective,
-                g=_mx_to_sx(constraints,[self._vert_Q_sym]) if self.use_sx else constraints,
+                f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,
+                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
             Q_init = self.Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
             lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
@@ -352,7 +352,7 @@ class InverseKinematics:
         """Checks the determinant of each segment frame"""
         self.segment_determinants = np.zeros((self.model.nb_segments, self.nb_frames))
         for i in range(0, self.Qopt.shape[1]):
-            Qi = NaturalCoordinatesNumpy(self.Qopt)[:, i:i + 1]
+            Qi = NaturalCoordinatesNumpy(self.Qopt)[:, i : i + 1]
             for s in range(0, self.model.nb_segments):
                 u, v, w = Qi.vector(s).to_uvw()
                 matrix = np.concatenate((u[:, np.newaxis], v[:, np.newaxis], w[:, np.newaxis]), axis=1)

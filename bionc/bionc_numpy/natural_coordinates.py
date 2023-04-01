@@ -251,9 +251,7 @@ class NaturalCoordinates(np.ndarray):
 
 
 class ExternalForce:
-    def __init__(self,
-                 application_point_in_local: np.ndarray,
-                 external_forces: np.ndarray):
+    def __init__(self, application_point_in_local: np.ndarray, external_forces: np.ndarray):
         self.application_point_in_local = application_point_in_local
         self.external_forces = external_forces
 
@@ -371,10 +369,11 @@ class ExternalForceList:
     """
 
     def __init__(self, external_forces: list[list[ExternalForce, ...]] = None):
-
         if external_forces is None:
-            raise ValueError("f_ext must be a list of ExternalForces, or use the classmethod"
-                             "NaturalExternalForceList.empty_from_nb_segment(nb_segment)")
+            raise ValueError(
+                "f_ext must be a list of ExternalForces, or use the classmethod"
+                "NaturalExternalForceList.empty_from_nb_segment(nb_segment)"
+            )
         self.external_forces = external_forces
 
     @property
@@ -406,14 +405,17 @@ class ExternalForceList:
 
         if len(self.external_forces) != Q.nb_qi():
             raise ValueError(
-                "The number of segment in the model and the number of segment in the external forces must be the same")
+                "The number of segment in the model and the number of segment in the external forces must be the same"
+            )
 
         natural_external_forces = np.zeros((12 * Q.nb_qi(), 1))
         for segment_index, segment_external_forces in enumerate(self.external_forces):
             segment_natural_external_forces = np.zeros((12, 1))
             slice_index = slice(segment_index * 12, (segment_index + 1) * 12)
             for external_force in segment_external_forces:
-                segment_natural_external_forces += external_force.to_natural_force(Q.vector(segment_index))[:, np.newaxis]
+                segment_natural_external_forces += external_force.to_natural_force(Q.vector(segment_index))[
+                    :, np.newaxis
+                ]
             natural_external_forces[slice_index, 0:1] = segment_natural_external_forces
 
         return natural_external_forces

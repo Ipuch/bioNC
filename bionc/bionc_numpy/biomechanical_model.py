@@ -663,7 +663,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = self.holonomic_constraints_jacobian(Q)
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
-        external_forces = ExternalForceList.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
+        external_forces = (
+            ExternalForceList.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
+        )
         fext = external_forces.to_natural_external_forces(Q)
 
         # KKT system

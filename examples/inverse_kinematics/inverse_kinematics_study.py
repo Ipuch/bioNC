@@ -25,7 +25,9 @@ def main():
     markers = markers + np.random.normal(0, 0.01, markers.shape)  # add noise
 
     # you can import the class from bionc
-    ik_solver = InverseKinematics(model, markers, solve_frame_per_frame=True, active_direct_frame_constraints=True, use_sx=True)
+    ik_solver = InverseKinematics(
+        model, markers, solve_frame_per_frame=True, active_direct_frame_constraints=True, use_sx=True
+    )
 
     tic1 = time.time()
     Qopt_ipopt = ik_solver.solve(method="sqpmethod")  # tend to find lower cost functions but may flip axis.
@@ -41,14 +43,16 @@ if __name__ == "__main__":
 
     # display the results of the optimization
     import matplotlib.pyplot as plt
+
     plt.figure()
     from bionc import NaturalCoordinates
+
     det = np.zeros((model.nb_segments, Qopt.shape[1]))
     for i in range(0, Qopt.shape[1]):
-        Qi = NaturalCoordinates(Qopt)[:, i:i+1]
+        Qi = NaturalCoordinates(Qopt)[:, i : i + 1]
         for s in range(0, model.nb_segments):
             u, v, w = Qi.vector(s).to_uvw()
-            matrix = np.concatenate((u[:,np.newaxis], v[:,np.newaxis], w[:,np.newaxis]), axis=1)
+            matrix = np.concatenate((u[:, np.newaxis], v[:, np.newaxis], w[:, np.newaxis]), axis=1)
             det[s, i] = np.linalg.det(matrix)
             if det[s, i] < 0:
                 print(f"frame {i} segment {s} has a negative determinant")
@@ -65,4 +69,4 @@ if __name__ == "__main__":
         show_xp_markers=True,
         show_model_markers=True,
     )
-    viz.animate(Qopt[:, 197:198], markers_xp=markers[:,:,197:198])
+    viz.animate(Qopt[:, 197:198], markers_xp=markers[:, :, 197:198])

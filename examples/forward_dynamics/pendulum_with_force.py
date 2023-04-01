@@ -214,7 +214,6 @@ def RK4(
 
 
 if __name__ == "__main__":
-
     # add an external force applied on the segment 0
     # first build the object
     fext = ExternalForceList.empty_from_nb_segment(1)
@@ -230,10 +229,7 @@ if __name__ == "__main__":
         # application_point_in_local=np.array([0, 0, 0]),
     )
     # then add the force to the list on segment 0
-    fext.add_external_force(
-        external_force=force1,
-        segment_index=0
-    )
+    fext.add_external_force(external_force=force1, segment_index=0)
 
     model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(t_final=10, external_forces=fext)
 

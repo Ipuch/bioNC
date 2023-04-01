@@ -18,7 +18,8 @@ from .bionc_numpy import (
     InertiaParameters,
     BiomechanicalModel,
     JointType,
-    ExternalForceList, ExternalForce,
+    ExternalForceList,
+    ExternalForce,
 )
 
 from .protocols import natural_coordinates

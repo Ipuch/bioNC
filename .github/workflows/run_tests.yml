@@ -51,9 +51,17 @@ jobs:
         run: pytest -v --color=yes --cov-report term-missing --cov=bionc tests
         if: matrix.label == 'osx-64'
 
+#      - name: Upload coverage to Codecov
+#        run: codecov
+#        if: matrix.label == 'linux-64'
+
       - name: Upload coverage to Codecov
-        run: codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
         if: matrix.label == 'linux-64'
+
 
       - name: Test installed version of bioviz on LINUX
         run: |

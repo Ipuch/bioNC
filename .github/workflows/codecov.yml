@@ -1,6 +1,7 @@
-name: API workflow
+# Check if the tests covers all the code
+name: Codecov(erage).
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   build:

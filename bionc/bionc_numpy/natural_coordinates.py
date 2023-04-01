@@ -330,7 +330,9 @@ class ExternalForce:
 
         fext = point_interpolation_matrix.T @ self.force
         fext += pseudo_interpolation_matrix.T @ self.torque
-        fext += pseudo_interpolation_matrix.T @ np.cross(application_point_in_global - Qi.rp, self.force)
+
+        # Bour's formula to transport the moment from the application point to the proximal point
+        # fext += pseudo_interpolation_matrix.T @ np.cross(application_point_in_global - Qi.rp, self.force)
 
         return np.array(fext)
 

@@ -44,7 +44,7 @@ jobs:
       - name: Run the actual tests on LINUX
         run: |
           sudo apt-get install xvfb
-          xvfb-run --server-args="-screen 0 1024x768x24" pytest -v --color=yes --cov-report term-missing --cov=bioviz tests
+          xvfb-run --server-args="-screen 0 1024x768x24" pytest -v --color=yes --cov-report term-missing --cov=bionc tests
         if: matrix.label == 'linux-64'
 
       - name: Run the actual tests

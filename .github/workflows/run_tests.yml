@@ -60,7 +60,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: true
-#          directory: ./coverage.xml
+          directory: /home/runner/work/bioNC/bioNC
           files: ./coverage.xml
         if: matrix.label == 'linux-64'
 

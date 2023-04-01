@@ -147,12 +147,8 @@ def test_joints(bionc_type, joint_type: JointType):
         joint = GroundJoint.Weld(
             name="Weld",
             child=bbox,
-            Q_child_ref=SegmentNaturalCoordinates.from_components(
-                u=[0.1, 0.2, 0.3],
-                rp=[0.21, 0.04, 0.053],
-                rd=[0.22, 0.041, 0.052],
-                w=[0.23, 0.042, 0.051],
-            ),
+            rp_child_ref=np.array([0.1, 0.2, 0.3]),
+            rd_child_ref=np.array([0.2, 0.04, 0.05]),
             index=0,
         )
     else:
@@ -350,18 +346,18 @@ def test_joints(bionc_type, joint_type: JointType):
         parent_jacobian_res = np.array(
             [
                 [
-                    0.163589,
-                    0.056279,
-                    0.231968,
-                    1.963063,
-                    0.675351,
-                    2.783621,
-                    -0.327177,
-                    -0.112558,
-                    -0.463937,
-                    0.490766,
-                    0.168838,
-                    0.695905,
+                    -0.045226,
+                    0.014514,
+                    0.170561,
+                    -0.542708,
+                    0.174171,
+                    2.046735,
+                    0.090451,
+                    -0.029029,
+                    -0.341123,
+                    -0.135677,
+                    0.043543,
+                    0.511684,
                 ]
             ]
         )
@@ -545,22 +541,38 @@ def test_joints(bionc_type, joint_type: JointType):
     elif joint_type == JointType.GROUND_WELD:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            np.array([-1.3, -1.9, -2.9, -1.29, -1.06, -3.147, -1.38, -2.159, -4.148, -1.47, -1.958, -5.249]),
+            np.array([-1.4, -0.9, -2.9, -1.4, -2.16, -4.15]),
             decimal=6,
         )
         child_jacobian = joint.constraint_jacobian(Q1, Q2)
         TestUtils.assert_equal(
             child_jacobian,
-            -np.eye(12),
+            -np.eye(12)[3:9, :],
             decimal=6,
         )
 
         child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
         TestUtils.assert_equal(
             child_jacobian_dot,
-            np.zeros((12, 12)),
+            np.zeros((6, 12)),
             decimal=6,
         )
 
         assert joint.parent_constraint_jacobian(Q1, Q2) is None
         assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
+
+
+# def test_numpy_jacobian_from_casadi_derivatives()
+# todo:
+# # numpy version
+# Q_test = NaturalCoordinates(np.arange(24))
+# jacobian_numpy = model.joint_constraints_jacobian(Q_test)
+#
+# model_mx = model.to_mx()
+# sym = NaturalCoordinatesMX.sym(2)
+# j_constraints_sym = model_mx.joint_constraints(sym)
+# # jacobian
+# j_jacobian_sym = jacobian(j_constraints_sym, sym)
+# j_jacobian_func = Function("j_jacobian_func", [sym], [j_jacobian_sym])
+#
+# jacobian_mx = j_jacobian_func(np.arange(24)).toarray()

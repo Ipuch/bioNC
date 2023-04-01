@@ -315,6 +315,13 @@ class GenericBiomechanicalModel(ABC):
         return nb_markers
 
     @property
+    def segment_names(self) -> list[str]:
+        """
+        This function returns the names of the segments in the model
+        """
+        return list(self.segments.keys())
+
+    @property
     def marker_names(self) -> list[str]:
         """
         This function returns the names of the markers in the model
@@ -467,6 +474,17 @@ class GenericBiomechanicalModel(ABC):
             if segment.index == index:
                 return segment
         raise ValueError(f"The segment index does not exist, the model has only {self.nb_segments} segments")
+
+    @property
+    def normalized_coordinates(self) -> tuple[tuple[int, ...]]:
+        idx = []
+        for i in range(self.nb_segments):
+            # create list from i* 12 to (i+1) * 12
+            segment_idx = [i for i in range(i * 12, (i + 1) * 12)]
+            idx.append(segment_idx[0:3])
+            idx.append(segment_idx[9:12])
+
+        return idx
 
     @property
     def mass_matrix(self):

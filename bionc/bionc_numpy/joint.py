@@ -643,7 +643,7 @@ class Joint:
             return constraint
 
         def parent_constraint_jacobian(
-            self, Q_child: SegmentNaturalCoordinates, Q_parent: SegmentNaturalCoordinates
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
             parent_point_location = self.parent_point.position_in_global(Q_parent)
             child_point_location = self.child_point.position_in_global(Q_child)
@@ -663,7 +663,7 @@ class Joint:
             return np.array(K_k_child)
 
         def parent_constraint_jacobian_derivative(
-            self, Qdot_child: SegmentNaturalVelocities, Qdot_parent: SegmentNaturalVelocities
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> np.ndarray:
             parent_point_location = self.parent_point.position_in_global(Qdot_parent)
             child_point_location = self.child_point.position_in_global(Qdot_child)
@@ -870,7 +870,7 @@ class GroundJoint:
 
             Returns
             -------
-            MX
+            np.ndarray
                 joint constraints jacobian of the child segment [5, 12]
             """
 
@@ -1010,14 +1010,16 @@ class GroundJoint:
             self,
             name: str,
             child: NaturalSegment,
-            Q_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
+            rp_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
+            rd_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
             index: int = None,
         ):
             super(GroundJoint.Weld, self).__init__(name, None, child, index)
 
+            self.rp_child_ref = rp_child_ref
+            self.rd_child_ref = rd_child_ref
             # check size and type of parent axis
-            self.Q_child_ref = SegmentNaturalCoordinates(Q_child_ref)
-            self.nb_constraints = 12
+            self.nb_constraints = 6
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """
@@ -1030,7 +1032,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [12, 1]
             """
 
-            return self.Q_child_ref.vector - Q_child.vector
+            return np.concatenate((self.rp_child_ref - Q_child.rp, self.rd_child_ref - Q_child.rd), axis=0)
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
@@ -1040,7 +1042,7 @@ class GroundJoint:
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
-            K_k_child = -np.eye(self.nb_constraints)
+            K_k_child = -np.eye(12)[3:9, :]
 
             return K_k_child
 
@@ -1101,5 +1103,6 @@ class GroundJoint:
                 name=self.name,
                 child=self.child.to_mx(),
                 index=self.index,
-                Q_child_ref=self.Q_child_ref,
+                rp_child_ref=self.rp_child_ref,
+                rd_child_ref=self.rd_child_ref,
             )

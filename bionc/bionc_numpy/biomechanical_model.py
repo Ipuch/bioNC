@@ -6,6 +6,7 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
+from .external_force import ExternalForceList
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -632,7 +633,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
-        # external_forces: ExternalForces
+        external_forces: ExternalForceList = None,
         stabilization: dict = None,
     ) -> np.ndarray:
         """
@@ -644,6 +645,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+        external_forces : ExternalForceList
+            The list of external forces applied on the system
         stabilization: dict
             Dictionary containing the Baumgarte's stabilization parameters:
             * alpha: float
@@ -660,6 +663,11 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = self.holonomic_constraints_jacobian(Q)
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
+        external_forces = (
+            ExternalForceList.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
+        )
+        fext = external_forces.to_natural_external_forces(Q)
+
         # KKT system
         # [G, K.T] [Qddot]  = [forces]
         # [K, 0  ] [lambda] = [biais]
@@ -667,7 +675,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
         KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
-        forces = self.weight()
+        forces = self.weight() + fext
         biais = -Kdot @ Qdot
 
         if stabilization is not None:

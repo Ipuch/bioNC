@@ -6960,6 +6960,14 @@ def test_biomech_model(bionc_type):
         "RTAR",
     ]
     assert natural_model.marker_names_technical == marker_names_technical
+    segment_names = [
+        "PELVIS",
+        "THIGH",
+        "SHANK",
+        "FOOT",
+    ]
+
+    assert natural_model.segment_names == segment_names
 
     filename = "natural_model.nc"
     if bionc_type == "numpy":

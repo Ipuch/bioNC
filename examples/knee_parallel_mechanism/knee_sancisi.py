@@ -2,10 +2,6 @@ import numpy as np
 
 from bionc import JointType
 
-# from bionc.bionc_casadi import (
-#     BiomechanicalModel,
-#     NaturalSegment,
-# )
 from bionc.bionc_numpy import (
     BiomechanicalModel,
     NaturalSegment,
@@ -197,75 +193,75 @@ def create_knee_model() -> BiomechanicalModel:
         )
     )
 
-    model._add_joint(
-        dict(
-            name="SPHERICAL_KNEE",
-            joint_type=JointType.SPHERICAL,
-            parent="THIGH",
-            child="SHANK",
-        )
-    )
+    # model._add_joint(
+    #     dict(
+    #         name="SPHERICAL_KNEE",
+    #         joint_type=JointType.SPHERICAL,
+    #         parent="THIGH",
+    #         child="SHANK",
+    #     )
+    # )
 
     # Parallel Mechanism joint definition
-    # model._add_joint(
-    #     dict(
-    #         name="medial_knee",
-    #         joint_type=JointType.SPHERE_ON_PLANE,
-    #         parent="THIGH",
-    #         child="SHANK",
-    #         sphere_radius=0.03232,
-    #         sphere_center="medial_centre_femur",
-    #         plane_normal="medial_normal_shank",
-    #         plane_point="medial_contact_shank",
-    #     )
-    # )
-    # model._add_joint(
-    #     dict(
-    #         name="lateral_knee",
-    #         joint_type=JointType.SPHERE_ON_PLANE,
-    #         parent="THIGH",
-    #         child="SHANK",
-    #         sphere_radius=0.02834,
-    #         sphere_center="lateral_centre_femur",
-    #         plane_normal="lateral_normal_shank",
-    #         plane_point="lateral_contact_shank",
-    #     )
-    # )
-    # model._add_joint(
-    #     dict(
-    #         name="ACL",
-    #         joint_type=JointType.CONSTANT_LENGTH,
-    #         parent="THIGH",
-    #         child="SHANK",
-    #         # length=0.04053,  # from article
-    #         length=0.04356820117764876,  # from data
-    #         parent_point="ACL_femur",
-    #         child_point="ACL_shank",
-    #     )
-    # )
-    # model._add_joint(
-    #     dict(
-    #         name="PCL",
-    #         joint_type=JointType.CONSTANT_LENGTH,
-    #         parent="THIGH",
-    #         child="SHANK",
-    #         # length=0.04326, # from article
-    #         length=0.042833461279363376,  # from data
-    #         parent_point="PCL_femur",
-    #         child_point="PCL_shank",
-    #     )
-    # )
-    # model._add_joint(
-    #     dict(
-    #         name="MCL",
-    #         joint_type=JointType.CONSTANT_LENGTH,
-    #         parent="THIGH",
-    #         child="SHANK",
-    #         # length=0.12970, # from article
-    #         length=0.10828123262317323,
-    #         parent_point="MCL_femur",
-    #         child_point="MCL_shank",
-    #     )
-    # )
+    model._add_joint(
+        dict(
+            name="medial_knee",
+            joint_type=JointType.SPHERE_ON_PLANE,
+            parent="THIGH",
+            child="SHANK",
+            sphere_radius=0.03232,
+            sphere_center="medial_centre_femur",
+            plane_normal="medial_normal_shank",
+            plane_point="medial_contact_shank",
+        )
+    )
+    model._add_joint(
+        dict(
+            name="lateral_knee",
+            joint_type=JointType.SPHERE_ON_PLANE,
+            parent="THIGH",
+            child="SHANK",
+            sphere_radius=0.02834,
+            sphere_center="lateral_centre_femur",
+            plane_normal="lateral_normal_shank",
+            plane_point="lateral_contact_shank",
+        )
+    )
+    model._add_joint(
+        dict(
+            name="ACL",
+            joint_type=JointType.CONSTANT_LENGTH,
+            parent="THIGH",
+            child="SHANK",
+            # length=0.04053,  # from article
+            length=0.04356820117764876,  # from data
+            parent_point="ACL_femur",
+            child_point="ACL_shank",
+        )
+    )
+    model._add_joint(
+        dict(
+            name="PCL",
+            joint_type=JointType.CONSTANT_LENGTH,
+            parent="THIGH",
+            child="SHANK",
+            # length=0.04326, # from article
+            length=0.042833461279363376,  # from data
+            parent_point="PCL_femur",
+            child_point="PCL_shank",
+        )
+    )
+    model._add_joint(
+        dict(
+            name="MCL",
+            joint_type=JointType.CONSTANT_LENGTH,
+            parent="THIGH",
+            child="SHANK",
+            # length=0.12970, # from article
+            length=0.10828123262317323,
+            parent_point="MCL_femur",
+            child_point="MCL_shank",
+        )
+    )
 
     return model

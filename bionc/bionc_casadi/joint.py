@@ -1,4 +1,4 @@
-from casadi import MX, dot, cos, transpose, sumsqr
+from casadi import MX, dot, cos, transpose, sumsqr, vertcat
 import numpy as np
 
 from .natural_segment import NaturalSegment
@@ -568,7 +568,7 @@ class Joint:
             return constraint
 
         def parent_constraint_jacobian(
-            self, Q_child: SegmentNaturalCoordinates, Q_parent: SegmentNaturalCoordinates
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> MX:
             parent_point_location = self.parent_point.position_in_global(Q_parent)
             child_point_location = self.child_point.position_in_global(Q_child)
@@ -588,7 +588,7 @@ class Joint:
             return K_k_child
 
         def parent_constraint_jacobian_derivative(
-            self, Qdot_child: SegmentNaturalVelocities, Qdot_parent: SegmentNaturalVelocities
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
             parent_point_location = self.parent_point.position_in_global(Qdot_parent)
             child_point_location = self.child_point.position_in_global(Qdot_child)
@@ -871,14 +871,16 @@ class GroundJoint:
             self,
             name: str,
             child: NaturalSegment,
-            Q_child_ref: SegmentNaturalCoordinates,
+            rp_child_ref: SegmentNaturalCoordinates = None,
+            rd_child_ref: SegmentNaturalCoordinates = None,
             index: int = None,
         ):
             super(GroundJoint.Weld, self).__init__(name, None, child, index)
 
             # check size and type of parent axis
-            self.Q_child_ref = Q_child_ref
-            self.nb_constraints = 12
+            self.rp_child_ref = rp_child_ref
+            self.rd_child_ref = rd_child_ref
+            self.nb_constraints = 6
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
@@ -891,7 +893,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [12, 1]
             """
 
-            return self.Q_child_ref - Q_child
+            return vertcat(self.rp_child_ref - Q_child.rp, self.rd_child_ref - Q_child.rd)
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
@@ -901,7 +903,7 @@ class GroundJoint:
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> MX:
-            K_k_child = -MX.eye(self.nb_constraints)
+            K_k_child = -MX.eye(12)[3:9, :]
 
             return K_k_child
 

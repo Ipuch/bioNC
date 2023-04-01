@@ -1,4 +1,4 @@
-from casadi import vertcat, horzcat, MX, Function, nlpsol
+from casadi import vertcat, horzcat, MX, Function, nlpsol, SX, Function
 import numpy as np
 from pyomeca import Markers
 
@@ -8,6 +8,26 @@ from ..bionc_casadi import (
 )
 
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
+from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
+
+
+def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
+    """
+    Converts a MX to a SX
+
+    Parameters
+    ----------
+    mx : MX
+        The MX to convert
+    symbolics : list[MX]
+        The symbolics to use
+
+    Returns
+    -------
+    The converted SX
+    """
+    f = Function("f", symbolics, [mx]).expand()
+    return f(*symbolics)
 
 
 def _solve_nlp(method: str, nlp: dict, Q_init: np.ndarray, lbg: np.ndarray, ubg: np.ndarray, options: dict):
@@ -45,6 +65,29 @@ def _solve_nlp(method: str, nlp: dict, Q_init: np.ndarray, lbg: np.ndarray, ubg:
         print("Inverse Kinematics failed to converge")
 
     return r
+
+
+def sarrus(matrix: MX):
+    """
+    Computes the determinant of a 3x3 matrix using the Sarrus rule
+
+    Parameters
+    ----------
+    matrix : MX
+        The matrix to compute the determinant of
+
+    Returns
+    -------
+    The determinant of the matrix
+    """
+    return (
+        matrix[0, 0] * matrix[1, 1] * matrix[2, 2]
+        + matrix[0, 1] * matrix[1, 2] * matrix[2, 0]
+        + matrix[0, 2] * matrix[1, 0] * matrix[2, 1]
+        - matrix[0, 0] * matrix[1, 2] * matrix[2, 1]
+        - matrix[0, 1] * matrix[1, 0] * matrix[2, 2]
+        - matrix[0, 2] * matrix[1, 1] * matrix[2, 0]
+    )
 
 
 class InverseKinematics:
@@ -90,6 +133,8 @@ class InverseKinematics:
         builds the constraints to satisfy
     animate()
         Animates the solution of the inverse kinematics
+    _active_direct_frame_constraints()
+        builds the constraints to ensure that the determinant of the matrix [u, v, w] is positive
     """
 
     def __init__(
@@ -98,8 +143,30 @@ class InverseKinematics:
         experimental_markers: np.ndarray | str,
         Q_init: np.ndarray | NaturalCoordinates = None,
         solve_frame_per_frame: bool = True,
+        active_direct_frame_constraints: bool = False,
+        use_sx: bool = True,
     ):
+        """
+        Parameters
+        ----------
+        model : BiomechanicalModel
+            The model considered (bionc.numpy)
+        experimental_markers : np.ndarray | str
+            The experimental markers (3xNxM numpy array), or a path to a c3d file
+        Q_init : np.ndarray | NaturalCoordinates
+            The initial guess for the inverse kinematics computed from the experimental markers
+        solve_frame_per_frame : bool
+            If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
+        active_direct_frame_constraints : bool
+            If True, the direct frame constraints are active, otherwise they are not.
+            It ensures that rigid body constraints lead to positive determinants or the matrix [u, v, w].
+        use_sx : bool
+            If True, the symbolic variables are SX, otherwise they are MX (SX are faster but take more memory)
+        """
+
         self._frame_per_frame = solve_frame_per_frame
+        self._active_direct_frame_constraints = active_direct_frame_constraints
+        self.use_sx = use_sx
 
         if not isinstance(model, BiomechanicalModel):
             raise ValueError("model must be a BiomechanicalModel")
@@ -125,6 +192,7 @@ class InverseKinematics:
             self.Q_init = Q_init
 
         self.Qopt = None
+        self.segment_determinants = None
 
         self.nb_frames = self.experimental_markers.shape[2]
         self.nb_markers = self.experimental_markers.shape[1]
@@ -192,30 +260,43 @@ class InverseKinematics:
             lbg = np.zeros(self.model.nb_holonomic_constraints)
             ubg = np.zeros(self.model.nb_holonomic_constraints)
             constraints = self._constraints(self._Q_sym)
+            if self._active_direct_frame_constraints:
+                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
+                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments)))
+                # upper bounds infinity
+                ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
             nlp = dict(
                 x=self._vert_Q_sym,
-                g=constraints,
+                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
             for f in range(self.nb_frames):
-                nlp["f"] = self._objective_function(self._Q_sym, self.experimental_markers[:, :, f])
+                objective = self._objective_function(self._Q_sym, self.experimental_markers[:, :, f])
+                nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
                 Q_init = self.Q_init[:, f : f + 1]
                 r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
                 Qopt[:, f : f + 1] = r["x"].toarray()
         else:
             constraints = self._constraints(self._Q_sym)
+            if self._active_direct_frame_constraints:
+                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
             objective = self._objective(self._Q_sym, self.experimental_markers)
             nlp = dict(
                 x=self._vert_Q_sym,
-                f=objective,
-                g=constraints,
+                f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,
+                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
             Q_init = self.Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
             lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
             ubg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
+            if self._active_direct_frame_constraints:
+                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
+                ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
             r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
             Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
+
+        self.check_segment_determinants()
 
         return Qopt
 
@@ -255,5 +336,28 @@ class InverseKinematics:
             phir.append(self._model_mx.rigid_body_constraints(Q_f))
             phik.append(self._model_mx.joint_constraints(Q_f))
         return vertcat(*phir, *phik)
+
+    def _direct_frame_constraints(self, Q):
+        """Computes the direct frame constraints and handle single frame or multi frames"""
+        nb_frames = 1 if self._frame_per_frame else self.nb_frames
+        direct_frame_constraints = []
+        for f in range(nb_frames):
+            Q_f = NaturalCoordinates(Q[:, f])
+            for ii in range(self.model.nb_segments):
+                u, v, w = Q_f.vector(ii).to_uvw()
+                direct_frame_constraints.append(sarrus(horzcat(u, v, w)))
+        return vertcat(*direct_frame_constraints)
+
+    def check_segment_determinants(self):
+        """Checks the determinant of each segment frame"""
+        self.segment_determinants = np.zeros((self.model.nb_segments, self.nb_frames))
+        for i in range(0, self.Qopt.shape[1]):
+            Qi = NaturalCoordinatesNumpy(self.Qopt)[:, i : i + 1]
+            for s in range(0, self.model.nb_segments):
+                u, v, w = Qi.vector(s).to_uvw()
+                matrix = np.concatenate((u[:, np.newaxis], v[:, np.newaxis], w[:, np.newaxis]), axis=1)
+                self.segment_determinants[s, i] = np.linalg.det(matrix)
+                if self.segment_determinants[s, i] < 0:
+                    print(f"Warning: frame {i} segment {s} has a negative determinant")
 
     # todo: def sol() -> dict that returns the details of the inverse kinematics such as all the metrics, etc...

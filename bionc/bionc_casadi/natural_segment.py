@@ -2,7 +2,7 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, sum2
+from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, cross, norm_2
 
 from ..bionc_casadi.natural_coordinates import SegmentNaturalCoordinates
 from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities

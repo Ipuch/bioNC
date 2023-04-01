@@ -2,7 +2,7 @@ import numpy as np
 from bionc import NaturalCoordinates, SegmentNaturalCoordinates, Viz, SegmentNaturalVelocities, NaturalVelocities
 from bionc.bionc_casadi.utils import to_numeric_MX
 
-from knee import create_knee_model
+from knee_sancisi import create_knee_model
 from utils import forward_integration, post_computations
 
 model = create_knee_model()
@@ -18,8 +18,8 @@ Q = NaturalCoordinates.from_qi((Q0, Q1))
 print(model.rigid_body_constraints(NaturalCoordinates(Q)))
 print(model.joint_constraints(NaturalCoordinates(Q)))
 
-# viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=False, size_xp_marker=0.005)
-# viz.animate(Q)
+viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=False, size_xp_marker=0.005)
+viz.animate(Q)
 
 
 marker_names = model.marker_names
@@ -64,7 +64,7 @@ tuple_of_Qdot = [
 Qdot = NaturalVelocities.from_qdoti(tuple(tuple_of_Qdot))
 
 # actual simulation
-t_final = 1  # seconds
+t_final = 2  # seconds
 time_steps, all_states, dynamics = forward_integration(
     model=model,
     Q_init=NaturalCoordinates(Q_opt),

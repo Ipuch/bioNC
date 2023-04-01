@@ -251,6 +251,29 @@ class NaturalCoordinates(np.ndarray):
 
 
 class ExternalForce:
+    """
+    This class represents an external force applied to a segment.
+
+    Attributes
+    ----------
+    application_point_in_local : np.ndarray
+        The application point of the force in the natural coordinate system of the segment
+    external_forces : np.ndarray
+        The external force vector in the global coordinate system (torque, force)
+
+    Methods
+    -------
+    from_components(application_point_in_local, force, torque)
+        This function creates an external force from its components.
+    force
+        This function returns the force vector of the external force.
+    torque
+        This function returns the torque vector of the external force.
+    compute_pseudo_interpolation_matrix()
+        This function computes the pseudo interpolation matrix of the external force.
+    to_natural_force
+        This function returns the external force in the natural coordinate format.
+    """
     def __init__(self, application_point_in_local: np.ndarray, external_forces: np.ndarray):
         self.application_point_in_local = application_point_in_local
         self.external_forces = external_forces
@@ -272,17 +295,18 @@ class ExternalForce:
         Returns
         -------
         ExternalForce
-
         """
 
         return cls(application_point_in_local, np.concatenate((torque, force)))
 
     @property
     def force(self) -> np.ndarray:
+        """ The force vector in the global coordinate system """
         return self.external_forces[3:6]
 
     @property
     def torque(self) -> np.ndarray:
+        """ The torque vector in the global coordinate system """
         return self.external_forces[0:3]
 
     @staticmethod
@@ -331,7 +355,6 @@ class ExternalForce:
         -------
         np.ndarray
             The external forces adequately transformed for the equation of motion in natural coordinates
-
         """
 
         pseudo_interpolation_matrix = self.compute_pseudo_interpolation_matrix(Qi)
@@ -357,7 +380,20 @@ class ExternalForceList:
     Attributes
     ----------
     external_forces : list
-        List of ExternalForces
+        List of ExternalForces for each segment
+
+    Methods
+    -------
+    add_external_force(segment_index, external_force)
+        This function adds an external force to the list of external forces.
+    empty_from_nb_segment(nb_segment)
+        This function creates an empty ExternalForceList from the number of segments.
+    to_natural_external_forces(Q)
+        This function returns the external forces in the natural coordinate format.
+    segment_external_forces(segment_index)
+        This function returns the external forces of a segment.
+    nb_segments
+        This function returns the number of segments.
 
     Examples
     --------
@@ -378,6 +414,7 @@ class ExternalForceList:
 
     @property
     def nb_segments(self) -> int:
+        """ Returns the number of segments """
         return len(self.external_forces)
 
     @classmethod
@@ -388,9 +425,20 @@ class ExternalForceList:
         return cls(external_forces=[[] for _ in range(nb_segment)])
 
     def segment_external_forces(self, segment_index: int) -> list[ExternalForce]:
+        """ Returns the external forces of the segment """
         return self.external_forces[segment_index]
 
     def add_external_force(self, segment_index: int, external_force: ExternalForce):
+        """
+        Add an external force to the segment
+
+        Parameters
+        ----------
+        segment_index: int
+            The index of the segment
+        external_force:
+            The external force to add
+        """
         self.external_forces[segment_index].append(external_force)
 
     def to_natural_external_forces(self, Q: NaturalCoordinates) -> np.ndarray:

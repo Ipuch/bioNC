@@ -258,19 +258,37 @@ class ExternalForce:
         self.external_forces = external_forces
 
     @classmethod
-    def from_components(cls, application_point_in_global: np.ndarray, force: np.ndarray, torque: np.ndarray):
-        return cls(application_point_in_global, np.concatenate((torque, force)))
+    def from_components(cls, application_point_in_local: np.ndarray, force: np.ndarray, torque: np.ndarray):
+        """
+        This function creates an external force from its components.
+
+        Parameters
+        ----------
+        application_point_in_local : np.ndarray
+            The application point of the force in the natural coordinate system of the segment
+        force
+            The force vector in the global coordinate system
+        torque
+            The torque vector in the global coordinate system
+
+        Returns
+        -------
+        ExternalForce
+
+        """
+
+        return cls(application_point_in_local, np.concatenate((torque, force)))
 
     @property
-    def force(self):
+    def force(self) -> np.ndarray:
         return self.external_forces[3:6]
 
     @property
-    def torque(self):
+    def torque(self) -> np.ndarray:
         return self.external_forces[0:3]
 
     @staticmethod
-    def compute_pseudo_interpolation_matrix(Qi: SegmentNaturalCoordinates):
+    def compute_pseudo_interpolation_matrix(Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
         Return the force moment transformation matrix
         """
@@ -290,9 +308,9 @@ class ExternalForce:
         lever_arm_force_matrix[:, 1] = np.cross(Qi.u, Qi.v)
         lever_arm_force_matrix[:, 2] = np.cross(-Qi.v, Qi.w)
 
-        return (left_interpolation_matrix @ lever_arm_force_matrix).T
+        return (left_interpolation_matrix @ np.linalg.inv(lever_arm_force_matrix)).T
 
-    def to_natural_force(self, Qi: SegmentNaturalCoordinates):
+    def to_natural_force(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
         Apply external forces to the segment
 

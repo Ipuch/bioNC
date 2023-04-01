@@ -14,6 +14,83 @@ from bionc.bionc_numpy import (
 from bionc import NaturalAxis, CartesianAxis
 
 
+def build_pendulum():
+    # Let's create a model
+    model = BiomechanicalModel()
+    # fill the biomechanical model with the segment
+    model["pendulum"] = NaturalSegment(
+        name="pendulum",
+        alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([0, -0.5, 0]),  # in segment coordinates system
+        inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+    )
+    # add a revolute joint (still experimental)
+    # if you want to add a revolute joint,
+    # you need to ensure that x is always orthogonal to u and v
+    model._add_joint(
+        dict(
+            name="hinge",
+            joint_type=JointType.GROUND_REVOLUTE,
+            parent="GROUND",
+            child="pendulum",
+            parent_axis=[CartesianAxis.X, CartesianAxis.X],
+            child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
+            theta=[np.pi / 2, np.pi / 2],
+        )
+    )
+
+    model.save("pendulum_with_force.nmod")
+
+    return model
+
+
+def apply_force_and_drop_pendulum(t_final: float = 10, external_forces: ExternalForceList = None):
+    """
+    This function is used to test the external force
+
+    Parameters
+    ----------
+    t_final: float
+        The final time of the simulation
+    external_forces: ExternalForceList
+        The external forces applied to the model
+
+    Returns
+    -------
+    tuple[BiomechanicalModel, np.ndarray, np.ndarray, Callable]:
+        model : BiomechanicalModel
+            The model to be simulated
+        time_steps : np.ndarray
+            The time steps of the simulation
+        all_states : np.ndarray
+            The states of the system at each time step X = [Q, Qdot]
+        dynamics : Callable
+            The dynamics of the system, f(t, X) = [Xdot, lambdas]
+
+    """
+    model = build_pendulum()
+
+    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
+    Q = NaturalCoordinates(Qi)
+    Qdoti = SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
+    Qdot = NaturalVelocities(Qdoti)
+
+    time_steps, all_states, dynamics = drop_the_pendulum(
+        model=model,
+        Q_init=Q,
+        Qdot_init=Qdot,
+        external_forces=external_forces,
+        t_final=t_final,
+        steps_per_second=60,
+    )
+
+    return model, time_steps, all_states, dynamics
+
+
 def drop_the_pendulum(
     model: BiomechanicalModel,
     Q_init: NaturalCoordinates,
@@ -33,6 +110,8 @@ def drop_the_pendulum(
         The initial natural coordinates of the segment
     Qdot_init : SegmentNaturalVelocities
         The initial natural velocities of the segment
+    external_forces : ExternalForceList
+        The external forces applied to the model
     t_final : float, optional
         The final time of the simulation, by default 2
     steps_per_second : int, optional
@@ -127,161 +206,35 @@ def RK4(
         k4 = f(t[i] + h, yi + k3 * h, *args)
         y[:, i + 1] = yi + (h / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
 
+        # verify after each time step the normalization of the states
         if normalize_idx is not None:
             for idx in normalize_idx:
                 y[idx, i + 1] = y[idx, i + 1] / np.linalg.norm(y[idx, i + 1])
     return y
 
 
-def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_states: np.ndarray, dynamics):
-    """
-    This function computes:
-     - the rigid body constraint error
-     - the rigid body constraint jacobian derivative error
-     - the joint constraint error
-     - the lagrange multipliers of the rigid body constraint
-
-    Parameters
-    ----------
-    model : NaturalSegment
-        The segment to be simulated
-    time_steps : np.ndarray
-        The time steps of the simulation
-    all_states : np.ndarray
-        The states of the system at each time step X = [Q, Qdot]
-    dynamics : Callable
-        The dynamics of the system, f(t, X) = [Xdot, lambdas]
-
-    Returns
-    -------
-    tuple:
-        rigid_body_constraint_error : np.ndarray
-            The rigid body constraint error at each time step
-        rigid_body_constraint_jacobian_derivative_error : np.ndarray
-            The rigid body constraint jacobian derivative error at each time step
-        joint_constraints: np.ndarray
-            The joint constraints at each time step
-        lambdas : np.ndarray
-            The lagrange multipliers of the rigid body constraint at each time step
-    """
-    idx_coordinates = slice(0, model.nb_Q)
-    idx_velocities = slice(model.nb_Q, model.nb_Q + model.nb_Qdot)
-
-    # compute the quantities of interest after the integration
-    all_lambdas = np.zeros((model.nb_holonomic_constraints, len(time_steps)))
-    defects = np.zeros((model.nb_rigid_body_constraints, len(time_steps)))
-    defects_dot = np.zeros((model.nb_rigid_body_constraints, len(time_steps)))
-    joint_defects = np.zeros((model.nb_joint_constraints, len(time_steps)))
-    joint_defects_dot = np.zeros((model.nb_joint_constraints, len(time_steps)))
-
-    for i in range(len(time_steps)):
-        defects[:, i] = model.rigid_body_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
-        defects_dot[:, i] = model.rigid_body_constraints_derivative(
-            NaturalCoordinates(all_states[idx_coordinates, i]), NaturalVelocities(all_states[idx_velocities, i])
-        )
-
-        joint_defects[:, i] = model.joint_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
-        # todo : to be implemented
-        # joint_defects_dot = model.joint_constraints_derivative(
-        #     NaturalCoordinates(all_states[idx_coordinates, i]),
-        #     NaturalVelocities(all_states[idx_velocities, i]))
-        # )
-
-        all_lambdas[:, i : i + 1] = dynamics(time_steps[i], all_states[:, i])[1]
-
-    return defects, defects_dot, joint_defects, all_lambdas
-
-
 if __name__ == "__main__":
-    # Let's create a model
-    model = BiomechanicalModel()
-    # fill the biomechanical model with the segment
-    model["pendulum"] = NaturalSegment(
-        name="pendulum",
-        alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
-        beta=np.pi / 2,
-        gamma=np.pi / 2,
-        length=1,
-        mass=1,
-        center_of_mass=np.array([0, -0.5, 0]),  # in segment coordinates system
-        inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
-    )
-    # add a revolute joint (still experimental)
-    # if you want to add a revolute joint,
-    # you need to ensure that x is always orthogonal to u and v
-    model._add_joint(
-        dict(
-            name="hinge",
-            joint_type=JointType.GROUND_REVOLUTE,
-            parent="GROUND",
-            child="pendulum",
-            parent_axis=[CartesianAxis.X, CartesianAxis.X],
-            child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
-            theta=[np.pi / 2, np.pi / 2],
-        )
-    )
-
-    model.save("pendulum_with_force.nmod")
-
-    print(model.joints)
-    print(model.nb_joints)
-    print(model.nb_joint_constraints)
-
-    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
-    Q = NaturalCoordinates(Qi)
-    Qdoti = SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
-    Qdot = NaturalVelocities(Qdoti)
-
-    print(model.joint_constraints(Q))
-    print(model.joint_constraints_jacobian(Q))
-    print(model.holonomic_constraints(Q))
-    print(model.holonomic_constraints_jacobian(Q))
-
-    # The actual simulation
-    t_final = 10
 
     # add an external force applied on the segment 0
+    # first build the object
     fext = ExternalForceList.empty_from_nb_segment(1)
+    # then add a force
     force1 = ExternalForce.from_components(
-        # force=np.array([0, 0, 1 * 9.81]),
-        # # force=np.array([0, 0, 0]),
-        # torque=np.array([0, 0, 0]),
-        # application_point_in_global=np.array([0, -0.5, 0]),
-        force=np.array([0, 0, 0]),
+        force=np.array([0, 0, 1 * 9.81]),
         # force=np.array([0, 0, 0]),
-        torque=np.array([-5, 0, 0]),
-        application_point_in_global=np.array([0, 0, 0]),
+        torque=np.array([0, 0, 0]),
+        application_point_in_local=np.array([0, -0.5, 0]),
+        # force=np.array([0, 0, 0]),
+        # torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
+        # application_point_in_local=np.array([0, 0, 0]),
     )
+    # then add the force to the list on segment 0
     fext.add_external_force(
         external_force=force1,
         segment_index=0
     )
 
-    time_steps, all_states, dynamics = drop_the_pendulum(
-        model=model,
-        Q_init=Q,
-        Qdot_init=Qdot,
-        external_forces=fext,
-        t_final=t_final,
-        steps_per_second=60,
-    )
-
-    # defects, defects_dot, joint_defects, all_lambdas = post_computations(
-    #     model=model,
-    #     time_steps=time_steps,
-    #     all_states=all_states,
-    #     dynamics=dynamics,
-    # )
-
-    from viz import plot_series
-
-    # Plot the results
-    # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
-    # plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
-    # plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
-    # plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
-    # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
-    # plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+    model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(t_final=10, external_forces=fext)
 
     # animate the motion
     from bionc import Viz

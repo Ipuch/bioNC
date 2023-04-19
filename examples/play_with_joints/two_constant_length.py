@@ -39,7 +39,7 @@ def build_two_link_segment():
         NaturalMarker(
             name="point_A",
             parent_name="segment_0",
-            position=np.array([0, -1, 0]),
+            position=np.array([0, -1, 0.05]),
             is_technical=True,
             is_anatomical=False,
         )
@@ -49,7 +49,7 @@ def build_two_link_segment():
         NaturalMarker(
             name="point_AA",
             parent_name="segment_0",
-            position=np.array([0, -1, 0.05]),
+            position=np.array([0, -1, -0.05]),
             is_technical=True,
             is_anatomical=False,
         )
@@ -59,7 +59,7 @@ def build_two_link_segment():
         NaturalMarker(
             name="point_B",
             parent_name="segment_1",
-            position=np.array([0, 0, 0]),
+            position=np.array([0, 0, 0.05]),
             is_technical=True,
             is_anatomical=False,
         )
@@ -69,7 +69,7 @@ def build_two_link_segment():
         NaturalMarker(
             name="point_BB",
             parent_name="segment_1",
-            position=np.array([0, 0, 0.05]),
+            position=np.array([0, 0, -0.05]),
             is_technical=True,
             is_anatomical=False,
         )
@@ -129,11 +129,11 @@ def main(initial_pose: str = "hanged"):
                 1,
                 0,
                 0,
-                0.2 * np.cos(np.pi / 4),
                 0,
+                0.2 * np.cos(np.pi / 4),
                 -(0.8 + 0.2 * np.sin(np.pi / 4)),
-                0.2 * np.cos(np.pi / 4),
                 0,
+                0.2 * np.cos(np.pi / 4),
                 -(0.8 + 0.2 * np.sin(np.pi / 4)) - 0.8,
                 0,
                 -1,
@@ -203,5 +203,5 @@ def main(initial_pose: str = "hanged"):
 
 
 if __name__ == "__main__":
-    main("hanged")
-    # main("ready_to_swing")
+    # main("hanged")
+    main("ready_to_swing")

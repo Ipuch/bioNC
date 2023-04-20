@@ -35,7 +35,9 @@ class ExternalForce:
         self.external_forces = MX(external_forces)
 
     @classmethod
-    def from_components(cls, application_point_in_local: np.ndarray | MX, force: np.ndarray | MX, torque: np.ndarray | MX):
+    def from_components(
+        cls, application_point_in_local: np.ndarray | MX, force: np.ndarray | MX, torque: np.ndarray | MX
+    ):
         """
         This function creates an external force from its components.
 

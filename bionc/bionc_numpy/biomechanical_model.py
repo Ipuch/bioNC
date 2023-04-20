@@ -658,6 +658,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         -------
             Qddot : NaturalAccelerations
                 The natural accelerations [12 * nb_segments, 1]
+            lagrange_multipliers : np.ndarray
+                The lagrange multipliers [nb_holonomic_constraints, 1]
         """
         G = self.mass_matrix
         K = self.holonomic_constraints_jacobian(Q)

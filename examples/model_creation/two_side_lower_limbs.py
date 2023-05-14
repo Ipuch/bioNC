@@ -19,6 +19,7 @@ from tests.utils import TestUtils
 bionc = TestUtils.bionc_folder()
 module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
+
 def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> BiomechanicalModel:
     """
     Create a model from a data file and we build the biomechanical model as a template using the marker names
@@ -86,7 +87,11 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
     model["RTHIGH"].add_marker(
         MarkerTemplate(
-            name="RIGHT_HIP_CENTER", function=right_hip_joint, parent_name="RTHIGH", is_technical=False, is_anatomical=True
+            name="RIGHT_HIP_CENTER",
+            function=right_hip_joint,
+            parent_name="RTHIGH",
+            is_technical=False,
+            is_anatomical=True,
         )
     )
     model["RTHIGH"].add_marker(MarkerTemplate("RKNE", parent_name="RTHIGH", is_technical=True))
@@ -111,7 +116,11 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
     model["LTHIGH"].add_marker(
         MarkerTemplate(
-            name="LEFT_HIP_CENTER", function=left_hip_joint, parent_name="LTHIGH", is_technical=False, is_anatomical=True
+            name="LEFT_HIP_CENTER",
+            function=left_hip_joint,
+            parent_name="LTHIGH",
+            is_technical=False,
+            is_anatomical=True,
         )
     )
     model["LTHIGH"].add_marker(MarkerTemplate("LKNE", parent_name="LTHIGH", is_technical=True))
@@ -134,13 +143,19 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         )
     )
     model["RSHANK"].add_marker(
-        MarkerTemplate("RIGHT_KNEE_JOINT", right_knee_joint, parent_name="RSHANK", is_technical=False, is_anatomical=True)
+        MarkerTemplate(
+            "RIGHT_KNEE_JOINT", right_knee_joint, parent_name="RSHANK", is_technical=False, is_anatomical=True
+        )
     )
     model["RSHANK"].add_marker(MarkerTemplate("RANE", parent_name="RSHANK", is_technical=True))
     model["RSHANK"].add_marker(MarkerTemplate("RANI", parent_name="RSHANK", is_technical=True))
     model["RSHANK"].add_marker(
         MarkerTemplate(
-            "RIGHT_ANKLE_JOINT", function=right_ankle_joint, parent_name="RSHANK", is_technical=False, is_anatomical=True
+            "RIGHT_ANKLE_JOINT",
+            function=right_ankle_joint,
+            parent_name="RSHANK",
+            is_technical=False,
+            is_anatomical=True,
         )
     )
 

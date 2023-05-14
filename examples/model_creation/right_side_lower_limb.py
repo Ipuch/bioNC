@@ -323,25 +323,25 @@ def generate_c3d_file(two_side: bool = False):
         pelvis_center = np.mean(c3d["data"]["points"][:3, [0, 2, 1, 3], :], axis=1)
         # remove two times the difference between each markers and the pelvis center along y axis
         c3d["data"]["points"][:3, 11, :] = c3d["data"]["points"][:3, 4, :]
-        c3d["data"]["points"][1, 11, :] -= 2 * ( c3d["data"]["points"][1, 4, :] - pelvis_center[1] )
+        c3d["data"]["points"][1, 11, :] -= 2 * (c3d["data"]["points"][1, 4, :] - pelvis_center[1])
 
         c3d["data"]["points"][:3, 12, :] = c3d["data"]["points"][:3, 5, :]
-        c3d["data"]["points"][1, 12, :] -= 2 * ( c3d["data"]["points"][1, 5, :] - pelvis_center[1] )
+        c3d["data"]["points"][1, 12, :] -= 2 * (c3d["data"]["points"][1, 5, :] - pelvis_center[1])
 
         c3d["data"]["points"][:3, 13, :] = c3d["data"]["points"][:3, 6, :]
-        c3d["data"]["points"][1, 13, :] -= 2 * ( c3d["data"]["points"][1, 6, :] - pelvis_center[1] )
+        c3d["data"]["points"][1, 13, :] -= 2 * (c3d["data"]["points"][1, 6, :] - pelvis_center[1])
 
         c3d["data"]["points"][:3, 14, :] = c3d["data"]["points"][:3, 7, :]
-        c3d["data"]["points"][1, 14, :] -= 2 * ( c3d["data"]["points"][1, 7, :] - pelvis_center[1] )
+        c3d["data"]["points"][1, 14, :] -= 2 * (c3d["data"]["points"][1, 7, :] - pelvis_center[1])
 
         c3d["data"]["points"][:3, 15, :] = c3d["data"]["points"][:3, 8, :]
-        c3d["data"]["points"][1, 15, :] -= 2 * ( c3d["data"]["points"][1, 8, :] - pelvis_center[1] )
+        c3d["data"]["points"][1, 15, :] -= 2 * (c3d["data"]["points"][1, 8, :] - pelvis_center[1])
 
         c3d["data"]["points"][:3, 16, :] = c3d["data"]["points"][:3, 9, :]
-        c3d["data"]["points"][1, 16, :] -= 2 * ( c3d["data"]["points"][1, 9, :] - pelvis_center[1] )
+        c3d["data"]["points"][1, 16, :] -= 2 * (c3d["data"]["points"][1, 9, :] - pelvis_center[1])
 
         c3d["data"]["points"][:3, 17, :] = c3d["data"]["points"][:3, 10, :]
-        c3d["data"]["points"][1, 17, :] -= 2 * ( c3d["data"]["points"][1, 10, :] - pelvis_center[1] )
+        c3d["data"]["points"][1, 17, :] -= 2 * (c3d["data"]["points"][1, 10, :] - pelvis_center[1])
 
     # Write the c3d file
     filename = f"{Path(__file__).parent.resolve()}/statref.c3d"

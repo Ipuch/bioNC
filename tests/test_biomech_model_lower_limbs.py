@@ -13,7 +13,6 @@ from .utils import TestUtils
     ],
 )
 def test_biomech_model(bionc_type):
-
     bionc = TestUtils.bionc_folder()
     module_c3d = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
     module = TestUtils.load_module(bionc + "/examples/model_creation/two_side_lower_limbs.py")

@@ -272,10 +272,12 @@ if __name__ == "__main__":
     fext.add_external_force(external_force=force1, segment_index=0)
     fext.add_external_force(external_force=force2, segment_index=1)
 
-    model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(t_final=10, external_forces=fext, nb_segments=nb_segments)
+    model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(
+        t_final=10, external_forces=fext, nb_segments=nb_segments
+    )
 
     # animate the motion
     from bionc import Viz
 
     viz = Viz(model)
-    viz.animate(all_states[:12*nb_segments, :], None)
+    viz.animate(all_states[: 12 * nb_segments, :], None)

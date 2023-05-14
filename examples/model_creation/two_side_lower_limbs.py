@@ -1,8 +1,4 @@
 import os
-from pathlib import Path
-
-import ezc3d
-import numpy as np
 from pyomeca import Markers
 
 from bionc import (
@@ -16,9 +12,12 @@ from bionc import (
     BiomechanicalModel,
     JointType,
 )
+from tests.utils import TestUtils
 
-from right_side_lower_limb import harrington2007, generate_c3d_file
-
+# special load to test the script
+# otherwise one could have use standard import
+bionc = TestUtils.bionc_folder()
+module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
 def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> BiomechanicalModel:
     """
@@ -29,8 +28,8 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     model = BiomechanicalModelTemplate()
     # de_leva = DeLevaTable(total_mass=100, sex="female")
 
-    right_hip_joint = lambda m, bio: harrington2007(m["RFWT"], m["LFWT"], m["RBWT"], m["LBWT"])[0]
-    left_hip_joint = lambda m, bio: harrington2007(m["RFWT"], m["LFWT"], m["RBWT"], m["LBWT"])[1]
+    right_hip_joint = lambda m, bio: module.harrington2007(m["RFWT"], m["LFWT"], m["RBWT"], m["LBWT"])[0]
+    left_hip_joint = lambda m, bio: module.harrington2007(m["RFWT"], m["LFWT"], m["RBWT"], m["LBWT"])[1]
     right_knee_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RKNI", "RKNE")
     right_ankle_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RANE", "RANI")
     left_knee_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "LKNI", "LKNE")
@@ -265,7 +264,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
 
 def main():
     # create a c3d file with data
-    filename = generate_c3d_file(two_side=True)
+    filename = module.generate_c3d_file(two_side=True)
     # Create the model from a c3d file and markers as template
     model = model_creation_from_measured_data(filename)
 

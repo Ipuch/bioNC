@@ -11,7 +11,7 @@ import time
 def main():
     # build the model from the lower limb example
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
+    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     # Generate c3d file
     filename = module.generate_c3d_file()
@@ -22,15 +22,16 @@ def main():
     markers = Markers.from_c3d(filename).to_numpy()[:3, :, :]  # 2 frames
     markers = np.repeat(markers, 100, axis=2)  # 2 x 100 frames
     np.random.seed(42)
-    markers = markers + np.random.normal(0, 0.01, markers.shape)  # add noise
+    markers = markers + np.random.normal(0, 0.05, markers.shape)  # add noise
 
     # you can import the class from bionc
     ik_solver = InverseKinematics(
-        model, markers, solve_frame_per_frame=True, active_direct_frame_constraints=True, use_sx=True
+        model, markers, solve_frame_per_frame=True, active_direct_frame_constraints=False, use_sx=True
     )
 
     tic1 = time.time()
     Qopt_ipopt = ik_solver.solve(method="sqpmethod")  # tend to find lower cost functions but may flip axis.
+    # Qopt_ipopt = ik_solver.solve(method="ipopt")  # tend to find higher cost functions but does not flip axis.
     toc1 = time.time()
 
     print(f"time to solve 200 frames with ipopt: {toc1 - tic1}")
@@ -58,8 +59,9 @@ if __name__ == "__main__":
                 print(f"frame {i} segment {s} has a negative determinant")
 
     plt.plot(det.T, label=model.segment_names, marker="o", ms=1.5)
-    # set ylim -5 5
-    plt.ylim(-5, 5)
+    plt.ylabel("Determinant of the non-orthogonal coordinate system")
+    plt.xlabel("Frame")
+    plt.ylim(-1, 1)
     plt.legend()
     plt.show()
 

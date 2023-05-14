@@ -17,7 +17,7 @@ from tests.utils import TestUtils
 
 # import the lower limb model
 bionc = TestUtils.bionc_folder()
-module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
+module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
 # Choose the optimizer
 optimizer = "ipopt"

@@ -11,7 +11,7 @@ import time
 def main():
     # build the model from the lower limb example
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
+    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     # Generate c3d file
     filename = module.generate_c3d_file()

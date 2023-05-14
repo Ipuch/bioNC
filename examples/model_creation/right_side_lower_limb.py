@@ -255,11 +255,28 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     return natural_model
 
 
-def generate_c3d_file():
+def generate_c3d_file(two_side: bool = False):
+    """
+    This function generates a c3d file with lower limb markers.
+    This is made to not  overload the repository with a c3d file
+
+    Parameters
+    ----------
+    two_side: bool
+        If True, the c3d file will have markers on both side of the body. If False, only the right side will be
+
+    Returns
+    -------
+    c3d: ezc3d.c3d
+        The c3d file
+    """
     # Load an empty c3d structure
     c3d = ezc3d.c3d()
 
     marker_tuple = ("RFWT", "LFWT", "RBWT", "LBWT", "RKNE", "RKNI", "RANE", "RANI", "RHEE", "RTARI", "RTAR")
+    if two_side:
+        marker_tuple_extended = ("LKNE", "LKNI", "LANE", "LANI", "LHEE", "LTARI", "LTAR")
+        marker_tuple += marker_tuple_extended
 
     # Fill it with random data
     c3d["parameters"]["POINT"]["RATE"]["value"] = [100]
@@ -300,6 +317,31 @@ def generate_c3d_file():
     c3d["data"]["points"][:3, 10, :] = np.array(
         [[0.23365552, 0.23372018], [1.49159607, 1.49141943], [0.03238689, 0.03257346]],
     )
+
+    if two_side:
+        # compute the middle of the pelvis (RFWT, RBWT, LFWT, LBWT)
+        pelvis_center = np.mean(c3d["data"]["points"][:3, [0, 2, 1, 3], :], axis=1)
+        # remove two times the difference between each markers and the pelvis center along y axis
+        c3d["data"]["points"][:3, 11, :] = c3d["data"]["points"][:3, 4, :]
+        c3d["data"]["points"][1, 11, :] -= 2 * ( c3d["data"]["points"][1, 4, :] - pelvis_center[1] )
+
+        c3d["data"]["points"][:3, 12, :] = c3d["data"]["points"][:3, 5, :]
+        c3d["data"]["points"][1, 12, :] -= 2 * ( c3d["data"]["points"][1, 5, :] - pelvis_center[1] )
+
+        c3d["data"]["points"][:3, 13, :] = c3d["data"]["points"][:3, 6, :]
+        c3d["data"]["points"][1, 13, :] -= 2 * ( c3d["data"]["points"][1, 6, :] - pelvis_center[1] )
+
+        c3d["data"]["points"][:3, 14, :] = c3d["data"]["points"][:3, 7, :]
+        c3d["data"]["points"][1, 14, :] -= 2 * ( c3d["data"]["points"][1, 7, :] - pelvis_center[1] )
+
+        c3d["data"]["points"][:3, 15, :] = c3d["data"]["points"][:3, 8, :]
+        c3d["data"]["points"][1, 15, :] -= 2 * ( c3d["data"]["points"][1, 8, :] - pelvis_center[1] )
+
+        c3d["data"]["points"][:3, 16, :] = c3d["data"]["points"][:3, 9, :]
+        c3d["data"]["points"][1, 16, :] -= 2 * ( c3d["data"]["points"][1, 9, :] - pelvis_center[1] )
+
+        c3d["data"]["points"][:3, 17, :] = c3d["data"]["points"][:3, 10, :]
+        c3d["data"]["points"][1, 17, :] -= 2 * ( c3d["data"]["points"][1, 10, :] - pelvis_center[1] )
 
     # Write the c3d file
     filename = f"{Path(__file__).parent.resolve()}/statref.c3d"

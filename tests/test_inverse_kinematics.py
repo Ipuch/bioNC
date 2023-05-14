@@ -9890,7 +9890,7 @@ def test_ik_example():
 
 def test_inverse_kinematics_class():
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
+    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     # Generate c3d file
     filename = module.generate_c3d_file()
@@ -9919,7 +9919,7 @@ def test_inverse_kinematics_class():
 
 def test_ik_all_frames():
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/model_creation/main.py")
+    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     # Generate c3d file
     filename = module.generate_c3d_file()

@@ -256,9 +256,7 @@ class ExternalForceList:
             )
 
         if segment_index >= len(self.external_forces):
-            raise ValueError(
-                "The segment index is out of range"
-            )
+            raise ValueError("The segment index is out of range")
 
         segment_natural_external_forces = np.zeros((12, 1))
         for external_force in self.external_forces[segment_index]:

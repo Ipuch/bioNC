@@ -255,4 +255,3 @@ def test_external_force(bionc_type):
         expand=False,
         squeeze=True,
     )
-

@@ -231,3 +231,18 @@ def test_external_force(bionc_type):
         expand=False,
         squeeze=False,
     )
+
+    new_natural_force = force2.transport_to(
+        to_segment_index=0,
+        new_application_point_in_local=np.array([0.005, 0.01, 0.02]),
+        Q=Q,
+        from_segment_index=1,
+    )
+
+    TestUtils.assert_equal(
+        new_natural_force,
+        np.array(
+            [0.0187, 0.17794, 0.0221, 0.1298, 0.1416, 0.29034, -0.0198, -0.0216, -0.16034, 0.17637, 0.0228, 0.0247]
+        ),
+        expand=False,
+    )

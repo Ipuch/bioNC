@@ -246,3 +246,13 @@ def test_external_force(bionc_type):
         ),
         expand=False,
     )
+
+    fext.add_external_force(external_force=force2, segment_index=2)
+    segment_force_2 = fext.to_segment_natural_external_forces(Q=Q, segment_index=2)
+    TestUtils.assert_equal(
+        np.squeeze(segment_force_2) if bionc_type == "numpy" else segment_force_2,
+        np.squeeze(natural_force * 2) if bionc_type == "numpy" else natural_force * 2.0,
+        expand=False,
+        squeeze=True,
+    )
+

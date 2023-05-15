@@ -233,6 +233,41 @@ class ExternalForceList:
 
         return natural_external_forces
 
+    def to_segment_natural_external_forces(self, Q: NaturalCoordinates, segment_index: int) -> np.ndarray:
+        """
+        Converts and sums all the segment natural external forces to the full vector of natural external forces
+        for one segment
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the model
+        segment_index: int
+            The index of the segment
+
+        Returns
+        -------
+        segment_natural_external_forces: np.ndarray
+        """
+
+        if len(self.external_forces) != Q.nb_qi():
+            raise ValueError(
+                "The number of segment in the model and the number of segment in the external forces must be the same"
+            )
+
+        if segment_index >= len(self.external_forces):
+            raise ValueError(
+                "The segment index is out of range"
+            )
+
+        segment_natural_external_forces = np.zeros((12, 1))
+        for external_force in self.external_forces[segment_index]:
+            segment_natural_external_forces += external_force.to_natural_force(Q.vector(segment_index))[
+                :, np.newaxis
+            ]
+
+        return segment_natural_external_forces
+
     def __iter__(self):
         return iter(self.external_forces)
 

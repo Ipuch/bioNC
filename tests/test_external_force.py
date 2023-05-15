@@ -110,7 +110,7 @@ def test_external_force(bionc_type):
     Q2 = SegmentNaturalCoordinates(Q1 + 0.1)
     Q = NaturalCoordinates.from_qi((Q0, Q1, Q2))
 
-    pseudo_interpolation_matrix = force2.compute_pseudo_interpolation_matrix(Q2)
+    pseudo_interpolation_matrix = Q2.compute_pseudo_interpolation_matrix()
     natural_force = force2.to_natural_force(Q2)
     natural_forces = fext.to_natural_external_forces(Q)
 

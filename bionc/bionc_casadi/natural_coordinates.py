@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import MX, vertcat, sum2, cross, sum1
+from casadi import MX, vertcat, inv, cross, sum1
 from typing import Union
 
 from .natural_vector import NaturalVector
@@ -202,6 +202,33 @@ class SegmentNaturalCoordinates(MX):
             return self.w
         else:
             raise ValueError("The axis must be u, v or w")
+
+    def compute_pseudo_interpolation_matrix(self) -> MX:
+        """
+        Return the force moment transformation matrix
+
+        Returns
+        -------
+        MX
+            The force moment transformation matrix
+        """
+        # default we apply force at the proximal point
+
+        left_interpolation_matrix = MX.zeros((12, 3))
+
+        left_interpolation_matrix[9:12, 0] = self.u
+        left_interpolation_matrix[0:3, 1] = self.v
+        left_interpolation_matrix[3:6, 2] = -self.w
+        left_interpolation_matrix[6:9, 2] = self.w
+
+        # Matrix of lever arms for forces equivalent to moment at proximal endpoint, denoted Bstar
+        lever_arm_force_matrix = MX.zeros((3, 3))
+
+        lever_arm_force_matrix[:, 0] = cross(self.w, self.u)
+        lever_arm_force_matrix[:, 1] = cross(self.u, self.v)
+        lever_arm_force_matrix[:, 2] = cross(-self.v, self.w)
+
+        return (left_interpolation_matrix @ inv(lever_arm_force_matrix)).T  # NOTE: inv may induce symbolic error.
 
 
 class NaturalCoordinates(MX):

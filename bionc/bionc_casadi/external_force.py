@@ -67,39 +67,6 @@ class ExternalForce:
         """The torque vector in the global coordinate system"""
         return self.external_forces[0:3]
 
-    @staticmethod
-    def compute_pseudo_interpolation_matrix(Qi: SegmentNaturalCoordinates) -> MX:
-        """
-        Return the force moment transformation matrix
-
-        Parameters
-        ----------
-        Qi : SegmentNaturalCoordinates
-            The natural coordinates of the segment
-
-        Returns
-        -------
-        np.ndarray
-            The force moment transformation matrix
-        """
-        # default we apply force at the proximal point
-
-        left_interpolation_matrix = MX.zeros((12, 3))
-
-        left_interpolation_matrix[9:12, 0] = Qi.u
-        left_interpolation_matrix[0:3, 1] = Qi.v
-        left_interpolation_matrix[3:6, 2] = -Qi.w
-        left_interpolation_matrix[6:9, 2] = Qi.w
-
-        # Matrix of lever arms for forces equivalent to moment at proximal endpoint, denoted Bstar
-        lever_arm_force_matrix = MX.zeros((3, 3))
-
-        lever_arm_force_matrix[:, 0] = cross(Qi.w, Qi.u)
-        lever_arm_force_matrix[:, 1] = cross(Qi.u, Qi.v)
-        lever_arm_force_matrix[:, 2] = cross(-Qi.v, Qi.w)
-
-        return (left_interpolation_matrix @ inv(lever_arm_force_matrix)).T  # NOTE: inv may induce symbolic error.
-
     def to_natural_force(self, Qi: SegmentNaturalCoordinates) -> MX:
         """
         Apply external forces to the segment
@@ -115,7 +82,7 @@ class ExternalForce:
             The external forces adequately transformed for the equation of motion in natural coordinates
         """
 
-        pseudo_interpolation_matrix = self.compute_pseudo_interpolation_matrix(Qi)
+        pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
         point_interpolation_matrix = NaturalVector(self.application_point_in_local).interpolate()
         application_point_in_global = point_interpolation_matrix @ Qi
 

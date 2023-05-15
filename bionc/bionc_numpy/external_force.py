@@ -91,6 +91,24 @@ class ExternalForce:
 
         return np.array(fext)
 
+    def transport_to(self, segment_index, application_point_in_local):
+        """
+        Transport the external force to another segment
+
+        Parameters
+        ----------
+        segment_index: int
+            The index of the segment
+        application_point_in_local: np.ndarray
+            The application point of the force in the natural coordinate system of the segment
+
+        TODO: WAY BETTER... this is not functional yet
+        """
+        self.application_point_in_local = application_point_in_local
+        self.external_forces = np.concatenate((self.torque, self.force))
+        raise NotImplementedError("This function is not functional yet")
+        return self
+
 
 class ExternalForceList:
     """

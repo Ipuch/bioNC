@@ -150,7 +150,7 @@ def inverse_dynamics_recursive_step(
         # transport the generalized forces from the child to the parent proximal point
         intersegmental_generalized_forces[:, segment_index] = intersegmental_generalized_forces.transport_to(
             segment_index=segment_index,
-            # application_point=TODO:
+            application_point=TODO:
         )
         # sum the generalized forces of each subsegments
         intersegmental_generalized_forces[:, segment_index] += intersegmental_generalized_forces[:, child]

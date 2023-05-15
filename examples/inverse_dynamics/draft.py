@@ -1,5 +1,4 @@
-from bionc.bionc_numpy import \
-    (
+from bionc.bionc_numpy import (
     NaturalCoordinates,
     NaturalVelocities,
     NaturalAccelerations,
@@ -87,14 +86,14 @@ def depth_first_search(model, segment_index, visited_segments=None):
 
 
 def inverse_dynamics_recursive_step(
-        model: BiomechanicalModel,
-        Q: NaturalCoordinates,
-        Qdot: NaturalVelocities,
-        Qddot: NaturalAccelerations,
-        external_forces: ExternalForceList,
-        segment_index: int,
-        visited_segments: list[bool, ...] = None,
-        intersegmental_generalized_forces: np.ndarray=None
+    model: BiomechanicalModel,
+    Q: NaturalCoordinates,
+    Qdot: NaturalVelocities,
+    Qddot: NaturalAccelerations,
+    external_forces: ExternalForceList,
+    segment_index: int,
+    visited_segments: list[bool, ...] = None,
+    intersegmental_generalized_forces: np.ndarray = None,
 ):
     """
     This function returns the segments in a depth first search order.
@@ -136,21 +135,20 @@ def inverse_dynamics_recursive_step(
         if visited_segments[child]:
             raise RuntimeError("The model contain closed loops, we cannot use this algorithm")
         if not visited_segments[child]:
-            visited_segments, intersegmental_generalized_forces = \
-                inverse_dynamics_recursive_step(
-                    model,
-                    Q,
-                    Qdot,
-                    Qddot,
-                    external_forces,
-                    child,
-                    visited_segments,
-                    intersegmental_generalized_forces,
-                )
+            visited_segments, intersegmental_generalized_forces = inverse_dynamics_recursive_step(
+                model,
+                Q,
+                Qdot,
+                Qddot,
+                external_forces,
+                child,
+                visited_segments,
+                intersegmental_generalized_forces,
+            )
         # transport the generalized forces from the child to the parent proximal point
         intersegmental_generalized_forces[:, segment_index] = intersegmental_generalized_forces.transport_to(
             segment_index=segment_index,
-            application_point=TODO:
+            # application_point=TODO:DO IT
         )
         # sum the generalized forces of each subsegments
         intersegmental_generalized_forces[:, segment_index] += intersegmental_generalized_forces[:, child]
@@ -167,14 +165,15 @@ def inverse_dynamics_recursive_step(
     return visited_segments, intersegmental_generalized_forces
 
 
-def _one_segment_inverse_dynamics(segment,
-                                  Qi:SegmentNaturalCoordinates,
-                                  Qddoti:SegmentNaturalAccelerations,
-                                  segment_external_forces: ExternalForce,
-                                  ):
+def _one_segment_inverse_dynamics(
+    segment,
+    Qi: SegmentNaturalCoordinates,
+    Qddoti: SegmentNaturalAccelerations,
+    segment_external_forces: ExternalForce,
+):
     """
     This function computes the inverse dynamics of a segment.
-    
+
     Parameters
     ----------
     segment
@@ -192,11 +191,9 @@ def _one_segment_inverse_dynamics(segment,
     rigid_body_constraints = segment.rigid_body_constraints(Q=Qi)
 
     # make a matrix out of it
-    front_matrix = np.hstack((proximal_interpolation_matrix, pseudo_interpolation_matrix, - rigid_body_constraints))
+    front_matrix = np.hstack((proximal_interpolation_matrix, pseudo_interpolation_matrix, -rigid_body_constraints))
 
     # compute the generalized forces
     generalized_forces = np.linalg.inv(front_matrix) @ (
-            segment.mass_matrix @ Qddoti
-            - segment.gravity_force()
-            - segment_external_forces
+        segment.mass_matrix @ Qddoti - segment.gravity_force() - segment_external_forces
     )

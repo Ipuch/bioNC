@@ -107,7 +107,7 @@ class ExternalForce:
         self.application_point_in_local = application_point_in_local
         self.external_forces = np.concatenate((self.torque, self.force))
         raise NotImplementedError("This function is not functional yet")
-        return self
+        # return self
 
 
 class ExternalForceList:

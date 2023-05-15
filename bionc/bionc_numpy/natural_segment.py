@@ -522,9 +522,9 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return self._mass_matrix
 
-    def weight(self) -> np.ndarray:
+    def gravity_force(self) -> np.ndarray:
         """
-        This function returns the weight applied on the segment through gravity force.
+        This function returns the gravity_force applied on the segment through gravity force.
 
         Returns
         -------
@@ -588,7 +588,7 @@ class NaturalSegment(AbstractNaturalSegment):
         A[0:12, 12:18] = Kr.T
         A[12:, 12:18] = np.zeros((6, 6))
 
-        B = np.concatenate([self.weight(), biais], axis=0)
+        B = np.concatenate([self.gravity_force(), biais], axis=0)
 
         # solve the linear system Ax = B with numpy
         x = np.linalg.solve(A, B)

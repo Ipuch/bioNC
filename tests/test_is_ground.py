@@ -87,6 +87,6 @@ def test_ground_segment(bionc_type):
     assert model.holonomic_constraints_jacobian(Q=Q).shape == (6 * 3 + 10, 12 * 3)
     assert model.holonomic_constraints_jacobian_derivative(Qdot=Qdot).shape == (6 * 3 + 10, 12 * 3)
     if bionc_type == "casadi":
-        TestUtils.assert_equal(sum1(model.weight()), np.array([-29.43]))
+        TestUtils.assert_equal(sum1(model.gravity_forces()), np.array([-29.43]))
     else:
-        TestUtils.assert_equal(sum(model.weight()), np.array([-29.43]))
+        TestUtils.assert_equal(sum(model.gravity_forces()), np.array([-29.43]))

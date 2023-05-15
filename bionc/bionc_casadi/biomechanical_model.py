@@ -583,18 +583,18 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return Kdot
 
-    def weight(self) -> MX:
+    def gravity_forces(self) -> MX:
         """
         This function returns the weights caused by the gravity forces on each segment
 
         Returns
         -------
-            The weight of each segment [12 * nb_segments, 1]
+            The gravity_force of each segment [12 * nb_segments, 1]
         """
         weight_vector = MX.zeros((self.nb_segments * 12, 1))
         for i, segment in enumerate(self.segments_no_ground.values()):
             idx = slice(12 * i, 12 * (i + 1))
-            weight_vector[idx] = segment.weight()
+            weight_vector[idx] = segment.gravity_force()
 
         return weight_vector
 
@@ -644,7 +644,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lower_KKT_matrix = horzcat(K, np.zeros((K.shape[0], K.shape[0])))
         KKT_matrix = vertcat(upper_KKT_matrix, lower_KKT_matrix)
 
-        forces = self.weight() + fext
+        forces = self.gravity_forces() + fext
         biais = -Kdot @ Qdot
         B = vertcat(forces, biais)
 

@@ -749,13 +749,13 @@ class GenericBiomechanicalModel(ABC):
         """
 
     @abstractmethod
-    def weight(self):
+    def gravity_forces(self):
         """
         This function returns the weights caused by the gravity forces on each segment
 
         Returns
         -------
-            The weight of each segment [12 * nb_segments, 1]
+            The gravity_force of each segment [12 * nb_segments, 1]
         """
 
     @abstractmethod

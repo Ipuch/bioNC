@@ -479,9 +479,9 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return self._mass_matrix
 
-    def weight(self) -> MX:
+    def gravity_force(self) -> MX:
         """
-        This function returns the weight applied on the segment through gravity force.
+        This function returns the gravity_force applied on the segment through gravity force.
 
         Returns
         -------
@@ -535,7 +535,7 @@ class NaturalSegment(AbstractNaturalSegment):
         A[0:12, 12:18] = Kr.T
         A[12:, 12:18] = MX.zeros((6, 6))
 
-        B = vertcat([self.weight(), biais])
+        B = vertcat([self.gravity_force(), biais])
 
         # solve the linear system Ax = B with numpy
         raise NotImplementedError("This function is not implemented yet")

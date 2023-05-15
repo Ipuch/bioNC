@@ -349,9 +349,9 @@ class AbstractNaturalSegment(ABC):
         """
 
     @abstractmethod
-    def weight(self):
+    def gravity_force(self):
         """
-        This function returns the weight applied on the segment through gravity force.
+        This function returns the gravity_force applied on the segment through gravity force.
         """
 
     @abstractmethod

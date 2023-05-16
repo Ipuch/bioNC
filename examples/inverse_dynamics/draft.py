@@ -9,7 +9,10 @@ from bionc.bionc_numpy import (
     NaturalVector,
     ExternalForce,
     NaturalSegment,
+    JointType,
 )
+
+from bionc import NaturalAxis, CartesianAxis
 
 from bionc import Viz
 import numpy as np
@@ -33,10 +36,10 @@ def inverse_dynamics(
     model: BiomechanicalModel,
     Q: NaturalCoordinates,
     Qddot: NaturalAccelerations,
-    external_forces: ExternalForceList,
+    external_forces: ExternalForceList = None,
 ):
     """
-    This function returns the segments in a depth first search order.
+    This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
 
     Parameters
     ----------
@@ -51,8 +54,12 @@ def inverse_dynamics(
 
     Returns
     -------
-    list[Segment]
-        The segments in a depth first search order
+    torques: np.ndarray
+        The intersegmental torques
+    forces: np.ndarray
+        The intersegmental forces
+    lambdas: np.ndarray
+        The lagrange multipliers due to rigid contacts constraints
     """
 
     if external_forces is None:
@@ -87,9 +94,9 @@ def inverse_dynamics(
 
     # NOTE: This won't work with two independent tree in the same model
     visited_segments = [False for _ in range(model.nb_segments)]
-    torques = np.zeros((model.nb_segments, 3))
-    forces = np.zeros((model.nb_segments, 3))
-    lambdas = np.zeros((model.nb_segments, 3))
+    torques = np.zeros((3, model.nb_segments))
+    forces = np.zeros((3, model.nb_segments))
+    lambdas = np.zeros((6, model.nb_segments))
     _, forces, torques, lambdas = inverse_dynamics_recursive_step(
         model=model,
         Q=Q,
@@ -127,11 +134,11 @@ def _depth_first_search(model, segment_index, visited_segments=None):
         visited_segments = [False for _ in range(model.nb_segments)]
 
     visited_segments[segment_index] = True
-    for child in model.segments[segment_index].childs:
-        if visited_segments[child]:
+    for child_index in model.children(segment_index):
+        if visited_segments[child_index]:
             raise RuntimeError("The model contain closed loops, we cannot use this algorithm")
-        if not visited_segments[child]:
-            visited_segments = (model, child, visited_segments)
+        if not visited_segments[child_index]:
+            visited_segments = _depth_first_search(model, child_index, visited_segments)
 
     return visited_segments
 
@@ -207,10 +214,10 @@ def inverse_dynamics_recursive_step(
             new_application_point_in_local=[0, 0, 0],  # proximal point
             from_segment_index=child_index,
             Q=Q,
-        )
+        )[:, np.newaxis]
 
     force_i, torque_i, lambda_i = _one_segment_inverse_dynamics(
-        segment=model.segments[segment_index],
+        segment=model.segment_from_index(segment_index),
         Qi=Qi,
         Qddoti=Qddoti,
         subtree_intersegmental_generalized_forces=subtree_intersegmental_generalized_forces,
@@ -259,17 +266,96 @@ def _one_segment_inverse_dynamics(
 
     proximal_interpolation_matrix = NaturalVector.proximal().interpolate()
     pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
-    rigid_body_constraints = segment.rigid_body_constraint(Qi=Qi)
+    rigid_body_constraints_jacobian = segment.rigid_body_constraint_jacobian(Qi=Qi)
 
     # make a matrix out of it
-    front_matrix = np.hstack((proximal_interpolation_matrix, pseudo_interpolation_matrix, -rigid_body_constraints))
+    front_matrix = np.hstack((proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T))
 
     # compute the generalized forces
     generalized_forces = np.linalg.inv(front_matrix) @ (
-        segment.mass_matrix @ Qddoti
-        - segment.gravity_force()
+            (segment.mass_matrix @ Qddoti)[:, np.newaxis]
+        - segment.gravity_force()[:, np.newaxis]
         - segment_external_forces
         - subtree_intersegmental_generalized_forces
     )
 
-    return generalized_forces[:3], generalized_forces[3:6], generalized_forces[6:]
+    return generalized_forces[:3, 0], generalized_forces[3:6,0], generalized_forces[6:,0]
+
+
+def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
+    """Build a n-link pendulum model"""
+    if nb_segments < 1:
+        raise ValueError("The number of segment must be greater than 1")
+    # Let's create a model
+    model = BiomechanicalModel()
+    # number of segments
+    # fill the biomechanical model with the segment
+    for i in range(nb_segments):
+        name = f"pendulum_{i}"
+        model[name] = NaturalSegment(
+            name=name,
+            alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
+            beta=np.pi / 2,
+            gamma=np.pi / 2,
+            length=1,
+            mass=1,
+            center_of_mass=np.array([0, -0.5, 0]),  # in segment coordinates system
+            inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+        )
+    # add a revolute joint (still experimental)
+    # if you want to add a revolute joint,
+    # you need to ensure that x is always orthogonal to u and v
+    model._add_joint(
+        dict(
+            name="hinge_0",
+            joint_type=JointType.GROUND_REVOLUTE,
+            parent="GROUND",
+            child="pendulum_0",
+            parent_axis=[CartesianAxis.X, CartesianAxis.X],
+            child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
+            theta=[np.pi / 2, np.pi / 2],
+        )
+    )
+    for i in range(1, nb_segments):
+        model._add_joint(
+            dict(
+                name=f"hinge_{i}",
+                joint_type=JointType.REVOLUTE,
+                parent=f"pendulum_{0}",
+                child=f"pendulum_{i}",
+                parent_axis=[NaturalAxis.U, NaturalAxis.U],
+                child_axis=[NaturalAxis.V, NaturalAxis.W],
+                theta=[np.pi / 2, np.pi / 2],
+            )
+        )
+
+    return model
+
+
+def main():
+
+    nb_segments = 2
+
+    model = build_n_link_pendulum(nb_segments=2)
+
+    tuple_of_Q = [
+        SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i - 1, 0], w=[0, 0, 1])
+        for i in range(0, nb_segments)
+    ]
+    Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
+
+    tuple_of_Qddot = [
+        SegmentNaturalAccelerations.from_components(uddot=[0, 0, 0], rpddot=[0, 0, 0], rdddot=[0, 0, 0], wddot=[0, 0, 0])
+        for i in range(0, nb_segments)
+    ]
+    Qddot = NaturalAccelerations.from_qddoti(tuple(tuple_of_Qddot))
+
+    torques, forces, lambdas = inverse_dynamics(model=model, Q=Q, Qddot=Qddot)
+
+    print(torques)
+    print(forces)
+    print(lambdas)
+
+
+if __name__ == "__main__":
+    main()

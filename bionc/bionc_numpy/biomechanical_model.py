@@ -7,7 +7,6 @@ from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
 from .external_force import ExternalForceList, ExternalForce
-from .natural_vector import NaturalVector
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -722,9 +721,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
     def inverse_dynamics(
         self,
-        Q: NaturalCoordinates,
-        Qddot: NaturalAccelerations,
-        external_forces: ExternalForceList = None,
+            Q: NaturalCoordinates,
+            Qddot: NaturalAccelerations,
+            external_forces: ExternalForceList = None,
     ) -> (np.ndarray, np.ndarray, np.ndarray):
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
@@ -818,7 +817,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         torques: np.ndarray = None,
         forces: np.ndarray = None,
         lambdas: np.ndarray = None,
-    ):
+    )-> (list[bool, ...], np.ndarray, np.ndarray, np.ndarray):
         """
         This function returns the segments in a depth first search order.
 
@@ -843,8 +842,14 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Returns
         -------
-        list[Segment]
-            The segments in a depth first search order
+        visited_segments: list[bool]
+            The segments already visited
+        torques: np.ndarray
+            The intersegmental torques applied to the segments
+        forces: np.ndarray
+            The intersegmental forces applied to the segments
+        lambdas: np.ndarray
+            The lagrange multipliers applied to the segments
         """
         visited_segments[segment_index] = True
 

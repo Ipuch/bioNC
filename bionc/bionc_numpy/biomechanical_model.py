@@ -6,7 +6,8 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
-from .external_force import ExternalForceList
+from .external_force import ExternalForceList, ExternalForce
+from .natural_vector import NaturalVector
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -718,3 +719,173 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The inverse kinematics object
         """
         return InverseKinematics(self, experimental_markers, Q_init, solve_frame_per_frame)
+
+    def inverse_dynamics(
+            self,
+            Q: NaturalCoordinates,
+            Qddot: NaturalAccelerations,
+            external_forces: ExternalForceList = None,
+    ) -> (np.ndarray, np.ndarray, np.ndarray):
+        """
+        This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
+
+        Source
+        ------
+        Dumas. R and Chèze. L (2006).
+        3D inverse dynamics in non-orthonormal segment coordinate system. Med Bio Eng Comput.
+        DOI 10.1007/s11517-006-0156-8
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The generalized coordinates of the model
+        Qddot: NaturalAccelerations
+            The generalized accelerations of the model
+        external_forces: ExternalForceList
+            The external forces applied to the model
+
+        Returns
+        -------
+        torques: np.ndarray
+            The intersegmental torques
+        forces: np.ndarray
+            The intersegmental forces
+        lambdas: np.ndarray
+            The lagrange multipliers due to rigid contacts constraints
+
+        NOTE:
+        - This won't work if there is several independant trees
+        - All segments need to be connected through a joint
+
+
+        """
+
+        if external_forces is None:
+            external_forces = ExternalForceList.empty_from_nb_segment(self.nb_segments)
+        else:
+            if external_forces.nb_segments != self.nb_segments:
+                raise ValueError(
+                    f"The number of segments in the model and the external forces must be the same:"
+                    f" segment number = {self.nb_segments}"
+                    f" external force size = {external_forces.nb_segments}"
+                )
+
+        if Q is None:
+            raise ValueError(f"The generalized coordinates must be provided")
+        if Q.nb_qi() != self.nb_segments:
+            raise ValueError(
+                f"The number of generalized coordinates in the model and the generalized coordinates must be the same:"
+                f" model number = {self.nb_segments}"
+                f" generalized coordinates size = {Q.nb_qi()}"
+            )
+        if Qddot is None:
+            raise ValueError(f"The generalized accelerations must be provided")
+        if Qddot.nb_qddoti() != self.nb_segments:
+            raise ValueError(
+                f"The number of generalized accelerations in the model and the generalized accelerations must be the same:"
+                f" model number = {self.nb_segments}"
+                f" generalized accelerations size = {Qddot.nb_qddoti()}"
+            )
+
+        # last check to verify that the model doesn't contain any closed loop
+        self._depth_first_search(0, visited_segments=None)
+
+        # NOTE: This won't work with two independent tree in the same model
+        visited_segments = [False for _ in range(self.nb_segments)]
+        torques = np.zeros((3, self.nb_segments))
+        forces = np.zeros((3, self.nb_segments))
+        lambdas = np.zeros((6, self.nb_segments))
+        _, forces, torques, lambdas = self._inverse_dynamics_recursive_step(
+            Q=Q,
+            Qddot=Qddot,
+            external_forces=external_forces,
+            segment_index=0,
+            visited_segments=visited_segments,
+            torques=torques,
+            forces=forces,
+            lambdas=lambdas,
+        )
+
+        return torques, forces, lambdas
+
+    def _inverse_dynamics_recursive_step(
+            self,
+            Q: NaturalCoordinates,
+            Qddot: NaturalAccelerations,
+            external_forces: ExternalForceList,
+            segment_index: int = 0,
+            visited_segments: list[bool, ...] = None,
+            torques: np.ndarray = None,
+            forces: np.ndarray = None,
+            lambdas: np.ndarray = None,
+    ):
+        """
+        This function returns the segments in a depth first search order.
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The generalized coordinates of the model
+        Qddot: NaturalAccelerations
+            The generalized accelerations of the model
+        external_forces: ExternalForceList
+            The external forces applied to the model
+        segment_index: int
+            The index of the segment to start the search from
+        visited_segments: list[bool]
+            The segments already visited
+        torques: np.ndarray
+            The intersegmental torques applied to the segments
+        forces: np.ndarray
+            The intersegmental forces applied to the segments
+        lambdas: np.ndarray
+            The lagrange multipliers applied to the segments
+
+        Returns
+        -------
+        list[Segment]
+            The segments in a depth first search order
+        """
+        visited_segments[segment_index] = True
+
+        Qi = Q.vector(segment_index)
+        Qddoti = Qddot.vector(segment_index)
+        external_forces_i = external_forces.to_segment_natural_external_forces(segment_index=segment_index, Q=Q)
+
+        subtree_intersegmental_generalized_forces = np.zeros((12, 1))
+        for child_index in self.children(segment_index):
+            if not visited_segments[child_index]:
+                visited_segments, torques, forces, lambdas = self._inverse_dynamics_recursive_step(
+                    Q,
+                    Qddot,
+                    external_forces,
+                    child_index,
+                    visited_segments=visited_segments,
+                    torques=torques,
+                    forces=forces,
+                    lambdas=lambdas,
+                )
+            # sum the generalized forces of each subsegment and transport them to the parent proximal point
+            intersegmental_generalized_forces = ExternalForce.from_components(
+                application_point_in_local=[0, 0, 0], force=forces[:, child_index], torque=torques[:, child_index]
+            )
+            subtree_intersegmental_generalized_forces += intersegmental_generalized_forces.transport_to(
+                to_segment_index=segment_index,
+                new_application_point_in_local=[0, 0, 0],  # proximal point
+                from_segment_index=child_index,
+                Q=Q,
+            )[:, np.newaxis]
+        segment_i = self.segment_from_index(segment_index)
+
+        force_i, torque_i, lambda_i = segment_i._one_segment_inverse_dynamics(
+            Qi=Qi,
+            Qddoti=Qddoti,
+            subtree_intersegmental_generalized_forces=subtree_intersegmental_generalized_forces,
+            segment_external_forces=external_forces_i,
+        )
+        # re-assigned the computed values to the output arrays
+        torques[:, segment_index] = torque_i
+        forces[:, segment_index] = force_i
+        lambdas[:, segment_index] = lambda_i
+
+        return visited_segments, torques, forces, lambdas

@@ -814,7 +814,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         torques: np.ndarray = None,
         forces: np.ndarray = None,
         lambdas: np.ndarray = None,
-    ) -> (list[bool, ...], np.ndarray, np.ndarray, np.ndarray):
+    ) -> tuple[list[bool, ...], np.ndarray, np.ndarray, np.ndarray]:
         """
         This function returns the segments in a depth first search order.
 
@@ -839,14 +839,15 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Returns
         -------
-        visited_segments: list[bool]
-            The segments already visited
-        torques: np.ndarray
-            The intersegmental torques applied to the segments
-        forces: np.ndarray
-            The intersegmental forces applied to the segments
-        lambdas: np.ndarray
-            The lagrange multipliers applied to the segments
+        tuple[list[bool, ...], np.ndarray, np.ndarray, np.ndarray]
+            visited_segments: list[bool]
+                The segments already visited
+            torques: np.ndarray
+                The intersegmental torques applied to the segments
+            forces: np.ndarray
+                The intersegmental forces applied to the segments
+            lambdas: np.ndarray
+                The lagrange multipliers applied to the segments
         """
         visited_segments[segment_index] = True
 

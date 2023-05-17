@@ -721,9 +721,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
     def inverse_dynamics(
         self,
-            Q: NaturalCoordinates,
-            Qddot: NaturalAccelerations,
-            external_forces: ExternalForceList = None,
+        Q: NaturalCoordinates,
+        Qddot: NaturalAccelerations,
+        external_forces: ExternalForceList = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
@@ -814,7 +814,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         torques: np.ndarray = None,
         forces: np.ndarray = None,
         lambdas: np.ndarray = None,
-    )-> (list[bool, ...], np.ndarray, np.ndarray, np.ndarray):
+    ) -> (list[bool, ...], np.ndarray, np.ndarray, np.ndarray):
         """
         This function returns the segments in a depth first search order.
 

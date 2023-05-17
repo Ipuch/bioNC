@@ -1,22 +1,16 @@
 from bionc.bionc_numpy import (
     NaturalCoordinates,
-    NaturalVelocities,
     NaturalAccelerations,
     ExternalForceList,
     BiomechanicalModel,
     SegmentNaturalCoordinates,
     SegmentNaturalAccelerations,
-    NaturalVector,
-    ExternalForce,
     NaturalSegment,
     JointType,
 )
 
 from bionc import NaturalAxis, CartesianAxis
-
-from bionc import Viz
 import numpy as np
-from tests.utils import TestUtils
 
 
 def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:

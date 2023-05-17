@@ -724,7 +724,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Q: NaturalCoordinates,
             Qddot: NaturalAccelerations,
             external_forces: ExternalForceList = None,
-    ) -> (np.ndarray, np.ndarray, np.ndarray):
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
 
@@ -745,12 +745,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Returns
         -------
-        torques: np.ndarray
-            The intersegmental torques
-        forces: np.ndarray
-            The intersegmental forces
-        lambdas: np.ndarray
-            The lagrange multipliers due to rigid contacts constraints
+        tuple[np.ndarray, np.ndarray, np.ndarray]
+            The forces, torques and lambdas
+
 
         NOTE:
         - This won't work if there is several independent trees

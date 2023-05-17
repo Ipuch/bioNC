@@ -832,7 +832,7 @@ class GenericBiomechanicalModel(ABC):
     @abstractmethod
     def inverse_dynamics(
         self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceList = None
-    )-> tuple[Any, Any, Any]:
+    ) -> tuple[Any, Any, Any]:
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
 
@@ -853,10 +853,6 @@ class GenericBiomechanicalModel(ABC):
 
         Returns
         -------
-        torques: np.ndarray
-           The intersegmental torques
-        forces: np.ndarray
-           The intersegmental forces
-        lambdas: np.ndarray
-           The lagrange multipliers due to rigid contacts constraints
+        tuple[Any, Any, Any]
+            The forces, torques and lambdas
         """

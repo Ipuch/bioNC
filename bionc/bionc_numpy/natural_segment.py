@@ -806,11 +806,11 @@ class NaturalSegment(AbstractNaturalSegment):
         return 0.5 * transpose(Qdoti.to_array()) @ self.mass_matrix @ Qdoti.to_array()
 
     def _one_segment_inverse_dynamics(
-            self,
-            Qi: SegmentNaturalCoordinates,
-            Qddoti: SegmentNaturalAccelerations,
-            subtree_intersegmental_generalized_forces: np.ndarray,
-            segment_external_forces: np.ndarray,
+        self,
+        Qi: SegmentNaturalCoordinates,
+        Qddoti: SegmentNaturalAccelerations,
+        subtree_intersegmental_generalized_forces: np.ndarray,
+        segment_external_forces: np.ndarray,
     ):
         """
         This function computes the inverse dynamics of a segment.
@@ -842,14 +842,15 @@ class NaturalSegment(AbstractNaturalSegment):
 
         # make a matrix out of it, todo: would be great to know if there is an analytical way to compute this matrix
         front_matrix = np.hstack(
-            (proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T))
+            (proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T)
+        )
 
         # compute the generalized forces
         generalized_forces = np.linalg.inv(front_matrix) @ (
-                (self.mass_matrix @ Qddoti)[:, np.newaxis]
-                - self.gravity_force()[:, np.newaxis]
-                - segment_external_forces
-                - subtree_intersegmental_generalized_forces
+            (self.mass_matrix @ Qddoti)[:, np.newaxis]
+            - self.gravity_force()[:, np.newaxis]
+            - segment_external_forces
+            - subtree_intersegmental_generalized_forces
         )
 
         return generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0]

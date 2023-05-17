@@ -35,7 +35,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
             beta=np.pi / 2,
             gamma=np.pi / 2,
             length=1,
-            mass=1*i,
+            mass=1 * i,
             center_of_mass=np.array([0, -0.5, 0]),  # in segment coordinates system
             inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
         )
@@ -70,7 +70,6 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
 
 
 def main():
-
     nb_segments = 3
 
     model = build_n_link_pendulum(nb_segments=nb_segments)
@@ -81,16 +80,20 @@ def main():
     #     for i in range(0, nb_segments)
     # ]
 
-    #vertical
+    # vertical
     tuple_of_Q = [
-        SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, -i if i <= 1 else -1], rd=[0, 0, -i - 1 if i <= 1 else -2], w=[0, -1, 0])
+        SegmentNaturalCoordinates.from_components(
+            u=[1, 0, 0], rp=[0, 0, -i if i <= 1 else -1], rd=[0, 0, -i - 1 if i <= 1 else -2], w=[0, -1, 0]
+        )
         for i in range(0, nb_segments)
     ]
 
     Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
 
     tuple_of_Qddot = [
-        SegmentNaturalAccelerations.from_components(uddot=[0, 0, 0], rpddot=[0, 0, 0], rdddot=[0, 0, 0], wddot=[0, 0, 0])
+        SegmentNaturalAccelerations.from_components(
+            uddot=[0, 0, 0], rpddot=[0, 0, 0], rdddot=[0, 0, 0], wddot=[0, 0, 0]
+        )
         for i in range(0, nb_segments)
     ]
     Qddot = NaturalAccelerations.from_qddoti(tuple(tuple_of_Qddot))

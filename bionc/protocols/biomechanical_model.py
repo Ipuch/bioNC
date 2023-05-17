@@ -830,7 +830,9 @@ class GenericBiomechanicalModel(ABC):
         return visited_segments
 
     @abstractmethod
-    def inverse_dynamics(self, Q:NaturalCoordinates, Qddot: NaturalAccelerations,  external_forces: ExternalForceList = None):
+    def inverse_dynamics(
+        self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceList = None
+    ):
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
 

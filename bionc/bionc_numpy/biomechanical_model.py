@@ -721,10 +721,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         return InverseKinematics(self, experimental_markers, Q_init, solve_frame_per_frame)
 
     def inverse_dynamics(
-            self,
-            Q: NaturalCoordinates,
-            Qddot: NaturalAccelerations,
-            external_forces: ExternalForceList = None,
+        self,
+        Q: NaturalCoordinates,
+        Qddot: NaturalAccelerations,
+        external_forces: ExternalForceList = None,
     ) -> (np.ndarray, np.ndarray, np.ndarray):
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
@@ -754,7 +754,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The lagrange multipliers due to rigid contacts constraints
 
         NOTE:
-        - This won't work if there is several independant trees
+        - This won't work if there is several independent trees
         - All segments need to be connected through a joint
 
 
@@ -809,15 +809,15 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         return torques, forces, lambdas
 
     def _inverse_dynamics_recursive_step(
-            self,
-            Q: NaturalCoordinates,
-            Qddot: NaturalAccelerations,
-            external_forces: ExternalForceList,
-            segment_index: int = 0,
-            visited_segments: list[bool, ...] = None,
-            torques: np.ndarray = None,
-            forces: np.ndarray = None,
-            lambdas: np.ndarray = None,
+        self,
+        Q: NaturalCoordinates,
+        Qddot: NaturalAccelerations,
+        external_forces: ExternalForceList,
+        segment_index: int = 0,
+        visited_segments: list[bool, ...] = None,
+        torques: np.ndarray = None,
+        forces: np.ndarray = None,
+        lambdas: np.ndarray = None,
     ):
         """
         This function returns the segments in a depth first search order.

@@ -717,7 +717,7 @@ class GenericBiomechanicalModel(ABC):
         """
 
     @abstractmethod
-    def holonomic_constraints(self, Q: NaturalCoordinates):
+    def holonomic_constraints(self, Q: NaturalCoordinates) -> MX | np.ndarray:
         """
         This function returns the holonomic constraints of the system, denoted Phi_h
         as a function of the natural coordinates Q. They are organized as follow, for each segment:
@@ -832,7 +832,7 @@ class GenericBiomechanicalModel(ABC):
     @abstractmethod
     def inverse_dynamics(
         self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceList = None
-    ) -> tuple[Any, Any, Any]:
+    ) -> tuple[np.ndarray | MX, np.ndarray | MX, np.ndarray | MX]:
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
 

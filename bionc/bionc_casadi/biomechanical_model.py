@@ -653,3 +653,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Qddot = x[0 : self.nb_Qddot]
         lagrange_multipliers = x[self.nb_Qddot :]
         return NaturalAccelerations(Qddot), lagrange_multipliers
+
+    def inverse_dynamics(
+        self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceList = None
+    ) -> tuple[np.ndarray | MX, np.ndarray | MX, np.ndarray | MX]:
+        pass

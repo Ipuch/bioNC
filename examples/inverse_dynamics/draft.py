@@ -1,7 +1,6 @@
 from bionc.bionc_numpy import (
     NaturalCoordinates,
     NaturalAccelerations,
-    ExternalForceList,
     BiomechanicalModel,
     SegmentNaturalCoordinates,
     SegmentNaturalAccelerations,

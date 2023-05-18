@@ -725,37 +725,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Qddot: NaturalAccelerations,
         external_forces: ExternalForceList = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
-
-        Source
-        ------
-        Dumas. R and Chèze. L (2006).
-        3D inverse dynamics in non-orthonormal segment coordinate system. Med Bio Eng Comput.
-        DOI 10.1007/s11517-006-0156-8
-
-        Parameters
-        ----------
-        Q: NaturalCoordinates
-            The generalized coordinates of the model
-        Qddot: NaturalAccelerations
-            The generalized accelerations of the model
-        external_forces: ExternalForceList
-            The external forces applied to the model
-
-        Returns
-        -------
-        tuple[np.ndarray, np.ndarray, np.ndarray]
-            The forces, torques and lambdas
-
-
-        NOTE:
-        - This won't work if there is several independent trees
-        - All segments need to be connected through a joint
-
-
-        """
-
         if external_forces is None:
             external_forces = ExternalForceList.empty_from_nb_segment(self.nb_segments)
         else:

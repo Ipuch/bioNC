@@ -69,6 +69,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
     "bionc_type",
     [
         "numpy",
+        "casadi",
     ],
 )
 def test_inverse_dynamics(bionc_type):

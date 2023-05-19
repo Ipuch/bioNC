@@ -849,7 +849,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             )[:, np.newaxis]
         segment_i = self.segment_from_index(segment_index)
 
-        force_i, torque_i, lambda_i = segment_i._one_segment_inverse_dynamics(
+        force_i, torque_i, lambda_i = segment_i.inverse_dynamics(
             Qi=Qi,
             Qddoti=Qddoti,
             subtree_intersegmental_generalized_forces=subtree_intersegmental_generalized_forces,

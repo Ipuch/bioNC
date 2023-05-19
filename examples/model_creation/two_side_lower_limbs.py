@@ -294,7 +294,7 @@ def main():
 
     # display the experimental markers in red and the model markers in green
     # almost superimposed because the model is well defined on the experimental data
-    bionc_viz = Viz(model, show_center_of_mass=False, show_model_markers=True, show_frames=False)
+    bionc_viz = Viz(model, show_center_of_mass=False, show_model_markers=True, show_frames=True)
     # bionc_viz.animate(Qxp, markers_xp=markers_xp)
     bionc_viz.animate(Qxp, markers_xp=markers_xp)
 

@@ -64,39 +64,6 @@ class ExternalForce:
         """The torque vector in the global coordinate system"""
         return self.external_forces[0:3]
 
-    @staticmethod
-    def compute_pseudo_interpolation_matrix(Qi: SegmentNaturalCoordinates) -> np.ndarray:
-        """
-        Return the force moment transformation matrix
-
-        Parameters
-        ----------
-        Qi : SegmentNaturalCoordinates
-            The natural coordinates of the segment
-
-        Returns
-        -------
-        np.ndarray
-            The force moment transformation matrix
-        """
-        # default we apply force at the proximal point
-
-        left_interpolation_matrix = np.zeros((12, 3))
-
-        left_interpolation_matrix[9:12, 0] = Qi.u
-        left_interpolation_matrix[0:3, 1] = Qi.v
-        left_interpolation_matrix[3:6, 2] = -Qi.w
-        left_interpolation_matrix[6:9, 2] = Qi.w
-
-        # Matrix of lever arms for forces equivalent to moment at proximal endpoint, denoted Bstar
-        lever_arm_force_matrix = np.zeros((3, 3))
-
-        lever_arm_force_matrix[:, 0] = np.cross(Qi.w, Qi.u)
-        lever_arm_force_matrix[:, 1] = np.cross(Qi.u, Qi.v)
-        lever_arm_force_matrix[:, 2] = np.cross(-Qi.v, Qi.w)
-
-        return (left_interpolation_matrix @ np.linalg.inv(lever_arm_force_matrix)).T
-
     def to_natural_force(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
         Apply external forces to the segment
@@ -109,20 +76,63 @@ class ExternalForce:
         Returns
         -------
         np.ndarray
-            The external forces adequately transformed for the equation of motion in natural coordinates
+            The external forces adequately transformed for the equation of motion in natural coordinates [12 x 1]
         """
 
-        pseudo_interpolation_matrix = self.compute_pseudo_interpolation_matrix(Qi)
+        pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
         point_interpolation_matrix = NaturalVector(self.application_point_in_local).interpolate()
         application_point_in_global = np.array(point_interpolation_matrix @ Qi).squeeze()
 
         fext = point_interpolation_matrix.T @ self.force
         fext += pseudo_interpolation_matrix.T @ self.torque
 
-        # Bour's formula to transport the moment from the application point to the proximal point
-        # fext += pseudo_interpolation_matrix.T @ np.cross(application_point_in_global - Qi.rp, self.force)
-
         return np.array(fext)
+
+    def transport_to(
+        self,
+        to_segment_index: int,
+        new_application_point_in_local: np.ndarray,
+        Q: NaturalCoordinates,
+        from_segment_index: int,
+    ):
+        """
+        Transport the external force to another segment and another application point
+
+        Parameters
+        ----------
+        to_segment_index: int
+            The index of the new segment
+        new_application_point_in_local: np.ndarray
+            The application point of the force in the natural coordinate system of the new segment
+        Q: NaturalCoordinates
+            The natural coordinates of the system
+        from_segment_index: int
+            The index of the current segment the force is applied on
+
+        Returns
+        -------
+        np.ndarray
+            The external forces adequately transformed for the equation of motion in natural coordinates [12 x 1]
+        """
+
+        Qi_old = Q.vector(from_segment_index)
+        Qi_new = Q.vector(to_segment_index)
+
+        old_point_interpolation_matrix = NaturalVector(self.application_point_in_local).interpolate()
+        new_point_interpolation_matrix = NaturalVector(new_application_point_in_local).interpolate()
+
+        old_application_point_in_global = np.array(old_point_interpolation_matrix @ Qi_old).squeeze()
+        new_application_point_in_global = np.array(new_point_interpolation_matrix @ Qi_new).squeeze()
+
+        new_pseudo_interpolation_matrix = Qi_new.compute_pseudo_interpolation_matrix()
+
+        # Bour's formula to transport the moment from the application point to the new application point
+        lever_arm = new_application_point_in_global - old_application_point_in_global
+        additional_torque = new_pseudo_interpolation_matrix.T @ np.cross(lever_arm, self.force)
+        fext = self.to_natural_force(Qi_new)
+        fext += additional_torque
+
+        return fext
 
 
 class ExternalForceList:
@@ -222,6 +232,37 @@ class ExternalForceList:
             natural_external_forces[slice_index, 0:1] = segment_natural_external_forces
 
         return natural_external_forces
+
+    def to_segment_natural_external_forces(self, Q: NaturalCoordinates, segment_index: int) -> np.ndarray:
+        """
+        Converts and sums all the segment natural external forces to the full vector of natural external forces
+        for one segment
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the model
+        segment_index: int
+            The index of the segment
+
+        Returns
+        -------
+        segment_natural_external_forces: np.ndarray
+        """
+
+        if len(self.external_forces) != Q.nb_qi():
+            raise ValueError(
+                "The number of segment in the model and the number of segment in the external forces must be the same"
+            )
+
+        if segment_index >= len(self.external_forces):
+            raise ValueError("The segment index is out of range")
+
+        segment_natural_external_forces = np.zeros((12, 1))
+        for external_force in self.external_forces[segment_index]:
+            segment_natural_external_forces += external_force.to_natural_force(Q.vector(segment_index))[:, np.newaxis]
+
+        return segment_natural_external_forces
 
     def __iter__(self):
         return iter(self.external_forces)

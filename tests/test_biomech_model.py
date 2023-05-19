@@ -9470,7 +9470,7 @@ def test_biomech_model_mass(bionc_type):
     )
     TestUtils.assert_equal(model.mass_matrix, G)
 
-    P = model.weight()
+    P = model.gravity_forces()
 
     assert P.shape[0] == 24
 

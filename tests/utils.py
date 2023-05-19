@@ -61,6 +61,9 @@ class TestUtils:
         """
         Assert that a casadi MX is equal to a numpy array if it is only numeric values
         """
+        if isinstance(expected, MX):
+            expected = TestUtils.mx_to_array(mx, squeeze=squeeze, expand=expand)
+
         np.testing.assert_almost_equal(
             TestUtils.mx_to_array(mx, squeeze=squeeze, expand=expand), expected, decimal=decimal
         )

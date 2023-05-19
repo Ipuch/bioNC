@@ -522,9 +522,9 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return self._mass_matrix
 
-    def weight(self) -> np.ndarray:
+    def gravity_force(self) -> np.ndarray:
         """
-        This function returns the weight applied on the segment through gravity force.
+        This function returns the gravity_force applied on the segment through gravity force.
 
         Returns
         -------
@@ -588,7 +588,7 @@ class NaturalSegment(AbstractNaturalSegment):
         A[0:12, 12:18] = Kr.T
         A[12:, 12:18] = np.zeros((6, 6))
 
-        B = np.concatenate([self.weight(), biais], axis=0)
+        B = np.concatenate([self.gravity_force(), biais], axis=0)
 
         # solve the linear system Ax = B with numpy
         x = np.linalg.solve(A, B)
@@ -804,3 +804,31 @@ class NaturalSegment(AbstractNaturalSegment):
             Kinetic energy of the segment
         """
         return 0.5 * transpose(Qdoti.to_array()) @ self.mass_matrix @ Qdoti.to_array()
+
+    def inverse_dynamics(
+        self,
+        Qi: SegmentNaturalCoordinates,
+        Qddoti: SegmentNaturalAccelerations,
+        subtree_intersegmental_generalized_forces: np.ndarray,
+        segment_external_forces: np.ndarray,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        proximal_interpolation_matrix = NaturalVector.proximal().interpolate()
+        pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
+        rigid_body_constraints_jacobian = self.rigid_body_constraint_jacobian(Qi=Qi)
+
+        # make a matrix out of it, todo: would be great to know if there is an analytical way to compute this matrix
+        front_matrix = np.hstack(
+            (proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T)
+        )
+
+        b = (
+            (self.mass_matrix @ Qddoti)[:, np.newaxis]
+            - self.gravity_force()[:, np.newaxis]
+            - segment_external_forces
+            - subtree_intersegmental_generalized_forces
+        )
+
+        # compute the generalized forces
+        generalized_forces = np.linalg.inv(front_matrix) @ b
+
+        return generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0]

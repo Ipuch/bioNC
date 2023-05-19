@@ -110,7 +110,7 @@ def test_external_force(bionc_type):
     Q2 = SegmentNaturalCoordinates(Q1 + 0.1)
     Q = NaturalCoordinates.from_qi((Q0, Q1, Q2))
 
-    pseudo_interpolation_matrix = force2.compute_pseudo_interpolation_matrix(Q2)
+    pseudo_interpolation_matrix = Q2.compute_pseudo_interpolation_matrix()
     natural_force = force2.to_natural_force(Q2)
     natural_forces = fext.to_natural_external_forces(Q)
 
@@ -230,4 +230,28 @@ def test_external_force(bionc_type):
         ),
         expand=False,
         squeeze=False,
+    )
+
+    new_natural_force = force2.transport_to(
+        to_segment_index=0,
+        new_application_point_in_local=np.array([0.005, 0.01, 0.02]),
+        Q=Q,
+        from_segment_index=1,
+    )
+
+    TestUtils.assert_equal(
+        new_natural_force,
+        np.array(
+            [0.0187, 0.17794, 0.0221, 0.1298, 0.1416, 0.29034, -0.0198, -0.0216, -0.16034, 0.17637, 0.0228, 0.0247]
+        ),
+        expand=False,
+    )
+
+    fext.add_external_force(external_force=force2, segment_index=2)
+    segment_force_2 = fext.to_segment_natural_external_forces(Q=Q, segment_index=2)
+    TestUtils.assert_equal(
+        np.squeeze(segment_force_2) if bionc_type == "numpy" else segment_force_2,
+        np.squeeze(natural_force * 2) if bionc_type == "numpy" else natural_force * 2.0,
+        expand=False,
+        squeeze=True,
     )

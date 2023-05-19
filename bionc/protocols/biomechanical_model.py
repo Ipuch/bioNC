@@ -7,6 +7,8 @@ import dill as pickle
 
 from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
+from bionc.protocols.natural_accelerations import NaturalAccelerations
+from bionc.protocols.external_force import ExternalForceList
 
 
 class GenericBiomechanicalModel(ABC):
@@ -222,7 +224,7 @@ class GenericBiomechanicalModel(ABC):
         elif isinstance(segment, int):
             segment = self.segment_from_index(segment)
         for joint in self.joints.values():
-            if joint.parent == segment:
+            if joint.parent is not None and joint.parent.name == segment.name:
                 children.append(joint.child.index)
         return children
 
@@ -715,7 +717,7 @@ class GenericBiomechanicalModel(ABC):
         """
 
     @abstractmethod
-    def holonomic_constraints(self, Q: NaturalCoordinates):
+    def holonomic_constraints(self, Q: NaturalCoordinates) -> MX | np.ndarray:
         """
         This function returns the holonomic constraints of the system, denoted Phi_h
         as a function of the natural coordinates Q. They are organized as follow, for each segment:
@@ -749,13 +751,13 @@ class GenericBiomechanicalModel(ABC):
         """
 
     @abstractmethod
-    def weight(self):
+    def gravity_forces(self):
         """
         This function returns the weights caused by the gravity forces on each segment
 
         Returns
         -------
-            The weight of each segment [12 * nb_segments, 1]
+            The gravity_force of each segment [12 * nb_segments, 1]
         """
 
     @abstractmethod
@@ -795,4 +797,62 @@ class GenericBiomechanicalModel(ABC):
         -------
             The position of the center of mass [3, nbSegments]
             in the global coordinate system/ inertial coordinate system
+        """
+
+    def _depth_first_search(self, segment_index, visited_segments=None) -> list[bool]:
+        """
+        This function returns the segments in a depth first search order.
+
+        todo: generalize to any number of segments with no parent.
+
+        Parameters
+        ----------
+        segment_index: int
+            The index of the segment to start the search from
+        visited_segments: list[Segment]
+            The segments already visited
+
+        Returns
+        -------
+        list[bool, ...
+            The segments in a depth first search order
+        """
+        if visited_segments is None:
+            visited_segments = [False for _ in range(self.nb_segments)]
+
+        visited_segments[segment_index] = True
+        for child_index in self.children(segment_index):
+            if visited_segments[child_index]:
+                raise RuntimeError("The model contain closed loops, we cannot use this algorithm")
+            if not visited_segments[child_index]:
+                visited_segments = self._depth_first_search(child_index, visited_segments)
+
+        return visited_segments
+
+    @abstractmethod
+    def inverse_dynamics(
+        self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceList = None
+    ) -> tuple[np.ndarray | MX, np.ndarray | MX, np.ndarray | MX]:
+        """
+        This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
+
+        Source
+        ------
+        Dumas. R and Chèze. L (2006).
+        3D inverse dynamics in non-orthonormal segment coordinate system. Med Bio Eng Comput.
+        DOI 10.1007/s11517-006-0156-8
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+           The generalized coordinates of the model
+        Qddot: NaturalAccelerations
+           The generalized accelerations of the model
+        external_forces: ExternalForceList
+           The external forces applied to the model
+
+        Returns
+        -------
+        tuple[Any, Any, Any]
+            The forces, torques and lambdas
         """

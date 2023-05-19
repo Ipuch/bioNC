@@ -2,7 +2,7 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, cross, norm_2
+from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, cross, norm_2, horzcat, solve
 
 from ..bionc_casadi.natural_coordinates import SegmentNaturalCoordinates
 from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities
@@ -479,9 +479,9 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return self._mass_matrix
 
-    def weight(self) -> MX:
+    def gravity_force(self) -> MX:
         """
-        This function returns the weight applied on the segment through gravity force.
+        This function returns the gravity_force applied on the segment through gravity force.
 
         Returns
         -------
@@ -535,7 +535,7 @@ class NaturalSegment(AbstractNaturalSegment):
         A[0:12, 12:18] = Kr.T
         A[12:, 12:18] = MX.zeros((6, 6))
 
-        B = vertcat([self.weight(), biais])
+        B = vertcat([self.gravity_force(), biais])
 
         # solve the linear system Ax = B with numpy
         raise NotImplementedError("This function is not implemented yet")
@@ -753,3 +753,32 @@ class NaturalSegment(AbstractNaturalSegment):
             Kinetic energy of the segment
         """
         return 0.5 * transpose(Qdoti.to_array()) @ (self.mass_matrix @ Qdoti.to_array())
+
+    def inverse_dynamics(
+        self,
+        Qi: SegmentNaturalCoordinates,
+        Qddoti: SegmentNaturalAccelerations,
+        subtree_intersegmental_generalized_forces: MX,
+        segment_external_forces: MX,
+    ) -> tuple[MX, MX, MX]:
+        proximal_interpolation_matrix = NaturalVector.proximal().interpolate()
+        pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
+        rigid_body_constraints_jacobian = self.rigid_body_constraint_jacobian(Qi=Qi)
+
+        # make a matrix out of it, so that we can solve the system
+        front_matrix = horzcat(
+            proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T
+        )
+
+        b = (
+            (self.mass_matrix @ Qddoti)
+            - self.gravity_force()
+            - segment_external_forces
+            - subtree_intersegmental_generalized_forces
+        )
+        # compute the generalized forces
+        # x = A^-1 * b
+        generalized_forces = solve(front_matrix, b, "symbolicqr")
+        # generalized_forces = inv(front_matrix) @ b
+
+        return generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0]

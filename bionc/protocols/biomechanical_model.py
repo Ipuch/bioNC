@@ -224,7 +224,7 @@ class GenericBiomechanicalModel(ABC):
         elif isinstance(segment, int):
             segment = self.segment_from_index(segment)
         for joint in self.joints.values():
-            if joint.parent == segment:
+            if joint.parent is not None and joint.parent.name == segment.name:
                 children.append(joint.child.index)
         return children
 

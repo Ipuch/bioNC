@@ -1,4 +1,4 @@
-from casadi import MX, inv, cross
+from casadi import MX, inv, cross, vertcat
 import numpy as np
 
 from .natural_vector import NaturalVector
@@ -55,7 +55,7 @@ class ExternalForce:
         ExternalForce
         """
 
-        return cls(application_point_in_local, np.concatenate((torque, force)))
+        return cls(application_point_in_local, vertcat(torque, force))
 
     @property
     def force(self) -> MX:

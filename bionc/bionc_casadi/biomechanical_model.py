@@ -688,7 +688,13 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             )
 
         # last check to verify that the model doesn't contain any closed loop
-        self._depth_first_search(0, visited_segments=None)
+        visited_segment = self._depth_first_search(0, visited_segments=None)
+        if not all(visited_segment):
+            raise ValueError(
+                f"The model contains free segments. The inverse dynamics can't be computed."
+                f" The free segments are: {np.where(np.logical_not(visited_segment))[0]}."
+                f" Please consider adding joints to integer them into the kinematic tree."
+            )
 
         # NOTE: This won't work with two independent tree in the same model
         visited_segments = [False for _ in range(self.nb_segments)]

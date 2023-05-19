@@ -767,7 +767,9 @@ class NaturalSegment(AbstractNaturalSegment):
 
         # make a matrix out of it, so that we can solve the system
         front_matrix = horzcat(
-            (proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T)
+            proximal_interpolation_matrix.T,
+            pseudo_interpolation_matrix.T,
+            -rigid_body_constraints_jacobian.T
         )
 
         b = (
@@ -776,9 +778,10 @@ class NaturalSegment(AbstractNaturalSegment):
             - segment_external_forces
             - subtree_intersegmental_generalized_forces
         )
-
+        print(b)
         # compute the generalized forces
         # x = A^-1 * b
-        generalized_forces = solve("symbolicqr", front_matrix, b)
+        generalized_forces = solve(front_matrix, b, "symbolicqr")
+        # generalized_forces = inv(front_matrix) @ b
 
         return generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0]

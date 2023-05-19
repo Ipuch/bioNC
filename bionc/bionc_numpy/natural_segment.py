@@ -821,12 +821,15 @@ class NaturalSegment(AbstractNaturalSegment):
             (proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T)
         )
 
-        # compute the generalized forces
-        generalized_forces = np.linalg.inv(front_matrix) @ (
+        b = (
             (self.mass_matrix @ Qddoti)[:, np.newaxis]
             - self.gravity_force()[:, np.newaxis]
             - segment_external_forces
             - subtree_intersegmental_generalized_forces
         )
+        print("b")
+        print(b)
+        # compute the generalized forces
+        generalized_forces = np.linalg.inv(front_matrix) @ b
 
         return generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0]

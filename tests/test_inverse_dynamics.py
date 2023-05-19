@@ -119,16 +119,16 @@ def test_inverse_dynamics(bionc_type):
     print(forces)
     print(lambdas)
 
-    TestUtils.assert_equal(torques, np.array([[  0.,     0. ,    0.  ],
- [  0. ,    0.,     0.  ],
- [-39.24 , 19.62 , 29.43]]), expand=False)
-
+    TestUtils.assert_equal(torques, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-39.24, 19.62, 29.43]]), expand=False)
 
     TestUtils.assert_equal(
         forces,
         np.array(
-            [[1.20137851e-15, -6.00689255e-16, -9.01033882e-16], [0.00000000e00, 0.00000000e00, 0.00000000e00],
-                [0.00000000e00, 0.00000000e00, 0.00000000e00]]
+            [
+                [1.20137851e-15, -6.00689255e-16, -9.01033882e-16],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+            ]
         ),
         expand=False,
     )
@@ -143,11 +143,11 @@ def test_inverse_dynamics(bionc_type):
                 [2.45250000e00, 4.90500000e00, 7.35750000e00],
                 [-3.00344627e-16, -6.00689255e-16, -9.01033882e-16],
                 [0.00000000e00, 0.00000000e00, 0.00000000e00],
-
             ]
         ),
         expand=False,
     )
+
 
 @pytest.mark.parametrize(
     "bionc_type",
@@ -173,18 +173,30 @@ def test_inverse_dynamics_segment(bionc_type):
     if bionc_type == "casadi":
         model = model.to_mx()
 
-    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0.001, 0], rp=[0, 0.001, 0], rd=[0, 0, 0.001], w=[0, -1, 0.001])
-    Qddoti = SegmentNaturalAccelerations.from_components(uddot=[0.01, 0.02, 0.03], rpddot=[0.04, 0.05, 0.06], rdddot=[0.07, 0.08, 0.09], wddot=[0.010, 0.011, 0.012])
+    Qi = SegmentNaturalCoordinates.from_components(
+        u=[1, 0.001, 0], rp=[0, 0.001, 0], rd=[0, 0, 0.001], w=[0, -1, 0.001]
+    )
+    Qddoti = SegmentNaturalAccelerations.from_components(
+        uddot=[0.01, 0.02, 0.03], rpddot=[0.04, 0.05, 0.06], rdddot=[0.07, 0.08, 0.09], wddot=[0.010, 0.011, 0.012]
+    )
     subtree_forces = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.01, 0.011, 0.013])[:, np.newaxis]
-    external_forces = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.01, 0.011, 0.013])[:, np.newaxis]
+    external_forces = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.01, 0.011, 0.013])[
+        :, np.newaxis
+    ]
 
     if bionc_type == "casadi":
         subtree_forces = MX(subtree_forces)
         external_forces = MX(external_forces)
 
-    gf = model.segments["pendulum_1"].inverse_dynamics(Qi, Qddoti, subtree_intersegmental_generalized_forces=subtree_forces, segment_external_forces=external_forces)
+    gf = model.segments["pendulum_1"].inverse_dynamics(
+        Qi, Qddoti, subtree_intersegmental_generalized_forces=subtree_forces, segment_external_forces=external_forces
+    )
 
     TestUtils.assert_equal(gf[0], np.array([-0.11, -0.13, 19.47]), expand=False)
-    TestUtils.assert_equal(gf[1], np.array([-0.01369 ,  0.011945, -0.00231 ]), expand=False)
-    TestUtils.assert_equal(gf[2], np.array([-1.25000000e-03, -5.75000000e-02, -1.67692693e-02, -4.87384150e+03,
-  4.00825576e+00,  4.12787788e-03]), expand=False, decimal=5)
+    TestUtils.assert_equal(gf[1], np.array([-0.01369, 0.011945, -0.00231]), expand=False)
+    TestUtils.assert_equal(
+        gf[2],
+        np.array([-1.25000000e-03, -5.75000000e-02, -1.67692693e-02, -4.87384150e03, 4.00825576e00, 4.12787788e-03]),
+        expand=False,
+        decimal=5,
+    )

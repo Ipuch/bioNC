@@ -767,9 +767,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         # make a matrix out of it, so that we can solve the system
         front_matrix = horzcat(
-            proximal_interpolation_matrix.T,
-            pseudo_interpolation_matrix.T,
-            -rigid_body_constraints_jacobian.T
+            proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T
         )
 
         b = (

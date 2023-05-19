@@ -776,7 +776,6 @@ class NaturalSegment(AbstractNaturalSegment):
             - segment_external_forces
             - subtree_intersegmental_generalized_forces
         )
-        print(b)
         # compute the generalized forces
         # x = A^-1 * b
         generalized_forces = solve(front_matrix, b, "symbolicqr")

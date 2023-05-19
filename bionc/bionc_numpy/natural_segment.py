@@ -827,8 +827,7 @@ class NaturalSegment(AbstractNaturalSegment):
             - segment_external_forces
             - subtree_intersegmental_generalized_forces
         )
-        print("b")
-        print(b)
+
         # compute the generalized forces
         generalized_forces = np.linalg.inv(front_matrix) @ b
 

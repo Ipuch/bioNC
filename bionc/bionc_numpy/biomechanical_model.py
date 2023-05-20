@@ -633,6 +633,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
+        generalized_forces: np.ndarray = None,
         external_forces: ExternalForceList = None,
         stabilization: dict = None,
     ) -> np.ndarray:
@@ -645,6 +646,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+        generalized_forces : np.ndarray
+            The generalized forces [12 * nb_segments, 1]
         external_forces : ExternalForceList
             The list of external forces applied on the system
         stabilization: dict

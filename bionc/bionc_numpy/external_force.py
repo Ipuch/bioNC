@@ -269,3 +269,37 @@ class ExternalForceList:
 
     def __len__(self):
         return len(self.external_forces)
+
+
+class GeneralizedForces(ExternalForce):
+    """
+    Made to handle generalized forces, it inherits from ExternalForce
+    """
+
+    def __init__(self, external_forces: np.ndarray, application_point_in_local: np.ndarray):
+        super().__init__(external_forces=external_forces, application_point_in_local=application_point_in_local)
+
+    def to_generalized_natural_forces(
+        self, parent_segment_index: int, child_segment_index: int, Q: NaturalCoordinates
+    ) -> np.ndarray:
+        """
+        Converts the generalized forces to natural forces
+
+        Parameters
+        ----------
+        parent_segment_index: int
+            The index of the parent segment
+        child_segment_index: int
+            The index of the child segment
+        Q: NaturalCoordinates
+            The natural coordinates of the model
+        """
+        f_child = self.to_natural_force(Q.vector(child_segment_index))
+        f_parent = self.transport_to(
+                to_segment_index=parent_segment_index,
+                new_application_point_in_local=[0, 0, 0],
+                Q=Q,
+                from_segment_index=child_segment_index,
+            )
+
+        return f_child, -f_parent

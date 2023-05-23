@@ -42,3 +42,5 @@ numpy_type = ndarray
 
 from .vizualization import Viz
 from .bionc_numpy import InverseKinematics
+
+__version__= "0.5.0"

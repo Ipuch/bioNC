@@ -854,5 +854,6 @@ class GenericBiomechanicalModel(ABC):
         Returns
         -------
         tuple[Any, Any, Any]
-            The forces, torques and lambdas
+            The forces, torques and lambdas, all expressed in the global coordinate system
+            It may be a good idea to express them in the local or euler basis coordinate system
         """

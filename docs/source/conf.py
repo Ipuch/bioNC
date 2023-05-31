@@ -14,10 +14,10 @@ sys.path.insert(0, os.path.abspath("../../"))
 # print(sys.path.insert(0, os.path.abspath("../../")))
 # print("Hello world")
 
-project = 'bionc'
-copyright = '2023, Pierre Puchaud'
-author = 'Pierre Puchaud'
-release = '0.5.0'
+project = "bionc"
+copyright = "2023, Pierre Puchaud"
+author = "Pierre Puchaud"
+release = "0.5.0"
 
 # ones.
 extensions = [

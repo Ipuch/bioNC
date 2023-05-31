@@ -7,6 +7,7 @@ from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
 from .external_force import ExternalForceList, ExternalForce
+from bionc.bionc_numpy.rotations import euler_axes_from_rotation_matrices
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -870,3 +871,42 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lambdas[:, segment_index] = lambda_i
 
         return visited_segments, torques, forces, lambdas
+
+    def express_joint_torques_in_euler_basis(self, Q: NaturalCoordinates, torques: np.ndarray) -> np.ndarray:
+        """
+        This function expresses the joint torques in the euler basis.
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The generalized coordinates of the model
+        torques: np.ndarray
+            The joint torques
+
+        Returns
+        -------
+        np.ndarray
+            The joint torques expressed in the euler basis
+        """
+        if torques.shape != (3, self.nb_segments):
+            raise ValueError(
+                f"The shape of the joint torques must be (3, {self.nb_segments}) but is {torques.shape}"
+            )
+
+        euler_torques = np.zeros((3, self.nb_segments))
+        for joint_name, joint in self.joints.items():
+            parent_segment = joint.parent
+            child_segment = joint.child
+            Q_parent = Q.vector(parent_segment.index)
+            Q_child = Q.vector(child_segment.index)
+
+            # compute rotation matrix from Qi
+            R_parent = parent_segment.segment_coordinates_system(Q_parent).rot()
+            R_child = child_segment.segment_coordinates_system(Q_child).rot()
+
+            e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence="xyz", projected_frame="mixed")
+
+            # compute the euler torques
+            euler_torques = vnop_array(torques, e1, e2, e3)
+
+        return euler_torques  # big draft

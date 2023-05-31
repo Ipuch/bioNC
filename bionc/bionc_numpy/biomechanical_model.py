@@ -889,9 +889,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The joint torques expressed in the euler basis
         """
         if torques.shape != (3, self.nb_segments):
-            raise ValueError(
-                f"The shape of the joint torques must be (3, {self.nb_segments}) but is {torques.shape}"
-            )
+            raise ValueError(f"The shape of the joint torques must be (3, {self.nb_segments}) but is {torques.shape}")
 
         euler_torques = np.zeros((3, self.nb_segments))
         for joint_name, joint in self.joints.items():

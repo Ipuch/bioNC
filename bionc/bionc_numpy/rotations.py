@@ -2,25 +2,20 @@ import numpy as np
 
 from bionc.bionc_numpy.interface_biorbd import rotation_matrix_to_euler_angles
 from bionc.utils.enums import CartesianAxis, EulerSequence
+
 # todo: test the whole file
 
 
 def rotation_x(angle):
-    return np.array([[1, 0, 0],
-                     [0, np.cos(angle), -np.sin(angle)],
-                     [0, np.sin(angle), np.cos(angle)]])
+    return np.array([[1, 0, 0], [0, np.cos(angle), -np.sin(angle)], [0, np.sin(angle), np.cos(angle)]])
 
 
 def rotation_y(angle):
-    return np.array([[np.cos(angle), 0, np.sin(angle)],
-                     [0, 1, 0],
-                     [-np.sin(angle), 0, np.cos(angle)]])
+    return np.array([[np.cos(angle), 0, np.sin(angle)], [0, 1, 0], [-np.sin(angle), 0, np.cos(angle)]])
 
 
 def rotation_z(angle):
-    return np.array([[np.cos(angle), -np.sin(angle), 0],
-                     [np.sin(angle), np.cos(angle), 0],
-                     [0, 0, 1]])
+    return np.array([[np.cos(angle), -np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
 
 
 def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: EulerSequence | str):
@@ -71,21 +66,21 @@ def rotation_matrix_from_angle_and_axis(angle: float, axis: str | CartesianAxis)
         Rotation matrix
     """
 
-    if axis == 'x' or axis == CartesianAxis.X:
+    if axis == "x" or axis == CartesianAxis.X:
         return rotation_x(angle)
-    elif axis == 'y' or axis == CartesianAxis.Y:
+    elif axis == "y" or axis == CartesianAxis.Y:
         return rotation_y(angle)
-    elif axis == 'z' or axis == CartesianAxis.Z:
+    elif axis == "z" or axis == CartesianAxis.Z:
         return rotation_z(angle)
     else:
         raise ValueError("The axis must be 'x', 'y' or 'z'.")
 
 
 def euler_axes_from_rotation_matrices(
-        R_parent: np.ndarray,
-        R_child: np.ndarray,
-        sequence: EulerSequence,
-        projected_frame: str = "mixed",
+    R_parent: np.ndarray,
+    R_child: np.ndarray,
+    sequence: EulerSequence,
+    projected_frame: str = "mixed",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     This function returns the euler axes from the rotation matrices in the global frame
@@ -125,7 +120,6 @@ def euler_axes_from_rotation_matrices(
         return tuple(euler_axes)
 
     elif projected_frame == "child":
-
         # flip the sequence and the rotation matrices
         sequence = sequence[::-1]
         individual_rotation_matrices = individual_rotation_matrices[::-1]
@@ -166,11 +160,11 @@ def vector_from_axis(axis: str | CartesianAxis) -> np.ndarray:
         Vector associated with the axis
     """
 
-    if axis == 'x' or axis == CartesianAxis.X:
+    if axis == "x" or axis == CartesianAxis.X:
         return np.array([1, 0, 0])
-    elif axis == 'y' or axis == CartesianAxis.Y:
+    elif axis == "y" or axis == CartesianAxis.Y:
         return np.array([0, 1, 0])
-    elif axis == 'z' or axis == CartesianAxis.Z:
+    elif axis == "z" or axis == CartesianAxis.Z:
         return np.array([0, 0, 1])
     else:
         raise ValueError("The axis must be 'x', 'y' or 'z'.")

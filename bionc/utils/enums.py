@@ -28,9 +28,10 @@ class EulerSequence(Enum):
 
 
 class ISBEulerSequence:
-    """ returns the corresponding enums
-        e.g. GLENO_HUMERAL returns EulerSequence.XYX
+    """returns the corresponding enums
+    e.g. GLENO_HUMERAL returns EulerSequence.XYX
     """
+
     def __init__(self):
         pass
 

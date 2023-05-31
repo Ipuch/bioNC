@@ -296,10 +296,10 @@ class GeneralizedForces(ExternalForce):
         """
         f_child = self.to_natural_force(Q.vector(child_segment_index))
         f_parent = self.transport_to(
-                to_segment_index=parent_segment_index,
-                new_application_point_in_local=[0, 0, 0],
-                Q=Q,
-                from_segment_index=child_segment_index,
-            )
+            to_segment_index=parent_segment_index,
+            new_application_point_in_local=[0, 0, 0],
+            Q=Q,
+            from_segment_index=child_segment_index,
+        )
 
         return f_child, -f_parent

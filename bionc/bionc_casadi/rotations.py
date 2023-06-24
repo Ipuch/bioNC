@@ -123,7 +123,7 @@ def euler_axes_from_rotation_matrices(
         return tuple(euler_axes)
 
     elif projected_frame == "child":
-        # flip the sequence and the rotation matrices
+        # flip the projection_basis and the rotation matrices
         sequence = sequence[::-1]
         individual_rotation_matrices = individual_rotation_matrices[::-1]
 

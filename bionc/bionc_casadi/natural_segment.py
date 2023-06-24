@@ -212,7 +212,7 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self._transformation_matrix @ np.concatenate((Q.u, Q.v, Q.w), axis=1),
+            rotation=self._transformation_matrix @ horzcat(Q.u, Q.v, Q.w),
             translation=Q.rp,
         )
 

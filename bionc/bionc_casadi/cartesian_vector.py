@@ -89,7 +89,7 @@ def vector_projection_in_non_orthogonal_basis(vector: np.ndarray | MX, e1: MX, e
 
     vnop = MX.zeros(vector.shape)
 
-    vnop[0, 0] = sum1(np.cross(e2, e3) * vector) / sum1(cross(e1, e2) * e3)
+    vnop[0, 0] = sum1(cross(e2, e3) * vector) / sum1(cross(e1, e2) * e3)
     vnop[1, 0] = sum1(cross(e3, e1) * vector) / sum1(cross(e1, e2) * e3)
     vnop[2, 0] = sum1(cross(e1, e2) * vector) / sum1(cross(e1, e2) * e3)
 

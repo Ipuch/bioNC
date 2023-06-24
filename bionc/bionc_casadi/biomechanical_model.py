@@ -7,6 +7,8 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .external_force import ExternalForceList, ExternalForce
+from .rotations import euler_axes_from_rotation_matrices
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -802,3 +804,45 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lambdas[:, segment_index] = lambda_i
 
         return visited_segments, torques, forces, lambdas
+
+    def express_joint_torques_in_euler_basis(self, Q: NaturalCoordinates, torques: MX) -> MX:
+        """
+        This function expresses the joint torques in the euler basis.
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The generalized coordinates of the model
+        torques: np.ndarray
+            The joint torques in global coordinates system
+
+        Returns
+        -------
+        np.ndarray
+            The joint torques expressed in the euler basis
+        """
+        if torques.shape != (3, self.nb_segments):
+            raise ValueError(f"The shape of the joint torques must be (3, {self.nb_segments}) but is {torques.shape}")
+
+        euler_torques = MX.zeros((3, self.nb_segments))
+        for i, (joint_name, joint) in enumerate(self.joints.items()):
+            parent_segment = joint.parent
+            child_segment = joint.child
+
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
+            Q_child = Q.vector(child_segment.index)
+
+            # compute rotation matrix from Qi
+            R_parent = np.eye(3) if joint.parent is None else parent_segment.segment_coordinates_system(Q_parent).rot
+            R_child = child_segment.segment_coordinates_system(Q_child).rot
+
+            e1, e2, e3 = euler_axes_from_rotation_matrices(
+                R_parent, R_child, sequence=joint.projection_basis, projected_frame="mixed"
+            )
+
+            # compute the euler torques
+            euler_torques[:, i] = vector_projection_in_non_orthogonal_basis(torques[:, i], e1, e2, e3)
+
+        return euler_torques

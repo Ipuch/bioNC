@@ -15,6 +15,7 @@ from bionc import (
     C3dData,
     BiomechanicalModel,
     JointType,
+    EulerSequence,
 )
 
 
@@ -231,6 +232,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="PELVIS",
         child="THIGH",
+        projection_basis=EulerSequence.ZXY, # to either project joint torque or joint angle
     )
 
     model.add_joint(
@@ -238,6 +240,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="THIGH",
         child="SHANK",
+        projection_basis=EulerSequence.ZXY,
     )
 
     model.add_joint(
@@ -245,6 +248,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="SHANK",
         child="FOOT",
+        projection_basis=EulerSequence.ZXY,
     )
 
     c3d_data = C3dData(f"{c3d_filename}")

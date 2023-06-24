@@ -6,7 +6,7 @@ from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
 from ..protocols.joint import JointBase
 from .natural_vector import NaturalVector
-from ..utils.enums import NaturalAxis, CartesianAxis
+from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence
 from .cartesian_vector import CartesianVector
 
 
@@ -30,8 +30,9 @@ class Joint:
             child_axis: tuple[NaturalAxis] | list[NaturalAxis],
             theta: tuple[float] | list[float] | np.ndarray | MX,
             index: int,
+            projection_basis: EulerSequence = None,
         ):
-            super(Joint.Hinge, self).__init__(name, parent, child, index)
+            super(Joint.Hinge, self).__init__(name, parent, child, index, projection_basis)
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:
@@ -207,8 +208,9 @@ class Joint:
             child_axis: NaturalAxis,
             theta: float | np.ndarray | MX,
             index: int,
+            projection_basis: EulerSequence = None,
         ):
-            super(Joint.Universal, self).__init__(name, parent, child, index)
+            super(Joint.Universal, self).__init__(name, parent, child, index, projection_basis)
 
             self.parent_axis = parent_axis
             self.parent_vector = NaturalVector.axis(self.parent_axis)
@@ -323,8 +325,9 @@ class Joint:
             parent: NaturalSegment,
             child: NaturalSegment,
             index: int,
+            projection_basis: EulerSequence = None,
         ):
-            super(Joint.Spherical, self).__init__(name, parent, child, index)
+            super(Joint.Spherical, self).__init__(name, parent, child, index, projection_basis)
             self.nb_constraints = 3
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
@@ -414,8 +417,9 @@ class Joint:
             sphere_center: str = None,
             plane_point: str = None,
             plane_normal: str = None,
+            projection_basis: EulerSequence = None,
         ):
-            super(Joint.SphereOnPlane, self).__init__(name, parent, child, index)
+            super(Joint.SphereOnPlane, self).__init__(name, parent, child, index, projection_basis)
             self.nb_constraints = 1
 
             if sphere_radius is None:
@@ -535,8 +539,9 @@ class Joint:
             length: float = None,
             parent_point: str = None,
             child_point: str = None,
+            projection_basis: EulerSequence = None,
         ):
-            super(Joint.ConstantLength, self).__init__(name, parent, child, index)
+            super(Joint.ConstantLength, self).__init__(name, parent, child, index, projection_basis)
 
             if length is None:
                 raise ValueError("length must be provided")
@@ -667,8 +672,9 @@ class GroundJoint:
             child_axis: tuple[NaturalAxis] | list[NaturalAxis],
             theta: tuple[float] | list[float] | np.ndarray = None,
             index: int = None,
+            projection_basis: EulerSequence = None,
         ):
-            super(GroundJoint.Hinge, self).__init__(name, None, child, index)
+            super(GroundJoint.Hinge, self).__init__(name, None, child, index, projection_basis)
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:
@@ -789,8 +795,9 @@ class GroundJoint:
             child: NaturalSegment,
             ground_application_point: np.ndarray = None,
             index: int = None,
+            projection_basis: EulerSequence = None,
         ):
-            super(GroundJoint.Spherical, self).__init__(name, None, child, index)
+            super(GroundJoint.Spherical, self).__init__(name, None, child, index, projection_basis)
             self.nb_constraints = 3
             self.ground_application_point = MX(ground_application_point)
 
@@ -874,6 +881,7 @@ class GroundJoint:
             rp_child_ref: SegmentNaturalCoordinates = None,
             rd_child_ref: SegmentNaturalCoordinates = None,
             index: int = None,
+            projection_basis: EulerSequence = None,
         ):
             super(GroundJoint.Weld, self).__init__(name, None, child, index)
 

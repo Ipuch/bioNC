@@ -4,6 +4,7 @@ from bionc import (
     CartesianAxis,
     NaturalAxis,
     JointType,
+    EulerSequence,
 )
 from casadi import MX
 
@@ -45,6 +46,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
             parent_axis=[CartesianAxis.X, CartesianAxis.X],
             child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
             theta=[np.pi / 2, np.pi / 2],
+            projection_basis=EulerSequence.XYZ,
         )
     )
     for i in range(1, nb_segments):
@@ -57,6 +59,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
                 parent_axis=[NaturalAxis.U, NaturalAxis.U],
                 child_axis=[NaturalAxis.V, NaturalAxis.W],
                 theta=[np.pi / 2, np.pi / 2],
+                projection_basis=EulerSequence.XYZ,
             )
         )
 

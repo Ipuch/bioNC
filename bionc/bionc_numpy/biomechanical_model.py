@@ -7,7 +7,7 @@ from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
 from .external_force import ExternalForceList, ExternalForce
-from bionc.bionc_numpy.rotations import euler_axes_from_rotation_matrices
+from .rotations import euler_axes_from_rotation_matrices
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
@@ -913,7 +913,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             R_child = child_segment.segment_coordinates_system(Q_child).rot
 
             e1, e2, e3 = euler_axes_from_rotation_matrices(
-                R_parent, R_child, sequence=joint.sequence, projected_frame="mixed"
+                R_parent, R_child, sequence=joint.projection_basis, projected_frame="mixed"
             )
 
             # compute the euler torques

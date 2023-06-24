@@ -20,8 +20,9 @@ class JointBase(ABC):
         The child segment of the joint
     index : int
         The index of the joint in the model
-    sequence : EulerSequence
+    projection_basis : EulerSequence
         The euler sequence of the joint, used for post computation, not directly related to natural coordinates
+        it can be used to project the joint angles or the joint torques on a specific euler projection_basis
 
     Methods
     -------
@@ -42,13 +43,13 @@ class JointBase(ABC):
         parent: AbstractNaturalSegment,
         child: AbstractNaturalSegment,
         index: int,
-        sequence: EulerSequence = EulerSequence.XYZ,
+        projection_basis: EulerSequence = EulerSequence.XYZ,
     ):
         self.name = name
         self.parent = parent
         self.child = child
         self.index = index
-        self.sequence = sequence
+        self.projection_basis = projection_basis
 
     @abstractmethod
     def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):

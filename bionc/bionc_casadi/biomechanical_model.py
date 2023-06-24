@@ -826,6 +826,15 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         euler_torques = MX.zeros((3, self.nb_segments))
         for i, (joint_name, joint) in enumerate(self.joints.items()):
+            if joint.projection_basis is None:
+                raise RuntimeError(
+                    "The projection basis of the joint must be defined to express the torques in an Euler basis."
+                    f"Joint {joint_name} has no projection basis defined."
+                    f"Please define a projection basis for this joint, "
+                    f"using argument `projection_basis` of the joint constructor"
+                    f" and enum `EulerSequence` for the type of entry."
+                )
+
             parent_segment = joint.parent
             child_segment = joint.child
 

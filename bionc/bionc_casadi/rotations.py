@@ -1,21 +1,26 @@
+from casadi import MX, cos, sin, vertcat, horzcat, transpose
 import numpy as np
 
 from .interface_biorbd import rotation_matrix_to_euler_angles
 from ..utils.enums import CartesianAxis, EulerSequence
 
-# todo: test the whole file
+
+def rotation_x(angle) -> MX:
+    return vertcat(
+        horzcat(MX(1), MX(0), MX(0)), horzcat(0, cos(angle), -sin(angle)), horzcat(0, sin(angle), cos(angle))
+    )
 
 
-def rotation_x(angle):
-    return np.array([[1, 0, 0], [0, np.cos(angle), -np.sin(angle)], [0, np.sin(angle), np.cos(angle)]])
+def rotation_y(angle) -> MX:
+    return vertcat(
+        horzcat(cos(angle), MX(0), sin(angle)), horzcat(MX(0), MX(1), MX(0)), horzcat(-sin(angle), MX(0), cos(angle))
+    )
 
 
-def rotation_y(angle):
-    return np.array([[np.cos(angle), 0, np.sin(angle)], [0, 1, 0], [-np.sin(angle), 0, np.cos(angle)]])
-
-
-def rotation_z(angle):
-    return np.array([[np.cos(angle), -np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
+def rotation_z(angle) -> MX:
+    return vertcat(
+        horzcat(cos(angle), -sin(angle), MX(0)), horzcat(sin(angle), cos(angle), MX(0)), horzcat(MX(0), MX(0), MX(1))
+    )
 
 
 def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: str):
@@ -44,7 +49,7 @@ def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: str):
     return R0, R1, R2
 
 
-def rotation_matrix_from_angle_and_axis(angle: float, axis: str | CartesianAxis) -> np.ndarray:
+def rotation_matrix_from_angle_and_axis(angle: MX, axis: str | CartesianAxis) -> MX:
     """
     This function returns a rotation matrix from an angle and an axis
 
@@ -72,19 +77,19 @@ def rotation_matrix_from_angle_and_axis(angle: float, axis: str | CartesianAxis)
 
 
 def euler_axes_from_rotation_matrices(
-    R_0_parent: np.ndarray,
-    R_0_child: np.ndarray,
+    R_0_parent: MX,
+    R_0_child: MX,
     sequence: EulerSequence,
     projected_frame: str = "mixed",
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[MX, MX, MX]:
     """
     This function returns the euler axes from the rotation matrices in the global frame
 
     Parameters
     ----------
-    R_0_parent : np.ndarray
+    R_0_parent : MX
         Rotation matrix of the parent ^0R_parent
-    R_0_child : np.ndarray
+    R_0_child : MX
         Rotation matrix of the child ^0R_child
     sequence : EulerSequence
         Sequence of rotations, e.g. 'xyz'
@@ -93,7 +98,7 @@ def euler_axes_from_rotation_matrices(
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray, np.ndarray]
+    tuple[MX, MX, MX]
         Euler rotation axes in the global frame
     """
 
@@ -105,7 +110,7 @@ def euler_axes_from_rotation_matrices(
 
     euler_axes = [None for _ in range(3)]
 
-    cumulated_rotation_matrix = np.eye(3)
+    cumulated_rotation_matrix = MX.eye(3)
 
     if projected_frame == "parent":
         for i, (axis, rotation) in enumerate(zip(sequence, individual_rotation_matrices)):
@@ -123,7 +128,7 @@ def euler_axes_from_rotation_matrices(
         individual_rotation_matrices = individual_rotation_matrices[::-1]
 
         for i, (axis, rotation) in enumerate(zip(sequence, individual_rotation_matrices)):
-            cumulated_rotation_matrix = cumulated_rotation_matrix @ rotation.T
+            cumulated_rotation_matrix = cumulated_rotation_matrix @ transpose(rotation)
 
             v = vector_from_axis(axis)
             # e.g. for xyz, z: R_0_child @ rotz.T @ [0, 0, 1]; y: R_0_child @ rotz.T @ roty.T @ [0, 1, 0]; ...
@@ -159,10 +164,10 @@ def vector_from_axis(axis: str | CartesianAxis) -> np.ndarray:
     """
 
     if axis == "x" or axis == CartesianAxis.X:
-        return np.array([1, 0, 0])
+        return MX([1, 0, 0])
     elif axis == "y" or axis == CartesianAxis.Y:
-        return np.array([0, 1, 0])
+        return MX([0, 1, 0])
     elif axis == "z" or axis == CartesianAxis.Z:
-        return np.array([0, 0, 1])
+        return MX([0, 0, 1])
     else:
         raise ValueError("The axis must be 'x', 'y' or 'z'.")

@@ -104,7 +104,7 @@ def test_interpolate_natural_vector(bionc_type):
     "bionc_type",
     [
         "numpy",
-        # "casadi",
+        "casadi",
     ],
 )
 def test_euler_vectors(bionc_type):
@@ -143,10 +143,10 @@ def test_euler_vectors(bionc_type):
 
 def _subtest_rotations(euler_rot_angles_1: list, euler_rot_angles_2: list, bionc_type: str, seq: EulerSequence):
     if bionc_type == "casadi":
-        print("todo")
-        # from bionc.bionc_casadi.rotations import (
-        #     euler_axes_from_rotation_matrices,
-        # )
+        from bionc.bionc_casadi.rotations import (
+            euler_axes_from_rotation_matrices,
+        )
+        from biorbd_casadi import Rotation
     else:
         from bionc.bionc_numpy.rotations import (
             euler_axes_from_rotation_matrices,

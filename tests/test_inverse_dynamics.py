@@ -111,6 +111,7 @@ def build_n_link_pendulum_spherical(nb_segments: int = 1) -> BiomechanicalModel:
     "bionc_type",
     [
         "numpy",
+        "casadi",
     ],
 )
 @pytest.mark.parametrize(
@@ -149,15 +150,9 @@ def test_inverse_dynamics_projected(bionc_type, configuration):
     if configuration == 1:
         # vertical
         tuple_of_Q = [
-            SegmentNaturalCoordinates.from_components(
-                u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1]
-            ),
-            SegmentNaturalCoordinates.from_components(
-                u=[1, 0, 0], rp=[0, -1, 0], rd=[0, -2, 0], w=[0, 0, 1]
-            ),
-            SegmentNaturalCoordinates.from_components(
-                u=[1, 0, 0], rp=[0, -2, 0], rd=[0, -3, 0], w=[0, 0, 1]
-            ),
+            SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1]),
+            SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -1, 0], rd=[0, -2, 0], w=[0, 0, 1]),
+            SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -2, 0], rd=[0, -3, 0], w=[0, 0, 1]),
         ]
     elif configuration == 2:
         # horizontal
@@ -171,13 +166,22 @@ def test_inverse_dynamics_projected(bionc_type, configuration):
         # each segment are turned by 90°
         tuple_of_Q = [
             SegmentNaturalCoordinates.from_components(
-                u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1],
+                u=[1, 0, 0],
+                rp=[0, 0, 0],
+                rd=[0, -1, 0],
+                w=[0, 0, 1],
             ),
             SegmentNaturalCoordinates.from_components(
-                u=[1, 0, 0], rp=[0, -1, 0], rd=[0, -1, 1], w=[0, 1, 0],
+                u=[1, 0, 0],
+                rp=[0, -1, 0],
+                rd=[0, -1, 1],
+                w=[0, 1, 0],
             ),
             SegmentNaturalCoordinates.from_components(
-                u=[0, 1, 0], rp=[0, -1, 1], rd=[1, -1, 1], w=[0, 0, 1],
+                u=[0, 1, 0],
+                rp=[0, -1, 1],
+                rd=[1, -1, 1],
+                w=[0, 0, 1],
             ),
         ]
 

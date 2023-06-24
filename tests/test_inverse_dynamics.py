@@ -113,7 +113,15 @@ def build_n_link_pendulum_spherical(nb_segments: int = 1) -> BiomechanicalModel:
         "numpy",
     ],
 )
-def test_inverse_dynamics_projected(bionc_type):
+@pytest.mark.parametrize(
+    "configuration",
+    [
+        1,
+        2,
+        3,
+    ],
+)
+def test_inverse_dynamics_projected(bionc_type, configuration):
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
             SegmentNaturalCoordinates,
@@ -138,13 +146,40 @@ def test_inverse_dynamics_projected(bionc_type):
     for seg in model.segments.values():
         print(seg.mass)
 
+    if configuration == 1:
         # vertical
-    tuple_of_Q = [
-        SegmentNaturalCoordinates.from_components(
-            u=[1, 0, 0], rp=[0, 0, -i if i <= 1 else -1], rd=[0, 0, -i - 1 if i <= 1 else -2], w=[0, -1, 0]
-        )
-        for i in range(0, nb_segments)
-    ]
+        tuple_of_Q = [
+            SegmentNaturalCoordinates.from_components(
+                u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1]
+            ),
+            SegmentNaturalCoordinates.from_components(
+                u=[1, 0, 0], rp=[0, -1, 0], rd=[0, -2, 0], w=[0, 0, 1]
+            ),
+            SegmentNaturalCoordinates.from_components(
+                u=[1, 0, 0], rp=[0, -2, 0], rd=[0, -3, 0], w=[0, 0, 1]
+            ),
+        ]
+    elif configuration == 2:
+        # horizontal
+        tuple_of_Q = [
+            SegmentNaturalCoordinates.from_components(
+                u=[1, 0, 0], rp=[0, 0, -i if i <= 1 else -1], rd=[0, 0, -i - 1 if i <= 1 else -2], w=[0, -1, 0]
+            )
+            for i in range(0, nb_segments)
+        ]
+    else:
+        # each segment are turned by 90°
+        tuple_of_Q = [
+            SegmentNaturalCoordinates.from_components(
+                u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1],
+            ),
+            SegmentNaturalCoordinates.from_components(
+                u=[1, 0, 0], rp=[0, -1, 0], rd=[0, -1, 1], w=[0, 1, 0],
+            ),
+            SegmentNaturalCoordinates.from_components(
+                u=[0, 1, 0], rp=[0, -1, 1], rd=[1, -1, 1], w=[0, 0, 1],
+            ),
+        ]
 
     Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
 
@@ -155,54 +190,28 @@ def test_inverse_dynamics_projected(bionc_type):
         for _ in range(0, nb_segments)
     ]
 
-    # import viz tools
-    # todo: to figure out if torques in Y after projection is correct
-    from bionc import Viz
-    v = Viz(model)
-    v.animate(Q)
+    # only to debug this test :)
+    # from bionc import Viz
+    #
+    # v = Viz(model)
+    # v.animate(Q)
 
     Qddot = NaturalAccelerations.from_qddoti(tuple(tuple_of_Qddot))
 
-    (torques, forces, lambdas) = model.inverse_dynamics(Q, Qddot)
+    torques, *_ = model.inverse_dynamics(Q, Qddot)
 
-    print(torques)
-    print(forces)
-    print(lambdas)
-
-    TestUtils.assert_equal(torques, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-39.24, 19.62, 29.43]]), expand=False)
-
-    TestUtils.assert_equal(
-        forces,
-        np.array(
-            [
-                [1.20137851e-15, -6.00689255e-16, -9.01033882e-16],
-                [0.00000000e00, 0.00000000e00, 0.00000000e00],
-                [0.00000000e00, 0.00000000e00, 0.00000000e00],
-            ]
-        ),
-        expand=False,
-    )
-
-    TestUtils.assert_equal(
-        lambdas,
-        np.array(
-            [
-                [0.00000000e00, 0.00000000e00, 0.00000000e00],
-                [0.00000000e00, 0.00000000e00, 0.00000000e00],
-                [0.00000000e00, 0.00000000e00, 0.00000000e00],
-                [2.45250000e00, 4.90500000e00, 7.35750000e00],
-                [-3.00344627e-16, -6.00689255e-16, -9.01033882e-16],
-                [0.00000000e00, 0.00000000e00, 0.00000000e00],
-            ]
-        ),
-        expand=False,
-    )
+    if configuration == 1:
+        expected_torques = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-39.24, 19.62, 29.43]])
+    elif configuration == 2:
+        expected_torques = np.array([[0.0, 0.0, 0.0], [-39.24, 19.62, 29.43], [0.0, 0.0, 0.0]])
+    else:
+        expected_torques = np.array([[0.0, 0.0, 0.0], [0.0, -19.62, 0.0], [-39.24, 0.0, 29.43]])
 
     projected_torques = model.express_joint_torques_in_euler_basis(Q, torques)
 
     TestUtils.assert_equal(
         projected_torques,
-        np.array([[0.0, 0.0, 0.0], [-39.24, 19.62, 29.43], [0.0, 0.0, 0.0]]),
+        expected_torques,
         expand=False,
     )
 

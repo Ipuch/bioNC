@@ -18,7 +18,7 @@ def rotation_z(angle):
     return np.array([[np.cos(angle), -np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
 
 
-def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: EulerSequence | str):
+def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: str):
     """
     This function converts a rotation matrix to individual rotation matrices
 
@@ -26,7 +26,7 @@ def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: EulerSeque
     ----------
     rotation_matrix : np.ndarray
         Rotation matrix
-    sequence : str or EulerSequence
+    sequence : str
         Sequence of rotations, e.g. 'xyz'
 
     Returns
@@ -34,11 +34,6 @@ def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: EulerSeque
     tuple[np.ndarray, np.ndarray, np.ndarray]
         Individual rotation matrices
     """
-
-    if isinstance(sequence, str) and len(sequence) != 3:
-        raise ValueError("The sequence must be of length 3.")
-    else:
-        sequence = EulerSequence.value
 
     angles = rotation_matrix_to_euler_angles(rotation_matrix, sequence)
 
@@ -77,19 +72,20 @@ def rotation_matrix_from_angle_and_axis(angle: float, axis: str | CartesianAxis)
 
 
 def euler_axes_from_rotation_matrices(
-    R_parent: np.ndarray,
-    R_child: np.ndarray,
+    R_0_parent: np.ndarray,
+    R_0_child: np.ndarray,
     sequence: EulerSequence,
     projected_frame: str = "mixed",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
+    # todo: test this independantly
     This function returns the euler axes from the rotation matrices in the global frame
 
     Parameters
     ----------
-    R_parent : np.ndarray
+    R_0_parent : np.ndarray
         Rotation matrix of the parent ^0R_parent
-    R_child : np.ndarray
+    R_0_child : np.ndarray
         Rotation matrix of the child ^0R_child
     sequence : EulerSequence
         Sequence of rotations, e.g. 'xyz'
@@ -102,7 +98,10 @@ def euler_axes_from_rotation_matrices(
         Euler rotation axes in the global frame
     """
 
-    R = R_parent.T @ R_child
+    R = R_0_parent.T @ R_0_child
+    if isinstance(sequence, EulerSequence):
+        sequence = sequence.value
+
     individual_rotation_matrices = rotation_matrices_from_rotation_matrix(R, sequence)
 
     euler_axes = [None for _ in range(3)]
@@ -115,7 +114,7 @@ def euler_axes_from_rotation_matrices(
 
             v = vector_from_axis(axis)
             # e.g. for xyz, x: R_0_parent @ rotx @ [1, 0, 0]; y: R_0_parent @ rotx @ roty @ [0, 1, 0]; ...
-            euler_axes[i] = R_parent @ cumulated_rotation_matrix @ v
+            euler_axes[i] = R_0_parent @ cumulated_rotation_matrix @ v
 
         return tuple(euler_axes)
 
@@ -129,7 +128,7 @@ def euler_axes_from_rotation_matrices(
 
             v = vector_from_axis(axis)
             # e.g. for xyz, z: R_0_child @ rotz.T @ [0, 0, 1]; y: R_0_child @ rotz.T @ roty.T @ [0, 1, 0]; ...
-            euler_axes[i] = R_child @ cumulated_rotation_matrix @ v
+            euler_axes[i] = R_0_child @ cumulated_rotation_matrix @ v
 
         # flip the euler axes
         euler_axes = euler_axes[::-1]
@@ -139,8 +138,8 @@ def euler_axes_from_rotation_matrices(
         # this method should be better as it relies less on the transformations of the rotation matrices
         # only the second axis depends on the first angle, the third relies on the child matrix
 
-        parent_euler_axes = euler_axes_from_rotation_matrices(R_child, R_parent, sequence, projected_frame="parent")
-        child_euler_axes = euler_axes_from_rotation_matrices(R_parent, R_child, sequence, projected_frame="child")
+        parent_euler_axes = euler_axes_from_rotation_matrices(R_0_child, R_0_parent, sequence, projected_frame="parent")
+        child_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, projected_frame="child")
 
         return parent_euler_axes[0], parent_euler_axes[1], child_euler_axes[2]
 

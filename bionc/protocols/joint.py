@@ -3,6 +3,7 @@ from abc import ABC, abstractmethod
 from .natural_segment import AbstractNaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
+from ..utils.enums import EulerSequence
 
 
 class JointBase(ABC):
@@ -19,6 +20,8 @@ class JointBase(ABC):
         The child segment of the joint
     index : int
         The index of the joint in the model
+    sequence : EulerSequence
+        The euler sequence of the joint, used for post computation, not directly related to natural coordinates
 
     Methods
     -------
@@ -39,11 +42,13 @@ class JointBase(ABC):
         parent: AbstractNaturalSegment,
         child: AbstractNaturalSegment,
         index: int,
+        sequence: EulerSequence = EulerSequence.XYZ,
     ):
         self.name = name
         self.parent = parent
         self.child = child
         self.index = index
+        self.sequence = sequence
 
     @abstractmethod
     def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):

@@ -2,9 +2,10 @@ from enum import Enum
 
 
 class NaturalAxis(Enum):
-    U = "U"
-    V = "V"
-    W = "W"
+    """ Natural axis """
+    U = "U"  # eventually corresponds to X
+    V = "V"  # eventually corresponds to Y
+    W = "W"  # eventually corresponds to Z
 
 
 class CartesianAxis(Enum):
@@ -14,6 +15,7 @@ class CartesianAxis(Enum):
 
 
 class EulerSequence(Enum):
+    """ Euler intrinsic sequence of rotations"""
     XYX = "xyx"
     XZX = "xzx"
     XYZ = "xyz"

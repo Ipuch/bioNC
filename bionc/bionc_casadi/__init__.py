@@ -15,3 +15,4 @@ from .inertia_parameters import InertiaParameters
 from .joint import Joint, GroundJoint
 from .natural_vector import NaturalVector
 from .external_force import ExternalForceList, ExternalForce
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis

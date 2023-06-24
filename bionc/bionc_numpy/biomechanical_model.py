@@ -900,7 +900,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         euler_torques = np.zeros((3, self.nb_segments))
         for i, (joint_name, joint) in enumerate(self.joints.items()):
-
             if joint.projection_basis is None:
                 raise RuntimeError(
                     "The projection basis of the joint must be defined to express the torques in an Euler basis."

@@ -117,19 +117,19 @@ class SegmentNaturalCoordinates(np.ndarray):
 
         """
         if self.shape[1] > 1:
-            return self.vnop_array(vector - self.rp, self.u, self.v, self.w)  # not satisfied yet of this
+            return self.vector_projection_in_non_orthogonal_basis(vector - self.rp, self.u, self.v, self.w)  # not satisfied yet of this
         else:
-            return NaturalVector(self.vnop_array(vector - self.rp, self.u, self.v, self.w))
+            return NaturalVector(self.vector_projection_in_non_orthogonal_basis(vector - self.rp, self.u, self.v, self.w))
 
     @staticmethod
-    def vnop_array(V: np.ndarray, e1: np.ndarray, e2: np.ndarray, e3: np.ndarray) -> np.ndarray:
+    def vector_projection_in_non_orthogonal_basis(vector: np.ndarray, e1: np.ndarray, e2: np.ndarray, e3: np.ndarray) -> np.ndarray:
         """
         This function converts a vector expressed in the global coordinate system
         to a vector expressed in a non-orthogonal coordinate system.
 
         Parameters
         ----------
-        V: np.ndarray
+        vector: np.ndarray
             The vector expressed in the global coordinate system
         e1: np.ndarray
             The first vector of the non-orthogonal coordinate system, usually the u-axis
@@ -143,12 +143,20 @@ class SegmentNaturalCoordinates(np.ndarray):
         vnop: np.ndarray
             The vector expressed in the non-orthogonal coordinate system
 
+        Source
+        ------
+        Desroches, G., Chèze, L., & Dumas, R. (2010).
+        Expression of joint moment in the joint coordinate system. Journal of biomechanical engineering, 132(11).
+        https://doi.org/10.1115/1.4002537
+
+        2.1 Expression of a 3D Vector in a Nonorthogonal Coordinate Base.
+
         """
 
-        if V.shape[0] != 3:
+        if vector.shape[0] != 3:
             raise ValueError("The vector must be expressed in 3D.")
-        if len(V.shape) == 1:
-            V = V[:, np.newaxis]
+        if len(vector.shape) == 1:
+            vector = vector[:, np.newaxis]
 
         if e1.shape[0] != 3:
             raise ValueError("The first vector of the non-orthogonal coordinate system must be expressed in 3D.")
@@ -163,11 +171,11 @@ class SegmentNaturalCoordinates(np.ndarray):
         if len(e3.shape) == 1:
             e3 = e3[:, np.newaxis]
 
-        vnop = np.zeros(V.shape)
+        vnop = np.zeros(vector.shape)
 
-        vnop[0, :] = np.sum(np.cross(e2, e3, axis=0) * V, 0) / np.sum(np.cross(e1, e2, axis=0) * e3, 0)
-        vnop[1, :] = np.sum(np.cross(e3, e1, axis=0) * V, 0) / np.sum(np.cross(e1, e2, axis=0) * e3, 0)
-        vnop[2, :] = np.sum(np.cross(e1, e2, axis=0) * V, 0) / np.sum(np.cross(e1, e2, axis=0) * e3, 0)
+        vnop[0, :] = np.sum(np.cross(e2, e3, axis=0) * vector, 0) / np.sum(np.cross(e1, e2, axis=0) * e3, 0)
+        vnop[1, :] = np.sum(np.cross(e3, e1, axis=0) * vector, 0) / np.sum(np.cross(e1, e2, axis=0) * e3, 0)
+        vnop[2, :] = np.sum(np.cross(e1, e2, axis=0) * vector, 0) / np.sum(np.cross(e1, e2, axis=0) * e3, 0)
 
         return vnop
 

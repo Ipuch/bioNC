@@ -138,7 +138,7 @@ def euler_axes_from_rotation_matrices(
         # this method should be better as it relies less on the transformations of the rotation matrices
         # only the second axis depends on the first angle, the third relies on the child matrix
 
-        parent_euler_axes = euler_axes_from_rotation_matrices(R_0_child, R_0_parent, sequence, projected_frame="parent")
+        parent_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, projected_frame="parent")
         child_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, projected_frame="child")
 
         return parent_euler_axes[0], parent_euler_axes[1], child_euler_axes[2]

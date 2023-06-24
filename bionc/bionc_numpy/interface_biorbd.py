@@ -1,4 +1,5 @@
 from biorbd import Rotation
+
 # from scipy.spatial.transform import Rotation
 import numpy as np
 
@@ -49,6 +50,7 @@ def rotation_matrix_to_euler_angles(rotation_matrix: np.ndarray, seq: str = "xyz
 
     rotation_matrix_biorbd = rotation_matrix_from_numpy_to_biorbd(rotation_matrix)
     return Rotation.toEulerAngles(rotation_matrix_biorbd, seq).to_array()
+
 
 # not possible to use scipy with casadi ...
 # do the same function but with scipy rotation matrix

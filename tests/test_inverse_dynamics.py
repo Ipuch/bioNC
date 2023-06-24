@@ -111,7 +111,6 @@ def build_n_link_pendulum_spherical(nb_segments: int = 1) -> BiomechanicalModel:
     "bionc_type",
     [
         "numpy",
-        "casadi",
     ],
 )
 def test_inverse_dynamics_projected(bionc_type):
@@ -203,13 +202,7 @@ def test_inverse_dynamics_projected(bionc_type):
 
     TestUtils.assert_equal(
         projected_torques,
-        np.array(
-            [
-                [0.0, 0.0, 0.0],
-                [-39.24, 19.62, 29.43],
-                [0.0, 0.0, 0.0]
-            ]
-        ),
+        np.array([[0.0, 0.0, 0.0], [-39.24, 19.62, 29.43], [0.0, 0.0, 0.0]]),
         expand=False,
     )
 
@@ -271,6 +264,7 @@ def test_inverse_dynamics_segment(bionc_type):
     "bionc_type",
     [
         "numpy",
+        "casadi",
     ],
 )
 def test_inverse_dynamics(bionc_type):
@@ -312,7 +306,7 @@ def test_inverse_dynamics(bionc_type):
         SegmentNaturalAccelerations.from_components(
             uddot=[0, 0, 0], rpddot=[0, 0, 0], rdddot=[0, 0, 0], wddot=[0, 0, 0]
         )
-        for i in range(0, nb_segments)
+        for _ in range(0, nb_segments)
     ]
     Qddot = NaturalAccelerations.from_qddoti(tuple(tuple_of_Qddot))
 

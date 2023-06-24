@@ -920,4 +920,3 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             euler_torques = vector_projection_in_non_orthogonal_basis(torques, e1, e2, e3)
 
         return euler_torques
-

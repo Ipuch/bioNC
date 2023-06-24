@@ -31,7 +31,7 @@ from .bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVel
 from .bionc_numpy.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
 from .bionc_numpy.homogenous_transform import HomogeneousTransform
 
-from .utils.enums import NaturalAxis, CartesianAxis
+from .utils.enums import NaturalAxis, CartesianAxis, EulerSequence
 
 from casadi.casadi import MX as MX_type
 from numpy import ndarray

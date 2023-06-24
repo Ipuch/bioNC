@@ -118,7 +118,9 @@ class SegmentNaturalCoordinates(np.ndarray):
 
         """
         if self.shape[1] > 1:
-            return vector_projection_in_non_orthogonal_basis(vector - self.rp, self.u, self.v, self.w)  # not satisfied yet of this
+            return vector_projection_in_non_orthogonal_basis(
+                vector - self.rp, self.u, self.v, self.w
+            )  # not satisfied yet of this
         else:
             return NaturalVector(vector_projection_in_non_orthogonal_basis(vector - self.rp, self.u, self.v, self.w))
 

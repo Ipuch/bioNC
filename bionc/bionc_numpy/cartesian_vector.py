@@ -38,7 +38,9 @@ class CartesianVector(np.ndarray):
             return cls(np.array([0, 0, 1]))
 
 
-def vector_projection_in_non_orthogonal_basis(vector: np.ndarray, e1: np.ndarray, e2: np.ndarray, e3: np.ndarray) -> np.ndarray:
+def vector_projection_in_non_orthogonal_basis(
+    vector: np.ndarray, e1: np.ndarray, e2: np.ndarray, e3: np.ndarray
+) -> np.ndarray:
     """
     This function converts a vector expressed in the global coordinate system
     to a vector expressed in a non-orthogonal coordinate system.

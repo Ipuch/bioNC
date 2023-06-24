@@ -253,7 +253,7 @@ class InverseKinematics:
                     "ipopt.print_timing_statistics": "no",
                 }
         else:
-            raise ValueError("method must be 'sqpmethod' or 'ipopt'")
+            raise ValueError("method must be one of the following str: 'sqpmethod' or 'ipopt'")
 
         if self._frame_per_frame:
             Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))

@@ -418,6 +418,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
     def Q_from_markers(self, markers: np.ndarray) -> NaturalCoordinates:
         """
         This function returns the natural coordinates of the system as a function of the markers positions
+        also referred as inverse kinematics
+        but the constraints are not enforced, this can be used as an initial guess for proper inverse kinematics.
 
         Parameters
         ----------
@@ -428,6 +430,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         -------
         NaturalCoordinates
             The natural coordinates of the segment [12 x n, 1]
+
+        See Also
+        --------
+        ..bionc_numpy.inverse_kinematics
         """
         if markers.shape[1] != self.nb_markers_technical:
             raise ValueError(

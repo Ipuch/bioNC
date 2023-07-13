@@ -325,7 +325,7 @@ def generate_c3d_file(two_side: bool = False):
     if two_side:
         # compute the middle of the pelvis (RFWT, RBWT, LFWT, LBWT)
         pelvis_center = np.mean(c3d["data"]["points"][:3, [0, 2, 1, 3], :], axis=1)
-        # remove two times the difference between each markers and the pelvis center along y axis
+        # remove two times the difference between each marker and the pelvis center along y axis
         c3d["data"]["points"][:3, 11, :] = c3d["data"]["points"][:3, 4, :]
         c3d["data"]["points"][1, 11, :] -= 2 * (c3d["data"]["points"][1, 4, :] - pelvis_center[1])
 

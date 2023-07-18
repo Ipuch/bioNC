@@ -2,6 +2,7 @@
 Example script for animating markers
 """
 from enum import Enum
+import time
 
 from bioviz import VtkModel, VtkWindow, Mesh
 import numpy as np
@@ -132,7 +133,34 @@ class Viz:
         show_joints: bool = True,
         size_model_marker: bool = 0.02,
         size_xp_marker: bool = 0.02,
+        background_color: tuple[float, float, float] = (0.5, 0.5, 0.5),
     ):
+        """
+        This class is used to visualize the biomechanical model.
+
+        Parameters
+        ----------
+        model : BiomechanicalModel
+            The biomechanical model to visualize.
+        show_ground_frame: bool
+            If True, the ground frame is displayed.
+        show_frames: bool
+            If True, the frames are displayed.
+        show_model_markers: bool
+            If True, the markers of the model are displayed.
+        show_xp_markers: bool
+            If True, the markers of the experimental data are displayed.
+        show_center_of_mass: bool
+            If True, the centers of mass are displayed.
+        show_joints: bool
+            If True, the joints are displayed.
+        size_model_marker: float
+            The size of the model markers.
+        size_xp_marker: float
+            The size of the experimental data markers.
+        background_color: tuple[float, float, float]
+            The background color of the window.
+        """
         self.model = model
         self.show_ground_frame = show_ground_frame
         self.show_frames = show_frames
@@ -142,7 +170,7 @@ class Viz:
         self.show_joints = show_joints
 
         # Create a windows with a nice gray background
-        self.vtkWindow = VtkWindow(background_color=(0.5, 0.5, 0.5))
+        self.vtkWindow = VtkWindow(background_color=background_color)
 
         if self.show_ground_frame:
             self.ground_frame = VtkGroundFrame(self.vtkWindow)
@@ -185,7 +213,7 @@ class Viz:
                         ligament_opacity=1,
                     )
 
-    def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp=None):
+    def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp=None, frame_rate=None):
         """
         This function is a cheap animation of markers
 
@@ -195,6 +223,9 @@ class Viz:
             The natural coordinates of the segment of shape (n_dofs, n_frames)
         markers_xp : np.ndarray
             The experimental markers measured in global frame of shape (3, n_markers, n_frames)
+        frame_rate : float
+            The frame rate of the animation, may not be respected if there are too much stuff to display.
+            very approximate, but it's just for a quick animation
         """
         from ..bionc_numpy import NaturalCoordinates
 
@@ -229,9 +260,12 @@ class Viz:
                     ligament = np.concatenate((ligament, np.ones((1, ligament.shape[1]))), axis=0)[:, :, np.newaxis]
                     all_ligament.append(Mesh(vertex=ligament))
 
+        dt = 1 / frame_rate if frame_rate else 0.01
+
         # Animate all this
         i = 0
         while self.vtkWindow.is_active:
+            tic = time.time()
             # Update the markers
             if self.show_model_markers:
                 self.vtkModelModel.update_markers(pyo_model_markers[:, :, i])
@@ -264,6 +298,9 @@ class Viz:
             # Update window
             self.vtkWindow.update_frame()
             i = (i + 1) % Q.shape[1]
+
+            while time.time() - tic < dt or frame_rate is None:
+                pass
 
 
 def cheap_markers_animation(xp_markers: np.ndarray, model_markers: np.ndarray):

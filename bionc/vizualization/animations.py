@@ -260,7 +260,7 @@ class Viz:
                     ligament = np.concatenate((ligament, np.ones((1, ligament.shape[1]))), axis=0)[:, :, np.newaxis]
                     all_ligament.append(Mesh(vertex=ligament))
 
-        dt = 1 / frame_rate if frame_rate else 0.01
+        dt = 1 / frame_rate if frame_rate else 1e-10
 
         # Animate all this
         i = 0
@@ -299,7 +299,7 @@ class Viz:
             self.vtkWindow.update_frame()
             i = (i + 1) % Q.shape[1]
 
-            while time.time() - tic < dt or frame_rate is None:
+            while time.time() - tic < dt or not (frame_rate is None):
                 pass
 
 

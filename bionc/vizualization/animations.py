@@ -11,6 +11,7 @@ from pyomeca import Markers
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from ..bionc_numpy.joint import Joint
+from .cylinder import displace_from_start_and_end, generate_cylinder_triangles, generate_cylinder_vertices
 
 
 class NaturalVectorColors(Enum):
@@ -134,6 +135,7 @@ class Viz:
         size_model_marker: bool = 0.02,
         size_xp_marker: bool = 0.02,
         background_color: tuple[float, float, float] = (0.5, 0.5, 0.5),
+        show_natural_mesh: bool = False,
     ):
         """
         This class is used to visualize the biomechanical model.
@@ -160,6 +162,8 @@ class Viz:
             The size of the experimental data markers.
         background_color: tuple[float, float, float]
             The background color of the window.
+        show_natural_mesh: bool
+            If True, the natural meshes of each segment are displayed.
         """
         self.model = model
         self.show_ground_frame = show_ground_frame
@@ -168,6 +172,7 @@ class Viz:
         self.show_xp_markers = show_xp_markers
         self.show_center_of_mass = show_center_of_mass
         self.show_joints = show_joints
+        self.show_natural_mesh = show_natural_mesh
 
         # Create a windows with a nice gray background
         self.vtkWindow = VtkWindow(background_color=background_color)
@@ -212,6 +217,11 @@ class Viz:
                         ligament_color=(0.9, 0.9, 0.05),
                         ligament_opacity=1,
                     )
+
+        if self.show_natural_mesh:
+            self.vtkMesh = VtkModel(
+                self.vtkWindow, patch_color=[(0, 0.5, 0.8) for i in range(self.model.nb_segments)], mesh_opacity=0.5
+            )
 
     def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp=None, frame_rate=None):
         """
@@ -295,12 +305,33 @@ class Viz:
                 if len(all_ligament) > 0:
                     self.vtkJoints.update_ligament(all_ligament)
 
+            if self.show_natural_mesh:
+                self.update_natural_mesh(Q[:, i : i + 1])
+
             # Update window
             self.vtkWindow.update_frame()
             i = (i + 1) % Q.shape[1]
 
             while time.time() - tic < dt or not (frame_rate is None):
                 pass
+
+    def update_natural_mesh(self, Q: NaturalCoordinates):
+        """update the mesh of the model"""
+        meshes = []
+        for s in range(Q.nb_qi()):
+            Qi = Q.vector(s)
+            height = np.linalg.norm(Qi.v) * (1 - 0.05)  # 5% shorter to see some space between segments
+            vertices = generate_cylinder_vertices(height, num_segments=20)
+            vertices = displace_from_start_and_end(vertices=vertices, start=Qi.rp, end=Qi.rd)
+            poly = generate_cylinder_triangles(vertices)
+
+            # vertices is list of tuple (x, y, z), convert to np.ndarray
+            vertices_array = np.array([list(v) for v in vertices]).T
+            poly_array = np.array(poly).T
+
+            meshes.append(Mesh(vertex=vertices_array[:, :, None], triangles=poly_array))
+
+        self.vtkMesh.new_mesh_set(all_meshes=meshes)
 
 
 def cheap_markers_animation(xp_markers: np.ndarray, model_markers: np.ndarray):

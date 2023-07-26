@@ -136,6 +136,11 @@ class Viz:
         size_xp_marker: bool = 0.02,
         background_color: tuple[float, float, float] = (0.5, 0.5, 0.5),
         show_natural_mesh: bool = False,
+        window_size: tuple[int, int] = (800, 600),
+        camera_position: tuple[float, float, float] = None,  # may not work
+        camera_focus_point: tuple[float, float, float] = None,  # may not work
+        camera_zoom: float = None,  # may not work
+        camera_roll: float = None,  # may not work
     ):
         """
         This class is used to visualize the biomechanical model.
@@ -164,6 +169,16 @@ class Viz:
             The background color of the window.
         show_natural_mesh: bool
             If True, the natural meshes of each segment are displayed.
+        window_size: tuple[int, int]
+            The size of the window.
+        camera_position: tuple[float, float, float]
+            The position of the camera. may not work
+        camera_focus_point: tuple[float, float, float]
+            The focus point of the camera. may not work
+        camera_zoom: float
+            The zoom of the camera. may not work
+        camera_roll: float
+            The roll of the camera. may not work
         """
         self.model = model
         self.show_ground_frame = show_ground_frame
@@ -223,6 +238,21 @@ class Viz:
                 self.vtkWindow, patch_color=[(0, 0.5, 0.8) for i in range(self.model.nb_segments)], mesh_opacity=0.5
             )
 
+        self.window_size = window_size
+        self.camera_position = camera_position
+        self.camera_focus_point = camera_focus_point
+        self.camera_zoom = camera_zoom
+        self.camera_roll = camera_roll
+
+        self.update_window_and_view()
+
+    def update_window_and_view(self):
+        self.vtkWindow.setFixedSize(self.window_size[0], self.window_size[1])
+        self.vtkWindow.set_camera_zoom(self.camera_zoom)
+        self.vtkWindow.set_camera_focus_point(self.camera_focus_point[0], self.camera_focus_point[1], self.camera_focus_point[2])
+        self.vtkWindow.set_camera_roll(self.camera_roll)
+        self.vtkWindow.set_camera_position(self.camera_position[0], self.camera_position[1], self.camera_position[2])
+
     def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp=None, frame_rate=None):
         """
         This function is a cheap animation of markers
@@ -244,7 +274,8 @@ class Viz:
         if markers_xp is not None:
             if Q.shape[1] != markers_xp.shape[2]:
                 raise ValueError(
-                    f"Q and markers_xp must have the same number of frames. Q.shape[1]={Q.shape[1]} and markers_xp.shape[2]={markers_xp.shape[2]}"
+                    f"Q and markers_xp must have the same number of frames. Q.shape[1]={Q.shape[1]} "
+                    f"and markers_xp.shape[2]={markers_xp.shape[2]}"
                 )
         else:
             self.show_xp_markers = False
@@ -310,10 +341,45 @@ class Viz:
 
             # Update window
             self.vtkWindow.update_frame()
+
             i = (i + 1) % Q.shape[1]
 
-            while time.time() - tic < dt or not (frame_rate is None):
+            while not (time.time() - tic > dt or (frame_rate is None)):
                 pass
+
+        # print camera parameters
+        print("Camera position: ", self.get_camera_position())
+        print("Camera focus point: ", self.get_camera_focus_point())
+        print("Camera zoom: ", self.get_camera_zoom())
+        print("Camera roll: ", self.get_camera_roll())
+
+    def get_camera_position(self) -> tuple:
+        return self.vtkWindow.get_camera_position()
+
+    def set_camera_position(self, x: float, y: float, z: float):
+        self.vtkWindow.set_camera_position(x, y, z)
+        self.vtkWindow.refresh_window()
+
+    def get_camera_roll(self) -> float:
+        return self.vtkWindow.get_camera_roll()
+
+    def set_camera_roll(self, roll: float):
+        self.vtkWindow.set_camera_roll(roll)
+        self.vtkWindow.refresh_window()
+
+    def get_camera_zoom(self) -> float:
+        return self.vtkWindow.get_camera_zoom()
+
+    def set_camera_zoom(self, zoom: float):
+        self.vtkWindow.set_camera_zoom(zoom)
+        self.vtkWindow.refresh_window()
+
+    def get_camera_focus_point(self) -> tuple:
+        return self.vtkWindow.get_camera_focus_point()
+
+    def set_camera_focus_point(self, x: float, y: float, z: float):
+        self.vtkWindow.set_camera_focus_point(x, y, z)
+        self.vtkWindow.refresh_window()
 
     def update_natural_mesh(self, Q: NaturalCoordinates):
         """update the mesh of the model"""

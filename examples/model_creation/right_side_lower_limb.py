@@ -58,7 +58,6 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
 
     rhjc_global = np.zeros((4, rasis.shape[1]))
     lhjc_global = np.zeros((4, rasis.shape[1]))
-    mid_global = np.zeros((4, rasis.shape[1]))
 
     for i in range(rasis.shape[1]):
         provv = (rasis[:3, i] - Sacrum[:3, i]) / np.linalg.norm(rasis[:3, i] - Sacrum[:3, i])
@@ -97,17 +96,13 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
         # transformation from pelvis to global CS
         rhjc_global[:3, i] = Pelvis[:3, :3] @ rhjc_pelvis + OB
         lhjc_global[:3, i] = Pelvis[:3, :3] @ lhjc_pelvis + OB
-        mid_global[:3, i] = (rhjc_global[:3, i] + lhjc_global[:3, i]) / 2
 
     rhjc_global[:3, :] /= 1000
     lhjc_global[:3, :] /= 1000
-    mid_global[:3, :] /= 1000
-
     rhjc_global[-1, :] = 1
     lhjc_global[-1, :] = 1
-    mid_global[-1, :] = 1
 
-    return rhjc_global, lhjc_global, mid_global
+    return rhjc_global, lhjc_global
 
 
 def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> BiomechanicalModel:

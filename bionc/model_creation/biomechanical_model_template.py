@@ -77,7 +77,7 @@ class BiomechanicalModelTemplate:
             theta=theta,
             parent_point=parent_point,
             child_point=child_point,
-            length=length
+            length=length,
         )
 
     def update(self, data: Data) -> BiomechanicalModel:

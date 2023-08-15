@@ -30,6 +30,9 @@ class BiomechanicalModelTemplate:
         child: str,
         parent_axis: NaturalAxis | tuple[NaturalAxis] | list[NaturalAxis] = None,
         child_axis: NaturalAxis | tuple[NaturalAxis] | list[NaturalAxis] = None,
+        parent_point: str = None,
+        child_point: str = None,
+        length: float = None,
         theta: float | tuple[float] | list[float] = None,
         projection_basis: EulerSequence = None,
     ):
@@ -50,6 +53,12 @@ class BiomechanicalModelTemplate:
             The axis of the parent segment, zero, one or two element but not more.
         child_axis : NaturalAxis | tuple[NaturalAxis] | list[NaturalAxis]
             The axis of the child segment, zero, one or two element but not more.
+        parent_point : str
+            The name of the parent point
+        child_point : str
+            The name of the child point
+        length : float
+            The length for the constant length joint constraint
         theta : float | tuple[float] | list[float]
             The angle of axis constraints, zero, one or two element but not more.
         projection_basis : EulerSequence
@@ -69,6 +78,9 @@ class BiomechanicalModelTemplate:
             parent_axis=parent_axis,
             child_axis=child_axis,
             theta=theta,
+            parent_point=parent_point,
+            child_point=child_point,
+            length=length,
             projection_basis=projection_basis,
         )
 

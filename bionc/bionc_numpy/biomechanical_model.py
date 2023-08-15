@@ -30,6 +30,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         biomechanical_model.segments = {key: segment.to_mx() for key, segment in self.segments.items()}
         biomechanical_model.joints = {key: joint.to_mx() for key, joint in self.joints.items()}
         biomechanical_model._update_mass_matrix()
+        biomechanical_model.set_numpy_model(self)
 
         return biomechanical_model
 

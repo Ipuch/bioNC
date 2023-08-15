@@ -14,6 +14,14 @@ from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 class BiomechanicalModel(GenericBiomechanicalModel):
     def __init__(self):
         super().__init__()
+        self._numpy_model = None
+
+    def set_numpy_model(self, numpy_model: GenericBiomechanicalModel):
+        self._numpy_model = numpy_model
+
+    @property
+    def numpy_model(self):
+        return self._numpy_model
 
     def save(self, filename: str):
         raise NotImplementedError("Saving a biomechanical model is not implemented yet with casadi models.")

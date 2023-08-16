@@ -1,6 +1,7 @@
-from bionc.bionc_numpy.transformation_matrix import check_plane, transformation_matrix
+from bionc.bionc_numpy.transformation_matrix import transformation_matrix
 from bionc.utils.enums import TransformationMatrixType
 from bionc import NaturalAxis
+from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
 import numpy as np
 import pytest
 from .utils import TestUtils
@@ -142,3 +143,39 @@ def test_segment_transformation_matrix(bionc_type):
 
     with pytest.raises(ValueError):
         bbox.transformation_matrix(matrix_type="INVALID_TYPE")
+
+
+def test_transformation_matrix_util():
+    tm = TransformationMatrixUtil((NaturalAxis.U, NaturalAxis.V), NaturalAxis.U)
+    assert tm.to_enum() == TransformationMatrixType.Buv
+
+    tm = TransformationMatrixUtil((NaturalAxis.W, NaturalAxis.U), NaturalAxis.W)
+    assert tm.to_enum() == TransformationMatrixType.Bwu
+
+    tm = TransformationMatrixUtil((NaturalAxis.V, NaturalAxis.W), NaturalAxis.V)
+    assert tm.to_enum() == TransformationMatrixType.Bvw
+
+    tm = TransformationMatrixUtil((NaturalAxis.U, NaturalAxis.V), NaturalAxis.V)
+    assert tm.to_enum() == TransformationMatrixType.Bvu
+
+    tm = TransformationMatrixUtil((NaturalAxis.W, NaturalAxis.U), NaturalAxis.U)
+    assert tm.to_enum() == TransformationMatrixType.Buw
+
+    tm = TransformationMatrixUtil((NaturalAxis.V, NaturalAxis.W), NaturalAxis.W)
+    assert tm.to_enum() == TransformationMatrixType.Bwv
+
+
+def test_check_plane_invalid_input():
+    with pytest.raises(ValueError):
+        check_plane((NaturalAxis.U, NaturalAxis.U))
+
+    with pytest.raises(ValueError):
+        check_plane((NaturalAxis.V, NaturalAxis.U))
+
+    with pytest.raises(ValueError):
+        check_plane((NaturalAxis.U, NaturalAxis.W, NaturalAxis.V))
+
+
+def test_check_axis_to_keep_invalid_input():
+    with pytest.raises(ValueError):
+        check_axis_to_keep('X')

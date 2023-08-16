@@ -32,13 +32,7 @@ from .bionc_numpy.natural_accelerations import SegmentNaturalAccelerations, Natu
 from .bionc_numpy.homogenous_transform import HomogeneousTransform
 
 from .utils.enums import NaturalAxis, CartesianAxis, EulerSequence
-
-from casadi.casadi import MX as MX_type
-from numpy import ndarray
-
-# global variable to store the type of the math interface
-casadi_type = MX_type
-numpy_type = ndarray
+from .utils.transformation_matrix import TransformationMatrixUtil
 
 from .vizualization import Viz
 from .bionc_numpy import InverseKinematics

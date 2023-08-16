@@ -166,3 +166,28 @@ def vector_from_axis(axis: str | CartesianAxis) -> np.ndarray:
         return np.array([0, 0, 1])
     else:
         raise ValueError("The axis must be 'x', 'y' or 'z'.")
+
+
+def euler_angles_from_rotation_matrix(parent_matrix: np.ndarray, child_matrix: np.ndarray, joint_sequence: EulerSequence):
+    """
+    This function returns the euler angles from two rotation matrices
+
+    Parameters
+    ----------
+    parent_matrix: np.ndarray
+        The parent rotation matrix
+    child_matrix: np.ndarray
+        The child rotation matrix
+    joint_sequence: EulerSequence
+        The sequence of rotations
+
+    Returns
+    -------
+    np.ndarray
+        The euler angles
+    """
+
+    rot = parent_matrix.T @ child_matrix
+    euler_angles = rotation_matrix_to_euler_angles(rot, joint_sequence.value)
+
+    return euler_angles

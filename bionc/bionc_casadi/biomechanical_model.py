@@ -7,7 +7,7 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .external_force import ExternalForceList, ExternalForce
-from .rotations import euler_axes_from_rotation_matrices
+from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
@@ -867,3 +867,51 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             euler_torques[:, i] = vector_projection_in_non_orthogonal_basis(torques[:, i], e1, e2, e3)
 
         return euler_torques
+
+    def natural_coordinates_to_joint_angles(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function converts the natural coordinates to joint angles with Euler Sequences defined for each joint
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The natural coordinates of the model
+
+        Returns
+        -------
+        np.ndarray
+            The joint angles [3 x nb_joints]
+        """
+        euler_angles = MX.zeros((3, self.nb_joints))
+
+        for i, (joint_name, joint) in enumerate(self.joints.items()):
+            if joint.projection_basis is None:
+                raise RuntimeError(
+                    "The projection basis of the joint must be defined to express the torques in an Euler basis."
+                    f"Joint {joint_name} has no projection basis defined."
+                    f"Please define a projection basis for this joint, "
+                    f"using argument `projection_basis` of the joint constructor"
+                    f" and enum `EulerSequence` for the type of entry."
+                )
+
+            parent_segment = joint.parent
+            child_segment = joint.child
+
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
+            Q_child = Q.vector(child_segment.index)
+
+            # compute rotation matrix from Qi
+            R_parent = (
+                np.eye(3)
+                if joint.parent is None
+                else parent_segment.segment_coordinates_system(Q_parent, joint.parent_basis).rot
+            )
+            R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
+
+            euler_angles[:, i] = euler_angles_from_rotation_matrix(
+                R_parent, R_child, joint_sequence=joint.projection_basis,
+            )
+
+        return euler_angles

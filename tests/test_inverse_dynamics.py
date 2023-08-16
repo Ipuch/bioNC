@@ -230,6 +230,64 @@ def test_inverse_dynamics_projected(bionc_type, configuration):
         "casadi",
     ],
 )
+def test_projection_of_torques(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+        )
+
+    nb_segments = 3
+
+    model = build_n_link_pendulum(nb_segments=nb_segments)
+    if bionc_type == "casadi":
+        model = model.to_mx()
+    tuple_of_Q = [
+        SegmentNaturalCoordinates.from_components(
+            u=[1.02, 0.03, 0.04],
+            rp=[0.05, 0.06, 0.07],
+            rd=[0, -1.002, 0.001],
+            w=[0.001, 0.002, 1],
+        ),
+        SegmentNaturalCoordinates.from_components(
+            u=[1.01, 0.02, 0.03],
+            rp=[0.0007, -1.001, 0.002],
+            rd=[0.0006, -1.003, 1.001],
+            w=[0.0008, 1.004, 0.001],
+        ),
+        SegmentNaturalCoordinates.from_components(
+            u=[0.0008, 1.002, 0.0007],
+            rp=[0.0006, -1.005, 1.003],
+            rd=[1.005, -1.004, 1.01],
+            w=[0.0003, 0.0007, 1.009],
+        ),
+    ]
+    Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
+
+    torques = np.array([[0.001, 0.04, 0.2], [0.5, 0.2, 0.1], [-39.0, 1, 2]])
+    expected_torques = np.array([[ 3.99988440e-02,  3.82187782e-02,  1.91215874e-01],
+       [ 5.77998844e-01, -9.98470561e-01,  8.76828403e-02],
+       [-3.89988440e+01,  1.99052206e-01,  1.97464529e+00]])
+    projected_torques = model.express_joint_torques_in_euler_basis(Q, torques)
+    TestUtils.assert_equal(
+        projected_torques,
+        expected_torques,
+        expand=False,
+    )
+
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    [
+        "numpy",
+        "casadi",
+    ],
+)
 def test_inverse_dynamics_segment(bionc_type):
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (

@@ -857,3 +857,18 @@ class GenericBiomechanicalModel(ABC):
             The forces, torques and lambdas, all expressed in the global coordinate system
             It may be a good idea to express them in the local or euler basis coordinate system
         """
+
+    @abstractmethod
+    def natural_coordinates_to_joint_angles(self, Q: NaturalCoordinates):
+        """
+        This function converts the natural coordinates to joint angles with Euler Sequences defined for each joint
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The natural coordinates of the model
+
+        Returns
+        -------
+            The joint angles [3 x nb_joints]
+        """

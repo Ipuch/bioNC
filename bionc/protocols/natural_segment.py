@@ -32,7 +32,7 @@ class AbstractNaturalSegment(ABC):
     _center_of_mass : np.ndarray
         center of mass of the segment in Segment Coordinate System
     _inertia: np.ndarray
-        inertia matrix of the segment in Segment Coordinate System
+        inertia matrix of the segment in Segment Coordinate System [3x3]
     """
 
     def __init__(

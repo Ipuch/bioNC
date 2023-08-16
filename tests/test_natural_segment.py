@@ -432,15 +432,27 @@ def test_center_of_mass(bionc_type):
         gamma=np.pi / 2.1,
         length=1.5,
         center_of_mass=np.array([0.1, 0.2, 0.3]),
+        inertia=np.array([[0.01, 0.02, 0.03], [0.02, 0.04, 0.05], [0.03, 0.05, 0.06]]),
         mass=2.66,
     )
 
     n_com = seg.natural_center_of_mass
     gravity_force = seg.gravity_force()
+    inertia = seg.pseudo_inertia_matrix
 
     TestUtils.assert_equal(n_com, np.array([0.1, 0.126213, 0.310178]), expand=False)
     TestUtils.assert_equal(
         gravity_force,
         np.array([0.0, 0.0, -2.60946, 0.0, 0.0, -29.388084, 0.0, 0.0, 3.293484, 0.0, 0.0, -8.093961]),
         expand=False,
+    )
+    TestUtils.assert_equal(
+        inertia,
+        np.array(
+            [
+                [0.2424, -0.09838969, -0.13322144],
+                [-0.09838969, 0.13513184, -0.03319404],
+                [-0.13322144, -0.03319404, 0.29967532],
+            ]
+        ),
     )

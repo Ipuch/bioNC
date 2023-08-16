@@ -181,7 +181,11 @@ class NaturalSegment(AbstractNaturalSegment):
             matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
         ).T
 
-    def segment_coordinates_system(self, Q: SegmentNaturalCoordinates) -> HomogeneousTransform:
+    def segment_coordinates_system(
+            self,
+            Q: SegmentNaturalCoordinates,
+            transformation_matrix_type: TransformationMatrixType | str = None,
+    ) -> HomogeneousTransform:
         """
         This function computes the segment coordinates from the natural coordinates
 
@@ -189,6 +193,8 @@ class NaturalSegment(AbstractNaturalSegment):
         ----------
         Q: SegmentNaturalCoordinates
             The natural coordinates of the segment
+        transformation_matrix_type : TransformationMatrixType or str
+            The type of the transformation matrix to compute, either "Buv" or TransformationMatrixType.Buv
 
         Returns
         -------
@@ -199,7 +205,8 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self.transformation_matrix() @ horzcat(Q.u, Q.v, Q.w),
+            rotation=self.transformation_matrix(transformation_matrix_type)
+            @ horzcat(Q.u, Q.v, Q.w),
             translation=Q.rp,
         )
 

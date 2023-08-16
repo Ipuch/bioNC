@@ -141,4 +141,3 @@ def _transformation_matrix_Bvw(length: float, alpha: float, beta: float, gamma: 
 
 def _transformation_matrix_Bwv(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
     raise NotImplementedError("The transformation matrix Bwv is not implemented yet.")
-

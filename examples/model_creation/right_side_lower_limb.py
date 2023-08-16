@@ -16,6 +16,9 @@ from bionc import (
     BiomechanicalModel,
     JointType,
     EulerSequence,
+    TransformationMatrixUtil,
+    TransformationMatrixType,
+    NaturalAxis,
 )
 
 
@@ -233,17 +236,13 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         parent="PELVIS",
         child="THIGH",
         projection_basis=EulerSequence.ZXY,  # to either project joint torque or joint angle
-        # Okay
-        # parent_transformation_matrix=TransformationMatrix.from_first_and_second_axis(
-        #     first_axis_aligment=NaturalAxis.W,
-        #     second_axis_aligment=NaturalAxis.U,
-        #     axis_to_keep=NaturalAxis.W,
-        # ),
-        # # # Okay
-        # # # Support
-        # child_first_axis_aligment=(NaturalAxis.V == CartesianAxis.Y),
-        # child_second_axis_aligment=NaturalAxis.U,
-        # child_transformation_matrix=Y, v, w
+        # we need to define the parent and child basis
+        parent_basis=TransformationMatrixUtil(
+            # defining the segment coordinate system
+            plane=(NaturalAxis.W, NaturalAxis.U),  # the plane to define the cross product
+            axis_to_keep=NaturalAxis.W,  # it means W = Z
+        ).to_enum(),
+        child_basis=TransformationMatrixType.Bvu,
     )
 
     model.add_joint(
@@ -251,7 +250,14 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="THIGH",
         child="SHANK",
-        projection_basis=EulerSequence.ZXY,
+        projection_basis=EulerSequence.ZXY,  # to either project joint torque or joint angle
+        # we need to define the parent and child basis
+        parent_basis=TransformationMatrixUtil(
+            # defining the segment coordinate system
+            plane=(NaturalAxis.W, NaturalAxis.U),  # the plane to define the cross product
+            axis_to_keep=NaturalAxis.W,  # it means W = Z
+        ).to_enum(),
+        child_basis=TransformationMatrixType.Bvu,
     )
 
     model.add_joint(
@@ -259,7 +265,14 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="SHANK",
         child="FOOT",
-        projection_basis=EulerSequence.ZXY,
+        projection_basis=EulerSequence.ZXY,  # to either project joint torque or joint angle
+        # we need to define the parent and child basis
+        parent_basis=TransformationMatrixUtil(
+            # defining the segment coordinate system
+            plane=(NaturalAxis.W, NaturalAxis.U),  # the plane to define the cross product
+            axis_to_keep=NaturalAxis.W,  # it means W = Z
+        ).to_enum(),
+        child_basis=TransformationMatrixType.Bvu,
     )
 
     c3d_data = C3dData(f"{c3d_filename}")

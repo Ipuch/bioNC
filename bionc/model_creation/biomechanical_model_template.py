@@ -3,7 +3,7 @@ from .protocols import Data
 from .segment_template import SegmentTemplate
 from ..bionc_numpy.biomechanical_model import BiomechanicalModel
 from ..bionc_numpy.enums import JointType
-from ..utils.enums import NaturalAxis, EulerSequence
+from ..utils.enums import NaturalAxis, EulerSequence, TransformationMatrixType
 
 
 class BiomechanicalModelTemplate:
@@ -35,6 +35,8 @@ class BiomechanicalModelTemplate:
         length: float = None,
         theta: float | tuple[float] | list[float] = None,
         projection_basis: EulerSequence = None,
+        parent_basis: TransformationMatrixType = None,
+        child_basis: TransformationMatrixType = None,
     ):
         """
         This method adds a joint to the model
@@ -63,6 +65,15 @@ class BiomechanicalModelTemplate:
             The angle of axis constraints, zero, one or two element but not more.
         projection_basis : EulerSequence
             The euler projection_basis to project the joint angles on or joint torques on
+        parent_basis : TransformationMatrixType
+            Defines the transformation matrix to get
+            from the natural coordinate system of the parent segment to the orthogonal coordinate system
+            of the parent segment to perform joint torque computations
+        child_basis : TransformationMatrixType
+            Defines the transformation matrix to get
+            from the natural coordinate system of the child segment to the orthogonal coordinate system
+            of the child segment to perform joint torque computations
+
 
         Returns
         -------
@@ -82,6 +93,8 @@ class BiomechanicalModelTemplate:
             child_point=child_point,
             length=length,
             projection_basis=projection_basis,
+            parent_basis=parent_basis,
+            child_basis=child_basis,
         )
 
     def update(self, data: Data) -> BiomechanicalModel:

@@ -31,7 +31,7 @@ from .bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVel
 from .bionc_numpy.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
 from .bionc_numpy.homogenous_transform import HomogeneousTransform
 
-from .utils.enums import NaturalAxis, CartesianAxis, EulerSequence
+from .utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 from .utils.transformation_matrix import TransformationMatrixUtil
 
 from .vizualization import Viz

@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from .natural_segment import AbstractNaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
-from ..utils.enums import EulerSequence
+from ..utils.enums import EulerSequence, TransformationMatrixType
 
 
 class JointBase(ABC):
@@ -44,12 +44,16 @@ class JointBase(ABC):
         child: AbstractNaturalSegment,
         index: int,
         projection_basis: EulerSequence = EulerSequence.XYZ,
+        parent_basis: TransformationMatrixType = TransformationMatrixType.Bwu,  # by default as eulersequence starts with Z (~W)
+        child_basis: TransformationMatrixType = TransformationMatrixType.Bvu,  # by default as eulersequence ends with Y (~V)
     ):
         self.name = name
         self.parent = parent
         self.child = child
         self.index = index
         self.projection_basis = projection_basis
+        self.parent_basis = parent_basis
+        self.child_basis = child_basis
 
     @abstractmethod
     def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):

@@ -4,7 +4,7 @@ from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
 from ..protocols.joint import JointBase
-from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence
+from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 from .natural_vector import NaturalVector
 from .cartesian_vector import CartesianVector
 
@@ -29,8 +29,10 @@ class Joint:
             theta: tuple[float] | list[float] | np.ndarray,
             index: int,
             projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Hinge, self).__init__(name, parent, child, index, projection_basis)
+            super(Joint.Hinge, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:
@@ -180,6 +182,8 @@ class Joint:
                 child_axis=self.child_axis,
                 theta=self.theta,
                 projection_basis=self.projection_basis,
+                parent_basis=self.parent_basis,
+                child_basis=self.child_basis,
             )
 
     class Universal(JointBase):
@@ -223,8 +227,10 @@ class Joint:
             theta: float,
             index: int,
             projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Universal, self).__init__(name, parent, child, index, projection_basis)
+            super(Joint.Universal, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
             self.parent_axis = parent_axis
             self.parent_vector = NaturalVector.axis(self.parent_axis)
 
@@ -347,6 +353,8 @@ class Joint:
                 child_axis=self.child_axis,
                 theta=self.theta,
                 projection_basis=self.projection_basis,
+                parent_basis=self.parent_basis,
+                child_basis=self.child_basis,
             )
 
     class Spherical(JointBase):
@@ -357,8 +365,10 @@ class Joint:
             child: NaturalSegment,
             index: int,
             projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Spherical, self).__init__(name, parent, child, index, projection_basis)
+            super(Joint.Spherical, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
             self.nb_constraints = 3
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
@@ -452,6 +462,8 @@ class Joint:
                 child=self.child.to_mx(),
                 index=self.index,
                 projection_basis=self.projection_basis,
+                parent_basis=self.parent_basis,
+                child_basis=self.child_basis,
             )
 
     class SphereOnPlane(JointBase):
@@ -470,8 +482,10 @@ class Joint:
             plane_point: str = None,
             plane_normal: str = None,
             projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.SphereOnPlane, self).__init__(name, parent, child, index, projection_basis)
+            super(Joint.SphereOnPlane, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
             self.nb_constraints = 1
 
             if sphere_radius is None:
@@ -606,6 +620,8 @@ class Joint:
                 plane_point=self.plane_point.name,
                 plane_normal=self.plane_normal.name,
                 projection_basis=self.projection_basis,
+                parent_basis=self.parent_basis,
+                child_basis=self.child_basis,
             )
 
     class ConstantLength(JointBase):
@@ -619,8 +635,10 @@ class Joint:
             parent_point: str = None,
             child_point: str = None,
             projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.ConstantLength, self).__init__(name, parent, child, index, projection_basis)
+            super(Joint.ConstantLength, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
 
             if length is None:
                 raise ValueError("length must be provided")
@@ -751,6 +769,8 @@ class Joint:
                 parent_point=self.parent_point.name,
                 child_point=self.child_point.name,
                 projection_basis=self.projection_basis,
+                parent_basis=self.parent_basis,
+                child_basis=self.child_basis,
             )
 
 
@@ -774,8 +794,9 @@ class GroundJoint:
             theta: tuple[float] | list[float] | np.ndarray = None,
             index: int = None,
             projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(GroundJoint.Hinge, self).__init__(name, None, child, index, projection_basis)
+            super(GroundJoint.Hinge, self).__init__(name, None, child, index, projection_basis, None, child_basis)
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:
@@ -906,6 +927,7 @@ class GroundJoint:
                 child_axis=self.child_axis,
                 theta=self.theta,
                 projection_basis=self.projection_basis,
+                child_basis=self.child_basis,
             )
 
     class Spherical(JointBase):
@@ -921,8 +943,9 @@ class GroundJoint:
             ground_application_point: np.ndarray = None,
             index: int = None,
             projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(GroundJoint.Spherical, self).__init__(name, None, child, index, projection_basis)
+            super(GroundJoint.Spherical, self).__init__(name, None, child, index, projection_basis, None, child_basis)
             self.nb_constraints = 3
             self.ground_application_point = ground_application_point
 
@@ -1012,6 +1035,7 @@ class GroundJoint:
                 ground_application_point=self.ground_application_point,
                 index=self.index,
                 projection_basis=self.projection_basis,
+                child_basis=self.child_basis,
             )
 
     class Weld(JointBase):
@@ -1028,8 +1052,9 @@ class GroundJoint:
             rd_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
             index: int = None,
             projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(GroundJoint.Weld, self).__init__(name, None, child, index, projection_basis)
+            super(GroundJoint.Weld, self).__init__(name, None, child, index, projection_basis, None, child_basis)
 
             self.rp_child_ref = rp_child_ref
             self.rd_child_ref = rd_child_ref
@@ -1121,4 +1146,5 @@ class GroundJoint:
                 rp_child_ref=self.rp_child_ref,
                 rd_child_ref=self.rd_child_ref,
                 projection_basis=self.projection_basis,
+                child_basis=self.child_basis,
             )

@@ -178,4 +178,4 @@ def test_check_plane_invalid_input():
 
 def test_check_axis_to_keep_invalid_input():
     with pytest.raises(ValueError):
-        check_axis_to_keep('X')
+        check_axis_to_keep("X")

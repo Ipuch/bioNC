@@ -19,10 +19,8 @@ class TransformationMatrixUtil:
         Get the corresponding TransformationMatrixType from the plane and the axis to keep.
 
     """
-    def __init__(self,
-                 plane: tuple[NaturalAxis, NaturalAxis],
-                 axis_to_keep: NaturalAxis
-                 ):
+
+    def __init__(self, plane: tuple[NaturalAxis, NaturalAxis], axis_to_keep: NaturalAxis):
         check_plane(plane)
         check_axis_to_keep(axis_to_keep)
 

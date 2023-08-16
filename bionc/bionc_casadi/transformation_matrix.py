@@ -3,7 +3,9 @@ from casadi import cos, sin, MX, sqrt
 from ..utils.enums import NaturalAxis, TransformationMatrixType
 
 
-def transformation_matrix(matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float):
+def transformation_matrix(
+    matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float
+):
     """
     Create a transformation matrix from a TransformationMatrixType
 
@@ -67,9 +69,7 @@ def _transformation_matrix_Buv(length: float, alpha: float, beta: float, gamma: 
     B[1, 1] = length * sin(gamma)
     B[0, 2] = cos(beta)
     B[1, 2] = (cos(alpha) - cos(beta) * cos(gamma)) / sin(gamma)
-    B[2, 2] = sqrt(
-        1 - cos(beta) ** 2 - ((cos(alpha) - cos(beta) * cos(gamma)) / sin(gamma)) ** 2
-    )
+    B[2, 2] = sqrt(1 - cos(beta) ** 2 - ((cos(alpha) - cos(beta) * cos(gamma)) / sin(gamma)) ** 2)
     return B
 
 
@@ -99,9 +99,7 @@ def _transformation_matrix_Bvu(length: float, alpha: float, beta: float, gamma: 
     B[1, 1] = length
     B[0, 2] = (cos(beta) - cos(alpha) * cos(gamma)) / sin(gamma)
     B[1, 2] = cos(alpha)
-    B[2, 2] = sqrt(
-        1 - cos(alpha) ** 2 - ((cos(beta) - cos(alpha) * cos(gamma)) / sin(gamma)) ** 2
-    )
+    B[2, 2] = sqrt(1 - cos(alpha) ** 2 - ((cos(beta) - cos(alpha) * cos(gamma)) / sin(gamma)) ** 2)
     return B
 
 
@@ -129,9 +127,7 @@ def _transformation_matrix_Bwu(length: float, alpha: float, beta: float, gamma: 
     B[0, 0] = sin(beta)
     B[2, 0] = cos(beta)
     B[0, 1] = length * (cos(gamma) - cos(alpha) * cos(beta) / sin(beta))
-    B[1, 1] = length * sqrt(
-        1 - cos(alpha) ** 2 - ((cos(gamma) - cos(alpha) * cos(beta)) / sin(beta)) ** 2
-    )
+    B[1, 1] = length * sqrt(1 - cos(alpha) ** 2 - ((cos(gamma) - cos(alpha) * cos(beta)) / sin(beta)) ** 2)
     B[2, 1] = length * cos(alpha)
     B[2, 2] = 1
     return B
@@ -187,7 +183,7 @@ def from_plane_and_axis_to_keep(plane: tuple[NaturalAxis, NaturalAxis], axis_to_
 
 
 def check_plane(plane: tuple[NaturalAxis, NaturalAxis]):
-    """ Check if the plane is valid """
+    """Check if the plane is valid"""
     if len(plane) != 2:
         raise ValueError(f"Plane must be a tuple of length 2, got {len(plane)}")
     if not all(isinstance(axis, NaturalAxis) for axis in plane):
@@ -195,14 +191,14 @@ def check_plane(plane: tuple[NaturalAxis, NaturalAxis]):
     if plane[0] == plane[1]:
         raise ValueError(f"Plane must be a tuple of different axis, got {plane}")
     if (
-            (plane[0] == NaturalAxis.V and plane[1] == NaturalAxis.U)
-            or (plane[0] == NaturalAxis.U and plane[1] == NaturalAxis.W)
-            or (plane[0] == NaturalAxis.W and plane[1] == NaturalAxis.V)
+        (plane[0] == NaturalAxis.V and plane[1] == NaturalAxis.U)
+        or (plane[0] == NaturalAxis.U and plane[1] == NaturalAxis.W)
+        or (plane[0] == NaturalAxis.W and plane[1] == NaturalAxis.V)
     ):
         raise ValueError(f"Invert Axis in plane, because it would lead to an indirect frame, got {plane}")
 
 
 def check_axis_to_keep(axis_to_keep: NaturalAxis):
-    """ Check if the axis to keep is valid """
+    """Check if the axis to keep is valid"""
     if not isinstance(axis_to_keep, NaturalAxis):
         raise ValueError(f"Axis to keep must be of type NaturalAxis, got {axis_to_keep}")

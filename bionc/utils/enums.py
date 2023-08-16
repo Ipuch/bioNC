@@ -74,7 +74,6 @@ class TransformationMatrixType(Enum):
 
 
 def transformation_matrix_str_to_enum(matrix_type: str) -> TransformationMatrixType:
-
     if matrix_type == "Buv":
         return TransformationMatrixType.Buv
     elif matrix_type == "Bvu":

@@ -43,7 +43,7 @@ def test_natural_segment(bionc_type):
     TestUtils.assert_equal(my_segment.center_of_mass, np.array([0, 0.01, 0]))
     TestUtils.assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
 
-    TestUtils.assert_equal(my_segment.natural_center_of_mass, np.array([0, 0.01, 0]))
+    TestUtils.assert_equal(my_segment.natural_center_of_mass, np.array([0, 0.01, 0]), expand=False)
     N = np.array(
         [
             [0.0, 0.0, 0.0, 1.010, 0.0, 0.0, -1.0e-02, -0.0, -0.0, -6.123234e-19, -0.0, -0.0],
@@ -51,7 +51,7 @@ def test_natural_segment(bionc_type):
             [0.0, 0.0, 0.0, 0.0, 0.0, 1.010, -0.0, -0.0, -1.0e-02, -0.0, -0.0, -6.123234e-19],
         ]
     )
-    TestUtils.assert_equal(my_segment.natural_center_of_mass.interpolate(), N)
+    TestUtils.assert_equal(my_segment.natural_center_of_mass.interpolate(), N, expand=False)
 
     M = np.array(
         [
@@ -109,7 +109,7 @@ def test_natural_segment(bionc_type):
         ]
     )
 
-    TestUtils.assert_equal(my_segment.mass_matrix, M)
+    TestUtils.assert_equal(my_segment.mass_matrix, M, expand=False)
 
     # kinetic energy and potential energy
 
@@ -127,8 +127,8 @@ def test_natural_segment(bionc_type):
         wdot=np.array([0.4, 0.5, 0.6]),
     )
 
-    TestUtils.assert_equal(my_segment.kinetic_energy(Qdoti), np.array(0.970595))
-    TestUtils.assert_equal(my_segment.potential_energy(Qi), np.array(0.229))
+    TestUtils.assert_equal(my_segment.kinetic_energy(Qdoti), np.array(0.970595), expand=False)
+    TestUtils.assert_equal(my_segment.potential_energy(Qi), np.array(0.229), expand=False)
 
 
 @pytest.mark.parametrize(
@@ -408,12 +408,12 @@ def test_angle_sanity_check(bionc_type):
             length=1.5,
         )
 
+
 @pytest.mark.parametrize(
     "bionc_type",
     ["numpy", "casadi"],
 )
 def test_center_of_mass(bionc_type):
-
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
             NaturalSegment,
@@ -438,7 +438,9 @@ def test_center_of_mass(bionc_type):
     n_com = seg.natural_center_of_mass
     gravity_force = seg.gravity_force()
 
-    TestUtils.assert_equal(n_com, np.array([0.1     , 0.126213, 0.310178]), expand=False)
-    TestUtils.assert_equal(gravity_force, np.array([  0.      ,   0.      ,  -2.60946 ,   0.      ,   0.      ,
-                  -29.388084,   0.      ,   0.      ,   3.293484,   0.      ,
-                                                      0.      ,  -8.093961]), expand=False)
+    TestUtils.assert_equal(n_com, np.array([0.1, 0.126213, 0.310178]), expand=False)
+    TestUtils.assert_equal(
+        gravity_force,
+        np.array([0.0, 0.0, -2.60946, 0.0, 0.0, -29.388084, 0.0, 0.0, 3.293484, 0.0, 0.0, -8.093961]),
+        expand=False,
+    )

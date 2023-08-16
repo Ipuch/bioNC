@@ -407,3 +407,38 @@ def test_angle_sanity_check(bionc_type):
             gamma=np.pi / 2.1,
             length=1.5,
         )
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_center_of_mass(bionc_type):
+
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+        )
+
+    seg = NaturalSegment(
+        name="bbox",
+        alpha=np.pi / 2 + 0.1,
+        beta=np.pi / 2 - 0.05,
+        gamma=np.pi / 2.1,
+        length=1.5,
+        center_of_mass=np.array([0.1, 0.2, 0.3]),
+        mass=2.66,
+    )
+
+    n_com = seg.natural_center_of_mass
+    gravity_force = seg.gravity_force()
+
+    TestUtils.assert_equal(n_com, np.array([0.1     , 0.126213, 0.310178]), expand=False)
+    TestUtils.assert_equal(gravity_force, np.array([  0.      ,   0.      ,  -2.60946 ,   0.      ,   0.      ,
+                  -29.388084,   0.      ,   0.      ,   3.293484,   0.      ,
+                                                      0.      ,  -8.093961]), expand=False)

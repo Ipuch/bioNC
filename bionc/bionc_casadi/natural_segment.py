@@ -1,6 +1,7 @@
 from typing import Union, Tuple
 
 import numpy as np
+from numpy.linalg import inv as np_inv
 from casadi import MX
 from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, cross, norm_2, horzcat, solve
 
@@ -385,7 +386,8 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return NaturalVector(to_numeric_MX(self.transformation_matrix()) @ self.center_of_mass)
+        # todo: write analytical inverses of transformation matrix
+        return NaturalVector(inv(to_numeric_MX(self.transformation_matrix())) @ self.center_of_mass)
 
     @property
     def natural_center_of_mass(self) -> NaturalVector:

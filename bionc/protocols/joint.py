@@ -43,7 +43,7 @@ class JointBase(ABC):
         parent: AbstractNaturalSegment,
         child: AbstractNaturalSegment,
         index: int,
-        projection_basis: EulerSequence = EulerSequence.XYZ,
+        projection_basis: EulerSequence = EulerSequence.ZXY,  # biomechanics default isb
         parent_basis: TransformationMatrixType = TransformationMatrixType.Bwu,  # by default as eulersequence starts with Z (~W)
         child_basis: TransformationMatrixType = TransformationMatrixType.Bvu,  # by default as eulersequence ends with Y (~V)
     ):

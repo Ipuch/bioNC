@@ -919,7 +919,11 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Q_child = Q.vector(child_segment.index)
 
             # compute rotation matrix from Qi
-            R_parent = np.eye(3) if joint.parent is None else parent_segment.segment_coordinates_system(Q_parent, joint.parent_basis).rot
+            R_parent = (
+                np.eye(3)
+                if joint.parent is None
+                else parent_segment.segment_coordinates_system(Q_parent, joint.parent_basis).rot
+            )
             R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
 
             e1, e2, e3 = euler_axes_from_rotation_matrices(

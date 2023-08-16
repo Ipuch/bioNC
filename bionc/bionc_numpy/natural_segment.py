@@ -228,9 +228,7 @@ class NaturalSegment(AbstractNaturalSegment):
         ).T
 
     def segment_coordinates_system(
-            self,
-            Q: SegmentNaturalCoordinates,
-            transformation_matrix_type: TransformationMatrixType | str = None
+        self, Q: SegmentNaturalCoordinates, transformation_matrix_type: TransformationMatrixType | str = None
     ) -> HomogeneousTransform:
         """
         This function computes the segment coordinates from the natural coordinates

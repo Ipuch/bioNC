@@ -249,12 +249,11 @@ class Viz:
     def update_window_and_view(self):
         self.vtkWindow.setFixedSize(self.window_size[0], self.window_size[1])
         self.vtkWindow.set_camera_position(self.camera_position[0], self.camera_position[1], self.camera_position[2])
-        self.vtkWindow.set_camera_focus_point(self.camera_focus_point[0], self.camera_focus_point[1],
-                                              self.camera_focus_point[2])
+        self.vtkWindow.set_camera_focus_point(
+            self.camera_focus_point[0], self.camera_focus_point[1], self.camera_focus_point[2]
+        )
         self.vtkWindow.set_camera_roll(self.camera_roll)
         self.vtkWindow.set_camera_zoom(self.camera_zoom)
-
-
 
     def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp=None, frame_rate=None):
         """

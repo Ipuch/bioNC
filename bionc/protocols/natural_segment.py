@@ -58,7 +58,6 @@ class AbstractNaturalSegment(ABC):
 
         # todo: sanity check to make sure u, v or w are not collinear
         # todo: implement all the transformations matrix according the Ph.D thesis of Alexandre Naaim
-        self._transformation_matrix = self._transformation_matrix()
 
         self._mass = mass
         if center_of_mass is None:
@@ -224,19 +223,6 @@ class AbstractNaturalSegment(ABC):
         return self._mass_matrix
 
     @property
-    def transformation_matrix(self):
-        """
-        This function returns the transformation matrix, denoted Bi,
-        from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
-        Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
-
-        Returns
-        -------
-            Transformation matrix from natural coordinate to segment coordinate system [3x3]
-        """
-        return self._transformation_matrix
-
-    @property
     def pseudo_inertia_matrix(self):
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
@@ -261,11 +247,15 @@ class AbstractNaturalSegment(ABC):
         return self._natural_center_of_mass
 
     @abstractmethod
-    def _transformation_matrix(self):
+    def transformation_matrix(self):
         """
-        This function computes the transformation matrix, denoted Bi,
+        This function returns the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
         Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
+
+        Returns
+        -------
+            Transformation matrix from natural coordinate to segment coordinate system [3x3]
         """
 
     @abstractmethod

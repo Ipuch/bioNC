@@ -10,10 +10,12 @@ from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_casadi.homogenous_transform import HomogeneousTransform
 from ..bionc_casadi.natural_marker import NaturalMarker, SegmentNaturalVector
 from ..bionc_casadi.natural_vector import NaturalVector
+from ..bionc_casadi.transformation_matrix import transformation_matrix
 
 from ..protocols.natural_segment import AbstractNaturalSegment
 
 from .utils import to_numeric_MX
+from ..utils.enums import TransformationMatrixType, transformation_matrix_str_to_enum
 
 
 class NaturalSegment(AbstractNaturalSegment):
@@ -157,7 +159,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return alpha, beta, gamma, length
 
-    def _transformation_matrix(self) -> MX:
+    def transformation_matrix(self, matrix_type: str | TransformationMatrixType = None) -> MX:
         """
         This function computes the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
@@ -168,31 +170,14 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
         """
-        B = MX.zeros(3, 3)
-        B[0, :] = MX([1, 0, 0])
-        B[1, 0] = self.length * cos(self.gamma)
-        B[1, 1] = self.length * sin(self.gamma)
-        B[1, 2] = 0
-        B[2, 0] = cos(self.beta)
-        B[2, 1] = (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta)
-        B[2, 2] = sqrt(
-            1 - cos(self.beta) ** 2 - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
-        )
-        return B
+        if isinstance(matrix_type, str):
+            matrix_type = transformation_matrix_str_to_enum(matrix_type)
 
-    @property
-    def transformation_matrix(self) -> MX:
-        """
-        This function returns the transformation matrix, denoted Bi,
-        from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
-        Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
+        if matrix_type is None:
+            matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
-        Returns
-        -------
-        MX
-            Transformation matrix from natural coordinate to segment coordinate system [3x3]
-        """
-        return self._transformation_matrix
+        return transformation_matrix(matrix_type, length=self.length, alpha=self.alpha, beta=self.beta,
+                                     gamma=self.gamma).T
 
     def segment_coordinates_system(self, Q: SegmentNaturalCoordinates) -> HomogeneousTransform:
         """
@@ -212,7 +197,7 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self._transformation_matrix @ horzcat(Q.u, Q.v, Q.w),
+            rotation=self.transformation_matrix() @ horzcat(Q.u, Q.v, Q.w),
             translation=Q.rp,
         )
 
@@ -371,7 +356,7 @@ class NaturalSegment(AbstractNaturalSegment):
             - dot(self.center_of_mass, self.center_of_mass)
         )
 
-        Binv = to_numeric_MX(inv(self.transformation_matrix))
+        Binv = to_numeric_MX(inv(self.transformation_matrix()))
         Binv_transpose = transpose(Binv)
 
         return Binv @ middle_block @ Binv_transpose
@@ -399,7 +384,7 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return NaturalVector(to_numeric_MX(self.transformation_matrix) @ self.center_of_mass)
+        return NaturalVector(to_numeric_MX(self.transformation_matrix()) @ self.center_of_mass)
 
     @property
     def natural_center_of_mass(self) -> NaturalVector:
@@ -604,7 +589,7 @@ class NaturalSegment(AbstractNaturalSegment):
             True if the marker is anatomical, False otherwise
         """
 
-        location = to_numeric_MX(inv(self.transformation_matrix)) @ location
+        location = to_numeric_MX(inv(self.transformation_matrix())) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 
@@ -637,7 +622,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = to_numeric_MX(inv(self.transformation_matrix)) @ direction
+        direction = to_numeric_MX(inv(self.transformation_matrix())) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,

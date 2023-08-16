@@ -233,6 +233,17 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         parent="PELVIS",
         child="THIGH",
         projection_basis=EulerSequence.ZXY,  # to either project joint torque or joint angle
+        # Okay
+        # parent_transformation_matrix=TransformationMatrix.from_first_and_second_axis(
+        #     first_axis_aligment=NaturalAxis.W,
+        #     second_axis_aligment=NaturalAxis.U,
+        #     axis_to_keep=NaturalAxis.W,
+        # ),
+        # # # Okay
+        # # # Support
+        # child_first_axis_aligment=(NaturalAxis.V == CartesianAxis.Y),
+        # child_second_axis_aligment=NaturalAxis.U,
+        # child_transformation_matrix=Y, v, w
     )
 
     model.add_joint(

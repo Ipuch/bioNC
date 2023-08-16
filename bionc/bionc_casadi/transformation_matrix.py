@@ -1,5 +1,4 @@
-import numpy as np
-from numpy import cos, sin
+from casadi import cos, sin, MX, sqrt
 
 from ..utils.enums import NaturalAxis, TransformationMatrixType
 
@@ -42,7 +41,7 @@ def transformation_matrix(matrix_type: TransformationMatrixType, length: float, 
         raise ValueError(f"Unknown TransformationMatrixType: {matrix_type}")
 
 
-def _transformation_matrix_Buv(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
+def _transformation_matrix_Buv(length: float, alpha: float, beta: float, gamma: float) -> MX:
     """
     Create a transformation matrix of type Buv
 
@@ -62,14 +61,19 @@ def _transformation_matrix_Buv(length: float, alpha: float, beta: float, gamma: 
     numpy.ndarray
         The transformation matrix
     """
-    return np.array([
-        [1, length * cos(gamma), cos(beta)],
-        [0, length * sin(gamma), (cos(alpha) - cos(beta) * cos(gamma))/sin(gamma)],
-        [0, 0, np.sqrt(1 - cos(beta)**2 - ((cos(alpha) - cos(beta) * cos(gamma)) / sin(gamma))**2)]
-    ])
+    B = MX.zeros(3, 3)
+    B[:, 0] = MX([1, 0, 0])
+    B[0, 1] = length * cos(gamma)
+    B[1, 1] = length * sin(gamma)
+    B[0, 2] = cos(beta)
+    B[1, 2] = (cos(alpha) - cos(beta) * cos(gamma)) / sin(gamma)
+    B[2, 2] = sqrt(
+        1 - cos(beta) ** 2 - ((cos(alpha) - cos(beta) * cos(gamma)) / sin(gamma)) ** 2
+    )
+    return B
 
 
-def _transformation_matrix_Bvu(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
+def _transformation_matrix_Bvu(length: float, alpha: float, beta: float, gamma: float) -> MX:
     """
     Create a transformation matrix of type Bvu
 
@@ -89,14 +93,19 @@ def _transformation_matrix_Bvu(length: float, alpha: float, beta: float, gamma: 
     numpy.ndarray
         The transformation matrix
     """
-    return np.array([
-        [sin(gamma), 0, (cos(beta) - cos(alpha) * cos(gamma)) / sin(gamma)],
-        [cos(gamma), length, cos(alpha)],
-        [0, 0, np.sqrt(1 - cos(alpha)**2 - ((cos(beta) - cos(alpha) * cos(gamma)) / sin(gamma))**2)]
-    ])
+    B = MX.zeros(3, 3)
+    B[0, 0] = sin(gamma)
+    B[1, 0] = cos(gamma)
+    B[1, 1] = length
+    B[0, 2] = (cos(beta) - cos(alpha) * cos(gamma)) / sin(gamma)
+    B[1, 2] = cos(alpha)
+    B[2, 2] = sqrt(
+        1 - cos(alpha) ** 2 - ((cos(beta) - cos(alpha) * cos(gamma)) / sin(gamma)) ** 2
+    )
+    return B
 
 
-def _transformation_matrix_Bwu(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
+def _transformation_matrix_Bwu(length: float, alpha: float, beta: float, gamma: float) -> MX:
     """
     Create a transformation matrix of type Bwu
 
@@ -116,22 +125,27 @@ def _transformation_matrix_Bwu(length: float, alpha: float, beta: float, gamma: 
     numpy.ndarray
         The transformation matrix
     """
-    return np.array([
-        [sin(beta), length * (cos(gamma) - cos(alpha) * cos(beta) / sin(beta)), 0],
-        [0, length * np.sqrt(1 - cos(alpha)**2 - ((cos(gamma) - cos(alpha) * cos(beta)) / sin(beta))**2), 0],
-        [cos(beta), length * cos(alpha), 1]
-    ])
+    B = MX.zeros(3, 3)
+    B[0, 0] = sin(beta)
+    B[2, 0] = cos(beta)
+    B[0, 1] = length * (cos(gamma) - cos(alpha) * cos(beta) / sin(beta))
+    B[1, 1] = length * sqrt(
+        1 - cos(alpha) ** 2 - ((cos(gamma) - cos(alpha) * cos(beta)) / sin(beta)) ** 2
+    )
+    B[2, 1] = length * cos(alpha)
+    B[2, 2] = 1
+    return B
 
 
-def _transformation_matrix_Buw(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
+def _transformation_matrix_Buw(length: float, alpha: float, beta: float, gamma: float) -> MX:
     raise NotImplementedError("The transformation matrix Buw is not implemented yet.")
 
 
-def _transformation_matrix_Bvw(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
+def _transformation_matrix_Bvw(length: float, alpha: float, beta: float, gamma: float) -> MX:
     raise NotImplementedError("The transformation matrix Bvw is not implemented yet.")
 
 
-def _transformation_matrix_Bwv(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
+def _transformation_matrix_Bwv(length: float, alpha: float, beta: float, gamma: float) -> MX:
     raise NotImplementedError("The transformation matrix Bwv is not implemented yet.")
 
 

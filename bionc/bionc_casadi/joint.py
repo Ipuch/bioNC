@@ -214,7 +214,9 @@ class Joint:
             parent_basis: TransformationMatrixType = None,
             child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Universal, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
+            super(Joint.Universal, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
 
             self.parent_axis = parent_axis
             self.parent_vector = NaturalVector.axis(self.parent_axis)
@@ -333,7 +335,9 @@ class Joint:
             parent_basis: TransformationMatrixType = None,
             child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Spherical, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
+            super(Joint.Spherical, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
             self.nb_constraints = 3
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
@@ -427,7 +431,9 @@ class Joint:
             parent_basis: TransformationMatrixType = None,
             child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.SphereOnPlane, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
+            super(Joint.SphereOnPlane, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
             self.nb_constraints = 1
 
             if sphere_radius is None:
@@ -551,7 +557,9 @@ class Joint:
             parent_basis: TransformationMatrixType = None,
             child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.ConstantLength, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
+            super(Joint.ConstantLength, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
 
             if length is None:
                 raise ValueError("length must be provided")

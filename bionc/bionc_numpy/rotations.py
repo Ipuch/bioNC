@@ -6,19 +6,22 @@ from ..utils.enums import CartesianAxis, EulerSequence
 # todo: test the whole file
 
 
-def rotation_x(angle):
+def rotation_x(angle) -> np.ndarray:
+    """ This function returns the rotation matrix around the x axis by the angle given in argument"""
     return np.array([[1, 0, 0], [0, np.cos(angle), -np.sin(angle)], [0, np.sin(angle), np.cos(angle)]])
 
 
-def rotation_y(angle):
+def rotation_y(angle) -> np.ndarray:
+    """ This function returns the rotation matrix around the y axis by the angle given in argument"""
     return np.array([[np.cos(angle), 0, np.sin(angle)], [0, 1, 0], [-np.sin(angle), 0, np.cos(angle)]])
 
 
-def rotation_z(angle):
+def rotation_z(angle) -> np.ndarray:
+    """ This function returns the rotation matrix around the z axis by the angle given in argument"""
     return np.array([[np.cos(angle), -np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
 
 
-def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: str):
+def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     This function converts a rotation matrix to individual rotation matrices
 
@@ -168,7 +171,7 @@ def vector_from_axis(axis: str | CartesianAxis) -> np.ndarray:
         raise ValueError("The axis must be 'x', 'y' or 'z'.")
 
 
-def euler_angles_from_rotation_matrix(parent_matrix: np.ndarray, child_matrix: np.ndarray, joint_sequence: EulerSequence):
+def euler_angles_from_rotation_matrix(parent_matrix: np.ndarray, child_matrix: np.ndarray, joint_sequence: EulerSequence) -> np.ndarray :
     """
     This function returns the euler angles from two rotation matrices
 

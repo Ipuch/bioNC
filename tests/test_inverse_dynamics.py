@@ -270,9 +270,13 @@ def test_projection_of_torques(bionc_type):
     Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
 
     torques = np.array([[0.001, 0.04, 0.2], [0.5, 0.2, 0.1], [-39.0, 1, 2]])
-    expected_torques = np.array([[ 3.99988440e-02,  3.82187782e-02,  1.91215874e-01],
-       [ 5.77998844e-01, -9.98470561e-01,  8.76828403e-02],
-       [-3.89988440e+01,  1.99052206e-01,  1.97464529e+00]])
+    expected_torques = np.array(
+        [
+            [3.99988440e-02, 3.82187782e-02, 1.91215874e-01],
+            [5.77998844e-01, -9.98470561e-01, 8.76828403e-02],
+            [-3.89988440e01, 1.99052206e-01, 1.97464529e00],
+        ]
+    )
     projected_torques = model.express_joint_torques_in_euler_basis(Q, torques)
     TestUtils.assert_equal(
         projected_torques,

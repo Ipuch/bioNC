@@ -911,7 +911,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
 
             euler_angles[:, i] = euler_angles_from_rotation_matrix(
-                R_parent, R_child, joint_sequence=joint.projection_basis,
+                R_parent,
+                R_child,
+                joint_sequence=joint.projection_basis,
             )
 
         return euler_angles

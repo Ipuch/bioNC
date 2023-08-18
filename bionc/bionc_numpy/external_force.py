@@ -493,7 +493,7 @@ class JointGeneralizedForcesList:
         """Returns the external forces of the segment"""
         return self.joint_generalized_forces[joint_index]
 
-    def add_generalized_force(self, joint_index: int, joint_generalized_force: ExternalForce):
+    def add_generalized_force(self, joint_index: int, joint_generalized_force: JointGeneralizedForces):
         """
         Add an external force to the segment
 
@@ -505,6 +505,36 @@ class JointGeneralizedForcesList:
             The joint_generalized_force to add
         """
         self.joint_generalized_forces[joint_index].append(joint_generalized_force)
+
+    def add_all_generalized_forces(self, model:"BiomechanicalModel", joint_generalized_forces: np.ndarray, Q: NaturalCoordinates):
+        """
+        Add all the generalized forces to the object
+
+        Parameters
+        ----------
+        model: BiomechanicalModel
+            The model of the system
+        joint_generalized_forces: np.ndarray
+            The generalized forces to add
+        Q: NaturalCoordinates
+            The natural coordinates of the model
+        """
+        for joint_index, joint in enumerate(model.joints):
+            parent_index = joint.parent.index
+            child_index = joint.child.index
+            joint_slice = slice(model.joint_dof_indexes(joint_index))
+            joint_generalized_force_array = joint_generalized_forces[joint_slice]
+            joint_generalized_force = JointGeneralizedForces.from_joint_generalized_forces(
+                forces=joint_generalized_force_array,
+                torques=joint_generalized_force_array,
+                translation_dof=joint.projection_direction,
+                rotation_dof=joint.projection_basis,
+                joint=joint,
+                Q_parent=Q.vector(parent_index),
+                Q_child=Q.vector(child_index),
+            )
+            self.add_generalized_force(joint_index, joint_generalized_force)
+
 
     def to_natural_external_forces(self, model: "BiomechanicalModel", Q: NaturalCoordinates) -> np.ndarray:
         """

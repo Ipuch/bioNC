@@ -79,6 +79,7 @@ class GenericBiomechanicalModel(ABC):
             self._update_mass_matrix()  # Update the generalized mass matrix
             if name in ("ground", "GROUND", "Ground"):
                 self.set_ground_segment(name)
+
             # adding a default joint with the world frame to defined standard transformations.
             from ..bionc_numpy.enums import JointType  # prevent circular import
             from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
@@ -544,7 +545,7 @@ class GenericBiomechanicalModel(ABC):
                 return joint
         raise ValueError("No joint with index " + str(index))
 
-    def joint_dof_idx(self, joint_id: int) -> tuple[int, ...]:
+    def joint_dof_indexes(self, joint_id: int) -> tuple[int, ...]:
         """
         This function returns the index of a given joint.
 

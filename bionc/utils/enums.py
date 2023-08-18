@@ -29,6 +29,15 @@ class EulerSequence(Enum):
     ZXZ = "zxz"
     ZXY = "zxy"
     ZYZ = "zyz"
+    XY = "xy"
+    XZ = "xz"
+    YX = "yx"
+    YZ = "yz"
+    ZX = "zx"
+    ZY = "zy"
+    X = "x"
+    Y = "y"
+    Z = "z"
 
 
 class ISBEulerSequence:

@@ -2,6 +2,8 @@ import numpy as np
 
 from .natural_vector import NaturalVector
 from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from ..utils.enums import CartesianAxis, EulerSequence
+from .rotations import euler_axes_from_rotation_matrices
 
 
 class ExternalForce:
@@ -89,11 +91,11 @@ class ExternalForce:
         return np.array(fext)
 
     def transport_to(
-        self,
-        to_segment_index: int,
-        new_application_point_in_local: np.ndarray,
-        Q: NaturalCoordinates,
-        from_segment_index: int,
+            self,
+            to_segment_index: int,
+            new_application_point_in_local: np.ndarray,
+            Q: NaturalCoordinates,
+            from_segment_index: int,
     ):
         """
         Transport the external force to another segment and another application point
@@ -227,8 +229,8 @@ class ExternalForceList:
             slice_index = slice(segment_index * 12, (segment_index + 1) * 12)
             for external_force in segment_external_forces:
                 segment_natural_external_forces += external_force.to_natural_force(Q.vector(segment_index))[
-                    :, np.newaxis
-                ]
+                                                   :, np.newaxis
+                                                   ]
             natural_external_forces[slice_index, 0:1] = segment_natural_external_forces
 
         return natural_external_forces
@@ -271,16 +273,115 @@ class ExternalForceList:
         return len(self.external_forces)
 
 
-class GeneralizedForces(ExternalForce):
+class JointGeneralizedForces(ExternalForce):
     """
-    Made to handle generalized forces, it inherits from ExternalForce
+    Made to handle joint generalized forces, it inherits from ExternalForce
     """
 
-    def __init__(self, external_forces: np.ndarray, application_point_in_local: np.ndarray):
+    def __init__(
+            self,
+            external_forces: np.ndarray,
+            application_point_in_local: np.ndarray,
+            translation_dof: tuple[CartesianAxis, ...] = None,
+            rotation_dof: EulerSequence = None,
+    ):
         super().__init__(external_forces=external_forces, application_point_in_local=application_point_in_local)
+        self.translation_dof = translation_dof
+        self.rotation_dof = rotation_dof
+
+    @classmethod
+    def from_joint_generalized_forces(
+            cls,
+            forces: np.ndarray,
+            torques: np.ndarray,
+            translation_dof: tuple[CartesianAxis, ...] = None,
+            rotation_dof: EulerSequence = None,
+            joint: Joint = None,
+            Q_parent: SegmentNaturalCoordinates = None,
+            Q_child: SegmentNaturalCoordinates = None,
+    ):
+        """
+        Create a JointGeneralizedForces from the forces and torques
+
+        Parameters
+        ----------
+        forces: np.ndarray
+            The forces
+        torques: np.ndarray
+            The torques
+        translation_dof: tuple[CartesianAxis, ...]
+            The translation degrees of freedom
+        rotation_dof: EulerSequence
+            The rotation degrees of freedom
+        joint: Joint
+            The joint
+        Q_parent: SegmentNaturalCoordinates
+            The natural coordinates of the proximal segment
+        Q_child: SegmentNaturalCoordinates
+            The natural coordinates of the distal segment
+        """
+
+        if forces.shape[0] != len(translation_dof):
+            raise ValueError(
+                "The number of forces must be equal to the number of translation degrees of freedom"
+            )
+        if len(translation_dof) != len(set(translation_dof)):
+            raise ValueError(f"The translation degrees of freedom must be unique. Got {translation_dof}")
+
+        if torques.shape[0] != len(rotation_dof.value):
+            raise ValueError("The number of torques must be equal to the number of rotation degrees of freedom")
+
+        parent_segment = joint.parent
+        child_segment = joint.child
+
+        # compute rotation matrix from Qi
+        R_parent = (
+            np.eye(3)
+            if parent_segment is None
+            else parent_segment.segment_coordinates_system(Q_parent, joint.parent_basis).rot
+        )
+        R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
+
+        filled_forces = np.zeros((3, 1))
+        for rot_dof in rotation_dof.value:
+            if rot_dof == CartesianAxis.X:
+                filled_forces[0, 0] = forces[0]
+            elif rot_dof == CartesianAxis.Y:
+                filled_forces[1, 0] = forces[1]
+            elif rot_dof == CartesianAxis.Z:
+                filled_forces[2, 0] = forces[2]
+
+        # force automatically in proximal segment coordinates system
+        force_in_global = np.zeros((3, 1))
+        for f_i, axis in zip(filled_forces, R_parent.T):  # transposed to iter along columns (xi, yi, zi) in R0
+            force_in_global += f_i * axis[:, np.newaxis]
+
+        filled_torques = np.zeros((3, 1))
+        for rot_dof in rotation_dof.value:
+            if rot_dof == "x":
+                filled_torques[0, 0] = torques[0]
+            elif rot_dof == "y":
+                filled_torques[1, 0] = torques[1]
+            elif rot_dof == "z":
+                filled_torques[2, 0] = torques[2]
+
+        euler_axes = euler_axes_from_rotation_matrices(
+            R_parent, R_child, sequence=joint.projection_basis, projected_frame="mixed"
+        )
+
+        tau_in_global = np.zeros((3, 1))
+        for tau_i, ei in zip(filled_torques, euler_axes):
+            tau_in_global += tau_i * ei
+
+        return cls(
+            external_forces=np.vstack((tau_in_global, filled_forces)),
+            application_point_in_local=np.zeros(3),
+            translation_dof=translation_dof,
+            rotation_dof=rotation_dof,
+        )
 
     def to_generalized_natural_forces(
-        self, parent_segment_index: int, child_segment_index: int, Q: NaturalCoordinates
+            self, parent_segment_index: int, child_segment_index: int, Q: NaturalCoordinates
     ) -> np.ndarray:
         """
         Converts the generalized forces to natural forces

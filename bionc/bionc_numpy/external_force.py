@@ -506,7 +506,9 @@ class JointGeneralizedForcesList:
         """
         self.joint_generalized_forces[joint_index].append(joint_generalized_force)
 
-    def add_all_joint_generalized_forces(self, model:"BiomechanicalModel", joint_generalized_forces: np.ndarray, Q: NaturalCoordinates):
+    def add_all_joint_generalized_forces(
+        self, model: "BiomechanicalModel", joint_generalized_forces: np.ndarray, Q: NaturalCoordinates
+    ):
         """
         Add all the generalized forces to the object. It separates the generalized forces into sub generalized forces
         corresponding to each individual joint.
@@ -560,7 +562,6 @@ class JointGeneralizedForcesList:
 
         natural_joint_forces = np.zeros((12 * Q.nb_qi(), 1))
         for joint_index, joint_generalized_force in enumerate(self.joint_generalized_forces):
-
             joint = model.joint_from_index(joint_index)
 
             parent_natural_joint_force = np.zeros((12, 1))
@@ -576,7 +577,7 @@ class JointGeneralizedForcesList:
                     parent_segment_index=parent_index,
                     child_segment_index=child_index,
                     Q=Q,
-                    )[:, np.newaxis]
+                )[:, np.newaxis]
                 parent_natural_joint_force += a
                 child_natural_joint_force += b
             if joint.parent is not None:

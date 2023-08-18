@@ -250,7 +250,9 @@ class Viz:
         if self.window_size is not None:
             self.vtkWindow.setFixedSize(self.window_size[0], self.window_size[1])
         if self.camera_position is not None:
-            self.vtkWindow.set_camera_position(self.camera_position[0], self.camera_position[1], self.camera_position[2])
+            self.vtkWindow.set_camera_position(
+                self.camera_position[0], self.camera_position[1], self.camera_position[2]
+            )
         if self.camera_focus_point is not None:
             self.vtkWindow.set_camera_focus_point(
                 self.camera_focus_point[0], self.camera_focus_point[1], self.camera_focus_point[2]

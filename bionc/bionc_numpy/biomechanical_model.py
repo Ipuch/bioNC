@@ -6,7 +6,7 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
-from .external_force import ExternalForceList, ExternalForce
+from .external_force import ExternalForceList, ExternalForce, JointGeneralizedForces
 from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
@@ -125,7 +125,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Phi_k = np.zeros(self.nb_joint_constraints)
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             Q_parent = (
@@ -151,7 +151,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         K_k = np.zeros((self.nb_joint_constraints, Q.shape[0]))
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             idx_col_child = slice(
@@ -194,7 +194,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         K_k_dot = np.zeros((self.nb_joint_constraints, Qdot.shape[0]))
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             idx_col_parent = slice(
@@ -478,7 +478,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         # it follows the order of the segments
         for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -524,7 +524,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = np.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -585,7 +585,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Kdot = np.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i in range(self.nb_segments):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -642,7 +642,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
-        generalized_joint_forces: np.ndarray = None,
+        joint_generalized_forces: np.ndarray = None,
         external_forces: ExternalForceList = None,
         stabilization: dict = None,
     ) -> np.ndarray:
@@ -655,8 +655,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
-        generalized_joint_forces : np.ndarray
-            The generalized forces [12 * nb_segments, 1]
+        joint_generalized_forces : np.ndarray
+            The joint generalized forces in joint euler-basis, and forces in parent basis, like in minimal coordinates,
+            one per dof of the system. If None, the joint generalized forces are set to 0
         external_forces : ExternalForceList
             The list of external forces applied on the system
         stabilization: dict
@@ -681,6 +682,16 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             ExternalForceList.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
         )
         fext = external_forces.to_natural_external_forces(Q)
+
+        generalized_joint_forces = JointGeneralizedForces.from_joint_generalized_forces(
+            forces=joint_generalized_forces,
+            torques=joint_generalized_forces,
+            translation_dof=self.translation_dof,
+            rotation_dof=self.rotation_dof,
+            joint=self.joints,
+            Q_parent=Q_parent,
+            Q_child=Q_child,
+        )
 
         # KKT system
         # [G, K.T] [Qddot]  = [forces]

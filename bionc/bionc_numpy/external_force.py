@@ -347,7 +347,9 @@ class JointGeneralizedForces(ExternalForce):
                 filled_forces[2, 0] = forces[2]
 
         # force automatically in proximal segment coordinates system
-        force_in_global = project_vector_into_frame(filled_forces, (R_parent[:,0:1], R_parent[:,1:2], R_parent[:,2:3]))
+        force_in_global = project_vector_into_frame(
+            filled_forces, (R_parent[:, 0:1], R_parent[:, 1:2], R_parent[:, 2:3])
+        )
 
         filled_torques = np.zeros((3, 1))
         for rot_dof in rotation_dof.value:
@@ -358,9 +360,7 @@ class JointGeneralizedForces(ExternalForce):
             elif rot_dof == "z":
                 filled_torques[2, 0] = torques[2]
 
-        euler_axes_in_global = euler_axes_from_rotation_matrices(
-            R_parent, R_child, sequence=joint.projection_basis
-        )
+        euler_axes_in_global = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=joint.projection_basis)
 
         tau_in_global = project_vector_into_frame(filled_torques, euler_axes_in_global)
 
@@ -400,7 +400,9 @@ class JointGeneralizedForces(ExternalForce):
         return f_child, -f_parent
 
 
-def project_vector_into_frame(vector_in_initial_basis: np.ndarray, basis_axes_in_new_frame: tuple[np.ndarray, np.ndarray, np.ndarray]) -> np.ndarray:
+def project_vector_into_frame(
+    vector_in_initial_basis: np.ndarray, basis_axes_in_new_frame: tuple[np.ndarray, np.ndarray, np.ndarray]
+) -> np.ndarray:
     """
     Project a vector into a frame
 

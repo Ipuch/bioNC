@@ -32,7 +32,8 @@ def test_biomech_model(bionc_type):
     assert natural_model.nb_segments == 7
     assert natural_model.nb_markers == 30
     assert natural_model.nb_markers_technical == 18
-    assert natural_model.nb_joints == 6
+    assert natural_model.nb_joints == 7
+    assert natural_model.nb_joints_with_constraints == 6
     assert natural_model.nb_joint_constraints == 18
     assert natural_model.nb_joint_dof == 24
     assert natural_model.nb_rigid_body_constraints == 6 * 7
@@ -41,3 +42,10 @@ def test_biomech_model(bionc_type):
     assert natural_model.nb_Q == 7 * 12
     assert natural_model.nb_Qdot == 7 * 12
     assert natural_model.nb_Qddot == 7 * 12
+
+    assert natural_model.has_free_joint(0) == True
+    assert natural_model.has_free_joint(1) == False
+
+    # only for testing purpose
+    natural_model._remove_free_joint(0)
+    assert natural_model.has_free_joint(0) == False

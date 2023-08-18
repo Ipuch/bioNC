@@ -684,6 +684,52 @@ class GroundJoint:
     The public interface to joints with the ground as parent segment.
     """
 
+    class Free(JointBase):
+        """
+        This joint is defined by 0 constraints to let the joint to be free with the world.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            child: NaturalSegment,
+            index: int = None,
+            projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(GroundJoint.Free, self).__init__(name, None, child, index, projection_basis, None, child_basis)
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            return None
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            return None
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            return None
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
     class Hinge(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system

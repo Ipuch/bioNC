@@ -131,7 +131,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Phi_k = MX.zeros(self.nb_joint_constraints)
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             Q_parent = (
@@ -157,7 +157,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         K_k = MX.zeros((self.nb_joint_constraints, Q.shape[0]))
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             idx_col_child = slice(
@@ -198,7 +198,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         K_k_dot = MX.zeros((self.nb_joint_constraints, Qdot.shape[0]))
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             idx_col_parent = slice(
@@ -449,7 +449,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         # it follows the order of the segments
         for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -495,7 +495,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = MX.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -556,7 +556,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Kdot = MX.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i in range(self.nb_segments):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)

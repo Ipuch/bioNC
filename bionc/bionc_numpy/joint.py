@@ -795,6 +795,73 @@ class GroundJoint:
     The public interface to joints with the ground as parent segment.
     """
 
+    class Free(JointBase):
+        """
+        This joint is defined by 0 constraints to let the joint to be free with the world.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            child: NaturalSegment,
+            index: int = None,
+            projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(GroundJoint.Free, self).__init__(name, None, child, index, projection_basis, None, child_basis)
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+            return None
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
+            return None
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return None
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
+            return None
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return None
+
+        def to_mx(self):
+            """
+            This function returns the joint as a mx joint
+
+            Returns
+            -------
+            JointBase
+                The joint as a mx joint
+            """
+            from ..bionc_casadi.joint import GroundJoint as CasadiGroundJoint
+
+            return CasadiGroundJoint.Free(
+                name=self.name,
+                child=self.child.to_mx(),
+                index=self.index,
+                projection_basis=self.projection_basis,
+                child_basis=self.child_basis,
+            )
+
     class Hinge(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system

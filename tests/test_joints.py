@@ -165,6 +165,14 @@ def test_joints(bionc_type, joint_type: JointType):
         )
         assert joint.nb_constraints == 6
         assert joint.nb_joint_dof == 0
+    elif joint_type == JointType.GROUND_FREE:
+        joint = GroundJoint.Free(
+            name="Free",
+            child=bbox,
+            index=0,
+        )
+        assert joint.nb_constraints == 0
+        assert joint.nb_joint_dof == 6
     else:
         raise ValueError("Joint type not tested yet")
 

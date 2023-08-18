@@ -63,7 +63,8 @@ def test_joints(bionc_type, joint_type: JointType):
         joint = Joint.Hinge(
             name="hinge", parent=box, child=bbox, index=0, parent_axis=parent_axis, child_axis=child_axis, theta=theta
         )
-
+        assert joint.nb_joint_dof == 1
+        assert joint.nb_constraints == 5
     elif joint_type == JointType.UNIVERSAL:
         joint = Joint.Universal(
             name="universal",
@@ -74,6 +75,8 @@ def test_joints(bionc_type, joint_type: JointType):
             child_axis=NaturalAxis.W,
             theta=0.4,
         )
+        assert joint.nb_joint_dof == 2
+        assert joint.nb_constraints == 4
     elif joint_type == JointType.SPHERICAL:
         joint = Joint.Spherical(
             name="spherical",
@@ -81,6 +84,8 @@ def test_joints(bionc_type, joint_type: JointType):
             child=bbox,
             index=0,
         )
+        assert joint.nb_joint_dof == 3
+        assert joint.nb_constraints == 3
     elif joint_type == JointType.GROUND_REVOLUTE:
         joint = GroundJoint.Hinge(
             name="hinge",
@@ -90,6 +95,8 @@ def test_joints(bionc_type, joint_type: JointType):
             child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
             theta=[np.pi / 2, np.pi / 2],
         )
+        assert joint.nb_joint_dof == 1
+        assert joint.nb_constraints == 5
     elif joint_type == JointType.GROUND_SPHERICAL:
         joint = GroundJoint.Spherical(
             name="spherical",
@@ -97,6 +104,8 @@ def test_joints(bionc_type, joint_type: JointType):
             index=0,
             ground_application_point=np.array([0.1, 0.2, 0.3]),
         )
+        assert joint.nb_joint_dof == 3
+        assert joint.nb_constraints == 3
     elif joint_type == JointType.CONSTANT_LENGTH:
         box.add_natural_marker_from_segment_coordinates(
             name="P1",
@@ -117,6 +126,7 @@ def test_joints(bionc_type, joint_type: JointType):
             length=1.5,
             index=0,
         )
+        assert joint.nb_constraints == 1
     elif joint_type == JointType.SPHERE_ON_PLANE:
         box.add_natural_marker_from_segment_coordinates(
             name="SPHERE_CENTER",
@@ -143,6 +153,8 @@ def test_joints(bionc_type, joint_type: JointType):
             plane_normal="PLANE_NORMAL",
             index=0,
         )
+        assert joint.nb_constraints == 1
+        assert joint.nb_joint_dof == 5
     elif joint_type == JointType.GROUND_WELD:
         joint = GroundJoint.Weld(
             name="Weld",
@@ -151,6 +163,8 @@ def test_joints(bionc_type, joint_type: JointType):
             rd_child_ref=np.array([0.2, 0.04, 0.05]),
             index=0,
         )
+        assert joint.nb_constraints == 6
+        assert joint.nb_joint_dof == 0
     else:
         raise ValueError("Joint type not tested yet")
 

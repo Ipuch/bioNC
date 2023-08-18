@@ -378,6 +378,16 @@ class GenericBiomechanicalModel(ABC):
         return nb_joint_constraints
 
     @property
+    def nb_joint_dof(self) -> int:
+        """
+        This function returns the number of joint degrees of freedom in the model
+        """
+        nb_joint_dof = 6 * self.nb_segments
+        for _, joint in self.joints.items():
+            nb_joint_dof -= joint.nb_constraints
+        return nb_joint_dof
+
+    @property
     def joint_names(self) -> list[str]:
         """
         This function returns the names of the joints in the model

@@ -642,7 +642,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
-        generalized_forces: np.ndarray = None,
+        generalized_joint_forces: np.ndarray = None,
         external_forces: ExternalForceList = None,
         stabilization: dict = None,
     ) -> np.ndarray:
@@ -655,7 +655,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
-        generalized_forces : np.ndarray
+        generalized_joint_forces : np.ndarray
             The generalized forces [12 * nb_segments, 1]
         external_forces : ExternalForceList
             The list of external forces applied on the system
@@ -689,7 +689,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
         KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
-        forces = self.gravity_forces() + fext
+        forces = self.gravity_forces() + fext + generalized_forces
         biais = -Kdot @ Qdot
 
         if stabilization is not None:

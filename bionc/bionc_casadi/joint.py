@@ -573,6 +573,14 @@ class Joint:
             self.parent_point = parent.marker_from_name(parent_point)
             self.child_point = child.marker_from_name(child_point)
 
+        @property
+        def nb_joint_dof(self) -> int:
+            """
+            erase the parent method because remove no proper dof when looking at absolute joint rotation and torques.
+            ex : one constant length won't block rotations and translations of the child segment
+            """
+            return 6
+
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted Phi_k

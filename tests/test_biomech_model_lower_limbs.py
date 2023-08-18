@@ -34,6 +34,7 @@ def test_biomech_model(bionc_type):
     assert natural_model.nb_markers_technical == 18
     assert natural_model.nb_joints == 6
     assert natural_model.nb_joint_constraints == 18
+    assert natural_model.nb_joint_dof == 24
     assert natural_model.nb_rigid_body_constraints == 6 * 7
     assert natural_model.nb_holonomic_constraints == 60
 

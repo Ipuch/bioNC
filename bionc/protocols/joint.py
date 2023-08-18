@@ -54,6 +54,7 @@ class JointBase(ABC):
         self.projection_basis = projection_basis
         self.parent_basis = parent_basis
         self.child_basis = child_basis
+        self.nb_constraints = 0
 
     @abstractmethod
     def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
@@ -123,3 +124,14 @@ class JointBase(ABC):
         -------
             derivative of Constraint Jacobians of the joint [n, 12]
         """
+
+    @property
+    def nb_joint_dof(self) -> int:
+        """
+        Returns the number of degrees of freedom of the joint
+
+        Returns
+        -------
+
+        """
+        return 6 - self.nb_constraints

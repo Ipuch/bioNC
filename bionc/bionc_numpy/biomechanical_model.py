@@ -6,7 +6,7 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
-from .external_force import ExternalForceList, ExternalForce, JointGeneralizedForces
+from .external_force import ExternalForceList, ExternalForce, JointGeneralizedForces, JointGeneralizedForcesList
 from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
@@ -683,14 +683,16 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         )
         fext = external_forces.to_natural_external_forces(Q)
 
-        generalized_joint_forces = JointGeneralizedForces.from_joint_generalized_forces(
-            forces=joint_generalized_forces,
-            torques=joint_generalized_forces,
-            translation_dof=self.translation_dof,
-            rotation_dof=self.rotation_dof,
-            joint=self.joints,
-            Q_parent=Q_parent,
-            Q_child=Q_child,
+        joint_generalized_forces_object = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_joints)
+        if joint_generalized_forces is not None:
+            joint_generalized_forces_object.add_all_joint_generalized_forces(
+                model=self,
+                joint_generalized_forces=joint_generalized_forces,
+                Q=Q,
+            )
+        natural_joint_forces = joint_generalized_forces_object.to_natural_joint_forces(
+            model=self,
+            Q=Q,
         )
 
         # KKT system
@@ -700,7 +702,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
         KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
-        forces = self.gravity_forces() + fext + generalized_forces
+        forces = self.gravity_forces() + fext + natural_joint_forces
         biais = -Kdot @ Qdot
 
         if stabilization is not None:

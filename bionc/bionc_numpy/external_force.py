@@ -506,23 +506,26 @@ class JointGeneralizedForcesList:
         """
         self.joint_generalized_forces[joint_index].append(joint_generalized_force)
 
-    def add_all_generalized_forces(self, model:"BiomechanicalModel", joint_generalized_forces: np.ndarray, Q: NaturalCoordinates):
+    def add_all_joint_generalized_forces(self, model:"BiomechanicalModel", joint_generalized_forces: np.ndarray, Q: NaturalCoordinates):
         """
-        Add all the generalized forces to the object
+        Add all the generalized forces to the object. It separates the generalized forces into sub generalized forces
+        corresponding to each individual joint.
 
         Parameters
         ----------
         model: BiomechanicalModel
             The model of the system
         joint_generalized_forces: np.ndarray
-            The generalized forces to add
+            The generalized forces to add [nb_joint_dof, 1]
         Q: NaturalCoordinates
             The natural coordinates of the model
         """
-        for joint_index, joint in enumerate(model.joints):
-            parent_index = joint.parent.index
+
+        for joint_index, joint in enumerate(model.joints.values()):
+            parent_index = None if joint.parent is None else joint.parent.index
             child_index = joint.child.index
-            joint_slice = slice(model.joint_dof_indexes(joint_index))
+            # assuming they are sorted e.g., [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] and not [1,3,5,2]
+            joint_slice = slice(model.joint_dof_indexes(joint_index)[0], model.joint_dof_indexes(joint_index)[-1] + 1)
             joint_generalized_force_array = joint_generalized_forces[joint_slice]
             joint_generalized_force = JointGeneralizedForces.from_joint_generalized_forces(
                 forces=joint_generalized_force_array,
@@ -530,13 +533,12 @@ class JointGeneralizedForcesList:
                 translation_dof=joint.projection_direction,
                 rotation_dof=joint.projection_basis,
                 joint=joint,
-                Q_parent=Q.vector(parent_index),
+                Q_parent=None if joint.parent is None else Q.vector(parent_index),
                 Q_child=Q.vector(child_index),
             )
             self.add_generalized_force(joint_index, joint_generalized_force)
 
-
-    def to_natural_external_forces(self, model: "BiomechanicalModel", Q: NaturalCoordinates) -> np.ndarray:
+    def to_natural_joint_forces(self, model: "BiomechanicalModel", Q: NaturalCoordinates) -> np.ndarray:
         """
         Converts and sums all the segment natural external forces to the full vector of natural external forces
 
@@ -548,11 +550,12 @@ class JointGeneralizedForcesList:
             The natural coordinates of the model
         """
 
-        if len(self.joint_generalized_forces) != Q.nb_qi() or len(self.joint_generalized_forces) != model.nb_joint():
+        if len(self.joint_generalized_forces) != Q.nb_qi() or len(self.joint_generalized_forces) != model.nb_joints:
             raise ValueError(
                 "The number of joint in the model and the number of segment in the joint forces must be the same."
-                f"Got {len(self.joint_generalized_forces)} joint forces and {Q.nb_qi()} segments in the model."
-                f"Got {model.nb_joint()} joints in the model."
+                f"Got {len(self.joint_generalized_forces)} joint forces and {Q.nb_qi()} segments "
+                f"in NaturalCoordinate vector Q."
+                f"Got {model.nb_joints} joints in the model."
             )
 
         natural_joint_forces = np.zeros((12 * Q.nb_qi(), 1))
@@ -563,9 +566,9 @@ class JointGeneralizedForcesList:
             parent_natural_joint_force = np.zeros((12, 1))
             child_natural_joint_force = np.zeros((12, 1))
 
-            parent_index = joint.parent_index
-            child_index = joint.child_index
-            parent_slice_index = slice(parent_index * 12, (parent_index + 1) * 12)
+            parent_index = None if joint.parent is None else joint.parent.index
+            child_index = joint.child.index
+            parent_slice_index = None if joint.parent is None else slice(parent_index * 12, (parent_index + 1) * 12)
             child_slice_index = slice(child_index * 12, (child_index + 1) * 12)
 
             for force in joint_generalized_force:
@@ -576,7 +579,8 @@ class JointGeneralizedForcesList:
                     )[:, np.newaxis]
                 parent_natural_joint_force += a
                 child_natural_joint_force += b
-            natural_joint_forces[parent_slice_index, 0:1] = parent_natural_joint_force
+            if joint.parent is not None:
+                natural_joint_forces[parent_slice_index, 0:1] = parent_natural_joint_force
             natural_joint_forces[child_slice_index, 0:1] = child_natural_joint_force
 
         return natural_joint_forces

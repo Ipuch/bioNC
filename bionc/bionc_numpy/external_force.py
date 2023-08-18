@@ -91,11 +91,11 @@ class ExternalForce:
         return np.array(fext)
 
     def transport_to(
-            self,
-            to_segment_index: int,
-            new_application_point_in_local: np.ndarray,
-            Q: NaturalCoordinates,
-            from_segment_index: int,
+        self,
+        to_segment_index: int,
+        new_application_point_in_local: np.ndarray,
+        Q: NaturalCoordinates,
+        from_segment_index: int,
     ):
         """
         Transport the external force to another segment and another application point
@@ -229,8 +229,8 @@ class ExternalForceList:
             slice_index = slice(segment_index * 12, (segment_index + 1) * 12)
             for external_force in segment_external_forces:
                 segment_natural_external_forces += external_force.to_natural_force(Q.vector(segment_index))[
-                                                   :, np.newaxis
-                                                   ]
+                    :, np.newaxis
+                ]
             natural_external_forces[slice_index, 0:1] = segment_natural_external_forces
 
         return natural_external_forces
@@ -279,11 +279,11 @@ class JointGeneralizedForces(ExternalForce):
     """
 
     def __init__(
-            self,
-            external_forces: np.ndarray,
-            application_point_in_local: np.ndarray,
-            translation_dof: tuple[CartesianAxis, ...] = None,
-            rotation_dof: EulerSequence = None,
+        self,
+        external_forces: np.ndarray,
+        application_point_in_local: np.ndarray,
+        translation_dof: tuple[CartesianAxis, ...] = None,
+        rotation_dof: EulerSequence = None,
     ):
         super().__init__(external_forces=external_forces, application_point_in_local=application_point_in_local)
         self.translation_dof = translation_dof
@@ -291,14 +291,14 @@ class JointGeneralizedForces(ExternalForce):
 
     @classmethod
     def from_joint_generalized_forces(
-            cls,
-            forces: np.ndarray,
-            torques: np.ndarray,
-            translation_dof: tuple[CartesianAxis, ...] = None,
-            rotation_dof: EulerSequence = None,
-            joint: Joint = None,
-            Q_parent: SegmentNaturalCoordinates = None,
-            Q_child: SegmentNaturalCoordinates = None,
+        cls,
+        forces: np.ndarray,
+        torques: np.ndarray,
+        translation_dof: tuple[CartesianAxis, ...] = None,
+        rotation_dof: EulerSequence = None,
+        joint: Joint = None,
+        Q_parent: SegmentNaturalCoordinates = None,
+        Q_child: SegmentNaturalCoordinates = None,
     ):
         """
         Create a JointGeneralizedForces from the forces and torques
@@ -322,9 +322,7 @@ class JointGeneralizedForces(ExternalForce):
         """
 
         if forces.shape[0] != len(translation_dof):
-            raise ValueError(
-                "The number of forces must be equal to the number of translation degrees of freedom"
-            )
+            raise ValueError("The number of forces must be equal to the number of translation degrees of freedom")
         if len(translation_dof) != len(set(translation_dof)):
             raise ValueError(f"The translation degrees of freedom must be unique. Got {translation_dof}")
 
@@ -381,7 +379,7 @@ class JointGeneralizedForces(ExternalForce):
         )
 
     def to_generalized_natural_forces(
-            self, parent_segment_index: int, child_segment_index: int, Q: NaturalCoordinates
+        self, parent_segment_index: int, child_segment_index: int, Q: NaturalCoordinates
     ) -> np.ndarray:
         """
         Converts the generalized forces to natural forces

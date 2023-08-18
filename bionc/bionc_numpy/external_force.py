@@ -277,6 +277,22 @@ class ExternalForceList:
 class JointGeneralizedForces(ExternalForce):
     """
     Made to handle joint generalized forces, it inherits from ExternalForce
+
+    Attributes
+    ----------
+    external_forces : np.ndarray
+        The external forces
+    application_point_in_local : np.ndarray
+        The application point in local coordinates
+
+    Methods
+    -------
+    from_joint_generalized_forces(forces, torques, translation_dof, rotation_dof, joint, Q_parent, Q_child)
+        This function creates a JointGeneralizedForces from the forces and torques
+
+    Notes
+    -----
+    The application point of torques is set to the proximal point of the child.
     """
 
     def __init__(
@@ -369,7 +385,7 @@ class JointGeneralizedForces(ExternalForce):
             application_point_in_local=np.zeros(3),
         )
 
-    def to_generalized_natural_forces(
+    def to_natural_joint_forces(
         self, parent_segment_index: int, child_segment_index: int, Q: NaturalCoordinates
     ) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -422,3 +438,115 @@ def project_vector_into_frame(
     for v, ei in zip(vector_in_initial_basis, basis_axes_in_new_frame):
         vector_in_new_frame += v * ei
     return vector_in_new_frame
+
+
+class JointGeneralizedForcesList:
+    """
+    This class is made to handle all the external forces of each joint, if none are provided, it will be an empty list.
+    All segment forces are expressed in natural coordinates to be added to the equation of motion as:
+
+    Q @ Qddot + K^T @ lambda = gravity_forces + f_ext + joint_forces
+
+    joint_forces being [nb_segments x 12, 1]
+
+    Attributes
+    ----------
+    joint_generalized_forces : list
+        List of JointGeneralizedForces for each joint.
+
+    Methods
+    -------
+    add_external_force(segment_index, external_force)
+        This function adds an external force to the list of external forces.
+    empty_from_nb_segment(nb_segment)
+        This function creates an empty ExternalForceList from the number of segments.
+    to_natural_external_forces(Q)
+        This function returns the external forces in the natural coordinate format.
+    segment_external_forces(segment_index)
+        This function returns the external forces of a segment.
+    nb_segments
+        This function returns the number of segments.
+
+    """
+
+    def __init__(self, joint_generalized_forces: list[list[JointGeneralizedForces, ...]] = None):
+        if joint_generalized_forces is None:
+            raise ValueError(
+                "joint_generalized_forces must be a list of JointGeneralizedForces, or use the classmethod"
+                "NaturalExternalForceList.empty_from_nb_joint(nb_joint)"
+            )
+        self.joint_generalized_forces = joint_generalized_forces
+
+    @property
+    def nb_joint(self) -> int:
+        """Returns the number of segments"""
+        return len(self.joint_generalized_forces)
+
+    @classmethod
+    def empty_from_nb_joint(cls, nb_joint: int):
+        """
+        Create an empty NaturalExternalForceList from the model size
+        """
+        return cls(joint_generalized_forces=[[] for _ in range(nb_joint)])
+
+    def joint_generalized_force(self, joint_index: int) -> list[ExternalForce]:
+        """Returns the external forces of the segment"""
+        return self.joint_generalized_forces[joint_index]
+
+    def add_generalized_force(self, joint_index: int, joint_generalized_force: ExternalForce):
+        """
+        Add an external force to the segment
+
+        Parameters
+        ----------
+        joint_index: int
+            The index of the segment
+        joint_generalized_force:
+            The joint_generalized_force to add
+        """
+        self.joint_generalized_forces[joint_index].append(joint_generalized_force)
+
+    def to_natural_external_forces(self, model: "BiomechanicalModel", Q: NaturalCoordinates) -> np.ndarray:
+        """
+        Converts and sums all the segment natural external forces to the full vector of natural external forces
+
+        Parameters
+        ----------
+        model: BiomechanicalModel
+            The biomechanical model
+        Q : NaturalCoordinates
+            The natural coordinates of the model
+        """
+
+        if len(self.joint_generalized_forces) != Q.nb_qi() or len(self.joint_generalized_forces) != model.nb_joint():
+            raise ValueError(
+                "The number of joint in the model and the number of segment in the joint forces must be the same."
+                f"Got {len(self.joint_generalized_forces)} joint forces and {Q.nb_qi()} segments in the model."
+                f"Got {model.nb_joint()} joints in the model."
+            )
+
+        natural_joint_forces = np.zeros((12 * Q.nb_qi(), 1))
+        for joint_index, joint_generalized_force in enumerate(self.joint_generalized_forces):
+
+            joint = model.joint_from_index(joint_index)
+
+            parent_natural_joint_force = np.zeros((12, 1))
+            child_natural_joint_force = np.zeros((12, 1))
+
+            parent_index = joint.parent_index
+            child_index = joint.child_index
+            parent_slice_index = slice(parent_index * 12, (parent_index + 1) * 12)
+            child_slice_index = slice(child_index * 12, (child_index + 1) * 12)
+
+            for force in joint_generalized_force:
+                a, b = force.to_natural_joint_forces(
+                    parent_segment_index=parent_index,
+                    child_segment_index=child_index,
+                    Q=Q,
+                    )[:, np.newaxis]
+                parent_natural_joint_force += a
+                child_natural_joint_force += b
+            natural_joint_forces[parent_slice_index, 0:1] = parent_natural_joint_force
+            natural_joint_forces[child_slice_index, 0:1] = child_natural_joint_force
+
+        return natural_joint_forces

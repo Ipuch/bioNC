@@ -927,7 +927,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
 
             e1, e2, e3 = euler_axes_from_rotation_matrices(
-                R_parent, R_child, sequence=joint.projection_basis, projected_frame="mixed"
+                R_parent, R_child, sequence=joint.projection_basis, axes_source_frame="mixed"
             )
 
             # compute the euler torques

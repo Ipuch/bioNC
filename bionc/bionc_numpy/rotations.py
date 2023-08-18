@@ -78,7 +78,7 @@ def euler_axes_from_rotation_matrices(
     R_0_parent: np.ndarray,
     R_0_child: np.ndarray,
     sequence: EulerSequence,
-    projected_frame: str = "mixed",
+    axes_source_frame: str = "mixed",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     This function returns the euler axes from the rotation matrices in the global frame
@@ -91,8 +91,12 @@ def euler_axes_from_rotation_matrices(
         Rotation matrix of the child ^0R_child
     sequence : EulerSequence
         Sequence of rotations, e.g. 'xyz'
-    projected_frame : str
-        Frame in which the axes are projected, e.g. 'parent', 'child', 'mixed'
+    axes_source_frame : str
+        Frame from which the axes get computed from, e.g. 'parent', 'child', 'mixed'.
+            - parent: the axes are computed from the parent rotation matrix
+            - child: the axes are computed from the child rotation matrix
+            - mixed (default): the first and second axes are computed from the parent rotation matrix,
+            the third from the child, limitating non-linearities
 
     Returns
     -------
@@ -110,7 +114,7 @@ def euler_axes_from_rotation_matrices(
 
     cumulated_rotation_matrix = np.eye(3)
 
-    if projected_frame == "parent":
+    if axes_source_frame == "parent":
         for i, (axis, rotation) in enumerate(zip(sequence, individual_rotation_matrices)):
             cumulated_rotation_matrix = cumulated_rotation_matrix @ rotation
 
@@ -120,7 +124,7 @@ def euler_axes_from_rotation_matrices(
 
         return tuple(euler_axes)
 
-    elif projected_frame == "child":
+    elif axes_source_frame == "child":
         # flip the sequence and the rotation matrices
         sequence = sequence[::-1]
         individual_rotation_matrices = individual_rotation_matrices[::-1]
@@ -136,12 +140,12 @@ def euler_axes_from_rotation_matrices(
         euler_axes = euler_axes[::-1]
         return tuple(euler_axes)
 
-    elif projected_frame == "mixed":
+    elif axes_source_frame == "mixed":
         # this method should be better as it relies less on the transformations of the rotation matrices
         # only the second axis depends on the first angle, the third relies on the child matrix
 
-        parent_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, projected_frame="parent")
-        child_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, projected_frame="child")
+        parent_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, axes_source_frame="parent")
+        child_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, axes_source_frame="child")
 
         return parent_euler_axes[0], parent_euler_axes[1], child_euler_axes[2]
 

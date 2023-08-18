@@ -4,6 +4,7 @@ from .natural_vector import NaturalVector
 from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from ..utils.enums import CartesianAxis, EulerSequence
 from .rotations import euler_axes_from_rotation_matrices
+from ..protocols.joint import JointBase as Joint
 
 
 class ExternalForce:
@@ -363,12 +364,12 @@ class JointGeneralizedForces(ExternalForce):
             elif rot_dof == "z":
                 filled_torques[2, 0] = torques[2]
 
-        euler_axes = euler_axes_from_rotation_matrices(
-            R_parent, R_child, sequence=joint.projection_basis, projected_frame="mixed"
+        euler_axes_in_global = euler_axes_from_rotation_matrices(
+            R_parent, R_child, sequence=joint.projection_basis, axes_source_frame="mixed"
         )
 
         tau_in_global = np.zeros((3, 1))
-        for tau_i, ei in zip(filled_torques, euler_axes):
+        for tau_i, ei in zip(filled_torques, euler_axes_in_global):
             tau_in_global += tau_i * ei
 
         return cls(
@@ -380,7 +381,7 @@ class JointGeneralizedForces(ExternalForce):
 
     def to_generalized_natural_forces(
         self, parent_segment_index: int, child_segment_index: int, Q: NaturalCoordinates
-    ) -> np.ndarray:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Converts the generalized forces to natural forces
 
@@ -392,6 +393,11 @@ class JointGeneralizedForces(ExternalForce):
             The index of the child segment
         Q: NaturalCoordinates
             The natural coordinates of the model
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            The generalized forces in the natural coordinates of the parent and child segments [12x1], [12x1]
         """
         f_child = self.to_natural_force(Q.vector(child_segment_index))
         f_parent = self.transport_to(

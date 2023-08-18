@@ -213,14 +213,14 @@ def test_euler_vectors_with_interpretable_values(bionc_type):
 
     TestUtils.assert_equal(e1, np.array([1, 0, 0]), decimal=7)
     TestUtils.assert_equal(e2, np.array([0, 0.99500417, 0.09983342]), decimal=7)
-    TestUtils.assert_equal(e3, np.array([ 0.        , -0.09983342,  0.99500417]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0, -0.09983342, 0.99500417]), decimal=7)
 
     R_child = to_array(Rotation.fromEulerAngles(np.array([0, 0.1, 0]), seq.value), bionc_type)
     e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
 
     TestUtils.assert_equal(e1, np.array([1, 0, 0]), decimal=7)
     TestUtils.assert_equal(e2, np.array([0, 1, 0]), decimal=7)
-    TestUtils.assert_equal(e3, np.array([0.0998334, 0.       , 0.9950042]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0998334, 0.0, 0.9950042]), decimal=7)
 
     R_child = to_array(Rotation.fromEulerAngles(np.array([0, 0, 0.1]), seq.value), bionc_type)
     e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
@@ -232,21 +232,21 @@ def test_euler_vectors_with_interpretable_values(bionc_type):
     R_parent = to_array(Rotation.fromEulerAngles(np.array([0.1, 0, 0]), seq.value), bionc_type)
     R_child = np.eye(3)
     e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
-    TestUtils.assert_equal(e1, np.array([1,  0.,         0]), decimal=7)
-    TestUtils.assert_equal(e2, np.array([0., 1., 0.]), decimal=7)
-    TestUtils.assert_equal(e3, np.array([0., 0., 1.]), decimal=7)
+    TestUtils.assert_equal(e1, np.array([1, 0.0, 0]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([0.0, 1.0, 0.0]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0, 0.0, 1.0]), decimal=7)
 
     R_parent = to_array(Rotation.fromEulerAngles(np.array([0, 0.1, 0]), seq.value), bionc_type)
     e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
-    TestUtils.assert_equal(e1, np.array([ 0.99500417,  0.,         -0.09983342]), decimal=7)
-    TestUtils.assert_equal(e2, np.array([0., 1., 0.]), decimal=7)
-    TestUtils.assert_equal(e3, np.array([0., 0., 1.]), decimal=7)
+    TestUtils.assert_equal(e1, np.array([0.99500417, 0.0, -0.09983342]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([0.0, 1.0, 0.0]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0, 0.0, 1.0]), decimal=7)
 
     R_parent = to_array(Rotation.fromEulerAngles(np.array([0, 0, 0.1]), seq.value), bionc_type)
     e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
-    TestUtils.assert_equal(e1, np.array([0.99500417, 0.09983342, 0.]), decimal=7)
-    TestUtils.assert_equal(e2, np.array([-0.09983342, 0.99500417, 0.]), decimal=7)
-    TestUtils.assert_equal(e3, np.array([0., 0., 1.]), decimal=7)
+    TestUtils.assert_equal(e1, np.array([0.99500417, 0.09983342, 0.0]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([-0.09983342, 0.99500417, 0.0]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0, 0.0, 1.0]), decimal=7)
 
 
 def to_array(R, bionc_type) -> np.ndarray:

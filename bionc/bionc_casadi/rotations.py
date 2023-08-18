@@ -97,7 +97,7 @@ def euler_axes_from_rotation_matrices(
         Frame from which the axes get computed from, e.g. 'parent', 'child', 'mixed'.
             - parent: the axes are computed from the parent rotation matrix
             - child: the axes are computed from the child rotation matrix
-            - mixed (default): the first and second axes are computed from the parent rotation matrix, 
+            - mixed (default): the first and second axes are computed from the parent rotation matrix,
             the third from the child, limitating non-linearities
 
     Returns
@@ -146,7 +146,9 @@ def euler_axes_from_rotation_matrices(
         # this method should be better as it relies less on the transformations of the rotation matrices
         # only the second axis depends on the first angle, the third relies on the child matrix
 
-        parent_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, axes_source_frame="parent")
+        parent_euler_axes = euler_axes_from_rotation_matrices(
+            R_0_parent, R_0_child, sequence, axes_source_frame="parent"
+        )
         child_euler_axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence, axes_source_frame="child")
 
         return parent_euler_axes[0], parent_euler_axes[1], child_euler_axes[2]

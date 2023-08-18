@@ -283,12 +283,8 @@ class JointGeneralizedForces(ExternalForce):
         self,
         external_forces: np.ndarray,
         application_point_in_local: np.ndarray,
-        translation_dof: tuple[CartesianAxis, ...] = None,
-        rotation_dof: EulerSequence = None,
     ):
         super().__init__(external_forces=external_forces, application_point_in_local=application_point_in_local)
-        self.translation_dof = translation_dof
-        self.rotation_dof = rotation_dof
 
     @classmethod
     def from_joint_generalized_forces(
@@ -351,9 +347,7 @@ class JointGeneralizedForces(ExternalForce):
                 filled_forces[2, 0] = forces[2]
 
         # force automatically in proximal segment coordinates system
-        force_in_global = np.zeros((3, 1))
-        for f_i, axis in zip(filled_forces, R_parent.T):  # transposed to iter along columns (xi, yi, zi) in R0
-            force_in_global += f_i * axis[:, np.newaxis]
+        force_in_global = project_vector_into_frame(filled_forces, (R_parent[:,0:1], R_parent[:,1:2], R_parent[:,2:3]))
 
         filled_torques = np.zeros((3, 1))
         for rot_dof in rotation_dof.value:
@@ -365,18 +359,14 @@ class JointGeneralizedForces(ExternalForce):
                 filled_torques[2, 0] = torques[2]
 
         euler_axes_in_global = euler_axes_from_rotation_matrices(
-            R_parent, R_child, sequence=joint.projection_basis, axes_source_frame="mixed"
+            R_parent, R_child, sequence=joint.projection_basis
         )
 
-        tau_in_global = np.zeros((3, 1))
-        for tau_i, ei in zip(filled_torques, euler_axes_in_global):
-            tau_in_global += tau_i * ei
+        tau_in_global = project_vector_into_frame(filled_torques, euler_axes_in_global)
 
         return cls(
-            external_forces=np.vstack((tau_in_global, filled_forces)),
+            external_forces=np.vstack((tau_in_global, force_in_global)),
             application_point_in_local=np.zeros(3),
-            translation_dof=translation_dof,
-            rotation_dof=rotation_dof,
         )
 
     def to_generalized_natural_forces(
@@ -408,3 +398,25 @@ class JointGeneralizedForces(ExternalForce):
         )
 
         return f_child, -f_parent
+
+
+def project_vector_into_frame(vector_in_initial_basis: np.ndarray, basis_axes_in_new_frame: tuple[np.ndarray, np.ndarray, np.ndarray]) -> np.ndarray:
+    """
+    Project a vector into a frame
+
+    Parameters
+    ----------
+    vector_in_initial_basis: np.ndarray
+        The vector to project [3x1]
+    basis_axes_in_new_frame: tuple[np.ndarray, np.ndarray, np.ndarray]
+        The basis axes of the new frame [3x1], [3x1], [3x1]
+
+    Returns
+    -------
+    np.ndarray
+        The projected vector in the new frame [3x1]
+    """
+    vector_in_new_frame = np.zeros((3, 1))
+    for v, ei in zip(vector_in_initial_basis, basis_axes_in_new_frame):
+        vector_in_new_frame += v * ei
+    return vector_in_new_frame

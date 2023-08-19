@@ -167,25 +167,47 @@ def drop_the_pendulum(
     return time_steps, all_states, dynamics
 
 
-if __name__ == "__main__":
+def main(mode: str = "moment_equilibrium"):
     # add an external force applied on the segment 0
     # first build the object
     fext = ExternalForceList.empty_from_nb_segment(1)
     # then add a force
-    force1 = ExternalForce.from_components(
-        # this force will prevent the pendulum to fall
-        force=np.array([0, 0, 1 * 9.81]),
-        torque=np.array([0, 0, 0]),
-        application_point_in_local=np.array([0, -0.5, 0]),
-        # this moment will prevent the pendulum to fall
-        # force=np.array([0, 0, 0]),
-        # torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
-        # application_point_in_local=np.array([0, 0, 0]),
-    )
+    if mode == "moment_equilibrium":
+        force1 = ExternalForce.from_components(
+            # this moment will prevent the pendulum to fall
+            force=np.array([0, 0, 0]),
+            torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
+            application_point_in_local=np.array([0, 0, 0]),
+        )
+    elif mode == "force_equilibrium":
+        force1 = ExternalForce.from_components(
+            # this force will prevent the pendulum to fall
+            force=np.array([0, 0, 1 * 9.81]),
+            torque=np.array([0, 0, 0]),
+            application_point_in_local=np.array([0, -0.5, 0]),
+        )
+    elif mode == "no_equilibrium":
+        force1 = ExternalForce.from_components(
+            # this will not prevent the pendulum to fall it will keep drag the pendulum down
+            force=np.array([0, 0, 1.0 * 9.81]),
+            torque=np.array([0, 0, 0]),
+            application_point_in_local=np.array([0, -0.25, 0]),
+        )
+    else:
+        raise ValueError("mode should be one of 'moment_equilibrium', 'force_equilibrium', 'no_equilibrium'")
+
     # then add the force to the list on segment 0
     fext.add_external_force(external_force=force1, segment_index=0)
 
     model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(t_final=10, external_forces=fext)
+
+    return model, all_states
+
+
+if __name__ == "__main__":
+    model, all_states = main(mode="moment_equilibrium")
+    # model, all_states = main(mode="force_equilibrium")
+    # model, all_states = main(mode="no_equilibrium")
 
     # animate the motion
     from bionc import Viz

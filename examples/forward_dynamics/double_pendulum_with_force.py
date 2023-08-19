@@ -195,32 +195,38 @@ def drop_the_pendulum(
     return time_steps, all_states, dynamics
 
 
-if __name__ == "__main__":
+def main(mode: str = "force_equilibrium"):
     nb_segments = 2
     # add an external force applied on the segment 0
     # first build the object
     fext = ExternalForceList.empty_from_nb_segment(nb_segment=nb_segments)
     # then add a force
-    force1 = ExternalForce.from_components(
-        # this force will prevent the pendulum to fall
-        force=np.array([0, 0, 1 * 9.81]),
-        torque=np.array([0, 0, 0]),
-        application_point_in_local=np.array([0, -0.5, 0]),
-        # this moment will prevent the pendulum to fall
-        # force=np.array([0, 0, 0]),
-        # torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
-        # application_point_in_local=np.array([0, 0, 0]),
-    )
-    force2 = ExternalForce.from_components(
-        # this force will prevent the pendulum to fall
-        force=np.array([0, 0, 1 * 9.81]),
-        torque=np.array([0, 0, 0]),
-        application_point_in_local=np.array([0, -0.5, 0]),
-        # this moment will prevent the pendulum to fall
-        # force=np.array([0, 0, 0]),
-        # torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
-        # application_point_in_local=np.array([0, 0, 0]),
-    )
+    if mode == "force_equilibrium":
+        force1 = ExternalForce.from_components(
+            # this force will prevent the pendulum to fall
+            force=np.array([0, 0, 1 * 9.81]),
+            torque=np.array([0, 0, 0]),
+            application_point_in_local=np.array([0, -0.5, 0]),
+        )
+        force2 = ExternalForce.from_components(
+            # this force will prevent the pendulum to fall
+            force=np.array([0, 0, 1 * 9.81]),
+            torque=np.array([0, 0, 0]),
+            application_point_in_local=np.array([0, -0.5, 0]),
+        )
+    elif mode == "no_equilibrium":
+        force1 = ExternalForce.from_components(
+            force=np.array([0, 0, 1 * 9.81]),
+            torque=np.array([0, 0, 0]),
+            application_point_in_local=np.array([0, -0.25, 0]),
+        )
+        force2 = ExternalForce.from_components(
+            force=np.array([0, 0, 1 * 9.81]),
+            torque=np.array([0, 0, 0]),
+            application_point_in_local=np.array([0, -0.25, 0]),
+        )
+    else:
+        raise ValueError("mode must be 'force_equilibrium', 'moment_equilibrium' or 'no_equilibrium'")
 
     # # then add the force to the list on segment 0
     fext.add_external_force(external_force=force1, segment_index=0)
@@ -230,8 +236,15 @@ if __name__ == "__main__":
         t_final=10, external_forces=fext, nb_segments=nb_segments
     )
 
+    return model, all_states
+
+
+if __name__ == "__main__":
+    model, all_states = main(mode="force_equilibrium")
+    # model, all_states = main(mode="no_equilibrium")
+
     # animate the motion
     from bionc import Viz
 
     viz = Viz(model)
-    viz.animate(all_states[: 12 * nb_segments, :], None)
+    viz.animate(all_states[: 12 * model.nb_segments, :], None)

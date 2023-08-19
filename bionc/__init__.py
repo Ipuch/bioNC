@@ -33,6 +33,7 @@ from .bionc_numpy.homogenous_transform import HomogeneousTransform
 
 from .utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 from .utils.transformation_matrix import TransformationMatrixUtil
+from .utils.ode_solver import RK4
 
 from .vizualization import Viz
 from .bionc_numpy import InverseKinematics

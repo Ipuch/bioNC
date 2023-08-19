@@ -6,6 +6,7 @@ from bionc.bionc_numpy import (
     SegmentNaturalCoordinates,
     SegmentNaturalVelocities,
 )
+from bionc import RK4
 
 
 def drop_the_box(
@@ -72,39 +73,6 @@ def drop_the_box(
     all_states = RK4(t=time_steps, f=lambda t, states: dynamics(t, states)[0], y0=states_0)
 
     return time_steps, all_states, dynamics
-
-
-def RK4(t: np.ndarray, f: Callable, y0: np.ndarray, args=()) -> np.ndarray:
-    """
-    Runge-Kutta 4th order method
-
-    Parameters
-    ----------
-    t : array_like
-        time steps
-    f : Callable
-        function to be integrated in the form f(t, y, *args)
-    y0 : np.ndarray
-        initial conditions of states
-
-    Returns
-    -------
-    y : array_like
-        states for each time step
-
-    """
-    n = len(t)
-    y = np.zeros((len(y0), n))
-    y[:, 0] = y0
-    for i in range(n - 1):
-        h = t[i + 1] - t[i]
-        yi = np.squeeze(y[:, i])
-        k1 = f(t[i], yi, *args)
-        k2 = f(t[i] + h / 2.0, yi + k1 * h / 2.0, *args)
-        k3 = f(t[i] + h / 2.0, yi + k2 * h / 2.0, *args)
-        k4 = f(t[i] + h, yi + k3 * h, *args)
-        y[:, i + 1] = yi + (h / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
-    return y
 
 
 def post_computations(segment: NaturalSegment, time_steps: np.ndarray, all_states: np.ndarray, dynamics: Callable):

@@ -47,6 +47,8 @@ if __name__ == "__main__":
     ik_solver, Qopt, _, model, markers = main()
 
     model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0]))
+
+    # convert the natural coordinates to joint angles (still experimental)
     print(model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0])))
 
     viz = Viz(

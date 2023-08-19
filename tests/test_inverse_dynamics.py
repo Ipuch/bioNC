@@ -422,3 +422,49 @@ def test_inverse_dynamics(bionc_type):
         ),
         expand=False,
     )
+
+
+def test_id_example():
+    bionc = TestUtils.bionc_folder()
+    module_id = TestUtils.load_module(bionc + "/examples/inverse_dynamics/three_link_pendulum.py")
+
+    a = module_id.main("horizontal")
+    assert isinstance(a, tuple)
+    assert len(a) == 3
+
+    b = module_id.main("vertical")
+    assert isinstance(b, tuple)
+    assert len(b) == 3
+
+    torques = b[0]
+    forces = b[1]
+    lambdas = b[2]
+
+    TestUtils.assert_equal(torques, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-29.43, 9.81, 19.62]]), expand=False)
+
+    TestUtils.assert_equal(
+        forces,
+        np.array(
+            [
+                [9.01033882e-16, -3.00344627e-16, -6.00689255e-16],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+            ],
+        ),
+        expand=False,
+    )
+
+    TestUtils.assert_equal(
+        lambdas,
+        np.array(
+            [
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                [0.00000000e00, 2.45250000e00, 4.90500000e00],
+                [0.00000000e00, -3.00344627e-16, -6.00689255e-16],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+            ]
+        ),
+        expand=False,
+    )

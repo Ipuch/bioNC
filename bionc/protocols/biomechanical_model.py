@@ -21,6 +21,14 @@ class GenericBiomechanicalModel(ABC):
 
     Methods
     ----------
+    __getitem__(self, name: str)
+        This function returns the segment with the given name
+    __setitem__(self, name: str, segment: Any)
+        This function adds a segment to the model
+    save(self, filename: str)
+        This function saves the model to a file
+    load(self, filename: str)
+        This function loads the model from a file
 
 
     """

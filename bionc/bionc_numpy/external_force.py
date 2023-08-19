@@ -552,12 +552,12 @@ class JointGeneralizedForcesList:
             The natural coordinates of the model
         """
 
-        if len(self.joint_generalized_forces) != Q.nb_qi() or len(self.joint_generalized_forces) != model.nb_joints:
+        if len(self.joint_generalized_forces) != Q.nb_qi() or len(self.joint_generalized_forces) != model.nb_segments:
             raise ValueError(
                 "The number of joint in the model and the number of segment in the joint forces must be the same."
                 f"Got {len(self.joint_generalized_forces)} joint forces and {Q.nb_qi()} segments "
                 f"in NaturalCoordinate vector Q."
-                f"Got {model.nb_joints} joints in the model."
+                f"Got {model.nb_segments} joints in the model."
             )
 
         natural_joint_forces = np.zeros((12 * Q.nb_qi(), 1))

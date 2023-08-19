@@ -683,7 +683,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         )
         fext = external_forces.to_natural_external_forces(Q)
 
-        joint_generalized_forces_object = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_joints)
+        joint_generalized_forces_object = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_segments)
+        # each segment is actuated from its parent segment (assuming tree-like structure)
         if joint_generalized_forces is not None:
             joint_generalized_forces_object.add_all_joint_generalized_forces(
                 model=self,

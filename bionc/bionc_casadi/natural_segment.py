@@ -437,7 +437,7 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi[0:3, 0:3] = Ji[0, 0] * MX.eye(3)
         Gi[0:3, 3:6] = (self.mass * n_ci[0] + Ji[0, 1]) * MX.eye(3)
         Gi[0:3, 6:9] = -Ji[0, 1] * MX.eye(3)
-        Gi[0:3, 9:12] = -Ji[0, 2] * MX.eye(3)
+        Gi[0:3, 9:12] = Ji[0, 2] * MX.eye(3)
 
         Gi[3:6, 3:6] = (self.mass + 2 * self.mass * n_ci[1] + Ji[1, 1]) * MX.eye(3)
         Gi[3:6, 6:9] = -(self.mass * n_ci[1] + Ji[1, 1]) * MX.eye(3)

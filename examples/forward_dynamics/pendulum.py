@@ -151,21 +151,43 @@ if __name__ == "__main__":
         gamma=np.pi / 2,
         length=1,
         mass=1,
-        center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
+        center_of_mass=np.array([0.1, 0.1, 0.1]),  # in segment coordinates system
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
     )
     # add a revolute joint (still experimental)
     # if you want to add a revolute joint,
     # you need to ensure that x is always orthogonal to u and v
+    # model._add_joint(
+    #     dict(
+    #         name="hinge",
+    #         joint_type=JointType.GROUND_REVOLUTE,
+    #         parent="GROUND",
+    #         child="pendulum",
+    #         # meaning we pivot around the cartesian x-axis
+    #         parent_axis=[CartesianAxis.X, CartesianAxis.X],
+    #         child_axis=[NaturalAxis.V, NaturalAxis.W],
+    #         theta=[np.pi / 2, np.pi / 2],
+    #         # # meaning we pivot around the cartesian y-axis
+    #         # parent_axis=[CartesianAxis.Y, CartesianAxis.Y],
+    #         # child_axis=[NaturalAxis.U, NaturalAxis.W],
+    #         # theta=[np.pi / 2, np.pi / 2],
+    #         # meaning we pivot around the cartesian z-axis
+    #         # parent_axis=[CartesianAxis.Z, CartesianAxis.Z],
+    #         # child_axis=[NaturalAxis.U, NaturalAxis.V],
+    #         # theta=[np.pi / 2, np.pi / 2],
+    #
+    #     )
+    # )
     model._add_joint(
         dict(
-            name="hinge",
-            joint_type=JointType.GROUND_REVOLUTE,
+            name="universal",
+            joint_type=JointType.GROUND_UNIVERSAL,
             parent="GROUND",
             child="pendulum",
-            parent_axis=[CartesianAxis.X, CartesianAxis.X],
-            child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
-            theta=[np.pi / 2, np.pi / 2],
+            # meaning we pivot around the cartesian x-axis
+            parent_axis=CartesianAxis.X,
+            child_axis=NaturalAxis.V,
+            theta=np.pi / 2,
         )
     )
 

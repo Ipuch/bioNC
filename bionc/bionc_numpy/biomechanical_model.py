@@ -685,16 +685,16 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         joint_generalized_forces_object = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_segments)
         # each segment is actuated from its parent segment (assuming tree-like structure)
-        if joint_generalized_forces is not None:
-            joint_generalized_forces_object.add_all_joint_generalized_forces(
-                model=self,
-                joint_generalized_forces=joint_generalized_forces,
-                Q=Q,
-            )
-        natural_joint_forces = joint_generalized_forces_object.to_natural_joint_forces(
-            model=self,
-            Q=Q,
-        )
+        # if joint_generalized_forces is not None:
+        #     joint_generalized_forces_object.add_all_joint_generalized_forces(
+        #         model=self,
+        #         joint_generalized_forces=joint_generalized_forces,
+        #         Q=Q,
+        #     )
+        # natural_joint_forces = joint_generalized_forces_object.to_natural_joint_forces(
+        #     model=self,
+        #     Q=Q,
+        # )
 
         # KKT system
         # [G, K.T] [Qddot]  = [forces]
@@ -703,7 +703,11 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
         KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
-        forces = self.gravity_forces() + fext + natural_joint_forces
+        forces = (
+                self.gravity_forces()
+                + fext
+                  # + natural_joint_forces
+                  )
         biais = -Kdot @ Qdot
 
         if stabilization is not None:

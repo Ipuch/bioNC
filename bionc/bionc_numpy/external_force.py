@@ -333,14 +333,23 @@ class JointGeneralizedForces(ExternalForce):
         Q_child: SegmentNaturalCoordinates
             The natural coordinates of the distal segment
         """
+        if translation_dof is None and forces is not None:
+            raise ValueError("The translation degrees of freedom must be specified")
+        if rotation_dof is None and torques is not None:
+            raise ValueError("The rotation degrees of freedom must be specified")
+        if translation_dof is not None and forces is not None:
+            if forces.shape[0] != len(translation_dof):
+                raise ValueError("The number of forces must be equal to the number of translation degrees of freedom")
+            if len(translation_dof) != len(set(translation_dof)):
+                raise ValueError(f"The translation degrees of freedom must be unique. Got {translation_dof}")
 
-        if forces.shape[0] != len(translation_dof):
-            raise ValueError("The number of forces must be equal to the number of translation degrees of freedom")
-        if len(translation_dof) != len(set(translation_dof)):
-            raise ValueError(f"The translation degrees of freedom must be unique. Got {translation_dof}")
-
-        if torques.shape[0] != len(rotation_dof.value):
-            raise ValueError("The number of torques must be equal to the number of rotation degrees of freedom")
+        if rotation_dof is not None and torques is None:
+            raise ValueError("The torques must be specified")
+        if rotation_dof is None and torques is not None:
+            raise ValueError("The rotation degrees of freedom must be specified")
+        if rotation_dof is not None and torques is not None:
+            if torques.shape[0] != len(rotation_dof.value):
+                raise ValueError("The number of torques must be equal to the number of rotation degrees of freedom")
 
         parent_segment = joint.parent
         child_segment = joint.child
@@ -406,14 +415,17 @@ class JointGeneralizedForces(ExternalForce):
             The generalized forces in the natural coordinates of the parent and child segments [12x1], [12x1]
         """
         f_child = self.to_natural_force(Q.vector(child_segment_index))
-        f_parent = self.transport_to(
-            to_segment_index=parent_segment_index,
-            new_application_point_in_local=[0, 0, 0],
-            Q=Q,
-            from_segment_index=child_segment_index,
-        )
 
-        return f_child, -f_parent
+        if parent_segment_index is not None:
+            f_parent = self.transport_to(
+                to_segment_index=parent_segment_index,
+                new_application_point_in_local=[0, 0, 0],
+                Q=Q,
+                from_segment_index=child_segment_index,
+            )
+            return -f_parent, f_child
+        else:
+            return None, f_child
 
 
 def project_vector_into_frame(
@@ -436,6 +448,8 @@ def project_vector_into_frame(
     """
     vector_in_new_frame = np.zeros((3, 1))
     for v, ei in zip(vector_in_initial_basis, basis_axes_in_new_frame):
+        if ei.shape != (3, 1):
+            ei = ei[:, np.newaxis]
         vector_in_new_frame += v * ei
     return vector_in_new_frame
 
@@ -529,10 +543,15 @@ class JointGeneralizedForcesList:
             # assuming they are sorted e.g., [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] and not [1,3,5,2]
             joint_slice = slice(model.joint_dof_indexes(joint_index)[0], model.joint_dof_indexes(joint_index)[-1] + 1)
             joint_generalized_force_array = joint_generalized_forces[joint_slice]
+            # splitting forces and torques because they are stacked in the same array
+            force_ending_index = 0 if joint.translation_coordinates is None else len(joint.translation_coordinates)
+            forces = None if joint.translation_coordinates is None else joint_generalized_force_array[:force_ending_index]
+            torques = None if joint.projection_basis is None else joint_generalized_force_array[force_ending_index:]
+            # finally computing the joint generalized force to be formatted in natural coordinates
             joint_generalized_force = JointGeneralizedForces.from_joint_generalized_forces(
-                forces=joint_generalized_force_array,
-                torques=joint_generalized_force_array,
-                translation_dof=joint.projection_direction,
+                forces=forces,
+                torques=torques,
+                translation_dof=joint.translation_coordinates,
                 rotation_dof=joint.projection_basis,
                 joint=joint,
                 Q_parent=None if joint.parent is None else Q.vector(parent_index),
@@ -577,10 +596,10 @@ class JointGeneralizedForcesList:
                     parent_segment_index=parent_index,
                     child_segment_index=child_index,
                     Q=Q,
-                )[:, np.newaxis]
-                parent_natural_joint_force += a
+                )
                 child_natural_joint_force += b
             if joint.parent is not None:
+                parent_natural_joint_force += a
                 natural_joint_forces[parent_slice_index, 0:1] = parent_natural_joint_force
             natural_joint_forces[child_slice_index, 0:1] = child_natural_joint_force
 

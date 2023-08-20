@@ -488,7 +488,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         Gi[6:9, 6:9] = Ji[1, 1] * eye(3)
         Gi[6:9, 9:12] = -Ji[1, 2] * eye(3)
-        
+
         Gi[9:12, 9:12] = Ji[2, 2] * eye(3)
 
         # symmetrize the matrix

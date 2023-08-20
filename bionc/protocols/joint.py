@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from .natural_segment import AbstractNaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
-from ..utils.enums import EulerSequence, TransformationMatrixType
+from ..utils.enums import EulerSequence, TransformationMatrixType, CartesianAxis
 
 
 class JointBase(ABC):
@@ -23,6 +23,17 @@ class JointBase(ABC):
     projection_basis : EulerSequence
         The euler sequence of the joint, used for post computation, not directly related to natural coordinates
         it can be used to project the joint angles or the joint torques on a specific euler projection_basis
+    parent_basis : TransformationMatrixType
+        The transformation to get the orthogonal parent basis of the joint,
+        used for post computation, to compute minimal coordinates afterward
+    child_basis : TransformationMatrixType
+        The transformation to get the orthogonal child basis of the joint,
+        used for post computation, to compute minimal coordinates afterward
+    nb_constraints : int
+        The number of constraints of the joint, e.g. 3 for a spherical joint, 5 for a revolute joint, etc...
+    translation_coordinates : tuple[CartesianAxis, CartesianAxis, CartesianAxis]
+        The translation basis of the joint, used for post computation, to compute minimal coordinates afterward
+
 
     Methods
     -------
@@ -46,6 +57,7 @@ class JointBase(ABC):
         projection_basis: EulerSequence = EulerSequence.ZXY,  # biomechanics default isb
         parent_basis: TransformationMatrixType = TransformationMatrixType.Bwu,  # by default as eulersequence starts with Z (~W)
         child_basis: TransformationMatrixType = TransformationMatrixType.Bvu,  # by default as eulersequence ends with Y (~V)
+        translation_coordinates: tuple[CartesianAxis, CartesianAxis, CartesianAxis] = (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z),
     ):
         self.name = name
         self.parent = parent
@@ -55,6 +67,7 @@ class JointBase(ABC):
         self.parent_basis = parent_basis
         self.child_basis = child_basis
         self.nb_constraints = 0
+        self.translation_coordinates = translation_coordinates
 
     @abstractmethod
     def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):

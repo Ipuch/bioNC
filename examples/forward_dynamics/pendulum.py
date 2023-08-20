@@ -140,7 +140,7 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
     return defects, defects_dot, joint_defects, all_lambdas
 
 
-if __name__ == "__main__":
+def main(mode: str = "x_revolute", show_results: bool = True):
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
@@ -151,45 +151,51 @@ if __name__ == "__main__":
         gamma=np.pi / 2,
         length=1,
         mass=1,
-        center_of_mass=np.array([0.1, 0.1, 0.1]),  # in segment coordinates system
-        inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+        center_of_mass=np.array([0.1, 0.1, -0.1]),  # in segment coordinates system
+        inertia=np.array([[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.05]]),  # in segment coordinates system
     )
-    # add a revolute joint (still experimental)
-    # if you want to add a revolute joint,
-    # you need to ensure that x is always orthogonal to u and v
+
+    if mode == "x_revolute":
+        # meaning we pivot around the cartesian x-axis
+        # if you want to add a revolute joint,
+        # you need to ensure that x is always orthogonal to u and v
+        parent_axis = [CartesianAxis.X, CartesianAxis.X]
+        child_axis = [NaturalAxis.V, NaturalAxis.W]
+    elif mode == "y_revolute":
+        # meaning we pivot around the cartesian y-axis
+        parent_axis = [CartesianAxis.Y, CartesianAxis.Y]
+        child_axis = [NaturalAxis.U, NaturalAxis.W]
+    elif mode == "z_revolute":
+        # meaning we pivot around the cartesian z-axis
+        # turn the pendulum around to make it turn along w-axis
+        parent_axis = [CartesianAxis.X, CartesianAxis.X]
+        child_axis = [NaturalAxis.U, NaturalAxis.V]
+    else:
+        raise ValueError("Unknown mode. please choose between x_revolute, y_revolute or z_revolute")
+
+    model._add_joint(
+        dict(
+            name="hinge",
+            joint_type=JointType.GROUND_REVOLUTE,
+            parent="GROUND",
+            child="pendulum",
+            parent_axis=parent_axis,
+            child_axis=child_axis,
+            theta=[np.pi / 2, np.pi / 2],
+        )
+    )
     # model._add_joint(
     #     dict(
-    #         name="hinge",
-    #         joint_type=JointType.GROUND_REVOLUTE,
+    #         name="universal",
+    #         joint_type=JointType.GROUND_UNIVERSAL,
     #         parent="GROUND",
     #         child="pendulum",
     #         # meaning we pivot around the cartesian x-axis
-    #         parent_axis=[CartesianAxis.X, CartesianAxis.X],
-    #         child_axis=[NaturalAxis.V, NaturalAxis.W],
-    #         theta=[np.pi / 2, np.pi / 2],
-    #         # # meaning we pivot around the cartesian y-axis
-    #         # parent_axis=[CartesianAxis.Y, CartesianAxis.Y],
-    #         # child_axis=[NaturalAxis.U, NaturalAxis.W],
-    #         # theta=[np.pi / 2, np.pi / 2],
-    #         # meaning we pivot around the cartesian z-axis
-    #         # parent_axis=[CartesianAxis.Z, CartesianAxis.Z],
-    #         # child_axis=[NaturalAxis.U, NaturalAxis.V],
-    #         # theta=[np.pi / 2, np.pi / 2],
-    #
+    #         parent_axis=CartesianAxis.X,
+    #         child_axis=NaturalAxis.V,
+    #         theta=np.pi / 2,
     #     )
     # )
-    model._add_joint(
-        dict(
-            name="universal",
-            joint_type=JointType.GROUND_UNIVERSAL,
-            parent="GROUND",
-            child="pendulum",
-            # meaning we pivot around the cartesian x-axis
-            parent_axis=CartesianAxis.X,
-            child_axis=NaturalAxis.V,
-            theta=np.pi / 2,
-        )
-    )
 
     model.save("pendulum.nmod")
 
@@ -197,7 +203,13 @@ if __name__ == "__main__":
     print(model.nb_joints)
     print(model.nb_joint_constraints)
 
-    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
+    if mode in ("x_revolute", "y_revolute"):
+        Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
+    elif mode == "z_revolute":
+        Qi = SegmentNaturalCoordinates.from_components(u=[0, 0, -1], rp=[0, 0, 0], rd=[0, -1, 0], w=[1, 0, 0])
+    else:
+        raise ValueError("Unknown mode. please choose between x_revolute, y_revolute or z_revolute")
+
     Q = NaturalCoordinates(Qi)
     Qdoti = SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
     Qdot = NaturalVelocities(Qdoti)
@@ -237,25 +249,33 @@ if __name__ == "__main__":
         t_final=t_final,
     )
 
-    defects, defects_dot, joint_defects, all_lambdas = post_computations(
-        model=model,
-        time_steps=time_steps,
-        all_states=all_states,
-        dynamics=dynamics,
-    )
+    if show_results:
+        defects, defects_dot, joint_defects, all_lambdas = post_computations(
+            model=model,
+            time_steps=time_steps,
+            all_states=all_states,
+            dynamics=dynamics,
+        )
 
-    from viz import plot_series
+        from viz import plot_series
 
-    # Plot the results
-    # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
-    plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
-    plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
-    plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
-    # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
-    plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+        # Plot the results
+        # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
+        plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
+        plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
+        plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
+        # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
+        plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+
+    return model, all_states
+
+if __name__ == "__main__":
+    # model, all_states = main("x_revolute", show_results=False)
+    # model, all_states = main("y_revolute", show_results=False)
+    model, all_states = main("z_revolute", show_results=False)
 
     # animate the motion
     from bionc import Viz
 
     viz = Viz(model)
-    viz.animate(all_states[:12, :], None)
+    viz.animate(all_states[:12, :], None, frame_rate=50)

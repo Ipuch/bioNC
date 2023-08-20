@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from .utils import TestUtils
 
@@ -31,6 +32,32 @@ def test_inverse_kinematics_one_frame():
     model = module.model_creation_from_measured_data(filename)
 
     module_ik.main(model, filename, show_animation=False)
+
+@pytest.mark.parametrize(
+    "mode",
+    ["x_revolute", "y_revolute", "z_revolute"],
+)
+def test_single_pendulum_dofs(mode):
+    bionc = TestUtils.bionc_folder()
+    module_fd = TestUtils.load_module(bionc + "/examples/forward_dynamics/pendulum.py")
+
+    model, all_states = module_fd.main(mode=mode, show_results=False)
+
+    Qf = all_states[:12, -1]
+    if mode == "x_revolute":
+        TestUtils.assert_equal(Qf, np.array([ 1.000000e+00,  0.000000e+00,  0.000000e+00,  0.000000e+00,
+                  -3.297850e-15, -1.641582e-14,  0.000000e+00, -5.151967e-01,
+                   8.568669e-01,  0.000000e+00,  8.568669e-01,  5.151967e-01]))
+    elif mode == "y_revolute":
+        TestUtils.assert_equal(Qf, np.array([5.151967e-01,  0.000000e+00, -8.568669e-01, -3.661819e-16,
+                   4.391503e-31, -7.966007e-15, -3.427154e-16, -1.000000e+00,
+                  -9.281921e-15,  8.568669e-01,  0.000000e+00,  5.151967e-01]))
+    elif mode == "z_revolute":
+        TestUtils.assert_equal(Qf, np.array([ 0.000000e+00, -8.568669e-01, -5.151967e-01, -2.328333e-17,
+                   1.398126e-15, -8.541665e-15, -9.373376e-18, -5.151967e-01,
+                   8.568669e-01,  1.000000e+00,  0.000000e+00,  0.000000e+00]))
+    else:
+        raise ValueError("Invalid mode")
 
 
 def test_forward_dynamics_with_force():

@@ -29,7 +29,7 @@ def build_3d_pendulum():
         gamma=np.pi / 2,
         length=1,
         mass=1,
-        center_of_mass=np.array([0.5, 0.5, 0.5]),  # in segment coordinates system
+        center_of_mass=np.array([0, -0.001, -0.5]),  # in segment coordinates system
         inertia=np.array([[0.01, 0, 0], [0, 0.001, 0], [0, 0, 0.01]]),  # in segment coordinates system
     )
     # add a spherical joint (still experimental)
@@ -156,6 +156,7 @@ def drop_the_pendulum(
             NaturalCoordinates(states[idx_coordinates]),
             NaturalVelocities(states[idx_velocities]),
             joint_generalized_forces=joint_generalized_forces,
+            stabilization=dict(alpha=50, beta=20)
         )
         return np.concatenate((states[idx_velocities], qddot.to_array()), axis=0), lambdas
 
@@ -168,7 +169,66 @@ def drop_the_pendulum(
     return time_steps, all_states, dynamics
 
 
-def main():
+def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_states: np.ndarray, dynamics):
+    """
+    This function computes:
+     - the rigid body constraint error
+     - the rigid body constraint jacobian derivative error
+     - the joint constraint error
+     - the lagrange multipliers of the rigid body constraint
+
+    Parameters
+    ----------
+    model : NaturalSegment
+        The segment to be simulated
+    time_steps : np.ndarray
+        The time steps of the simulation
+    all_states : np.ndarray
+        The states of the system at each time step X = [Q, Qdot]
+    dynamics : Callable
+        The dynamics of the system, f(t, X) = [Xdot, lambdas]
+
+    Returns
+    -------
+    tuple:
+        rigid_body_constraint_error : np.ndarray
+            The rigid body constraint error at each time step
+        rigid_body_constraint_jacobian_derivative_error : np.ndarray
+            The rigid body constraint jacobian derivative error at each time step
+        joint_constraints: np.ndarray
+            The joint constraints at each time step
+        lambdas : np.ndarray
+            The lagrange multipliers of the rigid body constraint at each time step
+    """
+    idx_coordinates = slice(0, model.nb_Q)
+    idx_velocities = slice(model.nb_Q, model.nb_Q + model.nb_Qdot)
+
+    # compute the quantities of interest after the integration
+    all_lambdas = np.zeros((model.nb_holonomic_constraints, len(time_steps)))
+    defects = np.zeros((model.nb_rigid_body_constraints, len(time_steps)))
+    defects_dot = np.zeros((model.nb_rigid_body_constraints, len(time_steps)))
+    joint_defects = np.zeros((model.nb_joint_constraints, len(time_steps)))
+    joint_defects_dot = np.zeros((model.nb_joint_constraints, len(time_steps)))
+
+    for i in range(len(time_steps)):
+        defects[:, i] = model.rigid_body_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
+        defects_dot[:, i] = model.rigid_body_constraints_derivative(
+            NaturalCoordinates(all_states[idx_coordinates, i]), NaturalVelocities(all_states[idx_velocities, i])
+        )
+
+        joint_defects[:, i] = model.joint_constraints(NaturalCoordinates(all_states[idx_coordinates, i]))
+        # todo : to be implemented
+        # joint_defects_dot = model.joint_constraints_derivative(
+        #     NaturalCoordinates(all_states[idx_coordinates, i]),
+        #     NaturalVelocities(all_states[idx_velocities, i]))
+        # )
+
+        all_lambdas[:, i : i + 1] = dynamics(time_steps[i], all_states[:, i])[1]
+
+    return defects, defects_dot, joint_defects, all_lambdas
+
+
+def main(show_results: bool = True):
 
     # as euler sequence is XYZ, we actuate along X axis first
     joint_generalized_forces = np.array([0.000, 0.0, 0.0])
@@ -178,14 +238,34 @@ def main():
         joint_generalized_forces=joint_generalized_forces
     )
 
+    if show_results:
+
+        defects, defects_dot, joint_defects, all_lambdas = post_computations(
+            model=model,
+            time_steps=time_steps,
+            all_states=all_states,
+            dynamics=dynamics,
+        )
+
+        from viz import plot_series
+
+        plot_series(time_steps, all_states[:12, :], legend="all_states")
+        # Plot the results
+        # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
+        plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
+        plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
+        plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
+        # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
+        plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+
     return model, all_states
 
 
 if __name__ == "__main__":
-    model, all_states = main()
+    model, all_states = main(show_results=False)
 
     # animate the motion
     from bionc import Viz
 
     viz = Viz(model)
-    viz.animate(all_states[:12, :], None, frame_rate=20)
+    viz.animate(all_states[:12, :1], None, frame_rate=20)

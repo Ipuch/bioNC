@@ -357,6 +357,7 @@ class Viz:
                 pass
 
         # print camera parameters
+    def print_camera_settings(self):
         print("Camera position: ", self.get_camera_position())
         print("Camera focus point: ", self.get_camera_focus_point())
         print("Camera zoom: ", self.get_camera_zoom())

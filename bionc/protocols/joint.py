@@ -57,7 +57,11 @@ class JointBase(ABC):
         projection_basis: EulerSequence = EulerSequence.ZXY,  # biomechanics default isb
         parent_basis: TransformationMatrixType = TransformationMatrixType.Bwu,  # by default as eulersequence starts with Z (~W)
         child_basis: TransformationMatrixType = TransformationMatrixType.Bvu,  # by default as eulersequence ends with Y (~V)
-        translation_coordinates: tuple[CartesianAxis, CartesianAxis, CartesianAxis] = (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z),
+        translation_coordinates: tuple[CartesianAxis, CartesianAxis, CartesianAxis] = (
+            CartesianAxis.X,
+            CartesianAxis.Y,
+            CartesianAxis.Z,
+        ),
     ):
         self.name = name
         self.parent = parent

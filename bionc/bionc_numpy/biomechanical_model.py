@@ -704,17 +704,17 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
         forces = (
-                self.gravity_forces()
-                + fext
-                  # + natural_joint_forces
-                  )
+            self.gravity_forces()
+            + fext
+            # + natural_joint_forces
+        )
         biais = -Kdot @ Qdot
 
         if stabilization is not None:
             # raise NotImplementedError("Stabilization is not implemented yet")
             biais -= (
-                    stabilization["alpha"] * self.holonomic_constraints(Q)
-                    + stabilization["beta"] * self.holonomic_constraints_jacobian(Q) @ Qdot
+                stabilization["alpha"] * self.holonomic_constraints(Q)
+                + stabilization["beta"] * self.holonomic_constraints_jacobian(Q) @ Qdot
             )
 
         B = np.concatenate([forces, biais], axis=0)
@@ -957,6 +957,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
     def natural_coordinates_to_joint_angles(self, Q: NaturalCoordinates) -> np.ndarray:
         """
         This function converts the natural coordinates to joint angles with Euler Sequences defined for each joint
+
+        # todo: This should be named to_minimal_coordinates instead of joint_angles,
+            because we can have translations too.
 
         Parameters
         ----------

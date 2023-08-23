@@ -545,7 +545,9 @@ class JointGeneralizedForcesList:
             joint_generalized_force_array = joint_generalized_forces[joint_slice]
             # splitting forces and torques because they are stacked in the same array
             force_ending_index = 0 if joint.translation_coordinates is None else len(joint.translation_coordinates)
-            forces = None if joint.translation_coordinates is None else joint_generalized_force_array[:force_ending_index]
+            forces = (
+                None if joint.translation_coordinates is None else joint_generalized_force_array[:force_ending_index]
+            )
             torques = None if joint.projection_basis is None else joint_generalized_force_array[force_ending_index:]
             # finally computing the joint generalized force to be formatted in natural coordinates
             joint_generalized_force = JointGeneralizedForces.from_joint_generalized_forces(

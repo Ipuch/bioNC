@@ -140,7 +140,7 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
     return defects, defects_dot, joint_defects, all_lambdas
 
 
-def main(mode: str = "x_revolute", show_structure:bool = False, show_results: bool = True):
+def main(mode: str = "x_revolute", show_structure: bool = False, show_results: bool = True):
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
@@ -209,8 +209,12 @@ def main(mode: str = "x_revolute", show_structure:bool = False, show_results: bo
 
     if show_structure:
         from matplotlib import pyplot as plt
+
         Qi_random = SegmentNaturalCoordinates.from_components(
-            u=[0.1, 0.2, 0.3], rp=[0.4, 0.5, 0.6], rd=[0.7, 0.8, 0.9], w=[1.0, 1.1, 1.2],
+            u=[0.1, 0.2, 0.3],
+            rp=[0.4, 0.5, 0.6],
+            rd=[0.7, 0.8, 0.9],
+            w=[1.0, 1.1, 1.2],
         )
         Q_random = NaturalCoordinates(Qi_random)
         plt.figure()

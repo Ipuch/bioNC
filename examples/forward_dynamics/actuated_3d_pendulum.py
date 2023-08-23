@@ -156,15 +156,18 @@ def drop_the_pendulum(
             NaturalCoordinates(states[idx_coordinates]),
             NaturalVelocities(states[idx_velocities]),
             joint_generalized_forces=joint_generalized_forces,
-            stabilization=dict(alpha=50, beta=20)
+            stabilization=dict(alpha=50, beta=20),
         )
         return np.concatenate((states[idx_velocities], qddot.to_array()), axis=0), lambdas
 
     # Solve the Initial Value Problem (IVP) for each time step
     # normalize_idx = model.normalized_coordinates
-    all_states = RK4(t=time_steps, f=lambda t, states: dynamics(t, states)[0], y0=states_0,
-                     # normalize_idx=normalize_idx
-                     )
+    all_states = RK4(
+        t=time_steps,
+        f=lambda t, states: dynamics(t, states)[0],
+        y0=states_0,
+        # normalize_idx=normalize_idx
+    )
 
     return time_steps, all_states, dynamics
 
@@ -229,17 +232,14 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
 
 
 def main(show_results: bool = True):
-
     # as euler sequence is XYZ, we actuate along X axis first
     joint_generalized_forces = np.array([0.000, 0.0, 0.0])
 
     model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(
-        t_final=5,
-        joint_generalized_forces=joint_generalized_forces
+        t_final=5, joint_generalized_forces=joint_generalized_forces
     )
 
     if show_results:
-
         defects, defects_dot, joint_defects, all_lambdas = post_computations(
             model=model,
             time_steps=time_steps,

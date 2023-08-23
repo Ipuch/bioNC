@@ -32,7 +32,9 @@ class Joint:
             parent_basis: TransformationMatrixType = None,
             child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Hinge, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis, None)
+            super(Joint.Hinge, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis, None
+            )
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:
@@ -497,7 +499,14 @@ class Joint:
             child_basis: TransformationMatrixType = None,
         ):
             super(Joint.SphereOnPlane, self).__init__(
-                name, parent, child, index, projection_basis, parent_basis, child_basis, (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z),
+                name,
+                parent,
+                child,
+                index,
+                projection_basis,
+                parent_basis,
+                child_basis,
+                (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z),
             )
             self.nb_constraints = 1
 
@@ -652,7 +661,14 @@ class Joint:
             child_basis: TransformationMatrixType = None,
         ):
             super(Joint.ConstantLength, self).__init__(
-                name, parent, child, index, projection_basis, parent_basis, child_basis,  (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z),
+                name,
+                parent,
+                child,
+                index,
+                projection_basis,
+                parent_basis,
+                child_basis,
+                (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z),
             )
 
             if length is None:
@@ -815,7 +831,16 @@ class GroundJoint:
             projection_basis: EulerSequence = None,
             child_basis: TransformationMatrixType = None,
         ):
-            super(GroundJoint.Free, self).__init__(name, None, child, index, projection_basis, None, child_basis,  (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z),)
+            super(GroundJoint.Free, self).__init__(
+                name,
+                None,
+                child,
+                index,
+                projection_basis,
+                None,
+                child_basis,
+                (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z),
+            )
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             return None
@@ -1093,7 +1118,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [4, 1]
             """
             constraint = np.zeros(self.nb_constraints)
-            constraint[:3] = - Q_child.rp
+            constraint[:3] = -Q_child.rp
             constraint[3] = np.dot(self.parent_vector, Q_child.axis(self.child_axis)) - np.cos(self.theta)
 
             return constraint
@@ -1101,7 +1126,6 @@ class GroundJoint:
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
-
             return None
 
         def child_constraint_jacobian(
@@ -1110,9 +1134,7 @@ class GroundJoint:
             K_k_child = np.zeros((self.nb_constraints, 12))
             K_k_child[:3, 3:6] = -np.eye(3)
 
-            K_k_child[3, :] = np.squeeze(
-                self.parent_vector.T @ self.child_vector.interpolate().rot
-            )
+            K_k_child[3, :] = np.squeeze(self.parent_vector.T @ self.child_vector.interpolate().rot)
 
             return K_k_child
 
@@ -1130,9 +1152,7 @@ class GroundJoint:
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> np.ndarray:
             K_k_child_dot = np.zeros((self.nb_constraints, 12))
-            K_k_child_dot[3, :] = np.squeeze(
-                self.parent_vector.T @ self.child_vector.interpolate().rot
-            )
+            K_k_child_dot[3, :] = np.squeeze(self.parent_vector.T @ self.child_vector.interpolate().rot)
 
             return K_k_child_dot
 
@@ -1205,9 +1225,13 @@ class GroundJoint:
             projection_basis: EulerSequence = None,
             child_basis: TransformationMatrixType = None,
         ):
-            super(GroundJoint.Spherical, self).__init__(name, None, child, index, projection_basis, None, child_basis, None)
+            super(GroundJoint.Spherical, self).__init__(
+                name, None, child, index, projection_basis, None, child_basis, None
+            )
             self.nb_constraints = 3
-            self.ground_application_point = ground_application_point if ground_application_point is not None else np.zeros(3)
+            self.ground_application_point = (
+                ground_application_point if ground_application_point is not None else np.zeros(3)
+            )
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """

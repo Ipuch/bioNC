@@ -11,6 +11,7 @@ class JointType(Enum):
     GROUND_FREE = GroundJoint.Free
     GROUND_WELD = GroundJoint.Weld
     GROUND_REVOLUTE = GroundJoint.Hinge
+    GROUND_UNIVERSAL = GroundJoint.Universal
     GROUND_SPHERICAL = GroundJoint.Spherical
     CONSTANT_LENGTH = Joint.ConstantLength
     REVOLUTE = Joint.Hinge

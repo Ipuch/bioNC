@@ -173,6 +173,17 @@ def test_joints(bionc_type, joint_type: JointType):
         )
         assert joint.nb_constraints == 0
         assert joint.nb_joint_dof == 6
+    elif joint_type == JointType.GROUND_UNIVERSAL:
+        joint = GroundJoint.Universal(
+            name="Universal",
+            child=bbox,
+            index=0,
+            parent_axis=CartesianAxis.X,
+            child_axis=NaturalAxis.V,
+            theta=np.pi / 2,
+        )
+        assert joint.nb_constraints == 4
+        assert joint.nb_joint_dof == 2
     else:
         raise ValueError("Joint type not tested yet")
 
@@ -577,6 +588,36 @@ def test_joints(bionc_type, joint_type: JointType):
         TestUtils.assert_equal(
             child_jacobian_dot,
             np.zeros((6, 12)),
+            decimal=6,
+        )
+
+        assert joint.parent_constraint_jacobian(Q1, Q2) is None
+        assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
+
+    elif joint_type == JointType.GROUND_UNIVERSAL:
+        TestUtils.assert_equal(
+            joint.constraint(Q1, Q2),
+            np.array([-1.5, -1.1, -3.2, -0.1]),
+            decimal=6,
+        )
+        child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        TestUtils.assert_equal(
+            child_jacobian,
+            np.array(
+                [
+                    [0.0, 0.0, 0.0, -1.0, -0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -1.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, -0.0, -0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                ]
+            ),
+            decimal=6,
+        )
+
+        child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        TestUtils.assert_equal(
+            child_jacobian_dot,
+            np.zeros((4, 12)),
             decimal=6,
         )
 

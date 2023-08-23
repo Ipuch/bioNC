@@ -1141,18 +1141,12 @@ class GroundJoint:
         def parent_constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> np.ndarray:
-            K_k_parent_dot = np.zeros((self.nb_constraints, 12))
-            K_k_parent_dot[3, :] = np.squeeze(
-                self.parent_vector.T @ np.array(self.child_vector.interpolate().rot @ Qdot_child)
-            )
-
             return None
 
         def child_constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> np.ndarray:
             K_k_child_dot = np.zeros((self.nb_constraints, 12))
-            K_k_child_dot[3, :] = np.squeeze(self.parent_vector.T @ self.child_vector.interpolate().rot)
 
             return K_k_child_dot
 
@@ -1169,7 +1163,7 @@ class GroundJoint:
                 joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
             """
 
-            return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
+            return self.child_constraint_jacobian(Q_parent, Q_child)
 
         def constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
@@ -1184,31 +1178,29 @@ class GroundJoint:
                 joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
             """
 
-            return self.parent_constraint_jacobian_derivative(
-                Qdot_parent, Qdot_child
-            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
-        # def to_mx(self):
-        #     """
-        #     This function returns the joint as a mx joint
-        #
-        #     Returns
-        #     -------
-        #     JointBase
-        #         The joint as a mx joint
-        #     """
-        #     from ..bionc_casadi.joint import Joint as CasadiJoint
-        #
-        #     return CasadiJoint.Universal(
-        #         name=self.name,
-        #         child=self.child.to_mx(),
-        #         index=self.index,
-        #         parent_axis=self.parent_axis,
-        #         child_axis=self.child_axis,
-        #         theta=self.theta,
-        #         projection_basis=self.projection_basis,
-        #         child_basis=self.child_basis,
-        #     )
+        def to_mx(self):
+            """
+            This function returns the joint as a mx joint
+
+            Returns
+            -------
+            JointBase
+                The joint as a mx joint
+            """
+            from ..bionc_casadi.joint import Joint as CasadiJoint
+
+            return CasadiJoint.Universal(
+                name=self.name,
+                child=self.child.to_mx(),
+                index=self.index,
+                parent_axis=self.parent_axis,
+                child_axis=self.child_axis,
+                theta=self.theta,
+                projection_basis=self.projection_basis,
+                child_basis=self.child_basis,
+            )
 
     class Spherical(JointBase):
         """

@@ -227,7 +227,22 @@ class InverseKinematics:
         objective_function: Callable[[MX, MX], MX]
             The objective function to add to the inverse kinematics problem
         """
+
         if isinstance(objective_function, Callable):
+            # check the number of inputs of the objective function
+            if objective_function.n_in() != 2:
+                raise ValueError(
+                    "objective_function must be a CasADi Function with the following signature: "
+                    "[objective_sym] = objective_function(Q_sym, markers_sym)"
+                )
+            # check the number of outputs of the objective function
+            if objective_function.n_out() != 1:
+                raise ValueError(
+                    "objective_function must be a CasADi Function with the following signature: "
+                    "[objective_sym] = objective_function(Q_sym, markers_sym)"
+                    "with an output of shape (1, 1)"
+                )
+
             symbolic_objective = objective_function(self._Q_sym, self._markers_sym)
         else:
             raise TypeError(

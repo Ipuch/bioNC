@@ -1,4 +1,6 @@
-from casadi import vertcat, horzcat, MX, Function, nlpsol, SX, Function
+from typing import Callable
+
+from casadi import vertcat, horzcat, MX, nlpsol, SX, Function, sum1
 import numpy as np
 from pyomeca import Markers
 
@@ -200,10 +202,45 @@ class InverseKinematics:
         self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
         self._markers_sym = MX.sym("markers", (3, self.nb_markers))
 
-        objective_sym = self._objective(self._Q_sym, self._markers_sym)
+        self.objective_sym = [self._objective(self._Q_sym, self._markers_sym)]
+        self._objective_function = None
+        self._update_objective_function()
+
+    def _update_objective_function(self):
+        """
+        This method updates the objective function of the inverse kinematics problem. It is called each time a new
+        objective is added to the inverse kinematics problem.
+        """
+
         self._objective_function = Function(
-            "objective_function", [self._Q_sym, self._markers_sym], [objective_sym]
+            "objective_function", [self._Q_sym, self._markers_sym], [sum1(vertcat(*self.objective_sym))]
         ).expand()
+
+    def add_objective(self, objective_function: Callable):
+        """
+
+        This method adds an extra objective to the inverse kinematics problem. The objective function has to be a
+        CasADi Function with the following signature: [objective_sym] = objective_function(Q_sym, markers_sym)
+
+        Parameters
+        ----------
+        objective_function: Callable[[MX, MX], MX]
+            The objective function to add to the inverse kinematics problem
+        """
+        if isinstance(objective_function, Callable):
+            symbolic_objective = objective_function(self._Q_sym, self._markers_sym)
+        else:
+            raise TypeError(
+                "objective_function must be a callable, i.e. a CasADi Function with the"
+                "following signature: objective_sym = objective_function(Q_sym, markers_sym). "
+                "It should be build from the following lines of code: \n"
+                "from casadi import Function \n"
+                "objective_function = Function('objective_function', "
+                "[Q_sym, markers_sym], [objective_sym])"
+            )
+
+        self.objective_sym.append(symbolic_objective)
+        self._update_objective_function()
 
     def solve(
         self,
@@ -314,7 +351,14 @@ class InverseKinematics:
         return Q, vert_Q
 
     def _objective(self, Q, experimental_markers) -> MX:
-        """Computes the objective function and handle single frame or multi frames"""
+        """
+        Computes the objective function and handle single frame or multi frames
+
+        Returns
+        -------
+        MX
+            The objective function that minimizes the distance between the experimental markers and the model markers
+        """
         error_m = 0
         nb_frames = 1 if self._frame_per_frame else self.nb_frames
         for f in range(nb_frames):
@@ -361,3 +405,26 @@ class InverseKinematics:
                     print(f"Warning: frame {i} segment {s} has a negative determinant")
 
     # todo: def sol() -> dict that returns the details of the inverse kinematics such as all the metrics, etc...
+    #     def sol(self):
+    #             """
+    #             Create and return a dict that contains the output of each optimization.
+    #             Return
+    #             ------
+    #             self.output: dict()
+    #                 The output of least_square function, such as number of iteration per frames,
+    #                 and the marker with highest residual
+    #             """
+    #             residuals_xyz = np.zeros((self.nb_markers * self.nb_dim, self.nb_frames))
+    #             residuals = np.zeros((self.nb_markers, self.nb_frames))
+    #             for f in range(self.nb_frames):
+    #                 #  residuals_xyz must contains position for each markers on axis x, y and z
+    #                 #  (or less depending on number of dimensions)
+    #             self.output = dict(
+    #                 residuals=residuals,
+    #                 residuals_xyz=residuals_xyz,
+    #                 max_marker=[self.marker_names[i] for i in np.argmax(residuals, axis=0)],
+    #                 message=[sol.message for sol in self.list_sol],
+    #                 status=[sol.status for sol in self.list_sol],
+    #                 success=[sol.success for sol in self.list_sol],
+    #             )
+    #             return self.output

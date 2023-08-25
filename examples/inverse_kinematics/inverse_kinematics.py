@@ -56,5 +56,6 @@ if __name__ == "__main__":
         show_center_of_mass=False,  # no center of mass in this example
         show_xp_markers=True,
         show_model_markers=True,
+        show_natural_mesh=True,
     )
     viz.animate(Qopt, markers_xp=markers)

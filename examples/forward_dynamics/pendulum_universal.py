@@ -17,7 +17,7 @@ def drop_the_pendulum(
     Q_init: NaturalCoordinates,
     Qdot_init: NaturalVelocities,
     t_final: float = 2,
-    steps_per_second: int = 50,
+    steps_per_second: int = 200,
 ):
     """
     This function simulates the dynamics of a natural segment falling from 0m during 2s
@@ -189,7 +189,7 @@ def main(mode: str = "x_revolute", show_results: bool = True):
     print(model.holonomic_constraints_jacobian(Q))
 
     # The actual simulation
-    t_final = 10
+    t_final = 2
     time_steps, all_states, dynamics = drop_the_pendulum(
         model=model,
         Q_init=Q,
@@ -220,7 +220,7 @@ def main(mode: str = "x_revolute", show_results: bool = True):
 
 
 if __name__ == "__main__":
-    model, all_states = main("x_revolute", show_results=True)
+    model, all_states = main("x_revolute", show_results=False)
 
     # animate the motion
     from bionc import Viz

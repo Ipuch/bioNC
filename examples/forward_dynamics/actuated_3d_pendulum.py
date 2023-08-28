@@ -29,7 +29,7 @@ def build_3d_pendulum():
         gamma=np.pi / 2,
         length=1,
         mass=1,
-        center_of_mass=np.array([0, -0.001, -0.5]),  # in segment coordinates system
+        center_of_mass=np.array([0, -1, -0.5]),  # in segment coordinates system
         inertia=np.array([[0.01, 0, 0], [0, 0.001, 0], [0, 0, 0.01]]),  # in segment coordinates system
     )
     # add a spherical joint (still experimental)
@@ -86,7 +86,7 @@ def apply_force_and_drop_pendulum(t_final: float = 10, joint_generalized_forces=
         Qdot_init=Qdot,
         joint_generalized_forces=joint_generalized_forces,
         t_final=t_final,
-        steps_per_second=60,
+        steps_per_second=200,
     )
 
     return model, time_steps, all_states, dynamics
@@ -268,4 +268,8 @@ if __name__ == "__main__":
     from bionc import Viz
 
     viz = Viz(model)
-    viz.animate(all_states[:12, :1], None, frame_rate=20)
+    viz.animate(all_states[:12, :200], None, frame_rate=200)
+    # This example stil have an unexpected behaviour, should at least fall in the direction of the gravity force during
+    # the first frames, but it does not.
+    # the pendulum should not rotate around the Z axis
+

@@ -241,6 +241,7 @@ def test_forward_dynamics(bionc_type):
 )
 def test_forward_dynamics_n_pendulum(bionc_type):
     # todo: inspect why we have a difference between casadi and numpy ...
+    #   test everything that is built inside.
 
     if bionc_type == "numpy":
         from bionc.bionc_numpy import NaturalCoordinates, NaturalVelocities

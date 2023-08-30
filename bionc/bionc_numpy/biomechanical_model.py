@@ -566,6 +566,22 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         This function returns the Jacobian matrix the holonomic constraints, denoted Kdot.
         They are organized as follow, for each segment, the rows of the matrix are:
         [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+        [joint constraint 0, rigid body constraint 0, joint constraint 1, rigid body constraint 1, ...]
+
+        ```math
+        \begin{equation}
+        \frac{d}{dt} \frac{\partial \Phi^k}{\partial Q} =
+        \begin{bmatrix}
+        \frac{d}{dt} \frac{\partial \Phi^k_0}{\partial Q} \\
+        \frac{d}{dt} \frac{\partial \Phi^r_0}{\partial Q} \\
+        \frac{d}{dt} \frac{\partial \Phi^k_1}{\partial Q} \\
+        \frac{d}{dt} \frac{\partial \Phi^r_1}{\partial Q} \\
+        \vdots \\
+        \frac{d}{dt} \frac{\partial \Phi^k_n}{\partial Q} \\
+        \frac{d}{dt} \frac{\partial \Phi^r_n}{\partial Q} \\
+        \end{bmatrix}
+        \end{equation}
+        ```
 
         Parameters
         ----------

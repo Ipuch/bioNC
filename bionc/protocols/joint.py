@@ -100,6 +100,10 @@ class JointBase(ABC):
         This function returns the parent constraint Jacobians of the joint, denoted K_k
         as a function of the natural coordinates Q_child.
 
+        ```math
+        K_k = \frac{\partial \Phi_k}{\partial Q_{parent}}
+        ```
+
         Returns
         -------
             Constraint Jacobians of the joint [n, nbQ]
@@ -110,6 +114,10 @@ class JointBase(ABC):
         """
         This function returns the child constraint Jacobians of the joint, denoted K_k
         as a function of the natural coordinates Q_parent.
+
+        ```math
+        K_k = \frac{\partial \Phi_k}{\partial Q_{child}}
+        ```
 
         Returns
         -------
@@ -124,6 +132,10 @@ class JointBase(ABC):
         This function returns the derivative of the parent constraint Jacobians of the joint, denoted K_k
         as a function of the natural velocities Qdot_child.
 
+        ```math
+        K_k_dot = \frac{d}{dt}\frac{\partial K_k}{\partial Q_{parent}}
+        ```
+
         Returns
         -------
             derivative of Constraint Jacobians of the joint [n, 12]
@@ -134,8 +146,12 @@ class JointBase(ABC):
         self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
     ):
         """
-        This function returns the derivative of the child constraint Jacobians of the joint, denoted K_k
+        This function returns the derivative of the child constraint Jacobians of the joint, denoted K_k_dot
         as a function of the natural velocities Qdot_parent.
+
+        ```math
+        K_k_dot = \frac{d}{dt}\frac{\partial K_k}{\partial Q_{child}}
+        ```
 
         Returns
         -------

@@ -272,4 +272,3 @@ if __name__ == "__main__":
     # This example stil have an unexpected behaviour, should at least fall in the direction of the gravity force during
     # the first frames, but it does not.
     # the pendulum should not rotate around the Z axis
-

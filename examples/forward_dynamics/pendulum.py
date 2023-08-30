@@ -9,7 +9,7 @@ from bionc.bionc_numpy import (
     SegmentNaturalVelocities,
     NaturalVelocities,
 )
-from bionc import NaturalAxis, CartesianAxis
+from bionc import NaturalAxis, CartesianAxis, RK4
 
 
 def drop_the_pendulum(
@@ -81,39 +81,6 @@ def drop_the_pendulum(
     return time_steps, all_states, dynamics
 
 
-def RK4(t: np.ndarray, f, y0: np.ndarray, args=()) -> np.ndarray:
-    """
-    Runge-Kutta 4th order method
-
-    Parameters
-    ----------
-    t : array_like
-        time steps
-    f : Callable
-        function to be integrated in the form f(t, y, *args)
-    y0 : np.ndarray
-        initial conditions of states
-
-    Returns
-    -------
-    y : array_like
-        states for each time step
-
-    """
-    n = len(t)
-    y = np.zeros((len(y0), n))
-    y[:, 0] = y0
-    for i in range(n - 1):
-        h = t[i + 1] - t[i]
-        yi = np.squeeze(y[:, i])
-        k1 = f(t[i], yi, *args)
-        k2 = f(t[i] + h / 2.0, yi + k1 * h / 2.0, *args)
-        k3 = f(t[i] + h / 2.0, yi + k2 * h / 2.0, *args)
-        k4 = f(t[i] + h, yi + k3 * h, *args)
-        y[:, i + 1] = yi + (h / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
-    return y
-
-
 def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_states: np.ndarray, dynamics):
     """
     This function computes:
@@ -173,7 +140,7 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
     return defects, defects_dot, joint_defects, all_lambdas
 
 
-if __name__ == "__main__":
+def main(mode: str = "x_revolute", show_structure: bool = False, show_results: bool = True):
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
@@ -184,20 +151,36 @@ if __name__ == "__main__":
         gamma=np.pi / 2,
         length=1,
         mass=1,
-        center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
-        inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+        center_of_mass=np.array([0.1, 0.1, -0.1]),  # in segment coordinates system
+        inertia=np.array([[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.05]]),  # in segment coordinates system
     )
-    # add a revolute joint (still experimental)
-    # if you want to add a revolute joint,
-    # you need to ensure that x is always orthogonal to u and v
+
+    if mode == "x_revolute":
+        # meaning we pivot around the cartesian x-axis
+        # if you want to add a revolute joint,
+        # you need to ensure that x is always orthogonal to u and v
+        parent_axis = [CartesianAxis.X, CartesianAxis.X]
+        child_axis = [NaturalAxis.V, NaturalAxis.W]
+    elif mode == "y_revolute":
+        # meaning we pivot around the cartesian y-axis
+        parent_axis = [CartesianAxis.Y, CartesianAxis.Y]
+        child_axis = [NaturalAxis.U, NaturalAxis.W]
+    elif mode == "z_revolute":
+        # meaning we pivot around the cartesian z-axis
+        # turn the pendulum around to make it turn along w-axis
+        parent_axis = [CartesianAxis.X, CartesianAxis.X]
+        child_axis = [NaturalAxis.U, NaturalAxis.V]
+    else:
+        raise ValueError("Unknown mode. please choose between x_revolute, y_revolute or z_revolute")
+
     model._add_joint(
         dict(
             name="hinge",
             joint_type=JointType.GROUND_REVOLUTE,
             parent="GROUND",
             child="pendulum",
-            parent_axis=[CartesianAxis.X, CartesianAxis.X],
-            child_axis=[NaturalAxis.V, NaturalAxis.W],  # meaning we pivot around the cartesian x-axis
+            parent_axis=parent_axis,
+            child_axis=child_axis,
             theta=[np.pi / 2, np.pi / 2],
         )
     )
@@ -208,7 +191,13 @@ if __name__ == "__main__":
     print(model.nb_joints)
     print(model.nb_joint_constraints)
 
-    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
+    if mode in ("x_revolute", "y_revolute"):
+        Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
+    elif mode == "z_revolute":
+        Qi = SegmentNaturalCoordinates.from_components(u=[0, 0, -1], rp=[0, 0, 0], rd=[0, -1, 0], w=[1, 0, 0])
+    else:
+        raise ValueError("Unknown mode. please choose between x_revolute, y_revolute or z_revolute")
+
     Q = NaturalCoordinates(Qi)
     Qdoti = SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
     Qdot = NaturalVelocities(Qdoti)
@@ -218,26 +207,43 @@ if __name__ == "__main__":
     print(model.holonomic_constraints(Q))
     print(model.holonomic_constraints_jacobian(Q))
 
-    # one can comment this section if he doesn't to display the matrices
-    # from matplotlib import pyplot as plt
-    #
-    # plt.spy(K)
-    # plt.show()
-    #
-    # plt.figure()
-    # plt.spy(model.mass_matrix)
-    # plt.show()
-    #
-    # plt.figure()
-    # G = model.mass_matrix
-    # K = model.rigid_body_constraints_jacobian(Q)
-    # Kdot = model.rigid_body_constraint_jacobian_derivative(Qdot)
-    #
-    # upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
-    # lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
-    # KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
-    # plt.spy(KKT_matrix)
-    # plt.show()
+    if show_structure:
+        from matplotlib import pyplot as plt
+
+        Qi_random = SegmentNaturalCoordinates.from_components(
+            u=[0.1, 0.2, 0.3],
+            rp=[0.4, 0.5, 0.6],
+            rd=[0.7, 0.8, 0.9],
+            w=[1.0, 1.1, 1.2],
+        )
+        Q_random = NaturalCoordinates(Qi_random)
+        plt.figure()
+        plt.spy(model.mass_matrix)
+        plt.title("Mass matrix")
+
+        plt.figure()
+        plt.spy(model.rigid_body_constraints_jacobian(Q_random))
+        plt.title("Rigid body constraints jacobian")
+        plt.ylabel("Rigid body constraints")
+        plt.xlabel("Natural coordinates")
+
+        plt.figure()
+        plt.spy(model.holonomic_constraints_jacobian(Q_random))
+        plt.title("Holonomic constraints jacobian")
+        plt.ylabel("Holonomic constraints")
+        plt.xlabel("Natural coordinates")
+
+        plt.figure()
+        G = model.mass_matrix
+        K = model.holonomic_constraints_jacobian(Q_random)
+
+        upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
+        lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
+        KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
+        plt.spy(KKT_matrix)
+        plt.title("KKT matrix")
+
+        plt.show()
 
     # The actual simulation
     t_final = 10
@@ -248,25 +254,34 @@ if __name__ == "__main__":
         t_final=t_final,
     )
 
-    defects, defects_dot, joint_defects, all_lambdas = post_computations(
-        model=model,
-        time_steps=time_steps,
-        all_states=all_states,
-        dynamics=dynamics,
-    )
+    if show_results:
+        defects, defects_dot, joint_defects, all_lambdas = post_computations(
+            model=model,
+            time_steps=time_steps,
+            all_states=all_states,
+            dynamics=dynamics,
+        )
 
-    from viz import plot_series
+        from viz import plot_series
 
-    # Plot the results
-    # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
-    plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
-    plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
-    plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
-    # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
-    plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+        # Plot the results
+        # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
+        plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
+        plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
+        plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
+        # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
+        plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+
+    return model, all_states
+
+
+if __name__ == "__main__":
+    # model, all_states = main("x_revolute", show_results=False)
+    # model, all_states = main("y_revolute", show_results=False)
+    model, all_states = main("z_revolute", show_structure=True, show_results=True)
 
     # animate the motion
     from bionc import Viz
 
     viz = Viz(model)
-    viz.animate(all_states[:12, :], None)
+    viz.animate(all_states[:12, :], None, frame_rate=50)

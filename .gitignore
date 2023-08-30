@@ -128,3 +128,9 @@ dmypy.json
 *.c3d
 
 sandbox/
+
+.vscode/
+
+tests/pendulum.nmod
+
+examples/forward_dynamics/pendulum_3d.nmod

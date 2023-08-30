@@ -6,7 +6,9 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
-from .external_force import ExternalForceList, ExternalForce
+from .external_force import ExternalForceList, ExternalForce, JointGeneralizedForces, JointGeneralizedForcesList
+from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -28,6 +30,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         biomechanical_model.segments = {key: segment.to_mx() for key, segment in self.segments.items()}
         biomechanical_model.joints = {key: joint.to_mx() for key, joint in self.joints.items()}
         biomechanical_model._update_mass_matrix()
+        biomechanical_model.set_numpy_model(self)
 
         return biomechanical_model
 
@@ -122,7 +125,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Phi_k = np.zeros(self.nb_joint_constraints)
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             Q_parent = (
@@ -148,7 +151,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         K_k = np.zeros((self.nb_joint_constraints, Q.shape[0]))
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             idx_col_child = slice(
@@ -191,7 +194,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         K_k_dot = np.zeros((self.nb_joint_constraints, Qdot.shape[0]))
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             idx_col_parent = slice(
@@ -417,6 +420,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
     def Q_from_markers(self, markers: np.ndarray) -> NaturalCoordinates:
         """
         This function returns the natural coordinates of the system as a function of the markers positions
+        also referred as inverse kinematics
+        but the constraints are not enforced, this can be used as an initial guess for proper inverse kinematics.
 
         Parameters
         ----------
@@ -427,6 +432,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         -------
         NaturalCoordinates
             The natural coordinates of the segment [12 x n, 1]
+
+        See Also
+        --------
+        ..bionc_numpy.inverse_kinematics
         """
         if markers.shape[1] != self.nb_markers_technical:
             raise ValueError(
@@ -469,7 +478,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         # it follows the order of the segments
         for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -515,7 +524,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = np.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -557,6 +566,22 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         This function returns the Jacobian matrix the holonomic constraints, denoted Kdot.
         They are organized as follow, for each segment, the rows of the matrix are:
         [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
+        [joint constraint 0, rigid body constraint 0, joint constraint 1, rigid body constraint 1, ...]
+
+        ```math
+        \begin{equation}
+        \frac{d}{dt} \frac{\partial \Phi^k}{\partial Q} =
+        \begin{bmatrix}
+        \frac{d}{dt} \frac{\partial \Phi^k_0}{\partial Q} \\
+        \frac{d}{dt} \frac{\partial \Phi^r_0}{\partial Q} \\
+        \frac{d}{dt} \frac{\partial \Phi^k_1}{\partial Q} \\
+        \frac{d}{dt} \frac{\partial \Phi^r_1}{\partial Q} \\
+        \vdots \\
+        \frac{d}{dt} \frac{\partial \Phi^k_n}{\partial Q} \\
+        \frac{d}{dt} \frac{\partial \Phi^r_n}{\partial Q} \\
+        \end{bmatrix}
+        \end{equation}
+        ```
 
         Parameters
         ----------
@@ -576,7 +601,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Kdot = np.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i in range(self.nb_segments):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -633,6 +658,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
+        joint_generalized_forces: np.ndarray = None,
         external_forces: ExternalForceList = None,
         stabilization: dict = None,
     ) -> np.ndarray:
@@ -645,6 +671,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+        joint_generalized_forces : np.ndarray
+            The joint generalized forces in joint euler-basis, and forces in parent basis, like in minimal coordinates,
+            one per dof of the system. If None, the joint generalized forces are set to 0
         external_forces : ExternalForceList
             The list of external forces applied on the system
         stabilization: dict
@@ -670,6 +699,19 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         )
         fext = external_forces.to_natural_external_forces(Q)
 
+        joint_generalized_forces_object = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_segments)
+        # each segment is actuated from its parent segment (assuming tree-like structure)
+        # if joint_generalized_forces is not None:
+        #     joint_generalized_forces_object.add_all_joint_generalized_forces(
+        #         model=self,
+        #         joint_generalized_forces=joint_generalized_forces,
+        #         Q=Q,
+        #     )
+        # natural_joint_forces = joint_generalized_forces_object.to_natural_joint_forces(
+        #     model=self,
+        #     Q=Q,
+        # )
+
         # KKT system
         # [G, K.T] [Qddot]  = [forces]
         # [K, 0  ] [lambda] = [biais]
@@ -677,14 +719,19 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
         KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
-        forces = self.gravity_forces() + fext
+        forces = (
+            self.gravity_forces()
+            + fext
+            # + natural_joint_forces
+        )
         biais = -Kdot @ Qdot
 
         if stabilization is not None:
-            raise NotImplementedError("Stabilization is not implemented yet")
-            # biais -= stabilization["alpha"] * self.holonomic_constraints(Q) + stabilization[
-            #     "beta"
-            # ] * self.holonomic_constraints_derivative(Qdot)
+            # raise NotImplementedError("Stabilization is not implemented yet")
+            biais -= (
+                stabilization["alpha"] * self.holonomic_constraints(Q)
+                + stabilization["beta"] * self.holonomic_constraints_jacobian(Q) @ Qdot
+            )
 
         B = np.concatenate([forces, biais], axis=0)
 
@@ -867,3 +914,111 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lambdas[:, segment_index] = lambda_i
 
         return visited_segments, torques, forces, lambdas
+
+    def express_joint_torques_in_euler_basis(self, Q: NaturalCoordinates, torques: np.ndarray) -> np.ndarray:
+        """
+        This function expresses the joint torques in the euler basis.
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The generalized coordinates of the model
+        torques: np.ndarray
+            The joint torques in global coordinates system
+
+        Returns
+        -------
+        np.ndarray
+            The joint torques expressed in the euler basis
+        """
+        if torques.shape != (3, self.nb_segments):
+            raise ValueError(f"The shape of the joint torques must be (3, {self.nb_segments}) but is {torques.shape}")
+
+        euler_torques = np.zeros((3, self.nb_segments))
+        for i, (joint_name, joint) in enumerate(self.joints.items()):
+            if joint.projection_basis is None:
+                raise RuntimeError(
+                    "The projection basis of the joint must be defined to express the torques in an Euler basis."
+                    f"Joint {joint_name} has no projection basis defined."
+                    f"Please define a projection basis for this joint, "
+                    f"using argument `projection_basis` of the joint constructor"
+                    f" and enum `EulerSequence` for the type of entry."
+                )
+
+            parent_segment = joint.parent
+            child_segment = joint.child
+
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
+            Q_child = Q.vector(child_segment.index)
+
+            # compute rotation matrix from Qi
+            R_parent = (
+                np.eye(3)
+                if joint.parent is None
+                else parent_segment.segment_coordinates_system(Q_parent, joint.parent_basis).rot
+            )
+            R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
+
+            e1, e2, e3 = euler_axes_from_rotation_matrices(
+                R_parent, R_child, sequence=joint.projection_basis, axes_source_frame="mixed"
+            )
+
+            # compute the euler torques
+            euler_torques[:, i] = vector_projection_in_non_orthogonal_basis(torques[:, i], e1, e2, e3).squeeze()
+
+        return euler_torques
+
+    def natural_coordinates_to_joint_angles(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function converts the natural coordinates to joint angles with Euler Sequences defined for each joint
+
+        # todo: This should be named to_minimal_coordinates instead of joint_angles,
+            because we can have translations too.
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The natural coordinates of the model
+
+        Returns
+        -------
+        np.ndarray
+            The joint angles [3 x nb_joints]
+        """
+        euler_angles = np.zeros((3, self.nb_joints))
+
+        for i, (joint_name, joint) in enumerate(self.joints.items()):
+            if joint.projection_basis is None:
+                raise RuntimeError(
+                    "The projection basis of the joint must be defined to express the torques in an Euler basis."
+                    f"Joint {joint_name} has no projection basis defined."
+                    f"Please define a projection basis for this joint, "
+                    f"using argument `projection_basis` of the joint constructor"
+                    f" and enum `EulerSequence` for the type of entry."
+                )
+
+            parent_segment = joint.parent
+            child_segment = joint.child
+
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
+            Q_child = Q.vector(child_segment.index)
+
+            # compute rotation matrix from Qi
+            R_parent = (
+                np.eye(3)
+                if joint.parent is None
+                else parent_segment.segment_coordinates_system(Q_parent, joint.parent_basis).rot
+            )
+            R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
+
+            euler_angles[:, i] = euler_angles_from_rotation_matrix(
+                R_parent,
+                R_child,
+                joint_sequence=joint.projection_basis,
+            )
+
+        return euler_angles

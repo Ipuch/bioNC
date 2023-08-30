@@ -79,7 +79,7 @@ def test_ground_segment(bionc_type):
 
     assert model.markers(Q).shape[0] == 3
     assert model.markers(Q).shape[1] == 2
-    TestUtils.assert_equal(model.potential_energy(Q), 0.34354285714285715)
+    TestUtils.assert_equal(model.potential_energy(Q), 0.34354285714285715, expand=False)
     assert model.center_of_mass_position(Q).shape[0:2] == (3, 3)
     assert model.markers_constraints(markers=np.ones((3, 2)), Q=Q).shape[0] == 6
     assert model.markers_constraints_jacobian().shape == (6, 12 * 3)
@@ -87,6 +87,6 @@ def test_ground_segment(bionc_type):
     assert model.holonomic_constraints_jacobian(Q=Q).shape == (6 * 3 + 10, 12 * 3)
     assert model.holonomic_constraints_jacobian_derivative(Qdot=Qdot).shape == (6 * 3 + 10, 12 * 3)
     if bionc_type == "casadi":
-        TestUtils.assert_equal(sum1(model.gravity_forces()), np.array([-29.43]))
+        TestUtils.assert_equal(sum1(model.gravity_forces()), np.array([-29.43]), expand=False)
     else:
         TestUtils.assert_equal(sum(model.gravity_forces()), np.array([-29.43]))

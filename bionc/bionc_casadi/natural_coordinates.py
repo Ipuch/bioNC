@@ -4,6 +4,7 @@ from typing import Union
 
 from .natural_vector import NaturalVector
 from ..utils.enums import NaturalAxis
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class SegmentNaturalCoordinates(MX):
@@ -132,52 +133,7 @@ class SegmentNaturalCoordinates(MX):
             The vector expressed in the non-orthogonal coordinate system (rp, u, v, w)
 
         """
-        return NaturalVector(self.vnop_array(vector - self.rp, self.u, self.v, self.w))
-
-    @staticmethod
-    def vnop_array(V: np.ndarray | MX, e1: MX, e2: MX, e3: MX) -> MX:
-        """
-        This function converts a vector expressed in the global coordinate system
-        to a vector expressed in a non-orthogonal coordinate system.
-
-        Parameters
-        ----------
-        V: np.ndarray | MX
-            The vector expressed in the global coordinate system
-        e1: MX
-            The first vector of the non-orthogonal coordinate system, usually the u-axis
-        e2: MX
-            The second vector of the non-orthogonal coordinate system, usually the v-axis
-        e3: MX
-            The third vector of the non-orthogonal coordinate system, usually the w-axis
-
-        Returns
-        -------
-        vnop: MX
-            The vector expressed in the non-orthogonal coordinate system
-        """
-
-        if V.shape[0] != 3:
-            raise ValueError("The vector must be expressed in 3D.")
-        if isinstance(V, np.ndarray):
-            V = MX(V)
-
-        if e1.shape[0] != 3:
-            raise ValueError("The first vector of the non-orthogonal coordinate system must be expressed in 3D.")
-
-        if e2.shape[0] != 3:
-            raise ValueError("The second vector of the non-orthogonal coordinate system must be expressed in 3D.")
-
-        if e3.shape[0] != 3:
-            raise ValueError("The third vector of the non-orthogonal coordinate system must be expressed in 3D.")
-
-        vnop = MX.zeros(V.shape)
-
-        vnop[0, 0] = sum1(np.cross(e2, e3) * V) / sum1(cross(e1, e2) * e3)
-        vnop[1, 0] = sum1(cross(e3, e1) * V) / sum1(cross(e1, e2) * e3)
-        vnop[2, 0] = sum1(cross(e1, e2) * V) / sum1(cross(e1, e2) * e3)
-
-        return vnop
+        return NaturalVector(vector_projection_in_non_orthogonal_basis(vector - self.rp, self.u, self.v, self.w))
 
     def axis(self, axis: Union[str, NaturalAxis]) -> MX:
         """

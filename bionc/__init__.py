@@ -31,14 +31,9 @@ from .bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVel
 from .bionc_numpy.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
 from .bionc_numpy.homogenous_transform import HomogeneousTransform
 
-from .utils.enums import NaturalAxis, CartesianAxis
-
-from casadi.casadi import MX as MX_type
-from numpy import ndarray
-
-# global variable to store the type of the math interface
-casadi_type = MX_type
-numpy_type = ndarray
+from .utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
+from .utils.transformation_matrix import TransformationMatrixUtil
+from .utils.ode_solver import RK4, forward_integration
 
 from .vizualization import Viz
 from .bionc_numpy import InverseKinematics

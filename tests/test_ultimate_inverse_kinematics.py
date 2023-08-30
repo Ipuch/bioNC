@@ -1,5 +1,7 @@
+from casadi import Function, sumsqr
 import numpy as np
 import pytest
+
 from tests.utils import TestUtils
 
 
@@ -9900,7 +9902,7 @@ def test_inverse_kinematics_class():
     from pyomeca import Markers
 
     markers = Markers.from_c3d(filename).to_numpy()[:3, :, :]  # 2 frames
-    markers = np.repeat(markers, 100, axis=2)  # 2 x 100 frames
+    markers = np.repeat(markers, 2, axis=2)  # 2 x 2 frames
     np.random.seed(42)
     markers = markers + np.random.normal(0, 0.01, markers.shape)  # add n
 
@@ -10047,6 +10049,151 @@ def test_ik_all_frames():
                 0.1688473,
                 0.9680654,
                 -0.18531047,
+            ]
+        ),
+        decimal=1e-5,
+    )
+
+
+def test_ik_frame_per_frame_extra_obj():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
+
+    # Generate c3d file
+    filename = module.generate_c3d_file()
+    # Generate model
+    natural_model = module.model_creation_from_measured_data(filename)
+
+    from pyomeca import Markers
+
+    markers = Markers.from_c3d(filename).to_numpy()[:3, :, :]  # 2 frames
+    markers = np.repeat(markers, 2, axis=2)  # 2 x 100 frames
+    np.random.seed(42)
+    markers = markers + np.random.normal(0, 0.01, markers.shape)  # add n
+
+    from bionc import InverseKinematics
+
+    # Create inverse kinematics object
+    ik = InverseKinematics(natural_model, markers, solve_frame_per_frame=True)
+
+    # test extra objective function
+    extra_objective_function = Function(
+        "extra_objective",
+        [ik._Q_sym, ik._markers_sym],  # mandatory signature
+        [sumsqr(ik._Q_sym[[0, 13, 14, 19, 22, 30, 47]])],  # adding random coordinates to minimize
+    )
+    ik.add_objective(extra_objective_function)
+
+    Qopt = ik.solve("ipopt")
+
+    np.testing.assert_almost_equal(
+        Qopt[:, 0],
+        np.array(
+            [
+                -2.40290805e-02,
+                9.87549794e-02,
+                -9.94821621e-01,
+                2.72842182e-01,
+                8.70125111e-01,
+                8.64672234e-01,
+                2.82844458e-01,
+                7.72258333e-01,
+                7.17585746e-01,
+                7.88266331e-01,
+                -6.15225119e-01,
+                -1.15863796e-02,
+                -9.99920831e-01,
+                -1.21487793e-02,
+                3.27706072e-03,
+                2.82844458e-01,
+                7.72258333e-01,
+                7.17585746e-01,
+                2.78069603e-01,
+                1.10866590e00,
+                5.07783240e-01,
+                2.96593177e-06,
+                2.60207937e-01,
+                9.65552603e-01,
+                -8.88023810e-01,
+                3.00280929e-01,
+                3.48202637e-01,
+                2.78069603e-01,
+                1.10866590e00,
+                5.07783240e-01,
+                2.34123415e-01,
+                1.31068528e00,
+                2.21490664e-01,
+                3.94438518e-01,
+                8.86677146e-01,
+                2.41292136e-01,
+                -5.81502862e-01,
+                4.12706480e-01,
+                -7.01090424e-01,
+                2.34123415e-01,
+                1.31068528e00,
+                2.21490664e-01,
+                1.95517211e-01,
+                1.37658772e00,
+                1.05472850e-01,
+                8.49995930e-02,
+                9.48358305e-01,
+                3.05600384e-01,
+            ]
+        ),
+        decimal=1e-5,
+    )
+    np.testing.assert_almost_equal(
+        Qopt[:, 1],
+        np.array(
+            [
+                -2.25125578e-02,
+                8.33761295e-02,
+                -9.96263823e-01,
+                2.82206474e-01,
+                8.82247299e-01,
+                8.65003230e-01,
+                2.92116407e-01,
+                7.82082820e-01,
+                7.19465409e-01,
+                7.86545695e-01,
+                -6.17531226e-01,
+                -1.02687739e-03,
+                -9.99802861e-01,
+                -1.88297320e-02,
+                6.29922085e-03,
+                2.92116407e-01,
+                7.82082820e-01,
+                7.19465409e-01,
+                2.84470288e-01,
+                1.11724946e00,
+                5.07770340e-01,
+                1.06991214e-03,
+                2.65701722e-01,
+                9.64054693e-01,
+                -9.52785572e-01,
+                1.57926709e-01,
+                2.59343033e-01,
+                2.84470288e-01,
+                1.11724946e00,
+                5.07770340e-01,
+                2.40499008e-01,
+                1.32057808e00,
+                2.22409981e-01,
+                2.34534995e-01,
+                9.25232411e-01,
+                2.98225288e-01,
+                -6.53457837e-01,
+                3.60688504e-01,
+                -6.65504815e-01,
+                2.40499008e-01,
+                1.32057808e00,
+                2.22409981e-01,
+                1.86938654e-01,
+                1.36466572e00,
+                1.02071821e-01,
+                3.20258552e-01,
+                9.47303922e-01,
+                7.05263971e-03,
             ]
         ),
         decimal=1e-5,

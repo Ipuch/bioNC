@@ -6,7 +6,7 @@ from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
 from ..protocols.joint import JointBase
 from .natural_vector import NaturalVector
-from ..utils.enums import NaturalAxis, CartesianAxis
+from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 from .cartesian_vector import CartesianVector
 
 
@@ -30,8 +30,11 @@ class Joint:
             child_axis: tuple[NaturalAxis] | list[NaturalAxis],
             theta: tuple[float] | list[float] | np.ndarray | MX,
             index: int,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Hinge, self).__init__(name, parent, child, index)
+            super(Joint.Hinge, self).__init__(name, parent, child, index, projection_basis, parent_basis, child_basis)
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:
@@ -207,8 +210,13 @@ class Joint:
             child_axis: NaturalAxis,
             theta: float | np.ndarray | MX,
             index: int,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Universal, self).__init__(name, parent, child, index)
+            super(Joint.Universal, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
 
             self.parent_axis = parent_axis
             self.parent_vector = NaturalVector.axis(self.parent_axis)
@@ -323,8 +331,13 @@ class Joint:
             parent: NaturalSegment,
             child: NaturalSegment,
             index: int,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.Spherical, self).__init__(name, parent, child, index)
+            super(Joint.Spherical, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
             self.nb_constraints = 3
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
@@ -414,8 +427,13 @@ class Joint:
             sphere_center: str = None,
             plane_point: str = None,
             plane_normal: str = None,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.SphereOnPlane, self).__init__(name, parent, child, index)
+            super(Joint.SphereOnPlane, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
             self.nb_constraints = 1
 
             if sphere_radius is None:
@@ -535,8 +553,13 @@ class Joint:
             length: float = None,
             parent_point: str = None,
             child_point: str = None,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(Joint.ConstantLength, self).__init__(name, parent, child, index)
+            super(Joint.ConstantLength, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
 
             if length is None:
                 raise ValueError("length must be provided")
@@ -549,6 +572,14 @@ class Joint:
             self.length = length
             self.parent_point = parent.marker_from_name(parent_point)
             self.child_point = child.marker_from_name(child_point)
+
+        @property
+        def nb_joint_dof(self) -> int:
+            """
+            erase the parent method because remove no proper dof when looking at absolute joint rotation and torques.
+            ex : one constant length won't block rotations and translations of the child segment
+            """
+            return 6
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
@@ -653,6 +684,52 @@ class GroundJoint:
     The public interface to joints with the ground as parent segment.
     """
 
+    class Free(JointBase):
+        """
+        This joint is defined by 0 constraints to let the joint to be free with the world.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            child: NaturalSegment,
+            index: int = None,
+            projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(GroundJoint.Free, self).__init__(name, None, child, index, projection_basis, None, child_basis)
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            return None
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            return None
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
+        def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            return None
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
     class Hinge(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
@@ -667,8 +744,10 @@ class GroundJoint:
             child_axis: tuple[NaturalAxis] | list[NaturalAxis],
             theta: tuple[float] | list[float] | np.ndarray = None,
             index: int = None,
+            projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(GroundJoint.Hinge, self).__init__(name, None, child, index)
+            super(GroundJoint.Hinge, self).__init__(name, None, child, index, projection_basis, None, child_basis)
 
             # check size and type of parent axis
             if not isinstance(parent_axis, (tuple, list)) or len(parent_axis) != 2:
@@ -685,7 +764,7 @@ class GroundJoint:
             # check size and type of theta
             if theta is None:
                 theta = np.ones(2) * np.pi / 2
-            if not isinstance(theta, (tuple, list, np.ndarray)) or len(theta) != 2:
+            if not isinstance(theta, (tuple, list, MX)) or len(theta) != 2:
                 raise TypeError("theta should be a tuple or list with 2 float")
 
             self.parent_axis = parent_axis
@@ -777,6 +856,138 @@ class GroundJoint:
 
             return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
+    class Universal(JointBase):
+        """
+        This class is to define a Universal joint between two segments.
+
+        Methods
+        -------
+        constraint(Q_parent, Q_child)
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+        constraint_jacobian(Q_parent, Q_child)
+            This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+        to_mx()
+            This function returns the joint as a mx joint to be used with the bionc_casadi package.
+
+        Attributes
+        ----------
+        name : str
+            Name of the joint
+        parent : NaturalSegment
+            Parent segment of the joint
+        child : NaturalSegment
+            Child segment of the joint
+        parent_axis : NaturalAxis
+            Axis of the parent segment
+        child_axis : NaturalAxis
+            Axis of the child segment
+        theta : float
+            Angle between the two axes
+        """
+
+        def __init__(
+            self,
+            name: str,
+            child: NaturalSegment,
+            parent_axis: CartesianAxis,
+            child_axis: NaturalAxis,
+            theta: float,
+            index: int,
+            projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(GroundJoint.Universal, self).__init__(
+                name, None, child, index, projection_basis, None, child_basis, None
+            )
+
+            # todo: there should be a check on the euler sequence and transformation matrix type here
+            #   with respected to the chosen parent and child axis
+
+            self.parent_axis = parent_axis
+            self.parent_vector = CartesianVector.axis(self.parent_axis)
+
+            self.child_axis = child_axis
+            self.child_vector = NaturalVector.axis(self.child_axis)
+
+            self.theta = theta
+
+            self.nb_constraints = 4
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                Kinematic constraints of the joint [4, 1]
+            """
+            constraint = MX.zeros(self.nb_constraints)
+            constraint[:3] = -Q_child.rp
+            constraint[3] = dot(self.parent_vector, Q_child.axis(self.child_axis)) - np.cos(self.theta)
+
+            return constraint
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            K_k_child = MX.zeros((self.nb_constraints, 12))
+            K_k_child[:3, 3:6] = -MX.eye(3)
+
+            K_k_child[3, :] = self.parent_vector.T @ self.child_vector.interpolate().rot
+
+            return K_k_child
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            K_k_child_dot = MX.zeros((self.nb_constraints, 12))
+
+            return K_k_child_dot
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
+            """
+
+            return self.child_constraint_jacobian(Q_parent, Q_child)
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
+            """
+
+            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
     class Spherical(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
@@ -789,8 +1000,10 @@ class GroundJoint:
             child: NaturalSegment,
             ground_application_point: np.ndarray = None,
             index: int = None,
+            projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(GroundJoint.Spherical, self).__init__(name, None, child, index)
+            super(GroundJoint.Spherical, self).__init__(name, None, child, index, projection_basis, None, child_basis)
             self.nb_constraints = 3
             self.ground_application_point = MX(ground_application_point)
 
@@ -801,7 +1014,7 @@ class GroundJoint:
 
             Returns
             -------
-            np.ndarray
+            MX
                 Kinematic constraints of the joint [3, 1]
             """
             constraint = self.ground_application_point - Q_child.rp
@@ -816,8 +1029,8 @@ class GroundJoint:
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> MX:
-            K_k_child = np.zeros((self.nb_constraints, 12))
-            K_k_child[:3, 3:6] = -np.eye(3)
+            K_k_child = MX.zeros((self.nb_constraints, 12))
+            K_k_child[:3, 3:6] = -MX.eye(3)
 
             return K_k_child
 
@@ -829,7 +1042,7 @@ class GroundJoint:
         def child_constraint_jacobian_derivative(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> np.ndarray:
-            K_k_child = np.zeros((self.nb_constraints, 12))
+            K_k_child = MX.zeros((self.nb_constraints, 12))
 
             return K_k_child
 
@@ -874,8 +1087,10 @@ class GroundJoint:
             rp_child_ref: SegmentNaturalCoordinates = None,
             rd_child_ref: SegmentNaturalCoordinates = None,
             index: int = None,
+            projection_basis: EulerSequence = None,
+            child_basis: TransformationMatrixType = None,
         ):
-            super(GroundJoint.Weld, self).__init__(name, None, child, index)
+            super(GroundJoint.Weld, self).__init__(name, None, child, index, projection_basis, None, child_basis)
 
             # check size and type of parent axis
             self.rp_child_ref = rp_child_ref

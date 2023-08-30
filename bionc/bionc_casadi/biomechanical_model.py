@@ -7,11 +7,21 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .external_force import ExternalForceList, ExternalForce
+from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
     def __init__(self):
         super().__init__()
+        self._numpy_model = None
+
+    def set_numpy_model(self, numpy_model: GenericBiomechanicalModel):
+        self._numpy_model = numpy_model
+
+    @property
+    def numpy_model(self):
+        return self._numpy_model
 
     def save(self, filename: str):
         raise NotImplementedError("Saving a biomechanical model is not implemented yet with casadi models.")
@@ -121,7 +131,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Phi_k = MX.zeros(self.nb_joint_constraints)
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             Q_parent = (
@@ -147,7 +157,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         K_k = MX.zeros((self.nb_joint_constraints, Q.shape[0]))
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             idx_col_child = slice(
@@ -188,7 +198,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         K_k_dot = MX.zeros((self.nb_joint_constraints, Qdot.shape[0]))
         nb_constraints = 0
-        for joint_name, joint in self.joints.items():
+        for joint_name, joint in self.joints_with_constraints.items():
             idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
 
             idx_col_parent = slice(
@@ -439,7 +449,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         # it follows the order of the segments
         for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -485,7 +495,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = MX.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i, segment in enumerate(self.segments_no_ground.values()):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -546,7 +556,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Kdot = MX.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
         for i in range(self.nb_segments):
             # add the joint constraints first
-            joints = self.joints_from_child_index(i)
+            joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
@@ -802,3 +812,108 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lambdas[:, segment_index] = lambda_i
 
         return visited_segments, torques, forces, lambdas
+
+    def express_joint_torques_in_euler_basis(self, Q: NaturalCoordinates, torques: MX) -> MX:
+        """
+        This function expresses the joint torques in the euler basis.
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The generalized coordinates of the model
+        torques: np.ndarray
+            The joint torques in global coordinates system
+
+        Returns
+        -------
+        np.ndarray
+            The joint torques expressed in the euler basis
+        """
+        if torques.shape != (3, self.nb_segments):
+            raise ValueError(f"The shape of the joint torques must be (3, {self.nb_segments}) but is {torques.shape}")
+
+        euler_torques = MX.zeros((3, self.nb_segments))
+        for i, (joint_name, joint) in enumerate(self.joints.items()):
+            if joint.projection_basis is None:
+                raise RuntimeError(
+                    "The projection basis of the joint must be defined to express the torques in an Euler basis."
+                    f"Joint {joint_name} has no projection basis defined."
+                    f"Please define a projection basis for this joint, "
+                    f"using argument `projection_basis` of the joint constructor"
+                    f" and enum `EulerSequence` for the type of entry."
+                )
+
+            parent_segment = joint.parent
+            child_segment = joint.child
+
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
+            Q_child = Q.vector(child_segment.index)
+
+            # compute rotation matrix from Qi
+            R_parent = (
+                np.eye(3)
+                if joint.parent is None
+                else parent_segment.segment_coordinates_system(Q_parent, joint.parent_basis).rot
+            )
+            R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
+
+            e1, e2, e3 = euler_axes_from_rotation_matrices(
+                R_parent, R_child, sequence=joint.projection_basis, axes_source_frame="mixed"
+            )
+
+            # compute the euler torques
+            euler_torques[:, i] = vector_projection_in_non_orthogonal_basis(torques[:, i], e1, e2, e3)
+
+        return euler_torques
+
+    def natural_coordinates_to_joint_angles(self, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        This function converts the natural coordinates to joint angles with Euler Sequences defined for each joint
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The natural coordinates of the model
+
+        Returns
+        -------
+        np.ndarray
+            The joint angles [3 x nb_joints]
+        """
+        euler_angles = MX.zeros((3, self.nb_joints))
+
+        for i, (joint_name, joint) in enumerate(self.joints.items()):
+            if joint.projection_basis is None:
+                raise RuntimeError(
+                    "The projection basis of the joint must be defined to express the torques in an Euler basis."
+                    f"Joint {joint_name} has no projection basis defined."
+                    f"Please define a projection basis for this joint, "
+                    f"using argument `projection_basis` of the joint constructor"
+                    f" and enum `EulerSequence` for the type of entry."
+                )
+
+            parent_segment = joint.parent
+            child_segment = joint.child
+
+            Q_parent = (
+                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
+            )  # if the joint is a joint with the ground, the parent is None
+            Q_child = Q.vector(child_segment.index)
+
+            # compute rotation matrix from Qi
+            R_parent = (
+                np.eye(3)
+                if joint.parent is None
+                else parent_segment.segment_coordinates_system(Q_parent, joint.parent_basis).rot
+            )
+            R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
+
+            euler_angles[:, i] = euler_angles_from_rotation_matrix(
+                R_parent,
+                R_child,
+                joint_sequence=joint.projection_basis,
+            )
+
+        return euler_angles

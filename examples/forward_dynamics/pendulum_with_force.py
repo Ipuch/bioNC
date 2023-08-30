@@ -11,7 +11,7 @@ from bionc.bionc_numpy import (
     ExternalForceList,
     ExternalForce,
 )
-from bionc import NaturalAxis, CartesianAxis
+from bionc import NaturalAxis, CartesianAxis, RK4
 
 
 def build_pendulum():
@@ -167,71 +167,47 @@ def drop_the_pendulum(
     return time_steps, all_states, dynamics
 
 
-def RK4(
-    t: np.ndarray,
-    f,
-    y0: np.ndarray,
-    normalize_idx: tuple[tuple[int, ...]] = None,
-    args=(),
-) -> np.ndarray:
-    """
-    Runge-Kutta 4th order method
-
-    Parameters
-    ----------
-    t : array_like
-        time steps
-    f : Callable
-        function to be integrated in the form f(t, y, *args)
-    y0 : np.ndarray
-        initial conditions of states
-    normalize_idx : tuple(tuple)
-        indices of states to be normalized together
-
-    Returns
-    -------
-    y : array_like
-        states for each time step
-
-    """
-    n = len(t)
-    y = np.zeros((len(y0), n))
-    y[:, 0] = y0
-    for i in range(n - 1):
-        h = t[i + 1] - t[i]
-        yi = np.squeeze(y[:, i])
-        k1 = f(t[i], yi, *args)
-        k2 = f(t[i] + h / 2.0, yi + k1 * h / 2.0, *args)
-        k3 = f(t[i] + h / 2.0, yi + k2 * h / 2.0, *args)
-        k4 = f(t[i] + h, yi + k3 * h, *args)
-        y[:, i + 1] = yi + (h / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
-
-        # verify after each time step the normalization of the states
-        if normalize_idx is not None:
-            for idx in normalize_idx:
-                y[idx, i + 1] = y[idx, i + 1] / np.linalg.norm(y[idx, i + 1])
-    return y
-
-
-if __name__ == "__main__":
+def main(mode: str = "moment_equilibrium"):
     # add an external force applied on the segment 0
     # first build the object
     fext = ExternalForceList.empty_from_nb_segment(1)
     # then add a force
-    force1 = ExternalForce.from_components(
-        # this force will prevent the pendulum to fall
-        force=np.array([0, 0, 1 * 9.81]),
-        torque=np.array([0, 0, 0]),
-        application_point_in_local=np.array([0, -0.5, 0]),
-        # this moment will prevent the pendulum to fall
-        # force=np.array([0, 0, 0]),
-        # torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
-        # application_point_in_local=np.array([0, 0, 0]),
-    )
+    if mode == "moment_equilibrium":
+        force1 = ExternalForce.from_components(
+            # this moment will prevent the pendulum to fall
+            force=np.array([0, 0, 0]),
+            torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
+            application_point_in_local=np.array([0, 0, 0]),
+        )
+    elif mode == "force_equilibrium":
+        force1 = ExternalForce.from_components(
+            # this force will prevent the pendulum to fall
+            force=np.array([0, 0, 1 * 9.81]),
+            torque=np.array([0, 0, 0]),
+            application_point_in_local=np.array([0, -0.5, 0]),
+        )
+    elif mode == "no_equilibrium":
+        force1 = ExternalForce.from_components(
+            # this will not prevent the pendulum to fall it will keep drag the pendulum down
+            force=np.array([0, 0, 1.0 * 9.81]),
+            torque=np.array([0, 0, 0]),
+            application_point_in_local=np.array([0, -0.25, 0]),
+        )
+    else:
+        raise ValueError("mode should be one of 'moment_equilibrium', 'force_equilibrium', 'no_equilibrium'")
+
     # then add the force to the list on segment 0
     fext.add_external_force(external_force=force1, segment_index=0)
 
     model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(t_final=10, external_forces=fext)
+
+    return model, all_states
+
+
+if __name__ == "__main__":
+    model, all_states = main(mode="moment_equilibrium")
+    # model, all_states = main(mode="force_equilibrium")
+    # model, all_states = main(mode="no_equilibrium")
 
     # animate the motion
     from bionc import Viz

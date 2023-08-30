@@ -9,6 +9,7 @@ from bionc.protocols.natural_coordinates import NaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
 from bionc.protocols.natural_accelerations import NaturalAccelerations
 from bionc.protocols.external_force import ExternalForceList
+from ..utils.enums import EulerSequence
 
 
 class GenericBiomechanicalModel(ABC):
@@ -20,6 +21,14 @@ class GenericBiomechanicalModel(ABC):
 
     Methods
     ----------
+    __getitem__(self, name: str)
+        This function returns the segment with the given name
+    __setitem__(self, name: str, segment: Any)
+        This function adds a segment to the model
+    save(self, filename: str)
+        This function saves the model to a file
+    load(self, filename: str)
+        This function loads the model from a file
 
 
     """
@@ -78,6 +87,28 @@ class GenericBiomechanicalModel(ABC):
             self._update_mass_matrix()  # Update the generalized mass matrix
             if name in ("ground", "GROUND", "Ground"):
                 self.set_ground_segment(name)
+
+            # adding a default joint with the world frame to defined standard transformations.
+            from ..bionc_numpy.enums import JointType  # prevent circular import
+            from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+
+            self._add_joint(
+                dict(
+                    name=f"free_joint_{name}",
+                    joint_type=CasadiJointType.GROUND_FREE
+                    if hasattr(self, "numpy_model")
+                    else JointType.GROUND_FREE,  # not satisfying
+                    parent="GROUND",  # to be popped out
+                    child=name,
+                    parent_point=None,
+                    child_point=None,
+                    length=None,
+                    theta=None,
+                    projection_basis=EulerSequence.XYZ,
+                    parent_basis=None,
+                    child_basis=None,
+                ),
+            )
         else:
             raise ValueError("The name of the segment does not match the name of the segment")
 
@@ -187,6 +218,11 @@ class GenericBiomechanicalModel(ABC):
             raise ValueError("The child segment does not exist")
         if joint["name"] in self.joints.keys():
             raise ValueError("The joint name already exists")
+        # remove the default joint GROUND_FREE if it still exists
+        # There is automatically a free joint for each segment when created. This joint is not needed anymore when
+        # adding a new joint to the segment
+        if self.has_free_joint(self.segments[joint["child"]].index):
+            self._remove_free_joint(self.segments[joint["child"]].index)
 
         # remove name of the joint_type from the dictionary
         joint_type = joint.pop("joint_type")
@@ -203,6 +239,68 @@ class GenericBiomechanicalModel(ABC):
         joint["index"] = self.nb_joints
 
         self.joints[joint["name"]] = joint_type.value(**joint)
+
+    @property
+    def joints_with_constraints(self) -> dict:
+        """
+        This function returns the dictionary of all the joints with constraints
+        It removes the joints with no constraints from self.joints
+
+        Returns
+        -------
+        dict[str: Joint, ...]
+            The dictionary of all the joints with constraints
+        """
+        return {name: joint for name, joint in self.joints.items() if joint.nb_constraints > 0}
+
+    def has_free_joint(self, segment_idx: int) -> bool:
+        """
+        This function returns true if the segment has a free joint with the ground
+
+        Parameters
+        ----------
+        segment_idx : int
+            The index of the segment
+
+        Returns
+        -------
+        bool
+            True if the segment has a free joint with the ground
+        """
+        from ..bionc_numpy.enums import JointType  # prevent circular import
+        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+
+        joints = self.joints_from_child_index(segment_idx, remove_free_joints=False)
+        for joint in joints:
+            if isinstance(joint, JointType.GROUND_FREE.value) or isinstance(joint, CasadiJointType.GROUND_FREE.value):
+                return True
+        return False
+
+    def _remove_free_joint(self, segment_idx: int):
+        """
+        This function removes the free joint of the segment
+
+        Notes
+        -----
+        Don't use this function if you don't know what you are doing
+
+        Parameters
+        ----------
+        segment_idx : int
+            The index of the segment
+        """
+        from ..bionc_numpy.enums import JointType  # prevent circular import
+        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+
+        joints = self.joints_from_child_index(segment_idx, remove_free_joints=False)
+        free_joint_found = False
+        for i, joint in enumerate(joints):
+            if isinstance(joint, JointType.GROUND_FREE.value) or isinstance(joint, CasadiJointType.GROUND_FREE.value):
+                self.remove_joint(joint.name)
+                free_joint_found = True
+
+        if not free_joint_found:
+            raise ValueError("The segment does not have a free joint")
 
     def children(self, segment: str | int) -> list[int]:
         """
@@ -350,6 +448,13 @@ class GenericBiomechanicalModel(ABC):
         """
         return len(self.joints)
 
+    @property
+    def nb_joints_with_constraints(self) -> int:
+        """
+        This function returns the number of joints with constraints in the model
+        """
+        return len(self.joints_with_constraints)
+
     def remove_joint(self, name: str):
         """
         This function removes a joint from the model
@@ -376,6 +481,16 @@ class GenericBiomechanicalModel(ABC):
         for _, joint in self.joints.items():
             nb_joint_constraints += joint.nb_constraints
         return nb_joint_constraints
+
+    @property
+    def nb_joint_dof(self) -> int:
+        """
+        This function returns the number of joint degrees of freedom in the model
+        """
+        nb_joint_dof = 0
+        for _, joint in self.joints.items():
+            nb_joint_dof += joint.nb_joint_dof
+        return nb_joint_dof
 
     @property
     def joint_names(self) -> list[str]:
@@ -438,7 +553,25 @@ class GenericBiomechanicalModel(ABC):
                 return joint
         raise ValueError("No joint with index " + str(index))
 
-    def joints_from_child_index(self, child_index: int) -> list:
+    def joint_dof_indexes(self, joint_id: int) -> tuple[int, ...]:
+        """
+        This function returns the index of a given joint.
+
+        Parameters
+        ----------
+        joint_id : int
+            The index of the joint for which the joint dof indexes are returned
+
+        Returns
+        -------
+        tuple[int, ...]
+            The indexes of the joint dof
+        """
+        joint = self.joint_from_index(joint_id)
+        joint_dof_inx = [joint.index + i for i in range(joint.nb_joint_dof)]
+        return tuple(joint_dof_inx)
+
+    def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
         """
         This function returns the joints that have the given child index
 
@@ -446,15 +579,25 @@ class GenericBiomechanicalModel(ABC):
         ----------
         child_index : int
             The child index
+        remove_free_joints : bool
+            If True, the free joints are not returned
 
         Returns
         -------
         list[JointBase]
             The joints that have the given child index
         """
+        from ..bionc_numpy.enums import JointType  # prevent circular import
+        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+
         joints = []
         for joint in self.joints.values():
             if joint.child.index == child_index:
+                if remove_free_joints and (
+                    isinstance(joint, JointType.GROUND_FREE.value)
+                    or isinstance(joint, CasadiJointType.GROUND_FREE.value)
+                ):
+                    continue
                 joints.append(joint)
         return joints
 
@@ -854,5 +997,21 @@ class GenericBiomechanicalModel(ABC):
         Returns
         -------
         tuple[Any, Any, Any]
-            The forces, torques and lambdas
+            The forces, torques and lambdas, all expressed in the global coordinate system
+            It may be a good idea to express them in the local or euler basis coordinate system
+        """
+
+    @abstractmethod
+    def natural_coordinates_to_joint_angles(self, Q: NaturalCoordinates):
+        """
+        This function converts the natural coordinates to joint angles with Euler Sequences defined for each joint
+
+        Parameters
+        ----------
+        Q: NaturalCoordinates
+            The natural coordinates of the model
+
+        Returns
+        -------
+            The joint angles [3 x nb_joints]
         """

@@ -62,24 +62,28 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
     return model
 
 
-def main():
+def main(mode: str = "horizontal"):
     nb_segments = 3
 
     model = build_n_link_pendulum(nb_segments=nb_segments)
 
-    # horizontal
-    # tuple_of_Q = [
-    #     SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i if i <= 1 else -1, 0], rd=[0, -i - 1 if i <= 1 else -2, 0], w=[0, 0, 1])
-    #     for i in range(0, nb_segments)
-    # ]
+    if mode == "horizontal":
+        tuple_of_Q = [
+            SegmentNaturalCoordinates.from_components(
+                u=[1, 0, 0], rp=[0, -i if i <= 1 else -1, 0], rd=[0, -i - 1 if i <= 1 else -2, 0], w=[0, 0, 1]
+            )
+            for i in range(0, nb_segments)
+        ]
 
-    # vertical
-    tuple_of_Q = [
-        SegmentNaturalCoordinates.from_components(
-            u=[1, 0, 0], rp=[0, 0, -i if i <= 1 else -1], rd=[0, 0, -i - 1 if i <= 1 else -2], w=[0, -1, 0]
-        )
-        for i in range(0, nb_segments)
-    ]
+    elif mode == "vertical":
+        tuple_of_Q = [
+            SegmentNaturalCoordinates.from_components(
+                u=[1, 0, 0], rp=[0, 0, -i if i <= 1 else -1], rd=[0, 0, -i - 1 if i <= 1 else -2], w=[0, -1, 0]
+            )
+            for i in range(0, nb_segments)
+        ]
+    else:
+        raise ValueError("mode must be horizontal or vertical")
 
     Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
 
@@ -97,6 +101,9 @@ def main():
     print(forces)
     print(lambdas)
 
+    return torques, forces, lambdas
+
 
 if __name__ == "__main__":
-    main()
+    main(mode="vertical")
+    # main(mode="horizontal")

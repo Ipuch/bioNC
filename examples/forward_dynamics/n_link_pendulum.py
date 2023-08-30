@@ -9,7 +9,7 @@ from bionc.bionc_numpy import (
     SegmentNaturalVelocities,
     NaturalVelocities,
 )
-from bionc import NaturalAxis, CartesianAxis
+from bionc import NaturalAxis, CartesianAxis, RK4
 
 
 def drop_the_pendulum(
@@ -79,39 +79,6 @@ def drop_the_pendulum(
     all_states = RK4(t=time_steps, f=lambda t, states: dynamics(t, states)[0], y0=states_0)
 
     return time_steps, all_states, dynamics
-
-
-def RK4(t: np.ndarray, f, y0: np.ndarray, args=()) -> np.ndarray:
-    """
-    Runge-Kutta 4th order method
-
-    Parameters
-    ----------
-    t : array_like
-        time steps
-    f : Callable
-        function to be integrated in the form f(t, y, *args)
-    y0 : np.ndarray
-        initial conditions of states
-
-    Returns
-    -------
-    y : array_like
-        states for each time step
-
-    """
-    n = len(t)
-    y = np.zeros((len(y0), n))
-    y[:, 0] = y0
-    for i in range(n - 1):
-        h = t[i + 1] - t[i]
-        yi = np.squeeze(y[:, i])
-        k1 = f(t[i], yi, *args)
-        k2 = f(t[i] + h / 2.0, yi + k1 * h / 2.0, *args)
-        k3 = f(t[i] + h / 2.0, yi + k2 * h / 2.0, *args)
-        k4 = f(t[i] + h, yi + k3 * h, *args)
-        y[:, i + 1] = yi + (h / 6.0) * (k1 + 2 * k2 + 2 * k3 + k4)
-    return y
 
 
 def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_states: np.ndarray, dynamics):
@@ -223,6 +190,8 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
 
 
 if __name__ == "__main__":
+    display_model_matrices = False
+    display_post_computation = False
     # Let's create a model
     nb_segments = 20
     model = build_n_link_pendulum(nb_segments=nb_segments)
@@ -249,58 +218,62 @@ if __name__ == "__main__":
     print(model.holonomic_constraints_jacobian(Q))
 
     # one can comment this section if he doesn't to display the matrices
-    from matplotlib import pyplot as plt
+    if display_model_matrices:
+        from matplotlib import pyplot as plt
 
-    K = model.joint_constraints_jacobian(Q)
-    # subplot with 3 columns and 1 row
-    fig, axs = plt.subplots(1, 3)
-    # spy(K) on axis (0,0)
-    axs[0].spy(K)
-    # title of the axis (0,0)
-    axs[0].set_title("Constraint Jacobian K")
-    #
-    axs[1].spy(model.mass_matrix)
-    axs[1].set_title("Mass matrix M")
-    #
-    G = model.mass_matrix
-    K = model.rigid_body_constraints_jacobian(Q)
-    Kdot = model.rigid_body_constraint_jacobian_derivative(Qdot)
-    upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
-    lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
-    KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
+        K = model.joint_constraints_jacobian(Q)
+        # subplot with 3 columns and 1 row
+        fig, axs = plt.subplots(1, 3)
+        # spy(K) on axis (0,0)
+        axs[0].spy(K)
+        # title of the axis (0,0)
+        axs[0].set_title("Constraint Jacobian K")
+        #
+        axs[1].spy(model.mass_matrix)
+        axs[1].set_title("Mass matrix M")
+        #
+        G = model.mass_matrix
+        K = model.rigid_body_constraints_jacobian(Q)
+        Kdot = model.rigid_body_constraint_jacobian_derivative(Qdot)
+        upper_KKT_matrix = np.concatenate((G, K.T), axis=1)
+        lower_KKT_matrix = np.concatenate((K, np.zeros((K.shape[0], K.shape[0]))), axis=1)
+        KKT_matrix = np.concatenate((upper_KKT_matrix, lower_KKT_matrix), axis=0)
 
-    axs[2].spy(KKT_matrix)
-    axs[2].set_title("KKT matrix")
-    plt.show()
+        axs[2].spy(KKT_matrix)
+        axs[2].set_title("KKT matrix")
+        plt.show()
 
     # actual simulation
     t_final = 10  # seconds
+    steps_per_second = 50
     time_steps, all_states, dynamics = drop_the_pendulum(
         model=model,
         Q_init=Q,
         Qdot_init=Qdot,
         t_final=t_final,
+        steps_per_second=steps_per_second,
     )
 
-    defects, defects_dot, joint_defects, all_lambdas = post_computations(
-        model=model,
-        time_steps=time_steps,
-        all_states=all_states,
-        dynamics=dynamics,
-    )
+    if display_post_computation:
+        defects, defects_dot, joint_defects, all_lambdas = post_computations(
+            model=model,
+            time_steps=time_steps,
+            all_states=all_states,
+            dynamics=dynamics,
+        )
 
-    from viz import plot_series
+        from viz import plot_series
 
-    # Plot the results
-    # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
-    plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
-    plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
-    plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
-    # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
-    plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+        # Plot the results
+        # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
+        plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
+        plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
+        plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
+        # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
+        plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
 
     # animate the motion
     from bionc import Viz
 
-    viz = Viz(model)
-    viz.animate(NaturalCoordinates(all_states[: (12 * nb_segments), :]), None)
+    viz = Viz(model, background_color=(1, 1, 1), show_ground_frame=True)
+    viz.animate(NaturalCoordinates(all_states[: (12 * nb_segments), :]), None, frame_rate=steps_per_second)

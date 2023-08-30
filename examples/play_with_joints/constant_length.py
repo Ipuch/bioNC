@@ -10,11 +10,10 @@ from bionc import (
     NaturalAxis,
     NaturalMarker,
     Viz,
+    forward_integration,
 )
 
 import numpy as np
-
-from utils import forward_integration, post_computations
 
 
 def build_two_link_segment():
@@ -83,7 +82,7 @@ def build_two_link_segment():
     return model
 
 
-def main(initial_pose: str = "hanged"):
+def main(initial_pose: str = "hanged", show_results: bool = True):
     model = build_two_link_segment()
 
     if initial_pose == "hanged":
@@ -148,40 +147,43 @@ def main(initial_pose: str = "hanged"):
         steps_per_second=100,
     )
 
-    defects, defects_dot, joint_defects, all_lambdas = post_computations(
-        model=model,
-        time_steps=time_steps,
-        all_states=all_states,
-        dynamics=dynamics,
-    )
+    if show_results:
+        from utils import post_computations
 
-    # plot results
-    import matplotlib.pyplot as plt
+        defects, defects_dot, joint_defects, all_lambdas = post_computations(
+            model=model,
+            time_steps=time_steps,
+            all_states=all_states,
+            dynamics=dynamics,
+        )
+        # plot results
 
-    plt.figure()
-    for i in range(0, model.nb_rigid_body_constraints):
-        plt.plot(time_steps, defects[i, :], marker="o", label=f"defects {i}")
-    plt.title("Rigid body constraints")
-    plt.legend()
+        import matplotlib.pyplot as plt
 
-    plt.figure()
-    for i in range(0, model.nb_joint_constraints):
-        plt.plot(time_steps, joint_defects[i, :], marker="o", label=f"joint_defects {i}")
-    plt.title("Joint constraints")
-    plt.legend()
+        plt.figure()
+        for i in range(0, model.nb_rigid_body_constraints):
+            plt.plot(time_steps, defects[i, :], marker="o", label=f"defects {i}")
+        plt.title("Rigid body constraints")
+        plt.legend()
 
-    plt.figure()
-    for i in range(0, model.nb_holonomic_constraints):
-        plt.plot(time_steps, all_lambdas[i, :], marker="o", label=f"lambda {i}")
-    plt.title("Lagrange multipliers")
-    plt.legend()
-    plt.show()
+        plt.figure()
+        for i in range(0, model.nb_joint_constraints):
+            plt.plot(time_steps, joint_defects[i, :], marker="o", label=f"joint_defects {i}")
+        plt.title("Joint constraints")
+        plt.legend()
 
-    # animation
-    viz = Viz(model)
-    viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
+        plt.figure()
+        for i in range(0, model.nb_holonomic_constraints):
+            plt.plot(time_steps, all_lambdas[i, :], marker="o", label=f"lambda {i}")
+        plt.title("Lagrange multipliers")
+        plt.legend()
+        plt.show()
+
+        # animation
+        viz = Viz(model)
+        viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
 
 
 if __name__ == "__main__":
-    # main("hanged")
-    main("ready_to_swing")
+    # main("hanged", show_results=True)
+    main("ready_to_swing", show_results=True)

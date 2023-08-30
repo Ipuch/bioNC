@@ -1,6 +1,7 @@
 from typing import Union, Tuple
 
 import numpy as np
+from numpy.linalg import inv as np_inv
 from casadi import MX
 from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, cross, norm_2, horzcat, solve
 
@@ -10,10 +11,12 @@ from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_casadi.homogenous_transform import HomogeneousTransform
 from ..bionc_casadi.natural_marker import NaturalMarker, SegmentNaturalVector
 from ..bionc_casadi.natural_vector import NaturalVector
+from ..bionc_casadi.transformation_matrix import transformation_matrix
 
 from ..protocols.natural_segment import AbstractNaturalSegment
 
 from .utils import to_numeric_MX
+from ..utils.enums import TransformationMatrixType, transformation_matrix_str_to_enum
 
 
 class NaturalSegment(AbstractNaturalSegment):
@@ -157,7 +160,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return alpha, beta, gamma, length
 
-    def _transformation_matrix(self) -> MX:
+    def transformation_matrix(self, matrix_type: str | TransformationMatrixType = None) -> MX:
         """
         This function computes the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
@@ -168,33 +171,21 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
         """
-        B = MX.zeros(3, 3)
-        B[0, :] = MX([1, 0, 0])
-        B[1, 0] = self.length * cos(self.gamma)
-        B[1, 1] = self.length * sin(self.gamma)
-        B[1, 2] = 0
-        B[2, 0] = cos(self.beta)
-        B[2, 1] = (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta)
-        B[2, 2] = sqrt(
-            1 - cos(self.beta) ** 2 - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
-        )
-        return B
+        if isinstance(matrix_type, str):
+            matrix_type = transformation_matrix_str_to_enum(matrix_type)
 
-    @property
-    def transformation_matrix(self) -> MX:
-        """
-        This function returns the transformation matrix, denoted Bi,
-        from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
-        Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
+        if matrix_type is None:
+            matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
-        Returns
-        -------
-        MX
-            Transformation matrix from natural coordinate to segment coordinate system [3x3]
-        """
-        return self._transformation_matrix
+        return transformation_matrix(
+            matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
+        ).T
 
-    def segment_coordinates_system(self, Q: SegmentNaturalCoordinates) -> HomogeneousTransform:
+    def segment_coordinates_system(
+        self,
+        Q: SegmentNaturalCoordinates,
+        transformation_matrix_type: TransformationMatrixType | str = None,
+    ) -> HomogeneousTransform:
         """
         This function computes the segment coordinates from the natural coordinates
 
@@ -202,6 +193,8 @@ class NaturalSegment(AbstractNaturalSegment):
         ----------
         Q: SegmentNaturalCoordinates
             The natural coordinates of the segment
+        transformation_matrix_type : TransformationMatrixType or str
+            The type of the transformation matrix to compute, either "Buv" or TransformationMatrixType.Buv
 
         Returns
         -------
@@ -212,7 +205,7 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self._transformation_matrix @ np.concatenate((Q.u, Q.v, Q.w), axis=1),
+            rotation=self.transformation_matrix(transformation_matrix_type) @ horzcat(Q.u, Q.v, Q.w),
             translation=Q.rp,
         )
 
@@ -371,7 +364,7 @@ class NaturalSegment(AbstractNaturalSegment):
             - dot(self.center_of_mass, self.center_of_mass)
         )
 
-        Binv = to_numeric_MX(inv(self.transformation_matrix))
+        Binv = to_numeric_MX(inv(self.transformation_matrix()))
         Binv_transpose = transpose(Binv)
 
         return Binv @ middle_block @ Binv_transpose
@@ -399,7 +392,8 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return NaturalVector(to_numeric_MX(self.transformation_matrix) @ self.center_of_mass)
+        # todo: write analytical inverses of transformation matrix
+        return NaturalVector(inv(to_numeric_MX(self.transformation_matrix())) @ self.center_of_mass)
 
     @property
     def natural_center_of_mass(self) -> NaturalVector:
@@ -443,7 +437,7 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi[0:3, 0:3] = Ji[0, 0] * MX.eye(3)
         Gi[0:3, 3:6] = (self.mass * n_ci[0] + Ji[0, 1]) * MX.eye(3)
         Gi[0:3, 6:9] = -Ji[0, 1] * MX.eye(3)
-        Gi[0:3, 9:12] = -Ji[0, 2] * MX.eye(3)
+        Gi[0:3, 9:12] = Ji[0, 2] * MX.eye(3)
 
         Gi[3:6, 3:6] = (self.mass + 2 * self.mass * n_ci[1] + Ji[1, 1]) * MX.eye(3)
         Gi[3:6, 6:9] = -(self.mass * n_ci[1] + Ji[1, 1]) * MX.eye(3)
@@ -604,7 +598,7 @@ class NaturalSegment(AbstractNaturalSegment):
             True if the marker is anatomical, False otherwise
         """
 
-        location = to_numeric_MX(inv(self.transformation_matrix)) @ location
+        location = to_numeric_MX(inv(self.transformation_matrix())) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 
@@ -637,7 +631,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = to_numeric_MX(inv(self.transformation_matrix)) @ direction
+        direction = to_numeric_MX(inv(self.transformation_matrix())) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,

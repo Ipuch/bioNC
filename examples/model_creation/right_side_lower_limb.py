@@ -15,6 +15,10 @@ from bionc import (
     C3dData,
     BiomechanicalModel,
     JointType,
+    EulerSequence,
+    TransformationMatrixUtil,
+    TransformationMatrixType,
+    NaturalAxis,
 )
 
 
@@ -231,6 +235,14 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="PELVIS",
         child="THIGH",
+        projection_basis=EulerSequence.ZXY,  # to either project joint torque or joint angle
+        # we need to define the parent and child basis
+        parent_basis=TransformationMatrixUtil(
+            # defining the segment coordinate system
+            plane=(NaturalAxis.W, NaturalAxis.U),  # the plane to define the cross product
+            axis_to_keep=NaturalAxis.W,  # it means W = Z
+        ).to_enum(),
+        child_basis=TransformationMatrixType.Bvu,
     )
 
     model.add_joint(
@@ -238,6 +250,14 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="THIGH",
         child="SHANK",
+        projection_basis=EulerSequence.ZXY,  # to either project joint torque or joint angle
+        # we need to define the parent and child basis
+        parent_basis=TransformationMatrixUtil(
+            # defining the segment coordinate system
+            plane=(NaturalAxis.W, NaturalAxis.U),  # the plane to define the cross product
+            axis_to_keep=NaturalAxis.W,  # it means W = Z
+        ).to_enum(),
+        child_basis=TransformationMatrixType.Bvu,
     )
 
     model.add_joint(
@@ -245,6 +265,14 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="SHANK",
         child="FOOT",
+        projection_basis=EulerSequence.ZXY,  # to either project joint torque or joint angle
+        # we need to define the parent and child basis
+        parent_basis=TransformationMatrixUtil(
+            # defining the segment coordinate system
+            plane=(NaturalAxis.W, NaturalAxis.U),  # the plane to define the cross product
+            axis_to_keep=NaturalAxis.W,  # it means W = Z
+        ).to_enum(),
+        child_basis=TransformationMatrixType.Bvu,
     )
 
     c3d_data = C3dData(f"{c3d_filename}")
@@ -321,7 +349,7 @@ def generate_c3d_file(two_side: bool = False):
     if two_side:
         # compute the middle of the pelvis (RFWT, RBWT, LFWT, LBWT)
         pelvis_center = np.mean(c3d["data"]["points"][:3, [0, 2, 1, 3], :], axis=1)
-        # remove two times the difference between each markers and the pelvis center along y axis
+        # remove two times the difference between each marker and the pelvis center along y axis
         c3d["data"]["points"][:3, 11, :] = c3d["data"]["points"][:3, 4, :]
         c3d["data"]["points"][1, 11, :] -= 2 * (c3d["data"]["points"][1, 4, :] - pelvis_center[1])
 

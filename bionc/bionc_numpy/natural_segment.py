@@ -11,6 +11,8 @@ from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
 from ..bionc_numpy.natural_marker import NaturalMarker, SegmentNaturalVector
 from ..bionc_numpy.natural_vector import NaturalVector
+from ..bionc_numpy.transformation_matrix import transformation_matrix
+from ..utils.enums import TransformationMatrixType, transformation_matrix_str_to_enum
 
 from ..protocols.natural_segment import AbstractNaturalSegment
 
@@ -199,48 +201,35 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return self._experimental_Q_function(markers, model)
 
-    def _transformation_matrix(self) -> np.ndarray:
+    def transformation_matrix(self, matrix_type: str | TransformationMatrixType = None) -> np.ndarray:
         """
         This function computes the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
         Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
 
-        Returns
-        -------
-        np.ndarray
-            Transformation matrix from natural coordinate to segment coordinate system [3x3]
-        """
-        return np.array(
-            [
-                [1, 0, 0],
-                [self.length * cos(self.gamma), self.length * sin(self.gamma), 0],
-                [
-                    cos(self.beta),
-                    (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta),
-                    np.sqrt(
-                        1
-                        - cos(self.beta) ** 2
-                        - (cos(self.alpha) - cos(self.beta) * cos(self.gamma)) / sin(self.beta) ** 2
-                    ),
-                ],
-            ]
-        )
-
-    @property
-    def transformation_matrix(self) -> np.ndarray:
-        """
-        This function returns the transformation matrix, denoted Bi,
-        from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
-        Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
+        Parameters
+        ----------
+        matrix_type : str or TransformationMatrixType
+            The type of the transformation matrix to compute, either "Buv" or TransformationMatrixType.Buv
 
         Returns
         -------
         np.ndarray
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
         """
-        return self._transformation_matrix
+        if isinstance(matrix_type, str):
+            matrix_type = transformation_matrix_str_to_enum(matrix_type)
 
-    def segment_coordinates_system(self, Q: SegmentNaturalCoordinates) -> HomogeneousTransform:
+        if matrix_type is None:
+            matrix_type = TransformationMatrixType.Buv  # NOTE: default value
+
+        return transformation_matrix(
+            matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
+        ).T
+
+    def segment_coordinates_system(
+        self, Q: SegmentNaturalCoordinates, transformation_matrix_type: TransformationMatrixType | str = None
+    ) -> HomogeneousTransform:
         """
         This function computes the segment coordinates from the natural coordinates
 
@@ -248,6 +237,8 @@ class NaturalSegment(AbstractNaturalSegment):
         ----------
         Q: SegmentNaturalCoordinates
             The natural coordinates of the segment
+        transformation_matrix_type : TransformationMatrixType or str
+            The type of the transformation matrix to compute, either "Buv" or TransformationMatrixType.Buv
 
         Returns
         -------
@@ -258,7 +249,7 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self._transformation_matrix
+            rotation=self.transformation_matrix(transformation_matrix_type)
             @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
             translation=Q.rp[:, np.newaxis],
         )
@@ -417,7 +408,7 @@ class NaturalSegment(AbstractNaturalSegment):
             - np.dot(self.center_of_mass.T, self.center_of_mass)
         )
 
-        Binv = inv(self.transformation_matrix)
+        Binv = inv(self.transformation_matrix())
         Binv_transpose = np.transpose(Binv)
 
         return Binv @ (middle_block @ Binv_transpose)
@@ -445,7 +436,7 @@ class NaturalSegment(AbstractNaturalSegment):
         np.ndarray
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return NaturalVector(inv(self.transformation_matrix) @ self.center_of_mass)
+        return NaturalVector(inv(self.transformation_matrix()) @ self.center_of_mass)
 
     @property
     def natural_center_of_mass(self) -> NaturalVector:
@@ -489,12 +480,15 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi[0:3, 0:3] = Ji[0, 0] * eye(3)
         Gi[0:3, 3:6] = (self.mass * n_ci[0] + Ji[0, 1]) * eye(3)
         Gi[0:3, 6:9] = -Ji[0, 1] * eye(3)
-        Gi[0:3, 9:12] = -Ji[0, 2] * eye(3)
+        Gi[0:3, 9:12] = Ji[0, 2] * eye(3)
+
         Gi[3:6, 3:6] = (self.mass + 2 * self.mass * n_ci[1] + Ji[1, 1]) * eye(3)
         Gi[3:6, 6:9] = -(self.mass * n_ci[1] + Ji[1, 1]) * eye(3)
         Gi[3:6, 9:12] = (self.mass * n_ci[2] + Ji[1, 2]) * eye(3)
+
         Gi[6:9, 6:9] = Ji[1, 1] * eye(3)
         Gi[6:9, 9:12] = -Ji[1, 2] * eye(3)
+
         Gi[9:12, 9:12] = Ji[2, 2] * eye(3)
 
         # symmetrize the matrix
@@ -655,7 +649,7 @@ class NaturalSegment(AbstractNaturalSegment):
             True if the marker is anatomical, False otherwise
         """
 
-        location = inv(self.transformation_matrix) @ location
+        location = inv(self.transformation_matrix()) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 
@@ -688,7 +682,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = inv(self.transformation_matrix) @ direction
+        direction = inv(self.transformation_matrix()) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,

@@ -2,6 +2,8 @@ import numpy as np
 import pytest
 from .utils import TestUtils
 
+from bionc import EulerSequence
+
 
 @pytest.mark.parametrize(
     "bionc_type",
@@ -10,24 +12,24 @@ from .utils import TestUtils
 def test_vnop(bionc_type):
     if bionc_type == "casadi":
         from bionc.bionc_casadi import (
-            SegmentNaturalCoordinates,
+            vector_projection_in_non_orthogonal_basis,
         )
     else:
         from bionc.bionc_numpy import (
-            SegmentNaturalCoordinates,
+            vector_projection_in_non_orthogonal_basis,
         )
     e1 = np.array([1, 0, 0])
     e2 = np.array([0, 1, 0])
     e3 = np.array([0, 0, 1])
     V = np.array([1, 1, 1])
-    vnop = SegmentNaturalCoordinates.vnop_array(V, e1, e2, e3)
+    vnop = vector_projection_in_non_orthogonal_basis(V, e1, e2, e3)
     TestUtils.assert_equal(vnop, np.array([1, 1, 1]).T[:, np.newaxis], squeeze=False)
 
     e1 = np.array([1, 4, 5])
     e2 = np.array([2, -3, 6])
     e3 = np.array([3, 2, -7])
     V = np.array([-1, 3, 5])
-    vnop = SegmentNaturalCoordinates.vnop_array(V, e1, e2, e3)
+    vnop = vector_projection_in_non_orthogonal_basis(V, e1, e2, e3)
     TestUtils.assert_equal(vnop, np.array([0.752475, -0.267327, -0.405941]).T[:, np.newaxis], squeeze=False)
 
     # tests errors with wrong shape
@@ -36,33 +38,33 @@ def test_vnop(bionc_type):
     e3 = np.array([3, 2, -7])
     V = np.array([-1, 3, 5])
     with pytest.raises(ValueError):
-        SegmentNaturalCoordinates.vnop_array(V, e1, e2, e3)
+        vector_projection_in_non_orthogonal_basis(V, e1, e2, e3)
 
     # e2 is wrong shape
     e1 = np.array([1, 4, 5])
     e2 = np.array([2, -3, 6, 7])
 
     with pytest.raises(ValueError):
-        SegmentNaturalCoordinates.vnop_array(V, e1, e2, e3)
+        vector_projection_in_non_orthogonal_basis(V, e1, e2, e3)
 
     # e3 is wrong shape
     e3 = np.array([3, 2, -7, 8])
     e2 = np.array([2, -3, 6])
     with pytest.raises(ValueError):
-        SegmentNaturalCoordinates.vnop_array(V, e1, e2, e3)
+        vector_projection_in_non_orthogonal_basis(V, e1, e2, e3)
 
     # V is wrong shape
     V = np.array([-1, 3, 5, 6])
     e3 = np.array([3, 2, -7])
     with pytest.raises(ValueError):
-        SegmentNaturalCoordinates.vnop_array(V, e1, e2, e3)
+        vector_projection_in_non_orthogonal_basis(V, e1, e2, e3)
 
     if bionc_type == "numpy":
         e1 = np.array([[1, 4, 5], [0.5, 5, 6]]).T
         e2 = np.array([[2, -3, 6], [2, -2.3, 7]]).T
         e3 = np.array([[3, 2, -7], [1, 1.9, -8]]).T
         V = np.array([[-1, 3, 5], [-0.5, 3, 6]]).T
-        vnop = SegmentNaturalCoordinates.vnop_array(V, e1, e2, e3)
+        vnop = vector_projection_in_non_orthogonal_basis(V, e1, e2, e3)
         TestUtils.assert_equal(
             vnop,
             np.array([[0.752475, -0.267327, -0.405941], [0.668505, -0.203698, -0.426857]]).T,
@@ -96,3 +98,159 @@ def test_interpolate_natural_vector(bionc_type):
             ]
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    [
+        "numpy",
+        "casadi",
+    ],
+)
+def test_euler_vectors(bionc_type):
+    for seq in EulerSequence:
+        # not implemented in biorbd
+        if seq == EulerSequence.XYX:
+            continue
+        if seq == EulerSequence.XZX:
+            continue
+        if seq == EulerSequence.XYX:
+            continue
+
+        if len(seq.value) < 3:
+            # sequence XY, YX, XZ, ZX, YZ, ZY are not tested yet
+            continue
+
+        _subtest_rotations([0.1, 0.2, 0.3], [0.4, 0.5, 0.6], bionc_type=bionc_type, seq=seq)
+        _subtest_rotations([-0.1, -0.2, 0.3], [0.41, 0.51, -0.61], bionc_type=bionc_type, seq=seq)
+        _subtest_rotations(
+            [np.pi / 3, np.pi / 4, np.pi / 5], [np.pi / 6, np.pi / 7, np.pi / 8], bionc_type=bionc_type, seq=seq
+        )
+        _subtest_rotations(
+            [np.pi / 3, -np.pi / 4, -np.pi / 5], [np.pi / 6, -np.pi / 3, np.pi / 8], bionc_type=bionc_type, seq=seq
+        )
+        # more extreme angles
+        _subtest_rotations(
+            [np.pi / 2, -np.pi / 2, np.pi / 2], [np.pi / 2, np.pi / 2, -np.pi / 2], bionc_type=bionc_type, seq=seq
+        )
+        _subtest_rotations(
+            [np.pi / 2, -np.pi / 2, np.pi / 2], [-np.pi / 2, np.pi / 2, -np.pi / 2], bionc_type=bionc_type, seq=seq
+        )
+        _subtest_rotations(
+            [np.pi / 2, -2 * np.pi / 3, np.pi / 2], [np.pi / 2, -np.pi / 2, -np.pi / 2], bionc_type=bionc_type, seq=seq
+        )
+        # more more extreme angles
+        _subtest_rotations([np.pi, -np.pi, np.pi], [np.pi, np.pi, -np.pi], bionc_type=bionc_type, seq=seq)
+        _subtest_rotations([np.pi, -np.pi, np.pi], [-np.pi, np.pi, -np.pi], bionc_type=bionc_type, seq=seq)
+        _subtest_rotations([np.pi, -2 * np.pi, np.pi], [np.pi, -np.pi, -np.pi], bionc_type=bionc_type, seq=seq)
+
+
+def _subtest_rotations(euler_rot_angles_1: list, euler_rot_angles_2: list, bionc_type: str, seq: EulerSequence):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi.rotations import (
+            euler_axes_from_rotation_matrices,
+        )
+        from biorbd_casadi import Rotation
+    else:
+        from bionc.bionc_numpy.rotations import (
+            euler_axes_from_rotation_matrices,
+        )
+        from biorbd import Rotation
+
+    R_parent = Rotation.fromEulerAngles(np.array(euler_rot_angles_1), "xyz")
+    R_child = Rotation.fromEulerAngles(np.array(euler_rot_angles_2), "xyz")
+
+    if bionc_type == "casadi":
+        R_parent = R_parent.to_mx()
+        R_child = R_child.to_mx()
+    else:
+        R_parent = R_parent.to_array()
+        R_child = R_child.to_array()
+
+    me1, me2, me3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
+
+    pe1, pe2, pe3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="parent")
+
+    ce1, ce2, ce3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="child")
+
+    TestUtils.assert_equal(me1, pe1, decimal=7)
+    TestUtils.assert_equal(me2, pe2, decimal=7)
+    TestUtils.assert_equal(me3, pe3, decimal=7)
+
+    TestUtils.assert_equal(me1, ce1, decimal=7)
+    TestUtils.assert_equal(me2, ce2, decimal=7)
+    TestUtils.assert_equal(me3, ce3, decimal=7)
+
+    TestUtils.assert_equal(pe1, ce1, decimal=7)
+    TestUtils.assert_equal(pe2, ce2, decimal=7)
+    TestUtils.assert_equal(pe3, ce3, decimal=7)
+
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    [
+        "numpy",
+        "casadi",
+    ],
+)
+def test_euler_vectors_with_interpretable_values(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi.rotations import (
+            euler_axes_from_rotation_matrices,
+        )
+        from biorbd_casadi import Rotation
+    else:
+        from bionc.bionc_numpy.rotations import (
+            euler_axes_from_rotation_matrices,
+        )
+        from biorbd import Rotation
+
+    seq = EulerSequence.XYZ
+    R_parent = np.eye(3)
+    R_child = to_array(Rotation.fromEulerAngles(np.array([0.1, 0, 0]), seq.value), bionc_type)
+
+    e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
+
+    TestUtils.assert_equal(e1, np.array([1, 0, 0]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([0, 0.99500417, 0.09983342]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0, -0.09983342, 0.99500417]), decimal=7)
+
+    R_child = to_array(Rotation.fromEulerAngles(np.array([0, 0.1, 0]), seq.value), bionc_type)
+    e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
+
+    TestUtils.assert_equal(e1, np.array([1, 0, 0]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([0, 1, 0]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0998334, 0.0, 0.9950042]), decimal=7)
+
+    R_child = to_array(Rotation.fromEulerAngles(np.array([0, 0, 0.1]), seq.value), bionc_type)
+    e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
+
+    TestUtils.assert_equal(e1, np.array([1, 0, 0]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([0, 1, 0]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0, 0, 1]), decimal=7)
+
+    R_parent = to_array(Rotation.fromEulerAngles(np.array([0.1, 0, 0]), seq.value), bionc_type)
+    R_child = np.eye(3)
+    e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
+    TestUtils.assert_equal(e1, np.array([1, 0.0, 0]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([0.0, 1.0, 0.0]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0, 0.0, 1.0]), decimal=7)
+
+    R_parent = to_array(Rotation.fromEulerAngles(np.array([0, 0.1, 0]), seq.value), bionc_type)
+    e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
+    TestUtils.assert_equal(e1, np.array([0.99500417, 0.0, -0.09983342]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([0.0, 1.0, 0.0]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0, 0.0, 1.0]), decimal=7)
+
+    R_parent = to_array(Rotation.fromEulerAngles(np.array([0, 0, 0.1]), seq.value), bionc_type)
+    e1, e2, e3 = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=seq, axes_source_frame="mixed")
+    TestUtils.assert_equal(e1, np.array([0.99500417, 0.09983342, 0.0]), decimal=7)
+    TestUtils.assert_equal(e2, np.array([-0.09983342, 0.99500417, 0.0]), decimal=7)
+    TestUtils.assert_equal(e3, np.array([0.0, 0.0, 1.0]), decimal=7)
+
+
+def to_array(R, bionc_type) -> np.ndarray:
+    if bionc_type == "casadi":
+        return R.to_mx()
+    else:
+        return R.to_array()

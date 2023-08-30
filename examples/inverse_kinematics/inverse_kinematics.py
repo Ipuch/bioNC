@@ -1,7 +1,7 @@
 """
 This example shows how to use the InverseKinematics class to solve an inverse kinematics problem.
 """
-from bionc import InverseKinematics, Viz
+from bionc import InverseKinematics, Viz, NaturalCoordinates
 import numpy as np
 from pyomeca import Markers
 from tests.utils import TestUtils
@@ -46,10 +46,16 @@ def main():
 if __name__ == "__main__":
     ik_solver, Qopt, _, model, markers = main()
 
+    model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0]))
+
+    # convert the natural coordinates to joint angles (still experimental)
+    print(model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0])))
+
     viz = Viz(
         model,
         show_center_of_mass=False,  # no center of mass in this example
         show_xp_markers=True,
         show_model_markers=True,
+        show_natural_mesh=True,
     )
     viz.animate(Qopt, markers_xp=markers)

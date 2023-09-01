@@ -481,18 +481,17 @@ class Joint:
 
     class GeneralSpherical(JointBase):
         def __init__(
-                self,
-                name: str,
-                parent: NaturalSegment,
-                child: NaturalSegment,
-                index: int,
-                parent_point: str = None,
-                child_point: str = None,
-                projection_basis: EulerSequence = None,
-                parent_basis: TransformationMatrixType = None,
-                child_basis: TransformationMatrixType = None,
+            self,
+            name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            index: int,
+            parent_point: str = None,
+            child_point: str = None,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
         ):
-
             super(Joint.GeneralSpherical, self).__init__(
                 name,
                 parent,
@@ -501,7 +500,7 @@ class Joint:
                 projection_basis,
                 parent_basis,
                 child_basis,
-                #None # a quoi celà corresponds ici ?
+                # None # a quoi celà corresponds ici ?
             )
 
             if parent_point is None:
@@ -539,16 +538,15 @@ class Joint:
             return constraint
 
         def parent_constraint_jacobian(
-                self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
-
             K_k_parent = np.zeros((self.nb_constraints, 12))
             K_k_parent[:3, 6:9] = self.parent_point.interpolation_matrix
 
             return K_k_parent
 
         def child_constraint_jacobian(
-                self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
             K_k_child = np.zeros((self.nb_constraints, 12))
             K_k_child[:3, 3:6] = -self.child_point.interpolation_matrix
@@ -556,22 +554,21 @@ class Joint:
             return K_k_child
 
         def parent_constraint_jacobian_derivative(
-                    self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-            ) -> np.ndarray:
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
             K_k_parent_dot = np.zeros((self.nb_constraints, 12))
 
             return K_k_parent_dot
 
-
         def child_constraint_jacobian_derivative(
-                        self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-                ) -> np.ndarray:
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
             K_k_child_dot = np.zeros((self.nb_constraints, 12))
 
             return K_k_child_dot
 
         def constraint_jacobian(
-                self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[np.ndarray, np.ndarray]:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
@@ -585,9 +582,8 @@ class Joint:
 
             return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
-
         def constraint_jacobian_derivative(
-                self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> tuple[np.ndarray, np.ndarray]:
             """
             This function returns the kinematic constraints of the joint, denoted K_k

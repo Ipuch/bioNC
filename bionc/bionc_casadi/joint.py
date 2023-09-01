@@ -504,7 +504,6 @@ class Joint:
                 Kinematic constraints of the joint [1, 12] for parent and child
             """
 
-
             return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
         def constraint_jacobian_derivative(

@@ -501,7 +501,7 @@ class Joint:
                 projection_basis,
                 parent_basis,
                 child_basis,
-                None # a quoi celà corresponds ici ?
+                #None # a quoi celà corresponds ici ?
             )
 
             if parent_point is None:
@@ -509,7 +509,7 @@ class Joint:
             if child_point is None:
                 raise ValueError("child_point must be provided")
 
-            self.nb_constraints = 1
+            self.nb_constraints = 3
             self.parent_point = parent.marker_from_name(parent_point)
             self.child_point = child.marker_from_name(child_point)
 
@@ -613,19 +613,19 @@ class Joint:
                 The joint as a mx joint
             """
             # TODO: implement this in joint casadi
-    #         from ..bionc_casadi.joint import Joint as CasadiJoint
-    #
-    #         return CasadiJoint.ConstantLength(
-    #             name=self.name,
-    #             parent=self.parent.to_mx(),
-    #             child=self.child.to_mx(),
-    #             index=self.index,
-    #             parent_point=self.parent_point.name,
-    #             child_point=self.child_point.name,
-    #             projection_basis=self.projection_basis,
-    #             parent_basis=self.parent_basis,
-    #             child_basis=self.child_basis,
-    #         )
+            from ..bionc_casadi.joint import Joint as CasadiJoint
+
+            return CasadiJoint.GeneralSpherical(
+                name=self.name,
+                parent=self.parent.to_mx(),
+                child=self.child.to_mx(),
+                index=self.index,
+                parent_point=self.parent_point.name,
+                child_point=self.child_point.name,
+                projection_basis=self.projection_basis,
+                parent_basis=self.parent_basis,
+                child_basis=self.child_basis,
+            )
 
     class SphereOnPlane(JointBase):
         """

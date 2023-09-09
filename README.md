@@ -59,8 +59,20 @@ The biomechanism generalized coordinates:
 ```math 
 Q = (Q_1, \dots, Q_N).
 ```
+is the concatenation of all body coordinates.
 
-is the concatentation of all body coordinates.
+To rigidify the body segments and to articulate them, two types of holonomic constraints are handled in this formalism: rigid-body constraints and joint constraints (also termed as kinematic constraints), denoted $\Phi^r(Q)$ and $\Phi^j(Q)$, respectively, and gathered in a common constraint function $\Phi$:
+
+```math 
+\begin{align}
+\Phi(Q) = \left(
+    \Phi^r(Q) \quad
+    \Phi^j(Q)
+\right)^\top
+\in \mathbf{R}^{6 \times N} \times \mathbf{R}^M.
+\end{align}
+```
+
 
 
 

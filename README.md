@@ -3,13 +3,16 @@ This repository contains the source code for the bioNC library, a python package
 Inverse and Forward approach are implemented.
 
 ## Status
+![Stars](https://img.shields.io/github/stars/Ipuch/bioNC?style=social)
+![Forks](https://img.shields.io/github/forks/Ipuch/bioNC?style=social)
 
-| Type | Status |
-|---|---|
-| License | <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a> |
-| Continuous integration | [![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/) |
-| Code coverage | [![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) |
-| Code Style | [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
+![Release Version](https://img.shields.io/github/v/release/Ipuch/bioNC) <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a>  [![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/)  [![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+![Last Commit](https://img.shields.io/github/last-commit/Ipuch/bioNC)
+![Contributors](https://img.shields.io/github/contributors/Ipuch/bioNC)
+![Merged PRs](https://img.shields.io/github/issues-pr-closed/Ipuch/bioNC)
+![Open Issues](https://img.shields.io/github/issues/Ipuch/bioNC)
+![Closed Issues](https://img.shields.io/github/issues-closed/Ipuch/bioNC)
 
 
 # Table of Contents

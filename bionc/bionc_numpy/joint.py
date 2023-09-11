@@ -393,7 +393,8 @@ class Joint:
                     is_technical=False,
                     is_anatomical=True,
                 )
-                if parent_point is None else parent.marker_from_name(parent_point)
+                if parent_point is None
+                else parent.marker_from_name(parent_point)
             )
 
             self.child_point = (
@@ -403,7 +404,8 @@ class Joint:
                     is_technical=False,
                     is_anatomical=True,
                 )
-                if child_point is None else child.marker_from_name(child_point)
+                if child_point is None
+                else child.marker_from_name(child_point)
             )
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:

@@ -383,12 +383,13 @@ class Joint:
             child_basis: TransformationMatrixType = None,
         ):
             super(Joint.Spherical, self).__init__(
-                name, parent, child, index, parent_point, child_point, projection_basis, parent_basis, child_basis, None
+                name, parent, child, index, projection_basis, parent_basis, child_basis, None
             )
             self.nb_constraints = 3
             self.parent_point = (
                 NaturalMarker(
                     name=f"{self.name}_parent_point",
+                    parent_name=self.parent.name,
                     position=NaturalVector.distal(),
                     is_technical=False,
                     is_anatomical=True,
@@ -400,6 +401,7 @@ class Joint:
             self.child_point = (
                 NaturalMarker(
                     name=f"{self.name}_child_point",
+                    parent_name=self.child.name,
                     position=NaturalVector.proximal(),
                     is_technical=False,
                     is_anatomical=True,

@@ -18,7 +18,6 @@ class JointType(Enum):
     # PRISMATIC = "not implemented yet"
     UNIVERSAL = Joint.Universal
     SPHERICAL = Joint.Spherical
-    GENERAL_SPHERICAL = Joint.GeneralSpherical
     SPHERE_ON_PLANE = Joint.SphereOnPlane
 
     # PLANAR = "planar"

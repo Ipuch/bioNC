@@ -4,6 +4,7 @@ import numpy as np
 from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
+from .natural_marker import NaturalMarker
 from ..protocols.joint import JointBase
 from .natural_vector import NaturalVector
 from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
@@ -331,14 +332,36 @@ class Joint:
             parent: NaturalSegment,
             child: NaturalSegment,
             index: int,
+            parent_point: str = None,
+            child_point: str = None,
             projection_basis: EulerSequence = None,
             parent_basis: TransformationMatrixType = None,
             child_basis: TransformationMatrixType = None,
         ):
             super(Joint.Spherical, self).__init__(
-                name, parent, child, index, projection_basis, parent_basis, child_basis
+                name, parent, child, index, parent_point, child_point, projection_basis, parent_basis, child_basis
             )
             self.nb_constraints = 3
+            self.parent_point = (
+                NaturalMarker(
+                    name=f"{self.name}_parent_point",
+                    position=NaturalVector.distal(),
+                    is_technical=False,
+                    is_anatomical=True,
+                )
+                if parent_point is None else parent.marker_from_name(parent_point)
+            )
+
+            self.child_point = (
+                NaturalMarker(
+                    name=f"{self.name}_child_point",
+                    position=NaturalVector.proximal(),
+                    is_technical=False,
+                    is_anatomical=True,
+                )
+                if child_point is None else child.marker_from_name(child_point)
+            )
+
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
@@ -350,7 +373,10 @@ class Joint:
             MX
                 Kinematic constraints of the joint [3, 1]
             """
-            constraint = Q_parent.rd - Q_child.rp
+            parent_point_location = self.parent_point.position_in_global(Q_parent)
+            child_point_location = self.child_point.position_in_global(Q_child)
+
+            constraint = parent_point_location - child_point_location
 
             return constraint
 
@@ -358,7 +384,7 @@ class Joint:
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> MX:
             K_k_parent = MX.zeros((self.nb_constraints, 12))
-            K_k_parent[:3, 6:9] = MX.eye(3)
+            K_k_parent[:3, :] = self.parent_point.interpolation_matrix
 
             return K_k_parent
 
@@ -366,7 +392,7 @@ class Joint:
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> MX:
             K_k_child = MX.zeros((self.nb_constraints, 12))
-            K_k_child[:3, 3:6] = -MX.eye(3)
+            K_k_child[:3, :] = -self.child_point.interpolation_matrix
 
             return K_k_child
 

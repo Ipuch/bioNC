@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from bionc import JointType, NaturalAxis, CartesianAxis
+from bionc import JointType, NaturalAxis, CartesianAxis, NaturalMarker
 from .utils import TestUtils
 
 
@@ -78,6 +78,17 @@ def test_joints(bionc_type, joint_type: JointType):
         assert joint.nb_joint_dof == 2
         assert joint.nb_constraints == 4
     elif joint_type == JointType.SPHERICAL:
+        box.add_natural_marker_from_segment_coordinates(
+            name="P1",
+            location=[0.1, 0.2, 0.3],
+            is_anatomical=True,
+        )
+        bbox.add_natural_marker_from_segment_coordinates(
+            name="P2",
+            location=[0.2, 0.04, 0.05],
+            is_anatomical=True,
+        )
+
         joint = Joint.Spherical(
             name="spherical",
             parent=box,
@@ -86,6 +97,18 @@ def test_joints(bionc_type, joint_type: JointType):
         )
         assert joint.nb_joint_dof == 3
         assert joint.nb_constraints == 3
+
+        joint_2 = Joint.Spherical(
+            name="spherical_2",
+            parent=box,
+            child=bbox,
+            index=1,
+            parent_point='P1',
+            child_point='P2',
+        )
+        assert joint_2.nb_joint_dof == 3
+        assert joint_2.nb_constraints == 3
+
     elif joint_type == JointType.GROUND_REVOLUTE:
         joint = GroundJoint.Hinge(
             name="hinge",
@@ -328,6 +351,7 @@ def test_joints(bionc_type, joint_type: JointType):
         )
 
     elif joint_type == JointType.SPHERICAL:
+        ## Spherical joint rd rp
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
             np.array([-0.3, 0.9, 0.9]),
@@ -366,6 +390,46 @@ def test_joints(bionc_type, joint_type: JointType):
         TestUtils.assert_equal(
             child_jacobian_dot,
             np.zeros((3, 12)),
+            decimal=6,
+        )
+        ## Spherical joint any point
+
+        TestUtils.assert_equal(
+            joint_2.constraint(Q1, Q2),
+            np.array([-0.227081,  0.071451,  0.849838]),
+            decimal=6,
+        )
+        parent_jacobian, child_jacobian = joint_2.constraint_jacobian(Q1, Q2)
+
+        TestUtils.assert_equal(
+            parent_jacobian,
+            np.array(
+                [
+                    [0.1, 0.0, 0.0, 1.2, 0.0, 0.0, -0.2, 0.0, 0.0, 0.3, 0.0, 0.0],
+                    [0.0, 0.1, 0.0, 0.0, 1.2, 0.0, 0.0, -0.2, 0.0, 0.0, 0.3, 0.0],
+                    [0.0, 0.0, 0.1, 0.0, 0.0, 1.2, 0.0, 0.0, -0.2, 0.0, 0.0, 0.3],
+                ]
+            ),
+            decimal=6,
+        )
+        TestUtils.assert_equal(
+            child_jacobian,
+            np.array(
+                [
+                    [-0.2, 0.0, 0.0, -1.0117535131559996
+, 0.0, 0.0, 0.01175351315599963
+, 0.0, 0.0, -0.0107387974365452
+, 0.0, 0.0],
+                    [0.0, -0.2, 0.0, -0.0, -1.0117535131559996
+, 0.0, 0.0, 0.01175351315599963
+, 0.0, 0.0, -0.0107387974365452
+, 0.0],
+                    [0.0, 0.0, -0.2, 0.0, 0.0, -1.0117535131559996
+, 0.0, 0.0, 0.01175351315599963
+, 0.0, 0.0, -0.0107387974365452
+],
+                ]
+            ),
             decimal=6,
         )
 
@@ -639,3 +703,4 @@ def test_joints(bionc_type, joint_type: JointType):
 # j_jacobian_func = Function("j_jacobian_func", [sym], [j_jacobian_sym])
 #
 # jacobian_mx = j_jacobian_func(np.arange(24)).toarray()
+# def joint_spherical_not_distal_proximal():

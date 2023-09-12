@@ -345,7 +345,7 @@ class Joint:
             self.parent_point = (
                 NaturalMarker(
                     name=f"{self.name}_parent_point",
-                    parent_name= self.parent.name,
+                    parent_name=self.parent.name,
                     position=NaturalVector.distal(),
                     is_technical=False,
                     is_anatomical=True,
@@ -357,7 +357,7 @@ class Joint:
             self.child_point = (
                 NaturalMarker(
                     name=f"{self.name}_child_point",
-                    parent_name= self.child.name,
+                    parent_name=self.child.name,
                     position=NaturalVector.proximal(),
                     is_technical=False,
                     is_anatomical=True,

@@ -386,6 +386,9 @@ class Joint:
                 name, parent, child, index, projection_basis, parent_basis, child_basis, None
             )
             self.nb_constraints = 3
+            self.parent_point_str = parent_point
+            self.child_point_str = child_point  # to transfer to casadi later on
+
             self.parent_point = (
                 NaturalMarker(
                     name=f"{self.name}_parent_point",
@@ -420,12 +423,12 @@ class Joint:
             np.ndarray
                 Kinematic constraints of the joint [3, 1]
             """
-            parent_point_location = self.parent_point.interpolation_matrix @ Q_parent
-            child_point_location = self.child_point.interpolation_matrix @ Q_child
+            parent_point_location = self.parent_point.position_in_global(Q_parent)
+            child_point_location = self.child_point.position_in_global(Q_child)
 
             constraint = parent_point_location - child_point_location
 
-            return constraint
+            return constraint.squeeze()
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
@@ -503,8 +506,8 @@ class Joint:
                 parent=self.parent.to_mx(),
                 child=self.child.to_mx(),
                 index=self.index,
-                parent_point=self.parent_point.name,
-                child_point=self.child_point.name,
+                parent_point=self.parent_point_str,
+                child_point=self.child_point_str,
                 projection_basis=self.projection_basis,
                 parent_basis=self.parent_basis,
                 child_basis=self.child_basis,

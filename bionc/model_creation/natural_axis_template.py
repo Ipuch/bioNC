@@ -1,5 +1,7 @@
 from typing import Callable
 
+import numpy as np
+
 from ..bionc_numpy.natural_axis import Axis
 from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
@@ -39,6 +41,25 @@ class AxisTemplate:
         start = self.start.to_marker(data, kinematic_chain, parent_scs)
         end = self.end.to_marker(data, kinematic_chain, parent_scs)
         return Axis(start, end)
+
+    @staticmethod
+    def normal_to_vectors(m, bio, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
+        v = np.ones((4, v1.shape[1]))
+        for i, (v1i, v2i) in enumerate(zip(v1.T, v2.T)):
+            vec1 = v1i[:3]
+            vec2 = v2i[:3]
+            v[:3, i] = np.cross(vec1, vec2) / np.linalg.norm(np.cross(vec1, vec2))
+
+        return v
+
+    @staticmethod
+    def from_start_to_end(m, bio, start: np.ndarray | str, end: np.ndarray) -> np.ndarray:
+        if isinstance(start, str):
+            start = m[start]
+        if isinstance(end, str):
+            end = m[end]
+
+        return (end - start) / np.linalg.norm(end - start, axis=0)
 
 
 class AxisFunctionTemplate:

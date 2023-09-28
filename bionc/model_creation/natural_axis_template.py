@@ -44,13 +44,26 @@ class AxisTemplate:
 
     @staticmethod
     def normalized_cross_product(m, bio, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
-        v = np.ones((4, v1.shape[1]))
+        """
+        Compute the normalized cross product between two vectors
+        Parameters
+        ----------
+        m : dict of markers
+        bio : BiomechanicalModel
+        v1 : np.ndarray
+        v2 : np.ndarray
+
+        Returns
+        -------
+        normalized_vector : np.ndarray
+        """
+        normalized_vector = np.zeros((4, v1.shape[1]))
         for i, (v1i, v2i) in enumerate(zip(v1.T, v2.T)):
             vec1 = v1i[:3]
             vec2 = v2i[:3]
-            v[:3, i] = np.cross(vec1, vec2) / np.linalg.norm(np.cross(vec1, vec2))
+            normalized_vector[:3, i] = np.cross(vec1, vec2) / np.linalg.norm(np.cross(vec1, vec2))
 
-        return v
+        return normalized_vector
 
     @staticmethod
     def from_start_to_end(m, bio, start: np.ndarray | str, end: np.ndarray) -> np.ndarray:

@@ -43,7 +43,7 @@ class AxisTemplate:
         return Axis(start, end)
 
     @staticmethod
-    def normal_to_vectors(m, bio, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
+    def normalized_cross_product(m, bio, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
         v = np.ones((4, v1.shape[1]))
         for i, (v1i, v2i) in enumerate(zip(v1.T, v2.T)):
             vec1 = v1i[:3]

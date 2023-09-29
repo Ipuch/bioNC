@@ -44,14 +44,16 @@ class AxisTemplate:
         return Axis(start, end)
 
     @staticmethod
-    def normalized_cross_product(m, bio, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
+    def normalized_cross_product(m: dict[str, float], bio: BiomechanicalModel, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
         """
         Compute the normalized cross product between two vectors
 
         Parameters
         ----------
-        m: dict of markers
+        m: dict[str, float]
+            Dictionnaries containing the location of markers in global frames
         bio: BiomechanicalModel
+            The model as it is constructed at that particular time. It is useful if some values must be obtained from previously computed values
         v1: np.ndarray
             First vector
         v2: np.ndarray

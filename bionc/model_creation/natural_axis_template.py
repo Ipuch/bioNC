@@ -65,15 +65,6 @@ class AxisTemplate:
 
         return normalized_vector
 
-    @staticmethod
-    def from_start_to_end(m, bio, start: np.ndarray | str, end: np.ndarray) -> np.ndarray:
-        if isinstance(start, str):
-            start = m[start]
-        if isinstance(end, str):
-            end = m[end]
-
-        return (end - start) / np.linalg.norm(end - start, axis=0)
-
 
 class AxisFunctionTemplate:
     def __init__(self, function: Callable):

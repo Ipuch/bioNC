@@ -27,6 +27,7 @@ class AxisTemplate:
     def to_axis(self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None) -> Axis:
         """
         Compute the axis from actual data
+
         Parameters
         ----------
         data
@@ -46,17 +47,21 @@ class AxisTemplate:
     def normalized_cross_product(m, bio, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
         """
         Compute the normalized cross product between two vectors
+
         Parameters
         ----------
-        m : dict of markers
-        bio : BiomechanicalModel
-        v1 : np.ndarray
-        v2 : np.ndarray
+        m: dict of markers
+        bio: BiomechanicalModel
+        v1: np.ndarray
+            First vector
+        v2: np.ndarray
+            Second vector
 
         Returns
         -------
         normalized_vector : np.ndarray
         """
+
         normalized_vector = np.zeros((4, v1.shape[1]))
         for i, (v1i, v2i) in enumerate(zip(v1.T, v2.T)):
             vec1 = v1i[:3]
@@ -79,6 +84,7 @@ class AxisFunctionTemplate:
     def to_axis(self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None) -> Axis:
         """
         Compute the axis from actual data
+
         Parameters
         ----------
         data

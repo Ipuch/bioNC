@@ -44,7 +44,9 @@ class AxisTemplate:
         return Axis(start, end)
 
     @staticmethod
-    def normalized_cross_product(m: dict[str, float], bio: BiomechanicalModel, v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
+    def normalized_cross_product(
+        m: dict[str, float], bio: BiomechanicalModel, v1: np.ndarray, v2: np.ndarray
+    ) -> np.ndarray:
         """
         Compute the normalized cross product between two vectors
 

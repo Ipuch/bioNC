@@ -77,7 +77,7 @@ class MarkerTemplate:
     @staticmethod
     def normal_to(m, bio, mk1: np.ndarray | str, mk2: np.ndarray | str, mk3: np.ndarray | str) -> np.ndarray:
         """
-        Compute the normalized cross product between two vectors
+        Compute the normal vector to a plane defined by three points.
 
         Parameters
         ----------

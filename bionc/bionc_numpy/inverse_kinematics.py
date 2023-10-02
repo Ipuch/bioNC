@@ -510,7 +510,8 @@ class InverseKinematics:
         )
 
         residual_marker_final = dict()
-        residual_marker_final["markers"] = residuals_markers
+        # TODO: Better name for this variable to find
+        residual_marker_final["sqrt_sum"] = residuals_markers
         residual_marker_final["xyz"] = residuals_makers_xyz
 
         residuals = dict()

@@ -76,6 +76,27 @@ class MarkerTemplate:
 
     @staticmethod
     def normal_to(m, bio, mk1: np.ndarray | str, mk2: np.ndarray | str, mk3: np.ndarray | str) -> np.ndarray:
+        """
+        Compute the normal vector to a plane defined by three points.
+
+        Parameters
+        ----------
+        m: dict[str, float]
+            Dictionnaries containing the location of markers in global frames
+        bio: BiomechanicalModel
+            The model as it is constructed at that particular time. It is useful if some values must be obtained from previously computed values
+        mk1: np.ndarray | str
+            First point of the plane
+        mk2: np.ndarray | str
+            Second point of the plane
+        mk3: np.ndarray | str
+            Third point of the plane
+
+        Returns
+        -------
+        normalized_plan_vector : np.ndarray
+            Normalized vector normal to the plane
+        """
         if isinstance(mk1, str):
             mk1 = m[mk1]
         if isinstance(mk2, str):
@@ -83,14 +104,33 @@ class MarkerTemplate:
         if isinstance(mk3, str):
             mk3 = m[mk3]
 
-        v = np.ones((4, mk1.shape[1]))
+        normalized_plan_vector = np.ones((4, mk1.shape[1]))
         for i, (mk1i, mk2i, mk3i) in enumerate(zip(mk1.T, mk2.T, mk3.T)):
             v1 = mk2i[:3] - mk1i[:3]
             v2 = mk3i[:3] - mk1i[:3]
-            v[:3, i] = np.cross(v1, v2) / np.linalg.norm(np.cross(v1, v2))
+            normalized_plan_vector[:3, i] = np.cross(v1, v2) / np.linalg.norm(np.cross(v1, v2))
 
-        return v
+        return normalized_plan_vector
 
     @staticmethod
     def middle_of(m, bio, m1: str, m2: str):
+        """
+        Compute the position of the middle of two points.
+
+        Parameters
+        ----------
+        m: dict[str, float]
+            Dictionnaries containing the location of markers in global frames
+        bio: BiomechanicalModel
+            The model as it is constructed at that particular time. It is useful if some values must be obtained from previously computed values
+        m1: np.ndarray | str
+            First point
+        m2: np.ndarray | str
+            Second point
+
+        Returns
+        -------
+        middle_point : np.ndarray
+            middle point between m1 and m2
+        """
         return (m[m1] + m[m2]) / 2

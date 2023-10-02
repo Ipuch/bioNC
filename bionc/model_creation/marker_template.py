@@ -114,4 +114,23 @@ class MarkerTemplate:
 
     @staticmethod
     def middle_of(m, bio, m1: str, m2: str):
+        """
+        Compute the position of the middle of two points.
+
+        Parameters
+        ----------
+        m: dict[str, float]
+            Dictionnaries containing the location of markers in global frames
+        bio: BiomechanicalModel
+            The model as it is constructed at that particular time. It is useful if some values must be obtained from previously computed values
+        m1: np.ndarray | str
+            First point
+        m2: np.ndarray | str
+            Second point
+
+        Returns
+        -------
+        middle_point : np.ndarray
+            middle point between m1 and m2
+        """
         return (m[m1] + m[m2]) / 2

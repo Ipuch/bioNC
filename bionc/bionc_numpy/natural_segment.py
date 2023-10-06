@@ -28,11 +28,11 @@ class NaturalSegment(AbstractNaturalSegment):
     from_experimental_Q()
 		This function sets the segment from the natural coordinates
 	parameters_from_Q()
-		This function computes the parameters of the segment from the natural coordinates
+		It computes the parameters of the segment from SegmentNaturalCoordinates Q
     set_experimental_Q_function()
-        This function sets the experimental Q function
+        This function sets the experimental Q function that evaluates Q from marker locations
     _Qi_from_markers() 
-        This function sets the experimental Q function
+        This function evaluates segment natural coordinates Q from markers locations.
 
     transformation_matrix()
         This function returns the transformation matrix, denoted Bi
@@ -66,7 +66,7 @@ class NaturalSegment(AbstractNaturalSegment):
     add_natural_marker()
         This function adds a marker to the segment
     add_natural_vector()
-        Add a new vector to the segment
+        Add a new natual vector to the segment
     add_natural_marker_from_segment_coordinates()
         Add a new marker to the segment
     add_natural_vector_from_segment_coordinates()
@@ -83,7 +83,7 @@ class NaturalSegment(AbstractNaturalSegment):
     kinetic_energy()
         This function returns the kinetic energy of the segment
     inverse_dynamics()
-        Computes inverse dynamics
+        Computes inverse dynamics for one segment
         
 
     Attributes

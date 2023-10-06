@@ -26,12 +26,12 @@ class NaturalSegment(AbstractNaturalSegment):
     to_mx()
         This function returns the segment in MX format
     from_experimental_Q()
-		This function sets the segment from the natural coordinates
-	parameters_from_Q()
-		It computes the parameters of the segment from SegmentNaturalCoordinates Q
+                This function sets the segment from the natural coordinates
+        parameters_from_Q()
+                It computes the parameters of the segment from SegmentNaturalCoordinates Q
     set_experimental_Q_function()
         This function sets the experimental Q function that evaluates Q from marker locations
-    _Qi_from_markers() 
+    _Qi_from_markers()
         This function evaluates segment natural coordinates Q from markers locations.
 
     transformation_matrix()
@@ -71,7 +71,7 @@ class NaturalSegment(AbstractNaturalSegment):
         Add a new marker to the segment
     add_natural_vector_from_segment_coordinates()
         Add a new marker to the segment
-        
+
     markers()
         This function returns the position of the markers of the system as a function of the natural coordinates Q also referred as forward kinematics
     marker_constraints()
@@ -84,7 +84,7 @@ class NaturalSegment(AbstractNaturalSegment):
         This function returns the kinetic energy of the segment
     inverse_dynamics()
         Computes inverse dynamics for one segment
-        
+
 
     Attributes
     ----------
@@ -146,7 +146,9 @@ class NaturalSegment(AbstractNaturalSegment):
         """
         This function returns the segment in MX format
         """
-        from ..bionc_casadi.natural_segment import NaturalSegment as NaturalSegmentCasadi
+        from ..bionc_casadi.natural_segment import (
+            NaturalSegment as NaturalSegmentCasadi,
+        )
 
         natural_segment = NaturalSegmentCasadi(
             name=self.name,
@@ -248,7 +250,9 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return self._experimental_Q_function(markers, model)
 
-    def transformation_matrix(self, matrix_type: str | TransformationMatrixType = None) -> np.ndarray:
+    def transformation_matrix(
+        self, matrix_type: str | TransformationMatrixType = None
+    ) -> np.ndarray:
         """
         This function computes the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
@@ -271,11 +275,17 @@ class NaturalSegment(AbstractNaturalSegment):
             matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
         return transformation_matrix(
-            matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
+            matrix_type,
+            length=self.length,
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
         ).T
 
     def segment_coordinates_system(
-        self, Q: SegmentNaturalCoordinates, transformation_matrix_type: TransformationMatrixType | str = None
+        self,
+        Q: SegmentNaturalCoordinates,
+        transformation_matrix_type: TransformationMatrixType | str = None,
     ) -> HomogeneousTransform:
         """
         This function computes the segment coordinates from the natural coordinates
@@ -297,7 +307,9 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return HomogeneousTransform.from_rt(
             rotation=self.transformation_matrix(transformation_matrix_type)
-            @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
+            @ np.concatenate(
+                (Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1
+            ),
             translation=Q.rp[:, np.newaxis],
         )
 
@@ -326,7 +338,9 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return SegmentNaturalCoordinates((u, rp, rd, w))
 
-    def rigid_body_constraint(self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]) -> np.ndarray:
+    def rigid_body_constraint(
+        self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]
+    ) -> np.ndarray:
         """
         This function returns the rigid body constraints of the segment, denoted phi_r.
 
@@ -406,7 +420,9 @@ class NaturalSegment(AbstractNaturalSegment):
         return self.rigid_body_constraint_jacobian(Qi) @ np.array(Qdoti)
 
     @staticmethod
-    def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> np.ndarray:
+    def rigid_body_constraint_jacobian_derivative(
+        Qdoti: SegmentNaturalVelocities,
+    ) -> np.ndarray:
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
 
@@ -573,7 +589,9 @@ class NaturalSegment(AbstractNaturalSegment):
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return (self.natural_center_of_mass.interpolate().T * self.mass) @ np.array([0, 0, -9.81])
+        return (self.natural_center_of_mass.interpolate().T * self.mass) @ np.array(
+            [0, 0, -9.81]
+        )
 
     def differential_algebraic_equation(
         self,
@@ -619,9 +637,9 @@ class NaturalSegment(AbstractNaturalSegment):
         biais = -Krdot @ Qdoti.vector
 
         if stabilization is not None:
-            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
-                "beta"
-            ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
+            biais -= stabilization["alpha"] * self.rigid_body_constraint(
+                Qi
+            ) + stabilization["beta"] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
         A = zeros((18, 18))
         A[0:12, 0:12] = Gi
@@ -764,7 +782,10 @@ class NaturalSegment(AbstractNaturalSegment):
         return markers
 
     def marker_constraints(
-        self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
+        self,
+        marker_locations: np.ndarray,
+        Qi: SegmentNaturalCoordinates,
+        only_technical: bool = True,
     ) -> np.ndarray:
         """
         This function returns the marker constraints of the segment
@@ -784,7 +805,11 @@ class NaturalSegment(AbstractNaturalSegment):
             The defects of the marker constraints of the segment (3 x N_markers)
         """
         nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
-        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
+        markers = (
+            [m for m in self._markers if m.is_technical]
+            if only_technical
+            else self._markers
+        )
 
         if marker_locations.shape != (3, nb_markers):
             raise ValueError(f"marker_locations should be of shape (3, {nb_markers})")
@@ -792,7 +817,9 @@ class NaturalSegment(AbstractNaturalSegment):
         defects = np.zeros((3, nb_markers))
 
         for i, marker in enumerate(markers):
-            defects[:, i] = marker.constraint(marker_location=marker_locations[:, i], Qi=Qi)
+            defects[:, i] = marker.constraint(
+                marker_location=marker_locations[:, i], Qi=Qi
+            )
 
         return defects
 
@@ -811,8 +838,16 @@ class NaturalSegment(AbstractNaturalSegment):
             The jacobian of the marker constraints of the segment [3, N_markers]
         """
         nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
-        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
-        return np.vstack([-marker.interpolation_matrix for marker in markers]) if nb_markers > 0 else np.array([])
+        markers = (
+            [m for m in self._markers if m.is_technical]
+            if only_technical
+            else self._markers
+        )
+        return (
+            np.vstack([-marker.interpolation_matrix for marker in markers])
+            if nb_markers > 0
+            else np.array([])
+        )
 
     def potential_energy(self, Qi: SegmentNaturalCoordinates) -> float:
         """
@@ -859,7 +894,11 @@ class NaturalSegment(AbstractNaturalSegment):
 
         # make a matrix out of it, todo: would be great to know if there is an analytical way to compute this matrix
         front_matrix = np.hstack(
-            (proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T)
+            (
+                proximal_interpolation_matrix.T,
+                pseudo_interpolation_matrix.T,
+                -rigid_body_constraints_jacobian.T,
+            )
         )
 
         b = (
@@ -872,4 +911,8 @@ class NaturalSegment(AbstractNaturalSegment):
         # compute the generalized forces
         generalized_forces = np.linalg.inv(front_matrix) @ b
 
-        return generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0]
+        return (
+            generalized_forces[:3, 0],
+            generalized_forces[3:6, 0],
+            generalized_forces[6:, 0],
+        )

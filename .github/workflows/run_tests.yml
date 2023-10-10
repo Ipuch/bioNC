@@ -51,10 +51,10 @@ jobs:
         run: pytest -v --color=yes --cov-report=xml --cov=bionc tests
         if: matrix.label == 'osx-64'
 
-      - name: Upload coverage to Codecov
-        run: codecov --token ${{ secrets.CODECOV_TOKEN }}
-        if: matrix.label == 'linux-64'
-
+#      - name: Upload coverage to Codecov
+#        run: codecov --token ${{ secrets.CODECOV_TOKEN }}
+#        if: matrix.label == 'linux-64'
+#
 #      - name: Upload coverage to Codecov
 #        uses: codecov/codecov-action@v3
 #        with:

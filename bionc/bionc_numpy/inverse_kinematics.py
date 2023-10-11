@@ -1,16 +1,21 @@
 from typing import Callable
 
-from casadi import vertcat, horzcat, MX, nlpsol, SX, Function, sum1
+from casadi import vertcat, horzcat, MX, nlpsol, SX, Function, sum1, dot, exp
 import numpy as np
 from pyomeca import Markers
+import ezc3d
 
 from ..bionc_casadi import (
     NaturalCoordinates,
     SegmentNaturalCoordinates,
 )
 
-from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
-from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
+from ..protocols.biomechanical_model import (
+    GenericBiomechanicalModel as BiomechanicalModel,
+)
+from ..bionc_numpy.natural_coordinates import (
+    NaturalCoordinates as NaturalCoordinatesNumpy,
+)
 
 
 def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
@@ -32,7 +37,14 @@ def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
     return f(*symbolics)
 
 
-def _solve_nlp(method: str, nlp: dict, Q_init: np.ndarray, lbg: np.ndarray, ubg: np.ndarray, options: dict):
+def _solve_nlp(
+    method: str,
+    nlp: dict,
+    Q_init: np.ndarray,
+    lbg: np.ndarray,
+    ubg: np.ndarray,
+    options: dict,
+):
     """
     Solves a nonlinear program with CasADi
 
@@ -142,7 +154,8 @@ class InverseKinematics:
     def __init__(
         self,
         model: BiomechanicalModel,
-        experimental_markers: np.ndarray | str,
+        experimental_markers: np.ndarray | str = None,
+        gaussian_parameters: str = None,
         Q_init: np.ndarray | NaturalCoordinates = None,
         solve_frame_per_frame: bool = True,
         active_direct_frame_constraints: bool = False,
@@ -176,7 +189,10 @@ class InverseKinematics:
         self._model_mx = model.to_mx()
 
         if isinstance(experimental_markers, str):
-            self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
+            self.experimental_markers = Markers.from_c3d(
+                experimental_markers
+            ).to_numpy()
+            self.markerless = False
         elif isinstance(experimental_markers, np.ndarray):
             if (
                 experimental_markers.shape[0] != 3
@@ -185,26 +201,70 @@ class InverseKinematics:
             ):
                 raise ValueError("experimental_markers must be a 3xNxM numpy array")
             self.experimental_markers = experimental_markers
-        else:
-            raise ValueError("experimental_markers must be a numpy array or a path to a c3d file")
+            self.markerless = False
+        # else:
+        #     raise ValueError("experimental_markers must be a numpy array or a path to a c3d file") # to modify so it doesn't crash automatically
 
-        if Q_init is None:
+        if isinstance(gaussian_parameters, str):
+            self.markerless = True
+            c3d_data = ezc3d.c3d(gaussian_parameters)
+
+            # data = np.array((3, 10000, c3d_data['parameters']['POINT']['FRAMES']['value'][0] )) # 10 000 à changer
+
+            ## comment est ce que je range mes données ici ??!
+
+            self._gaussian_parameters = c3d_data
+
+            # est ce qu'on va pas avoir des problèmes à chaque fois que experimental_markers devrait être appelé??!
+
+        if Q_init is None and self.markerless == False:
             self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
+        elif Q_init is None and self.markerless == True:
+            raise ValueError("Q_init must be provided for markerless analysis")
         else:
             self.Q_init = Q_init
 
         self.Qopt = None
         self.segment_determinants = None
-
-        self.nb_frames = self.experimental_markers.shape[2]
-        self.nb_markers = self.experimental_markers.shape[1]
-
         self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
-        self._markers_sym = MX.sym("markers", (3, self.nb_markers))
 
-        self.objective_sym = [self._objective(self._Q_sym, self._markers_sym)]
-        self._objective_function = None
-        self._update_objective_function()
+        if self.markerless:
+            # self.nb_frames = self._gaussian_parameters['parameters']['POINT']['FRAMES']['value'][0]
+            self.nb_frames = 5
+            # self.nb_markers = 26  # voir si ça va pas générer des problèmes si 1) on utilise pas tous les keypoints et 2) si ils sont pas tous dans le c3d
+
+            self.objective_sym = [
+                self._objective_HMP(self._Q_sym, self._gaussian_parameters)
+            ]
+
+            self._objective_function = None
+            self._update_objective_function_hmp()
+
+        else:
+            self.nb_frames = self.experimental_markers.shape[2]
+            self.nb_markers = self.experimental_markers.shape[1]
+
+            self._markers_sym = MX.sym("markers", (3, self.nb_markers))
+            self.objective_sym = [self._objective(self._Q_sym, self._markers_sym)]
+
+            self._objective_function = None
+            self._update_objective_function()
+
+    def _update_objective_function_hmp(self):
+        """
+        This method updates the objective function of the inverse kinematics problem in the case of heatmap input data.
+        It is called each time a new objective is added to the inverse kinematics problem.
+        It is based on the architecture of _update_objective_function(self)
+        """
+        ## là il faut vérifier si c'est bon ==> c'est pas bon
+        # voir ce qui est attendu en fait...
+        # self._objective_function = Function(
+        #     "objective_function", [self._Q_sym, self._gaussian_parameters], [sum1(vertcat(*self.objective_sym))]
+        # ).expand()
+
+        self._objective_function = Function(
+            "objective_function", [self._Q_sym], [sum1(vertcat(*self.objective_sym))]
+        ).expand()
 
     def _update_objective_function(self):
         """
@@ -213,7 +273,9 @@ class InverseKinematics:
         """
 
         self._objective_function = Function(
-            "objective_function", [self._Q_sym, self._markers_sym], [sum1(vertcat(*self.objective_sym))]
+            "objective_function",
+            [self._Q_sym, self._markers_sym],
+            [sum1(vertcat(*self.objective_sym))],
         ).expand()
 
     def add_objective(self, objective_function: Callable):
@@ -305,7 +367,9 @@ class InverseKinematics:
                     "ipopt.print_timing_statistics": "no",
                 }
         else:
-            raise ValueError("method must be one of the following str: 'sqpmethod' or 'ipopt'")
+            raise ValueError(
+                "method must be one of the following str: 'sqpmethod' or 'ipopt'"
+            )
 
         if self._frame_per_frame:
             Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
@@ -313,38 +377,68 @@ class InverseKinematics:
             ubg = np.zeros(self.model.nb_holonomic_constraints)
             constraints = self._constraints(self._Q_sym)
             if self._active_direct_frame_constraints:
-                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
+                constraints = vertcat(
+                    constraints, self._direct_frame_constraints(self._Q_sym)
+                )
                 lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments)))
                 # upper bounds infinity
                 ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
             nlp = dict(
                 x=self._vert_Q_sym,
-                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
+                g=_mx_to_sx(constraints, [self._vert_Q_sym])
+                if self.use_sx
+                else constraints,
             )
             for f in range(self.nb_frames):
-                objective = self._objective_function(self._Q_sym, self.experimental_markers[:, :, f])
-                nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
+                if self.markerless:
+                    objective = self._objective_function(self._Q_sym)
+                else:
+                    objective = self._objective_function(
+                        self._Q_sym, self.experimental_markers[:, :, f]
+                    )
+                nlp["f"] = (
+                    _mx_to_sx(objective, [self._vert_Q_sym])
+                    if self.use_sx
+                    else objective
+                )
                 Q_init = self.Q_init[:, f : f + 1]
                 r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
                 Qopt[:, f : f + 1] = r["x"].toarray()
         else:
             constraints = self._constraints(self._Q_sym)
             if self._active_direct_frame_constraints:
-                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
-            objective = self._objective(self._Q_sym, self.experimental_markers)
+                constraints = vertcat(
+                    constraints, self._direct_frame_constraints(self._Q_sym)
+                )
+            if self.markerless:
+                objective = self._objective_HMP(self._Q_sym, self._gaussian_parameters)
+            else:
+                objective = self._objective(self._Q_sym, self.experimental_markers)
             nlp = dict(
                 x=self._vert_Q_sym,
-                f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,
-                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
+                f=_mx_to_sx(objective, [self._vert_Q_sym])
+                if self.use_sx
+                else objective,
+                g=_mx_to_sx(constraints, [self._vert_Q_sym])
+                if self.use_sx
+                else constraints,
             )
-            Q_init = self.Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
+            Q_init = self.Q_init.reshape(
+                (12 * self.model.nb_segments * self.nb_frames, 1)
+            )
             lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
             ubg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
             if self._active_direct_frame_constraints:
-                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
-                ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
+                lbg = np.concatenate(
+                    (lbg, np.zeros(self.model.nb_segments * self.nb_frames))
+                )
+                ubg = np.concatenate(
+                    (ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf))
+                )
             r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
-            Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
+            Qopt = (
+                r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
+            )
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
 
@@ -379,10 +473,170 @@ class InverseKinematics:
         for f in range(nb_frames):
             Q_f = NaturalCoordinates(Q[:, f])
             xp_markers = (
-                experimental_markers[:3, :, f] if isinstance(experimental_markers, np.ndarray) else experimental_markers
+                experimental_markers[:3, :, f]
+                if isinstance(experimental_markers, np.ndarray)
+                else experimental_markers
             )
-            phim = self._model_mx.markers_constraints(xp_markers, Q_f, only_technical=True)
+            phim = self._model_mx.markers_constraints(
+                xp_markers, Q_f, only_technical=True
+            )
             error_m += 1 / 2 * phim.T @ phim
+        return error_m
+
+    def _compute_phim_hmp(self, X, cal, ratio, amp, pos, sigma):
+        # X doit être un vecteur de taille 4x1 en np ==> comment on fait en casadi??!
+        # première bidouille moche : on a toujours X de taille 3x1 et on rajoute le dernier terme a la mano
+        # phim = amp[0] * np.exp(- ((((ratio * (X@cal[1,0:3].T + cal[1,3])/(X@cal[2,0:3].T + cal[2,3])-pos[0])**2) / (2*sigma[0]**2)) + (((ratio * (X@cal[0,0:3].T + cal[0,3])/(X@cal[2,0:3].T + cal[2,3])-pos[1])**2) / (2*sigma[1]**2)))   )
+        phim = amp[0] * exp(
+            -(
+                (
+                    (
+                        (
+                            ratio
+                            * (dot(X, cal[1, 0:3]) + cal[1, 3])
+                            / (dot(X, cal[2, 0:3]) + cal[2, 3])
+                            - pos[0]
+                        )
+                        ** 2
+                    )
+                    / (2 * sigma[0] ** 2)
+                )
+                + (
+                    (
+                        (
+                            ratio
+                            * (dot(X, cal[0, 0:3]) + cal[0, 3])
+                            / (dot(X, cal[2, 0:3]) + cal[2, 3])
+                            - pos[1]
+                        )
+                        ** 2
+                    )
+                    / (2 * sigma[1] ** 2)
+                )
+            )
+        )
+        return 1 / phim
+
+    def _objective_HMP(self, Q, c3d_gaussian_parameters) -> MX:
+        # da = np.array([[1,1,1], [2,2,2]])
+        # dada = MX(da)
+        nb_cameras = [26580, 26582, 26586, 26587]
+
+        hmpData = c3d_gaussian_parameters["data"]["points"]
+        cal_matrix = c3d_gaussian_parameters["parameters"]["FORCE_PLATFORM"][
+            "CAL_MATRIX"
+        ]["value"]
+
+        names_list = []
+        for i in range(
+            len(c3d_gaussian_parameters["parameters"]["POINT"]["LABELS"]["value"])
+        ):
+            names_list.append(
+                c3d_gaussian_parameters["parameters"]["POINT"]["LABELS"]["value"][i]
+            )
+        for i in range(
+            len(c3d_gaussian_parameters["parameters"]["POINT"]["LABELS2"]["value"])
+        ):
+            names_list.append(
+                c3d_gaussian_parameters["parameters"]["POINT"]["LABELS2"]["value"][i]
+            )
+        for i in range(
+            len(c3d_gaussian_parameters["parameters"]["POINT"]["LABELS3"]["value"])
+        ):
+            names_list.append(
+                c3d_gaussian_parameters["parameters"]["POINT"]["LABELS3"]["value"][i]
+            )
+        for i in range(
+            len(c3d_gaussian_parameters["parameters"]["POINT"]["LABELS4"]["value"])
+        ):
+            names_list.append(
+                c3d_gaussian_parameters["parameters"]["POINT"]["LABELS4"]["value"][i]
+            )
+        names = {}
+        for i in range(len(names_list)):
+            names[names_list[i]] = i
+        error_m = 0
+        nb_frames = 1 if self._frame_per_frame else self.nb_frames
+        for f in range(nb_frames):
+            Q_f = NaturalCoordinates(Q[:, f])
+            markers_processed = []
+            for l in range(len(self.model.segment_names)):
+                markers2process = []
+                list_ind = []
+                compt = 0
+                n = len(self.model.segments[self.model.segment_names[l]]._markers)
+                for i in range(n):
+                    if (
+                        self.model.segments[self.model.segment_names[l]]
+                        ._markers[i]
+                        .name
+                        not in markers_processed
+                    ):
+                        list_ind.append(i)
+                        markers2process.append(
+                            self.model.segments[self.model.segment_names[l]]
+                            ._markers[i]
+                            .name
+                        )
+                        markers_processed.append(
+                            self.model.segments[self.model.segment_names[l]]
+                            ._markers[i]
+                            .name
+                        )  # avoid that we compute the motor constraints twice for the same vector
+                for (
+                    i
+                ) in (
+                    list_ind
+                ):  # calcul des contraintes motrices pour chacun des markers
+                    N = (
+                        self._model_mx.segments[self.model.segment_names[l]]
+                        ._markers[i]
+                        .interpolation_matrix
+                    )
+                    for k in range(len(nb_cameras)):
+                        pos = hmpData[
+                            :,
+                            names[
+                                "position_cam_"
+                                + str(nb_cameras[k])
+                                + "_"
+                                + self.model.segments[self.model.segment_names[l]]
+                                ._markers[i]
+                                .name
+                            ],
+                            f,
+                        ]
+                        sig = hmpData[
+                            :,
+                            names[
+                                "sigma_cam_"
+                                + str(nb_cameras[k])
+                                + "_"
+                                + self.model.segments[self.model.segment_names[l]]
+                                ._markers[i]
+                                .name
+                            ],
+                            f,
+                        ]
+                        amp = hmpData[
+                            :,
+                            names[
+                                "amplitude_cam_"
+                                + str(nb_cameras[k])
+                                + "_"
+                                + self.model.segments[self.model.segment_names[l]]
+                                ._markers[i]
+                                .name
+                            ],
+                            f,
+                        ]
+                        ratio = hmpData[0, names["ratio"], 0]
+                        X = (
+                            N @ Q_f[12 * l : 12 * (l + 1)]
+                        )  # probablement un problème ici entre numpy et casadi
+                        error_m += self._compute_phim_hmp(
+                            X, cal_matrix[k], ratio, amp, pos, sig
+                        )
         return error_m
 
     def _constraints(self, Q) -> MX:
@@ -414,7 +668,9 @@ class InverseKinematics:
             Qi = NaturalCoordinatesNumpy(self.Qopt)[:, i : i + 1]
             for s in range(0, self.model.nb_segments):
                 u, v, w = Qi.vector(s).to_uvw()
-                matrix = np.concatenate((u[:, np.newaxis], v[:, np.newaxis], w[:, np.newaxis]), axis=1)
+                matrix = np.concatenate(
+                    (u[:, np.newaxis], v[:, np.newaxis], w[:, np.newaxis]), axis=1
+                )
                 self.segment_determinants[s, i] = np.linalg.det(matrix)
                 if self.segment_determinants[s, i] < 0:
                     print(f"Warning: frame {i} segment {s} has a negative determinant")

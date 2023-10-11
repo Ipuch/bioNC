@@ -9,7 +9,7 @@ from bionc.bionc_numpy import (
     SegmentNaturalVelocities,
     NaturalVelocities,
 )
-from bionc import NaturalAxis, CartesianAxis, RK4
+from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 
 
 def drop_the_pendulum(
@@ -144,7 +144,7 @@ def main(mode: str = "x_revolute", show_structure: bool = False, show_results: b
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
-    model["pendulum"] = NaturalSegment(
+    model["pendulum"] = NaturalSegment.with_cartesian_inertial_parameters(
         name="pendulum",
         alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
         beta=np.pi / 2,
@@ -153,6 +153,7 @@ def main(mode: str = "x_revolute", show_structure: bool = False, show_results: b
         mass=1,
         center_of_mass=np.array([0.1, 0.1, -0.1]),  # in segment coordinates system
         inertia=np.array([[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.05]]),  # in segment coordinates system
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     if mode == "x_revolute":

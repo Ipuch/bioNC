@@ -75,8 +75,8 @@ class NaturalSegment(AbstractNaturalSegment):
         gamma: Union[np.ndarray, float, np.float64] = np.pi / 2,
         length: Union[np.ndarray, float, np.float64] = None,
         mass: Union[np.ndarray, float, np.float64] = None,
-        center_of_mass: np.ndarray = None,
-        inertia: np.ndarray = None,
+        natural_center_of_mass: np.ndarray = None,
+        natural_pseudo_inertia: np.ndarray = None,
         index: int = None,
         is_ground: bool = False,
     ):
@@ -89,8 +89,8 @@ class NaturalSegment(AbstractNaturalSegment):
             gamma=gamma,
             length=length,
             mass=mass,
-            center_of_mass=center_of_mass,
-            inertia=inertia,
+            natural_center_of_mass=natural_center_of_mass,
+            natural_pseudo_inertia=natural_pseudo_inertia,
             index=index,
             is_ground=is_ground,
         )
@@ -118,6 +118,55 @@ class NaturalSegment(AbstractNaturalSegment):
             natural_segment.add_natural_vector(vector.to_mx())
 
         return natural_segment
+
+    @classmethod
+    def with_cartesian_inertial_parameters(
+        cls,
+        name: str = None,
+        alpha: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        beta: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        gamma: Union[np.ndarray, float, np.float64] = np.pi / 2,
+        length: Union[np.ndarray, float, np.float64] = None,
+        mass: Union[np.ndarray, float, np.float64] = None,
+        center_of_mass: np.ndarray = None,
+        inertia: np.ndarray = None,
+        inertial_transformation_matrix: TransformationMatrixType = TransformationMatrixType.Buv,
+        index: int = None,
+        is_ground: bool = False
+    ):
+
+        cls._angle_sanity_check(alpha, beta, gamma)
+
+        if inertia.shape != (3, 3):
+            raise ValueError("Inertia matrix must be 3x3")
+
+        computed_transformation_matrix = transformation_matrix(
+            matrix_type=inertial_transformation_matrix,
+            length=length,
+            alpha=alpha,
+            beta=beta,
+            gamma=gamma,
+        )
+        natural_center_of_mass = cls.compute_natural_center_of_mass(center_of_mass, computed_transformation_matrix)
+        pseudo_inertia_matrix = cls.compute_pseudo_inertia_matrix(
+            mass=mass,
+            cartesian_center_of_mass=center_of_mass,
+            cartesian_inertia=inertia,
+            transformation_matrix=computed_transformation_matrix,
+        )
+
+        return cls(
+            name=name,
+            alpha=alpha,
+            beta=beta,
+            gamma=gamma,
+            length=length,
+            mass=mass,
+            natural_center_of_mass=natural_center_of_mass,
+            natural_pseudo_inertia=pseudo_inertia_matrix,
+            index=index,
+            is_ground=is_ground,
+        )
 
     @classmethod
     def from_experimental_Q(
@@ -401,14 +450,34 @@ class NaturalSegment(AbstractNaturalSegment):
         np.ndarray
             Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
         """
-        # todo: verify the formula
-        middle_block = (
-            self.inertia
-            + self.mass * np.dot(self.center_of_mass.T, self.center_of_mass) * eye(3)
-            - np.dot(self.center_of_mass.T, self.center_of_mass)
+        return self.compute_pseudo_inertia_matrix(
+            mass=self.mass,
+            cartesian_center_of_mass=self.center_of_mass,
+            cartesian_inertia=self.inertia,
+            transformation_matrix=self.transformation_matrix(),
         )
 
-        Binv = inv(self.transformation_matrix())
+    @staticmethod
+    def compute_pseudo_inertia_matrix(
+            mass: float,
+            cartesian_center_of_mass: np.ndarray,
+            cartesian_inertia: np.ndarray,
+            transformation_matrix: np.ndarray,
+    ):
+        """
+        This function returns the pseudo-inertia matrix of the segment, denoted J_i.
+        It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
+        """
+        center_of_mass = cartesian_center_of_mass
+        inertia = cartesian_inertia
+
+        middle_block = (
+                inertia
+                + mass * np.dot(center_of_mass.T, center_of_mass) * eye(3)
+                - np.dot(center_of_mass.T, center_of_mass)
+        )
+
+        Binv = inv(transformation_matrix)
         Binv_transpose = np.transpose(Binv)
 
         return Binv @ (middle_block @ Binv_transpose)
@@ -437,6 +506,22 @@ class NaturalSegment(AbstractNaturalSegment):
             Center of mass of the segment in the natural coordinate system [3x1]
         """
         return NaturalVector(inv(self.transformation_matrix()) @ self.center_of_mass)
+
+    @staticmethod
+    def compute_natural_center_of_mass(center_of_mass: np.ndarray,transformation_matrix: np.ndarray) -> NaturalVector:
+        """
+        This function computes the center of mass of the segment in the natural coordinate system.
+        It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
+
+        Parameters
+        ----------
+        center_of_mass : np.ndarray
+            Center of mass of the segment in the segment coordinate system [3x1]
+        transformation_matrix : np.ndarray
+            Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        """
+
+        return NaturalVector(inv(transformation_matrix) @ center_of_mass)
 
     @property
     def natural_center_of_mass(self) -> NaturalVector:

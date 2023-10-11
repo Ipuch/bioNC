@@ -7,6 +7,7 @@ from .natural_velocities import SegmentNaturalVelocities
 from .natural_accelerations import SegmentNaturalAccelerations
 from .homogenous_transform import HomogeneousTransform
 from .natural_markers import AbstractNaturalMarker, AbstractSegmentNaturalVector
+from ..utils.enums import TransformationMatrixType
 
 
 class AbstractNaturalSegment(ABC):
@@ -43,8 +44,8 @@ class AbstractNaturalSegment(ABC):
         gamma: Union[MX, float, np.float64] = np.pi / 2,
         length: Union[MX, float, np.float64] = None,
         mass: Union[MX, float, np.float64] = None,
-        center_of_mass: Union[MX, np.ndarray] = None,
-        inertia: Union[MX, np.ndarray] = None,
+        natural_center_of_mass: Union[MX, np.ndarray] = None,
+        natural_pseudo_inertia: Union[MX, np.ndarray] = None,
         index: int = None,
         is_ground: bool = False,
     ):
@@ -60,25 +61,25 @@ class AbstractNaturalSegment(ABC):
         # todo: implement all the transformations matrix according the Ph.D thesis of Alexandre Naaim
 
         self._mass = mass
-        if center_of_mass is None:
-            self._center_of_mass = center_of_mass
-            self._natural_center_of_mass = None
+        if natural_center_of_mass is None:
+            self._center_of_mass = None
+            self._natural_center_of_mass = natural_center_of_mass
         else:
-            if center_of_mass.shape[0] != 3:
+            if natural_center_of_mass.shape[0] != 3:
                 raise ValueError("Center of mass must be 3x1")
-            self._center_of_mass = center_of_mass
-            self._natural_center_of_mass = self._natural_center_of_mass()
+            # self._center_of_mass = center_of_mass # should become a method
+            self._natural_center_of_mass = natural_center_of_mass
 
-        if inertia is None:
-            self._inertia = inertia
-            self._inertia_in_natural_coordinates_system = None
+        if natural_pseudo_inertia is None:
+            self._inertia = None
+            self._inertia_in_natural_coordinates_system = natural_pseudo_inertia
             self._interpolation_matrix_inertia = None
             self._mass_matrix = None
         else:
-            if inertia.shape != (3, 3):
-                raise ValueError("Inertia matrix must be 3x3")
-            self._inertia = inertia
-            self._pseudo_inertia_matrix = self._pseudo_inertia_matrix()
+            if natural_pseudo_inertia.shape != (3, 3):
+                raise ValueError("natural_pseudo_inertia matrix must be 3x3")
+            # self._inertia = inertia  # should become a method
+            self._pseudo_inertia_matrix = natural_pseudo_inertia
             self._mass_matrix = self._update_mass_matrix()
 
         # list of markers embedded in the segment
@@ -326,8 +327,27 @@ class AbstractNaturalSegment(ABC):
         It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
         """
 
+    @staticmethod
+    def compute_pseudo_inertia_matrix(
+            mass,
+            cartesian_center_of_mass,
+            cartesian_inertia,
+            transformation_matrix,
+    ):
+        """
+        This function returns the pseudo-inertia matrix of the segment, denoted J_i.
+        It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
+        """
+
     @abstractmethod
     def _natural_center_of_mass(self):
+        """
+        This function computes the center of mass of the segment in the natural coordinate system.
+        It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
+        """
+
+    @staticmethod
+    def compute_natural_center_of_mass(center_of_mass, transformation_matrix):
         """
         This function computes the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.

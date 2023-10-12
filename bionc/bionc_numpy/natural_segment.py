@@ -23,7 +23,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
     Methods
     -------
-    transformation_matrix()
+    compute_transformation_matrix()
         This function returns the transformation matrix, denoted Bi
     rigid_body_constraint()
         This function returns the rigid body constraints of the segment, denoted phi_r
@@ -146,7 +146,7 @@ class NaturalSegment(AbstractNaturalSegment):
             alpha=alpha,
             beta=beta,
             gamma=gamma,
-        )
+        ).T
         natural_center_of_mass = cls.compute_natural_center_of_mass(center_of_mass, computed_transformation_matrix)
         pseudo_inertia_matrix = cls.compute_pseudo_inertia_matrix(
             mass=mass,
@@ -250,7 +250,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return self._experimental_Q_function(markers, model)
 
-    def transformation_matrix(self, matrix_type: str | TransformationMatrixType = None) -> np.ndarray:
+    def compute_transformation_matrix(self, matrix_type: str | TransformationMatrixType = None) -> np.ndarray:
         """
         This function computes the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
@@ -298,7 +298,7 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self.transformation_matrix(transformation_matrix_type)
+            rotation=self.compute_transformation_matrix(transformation_matrix_type)
             @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
             translation=Q.rp[:, np.newaxis],
         )
@@ -321,9 +321,9 @@ class NaturalSegment(AbstractNaturalSegment):
             Location of the segment [3 x 1]
         """
 
-        u = self.transformation_matrix @ T[0:3, 0]
-        w = self.transformation_matrix @ T[0:3, 2]
-        rp = self.transformation_matrix @ T[0:3, 4]
+        u = self.compute_transformation_matrix @ T[0:3, 0]
+        w = self.compute_transformation_matrix @ T[0:3, 2]
+        rp = self.compute_transformation_matrix @ T[0:3, 4]
         rd = (T @ np.array([0, self.length, 0, 1]))[0:3]  # not sure of this line.
 
         return SegmentNaturalCoordinates((u, rp, rd, w))
@@ -454,7 +454,7 @@ class NaturalSegment(AbstractNaturalSegment):
             mass=self.mass,
             cartesian_center_of_mass=self.center_of_mass,
             cartesian_inertia=self.inertia,
-            transformation_matrix=self.transformation_matrix(),
+            transformation_mat=self.compute_transformation_matrix(),
         )
 
     @staticmethod
@@ -462,11 +462,22 @@ class NaturalSegment(AbstractNaturalSegment):
             mass: float,
             cartesian_center_of_mass: np.ndarray,
             cartesian_inertia: np.ndarray,
-            transformation_matrix: np.ndarray,
+            transformation_mat: np.ndarray,
     ):
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
         It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
+
+        Parameters
+        ----------
+        mass : float
+            mass of the segment in Segment Coordinate System
+        cartesian_center_of_mass : np.ndarray
+            center of mass of the segment in Segment Coordinate System
+        cartesian_inertia : np.ndarray
+            inertia matrix of the segment in Segment Coordinate System
+        transformation_mat : np.ndarray
+            Transformation matrix from natural coordinate to segment coordinate system [3x3]
         """
         center_of_mass = cartesian_center_of_mass
         inertia = cartesian_inertia
@@ -477,7 +488,7 @@ class NaturalSegment(AbstractNaturalSegment):
                 - np.dot(center_of_mass.T, center_of_mass)
         )
 
-        Binv = inv(transformation_matrix)
+        Binv = inv(transformation_mat)
         Binv_transpose = np.transpose(Binv)
 
         return Binv @ (middle_block @ Binv_transpose)
@@ -505,7 +516,7 @@ class NaturalSegment(AbstractNaturalSegment):
         np.ndarray
             Center of mass of the segment in the natural coordinate system [3x1]
         """
-        return NaturalVector(inv(self.transformation_matrix()) @ self.center_of_mass)
+        return NaturalVector(inv(self.compute_transformation_matrix()) @ self.center_of_mass)
 
     @staticmethod
     def compute_natural_center_of_mass(center_of_mass: np.ndarray,transformation_matrix: np.ndarray) -> NaturalVector:
@@ -535,6 +546,12 @@ class NaturalSegment(AbstractNaturalSegment):
             Center of mass of the segment in the natural coordinate system [3x1]
         """
         return self._natural_center_of_mass
+
+    def center_of_mass(self, transformation_matrix: TransformationMatrixType = TransformationMatrixType.Buv):
+        return self.compute_transformation_matrix(transformation_matrix) @ self.natural_center_of_mass
+
+    def inertia(self, transformation_matrix: TransformationMatrixType = TransformationMatrixType.Buv):
+        return self.compute_transformation_matrix(transformation_matrix) @ self.natural_center_of_mass
 
     def center_of_mass_position(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
@@ -734,7 +751,7 @@ class NaturalSegment(AbstractNaturalSegment):
             True if the marker is anatomical, False otherwise
         """
 
-        location = inv(self.transformation_matrix()) @ location
+        location = inv(self.compute_transformation_matrix()) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 
@@ -767,7 +784,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = inv(self.transformation_matrix()) @ direction
+        direction = inv(self.compute_transformation_matrix()) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,

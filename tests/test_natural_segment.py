@@ -1,3 +1,4 @@
+from bionc import TransformationMatrixType
 import numpy as np
 import pytest
 
@@ -23,7 +24,7 @@ def test_natural_segment(bionc_type):
         )
 
     # Let's create a segment
-    my_segment = NaturalSegment(
+    my_segment = NaturalSegment.with_cartesian_inertial_parameters(
         name="box",
         alpha=np.pi / 2,
         beta=np.pi / 2,
@@ -32,6 +33,7 @@ def test_natural_segment(bionc_type):
         mass=1,
         center_of_mass=np.array([0, 0.01, 0]),
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
     # test the name of the segment
     assert my_segment.name == "box"
@@ -40,7 +42,7 @@ def test_natural_segment(bionc_type):
     TestUtils.assert_equal(my_segment.gamma, np.pi / 2)
     TestUtils.assert_equal(my_segment.length, 1)
     TestUtils.assert_equal(my_segment.mass, 1)
-    TestUtils.assert_equal(my_segment.center_of_mass, np.array([0, 0.01, 0]))
+    TestUtils.assert_equal(my_segment.center_of_mass(), np.array([0, 0.01, 0]))
     TestUtils.assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
 
     TestUtils.assert_equal(my_segment.natural_center_of_mass, np.array([0, 0.01, 0]), expand=False)
@@ -273,7 +275,7 @@ def test_marker_features(bionc_type):
         )
 
     # Let's create a segment
-    my_segment = NaturalSegment(
+    my_segment = NaturalSegment.with_cartesian_inertial_parameters(
         name="Thigh",
         alpha=np.pi / 2,
         beta=np.pi / 2,
@@ -282,6 +284,7 @@ def test_marker_features(bionc_type):
         mass=1,
         center_of_mass=np.array([0, 0.01, 0]),
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     # NaturalMarker(
@@ -386,7 +389,7 @@ def test_marker_add_from_scs(bionc_type):
         )
 
     # Let's create a segment
-    my_segment = NaturalSegment(
+    my_segment = NaturalSegment.with_cartesian_inertial_parameters(
         name="Thigh",
         alpha=np.pi / 2,
         beta=np.pi / 2,
@@ -395,6 +398,7 @@ def test_marker_add_from_scs(bionc_type):
         mass=1,
         center_of_mass=np.array([0, 0.01, 0]),
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     my_segment.add_natural_marker_from_segment_coordinates(
@@ -546,7 +550,7 @@ def test_center_of_mass(bionc_type):
             SegmentNaturalCoordinates,
         )
 
-    seg = NaturalSegment(
+    seg = NaturalSegment.with_cartesian_inertial_parameters(
         name="bbox",
         alpha=np.pi / 2 + 0.1,
         beta=np.pi / 2 - 0.05,
@@ -555,6 +559,7 @@ def test_center_of_mass(bionc_type):
         center_of_mass=np.array([0.1, 0.2, 0.3]),
         inertia=np.array([[0.01, 0.02, 0.03], [0.02, 0.04, 0.05], [0.03, 0.05, 0.06]]),
         mass=2.66,
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     n_com = seg.natural_center_of_mass

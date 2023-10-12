@@ -109,7 +109,7 @@ def test_segment_transformation_matrix(bionc_type):
             NaturalSegment,
         )
 
-    bbox = NaturalSegment(
+    bbox = NaturalSegment.with_cartesian_inertial_parameters(
         name="bbox",
         alpha=np.pi / 1.9,
         beta=np.pi / 2.3,
@@ -118,31 +118,32 @@ def test_segment_transformation_matrix(bionc_type):
         mass=1.1,
         center_of_mass=np.array([0.1, 0.11, 0.111]),  # scs
         inertia=np.array([[1.1, 0, 0], [0, 1.2, 0], [0, 0, 1.3]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     res_Buv = np.array([[1.0, 0.0, 0.0], [0.11209514, 1.4958057, 0.0], [0.20345601, -0.09805782, 0.97416134]])
 
-    TestUtils.assert_equal(bbox.transformation_matrix(), res_Buv)
-    TestUtils.assert_equal(bbox.transformation_matrix(matrix_type=TransformationMatrixType.Buv), res_Buv)
-    TestUtils.assert_equal(bbox.transformation_matrix(matrix_type="Buv"), res_Buv)
+    TestUtils.assert_equal(bbox.compute_transformation_matrix(), res_Buv)
+    TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Buv), res_Buv)
+    TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Buv"), res_Buv)
 
     res_Bvu = np.array([[0.9972038, 0.07473009, 0.0], [0.0, 1.5, 0.0], [0.21021498, -0.08257935, 0.97416134]])
-    TestUtils.assert_equal(bbox.transformation_matrix(matrix_type=TransformationMatrixType.Bvu), res_Bvu)
-    TestUtils.assert_equal(bbox.transformation_matrix(matrix_type="Bvu"), res_Bvu)
+    TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bvu), res_Bvu)
+    TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bvu"), res_Bvu)
 
     res_Bwu = np.array([[0.97908409, 0.0, 0.20345601], [0.13783542, 1.48828492, -0.12386902], [0.0, 0.0, 1.0]])
-    TestUtils.assert_equal(bbox.transformation_matrix(matrix_type=TransformationMatrixType.Bwu), res_Bwu)
-    TestUtils.assert_equal(bbox.transformation_matrix(matrix_type="Bwu"), res_Bwu)
+    TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bwu), res_Bwu)
+    TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bwu"), res_Bwu)
 
     with pytest.raises(NotImplementedError):
-        bbox.transformation_matrix(matrix_type=TransformationMatrixType.Buw)
+        bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Buw)
     with pytest.raises(NotImplementedError):
-        bbox.transformation_matrix(matrix_type=TransformationMatrixType.Bvw)
+        bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bvw)
     with pytest.raises(NotImplementedError):
-        bbox.transformation_matrix(matrix_type=TransformationMatrixType.Bwv)
+        bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bwv)
 
     with pytest.raises(ValueError):
-        bbox.transformation_matrix(matrix_type="INVALID_TYPE")
+        bbox.compute_transformation_matrix(matrix_type="INVALID_TYPE")
 
 
 def test_transformation_matrix_util():

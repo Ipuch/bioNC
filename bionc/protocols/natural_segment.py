@@ -203,9 +203,21 @@ class AbstractNaturalSegment(ABC):
     def mass(self):
         return self._mass
 
-    @property
-    def center_of_mass(self):
-        return self._center_of_mass
+    @abstractmethod
+    def center_of_mass(self, transformation_matrix: TransformationMatrixType):
+        """
+        This function returns the center of mass of the segment in a given coordinate system
+        specified by the transformation matrix
+
+        Parameters
+        ----------
+        transformation_matrix:
+            The transformation matrix from the natural coordinate system to the desired coordinate system
+
+        Returns
+        -------
+            Center of mass of the segment in the desired coordinate system [3x1]
+        """
 
     @property
     def inertia(self):
@@ -248,7 +260,7 @@ class AbstractNaturalSegment(ABC):
         return self._natural_center_of_mass
 
     @abstractmethod
-    def transformation_matrix(self):
+    def compute_transformation_matrix(self):
         """
         This function returns the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.

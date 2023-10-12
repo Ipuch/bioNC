@@ -60,7 +60,6 @@ class NaturalInertialParameters:
         natural_pseudo_inertia: np.ndarray = None,
         initial_transformation_matrix: np.ndarray = None,
     ):
-
         if mass is None:
             raise ValueError("mass must be provided")
         if natural_center_of_mass is None:
@@ -187,10 +186,10 @@ class NaturalInertialParameters:
 
     @staticmethod
     def compute_cartesian_inertia_from_pseudo(
-            mass: float,
-            cartesian_center_of_mass: np.ndarray,
-            pseudo_inertia: np.ndarray,
-            transformation_mat: np.ndarray,
+        mass: float,
+        cartesian_center_of_mass: np.ndarray,
+        pseudo_inertia: np.ndarray,
+        transformation_mat: np.ndarray,
     ) -> np.ndarray:
         """
         Computes the cartesian inertia matrix from pseudo-inertia matrix.
@@ -213,9 +212,11 @@ class NaturalInertialParameters:
         """
         B = transformation_mat
         middle_block = B @ (pseudo_inertia @ B.T)
-        inertia = (middle_block
-                   - mass * np.dot(cartesian_center_of_mass.T, cartesian_center_of_mass) * np.eye(3)
-                   + np.dot(cartesian_center_of_mass.T,cartesian_center_of_mass))
+        inertia = (
+            middle_block
+            - mass * np.dot(cartesian_center_of_mass.T, cartesian_center_of_mass) * np.eye(3)
+            + np.dot(cartesian_center_of_mass.T, cartesian_center_of_mass)
+        )
         return inertia
 
     def center_of_mass(self, transformation_matrix: np.ndarray = None) -> np.ndarray:
@@ -262,13 +263,12 @@ class NaturalInertialParameters:
 
     @classmethod
     def from_cartesian_inertial_parameters(
-            cls,
-            mass: Union[np.ndarray, float, np.float64] = None,
-            center_of_mass: np.ndarray = None,
-            inertia_matrix: np.ndarray = None,
-            inertial_transformation_matrix: np.ndarray = None,
+        cls,
+        mass: Union[np.ndarray, float, np.float64] = None,
+        center_of_mass: np.ndarray = None,
+        inertia_matrix: np.ndarray = None,
+        inertial_transformation_matrix: np.ndarray = None,
     ):
-
         if inertia_matrix.shape != (3, 3):
             raise ValueError("Inertia matrix must be 3x3")
 
@@ -305,10 +305,10 @@ class NaturalInertialParameters:
 
     @staticmethod
     def compute_pseudo_inertia_matrix(
-            mass: float,
-            cartesian_center_of_mass: np.ndarray,
-            cartesian_inertia: np.ndarray,
-            transformation_mat: np.ndarray,
+        mass: float,
+        cartesian_center_of_mass: np.ndarray,
+        cartesian_inertia: np.ndarray,
+        transformation_mat: np.ndarray,
     ):
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
@@ -334,9 +334,9 @@ class NaturalInertialParameters:
         inertia = cartesian_inertia
 
         middle_block = (
-                inertia
-                + mass * np.dot(center_of_mass.T, center_of_mass) * eye(3)
-                - np.dot(center_of_mass.T, center_of_mass)
+            inertia
+            + mass * np.dot(center_of_mass.T, center_of_mass) * eye(3)
+            - np.dot(center_of_mass.T, center_of_mass)
         )
 
         Binv = inv(transformation_mat)

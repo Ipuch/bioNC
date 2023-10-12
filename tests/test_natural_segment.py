@@ -43,7 +43,9 @@ def test_natural_segment(bionc_type):
     TestUtils.assert_equal(my_segment.length, 1)
     TestUtils.assert_equal(my_segment.mass, 1)
     TestUtils.assert_equal(my_segment.center_of_mass(), np.array([0, 0.01, 0]))
-    TestUtils.assert_equal(my_segment._natural_inertial_parameters.inertia(), np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+    TestUtils.assert_equal(
+        my_segment._natural_inertial_parameters.inertia(), np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    )
 
     TestUtils.assert_equal(my_segment.natural_center_of_mass, np.array([0, 0.01, 0]), expand=False)
     N = np.array(

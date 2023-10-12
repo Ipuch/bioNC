@@ -5,6 +5,7 @@ from bionc import TransformationMatrixType
 
 from .utils import TestUtils
 
+
 @pytest.mark.parametrize(
     "bionc_type",
     [
@@ -13,7 +14,6 @@ from .utils import TestUtils
     ],
 )
 def test_init_with_valid_parameters(bionc_type):
-
     if bionc_type == "numpy":
         from bionc import NaturalInertialParameters
 
@@ -27,6 +27,7 @@ def test_init_with_valid_parameters(bionc_type):
     TestUtils.assert_equal(obj.natural_center_of_mass, natural_center_of_mass)
     TestUtils.assert_equal(obj.natural_pseudo_inertia, natural_pseudo_inertia)
 
+
 @pytest.mark.parametrize(
     "bionc_type",
     [
@@ -35,7 +36,6 @@ def test_init_with_valid_parameters(bionc_type):
     ],
 )
 def test_init_with_valid_parameters(bionc_type):
-
     if bionc_type == "numpy":
         from bionc import NaturalInertialParameters
 
@@ -58,7 +58,6 @@ def test_init_with_valid_parameters(bionc_type):
     ],
 )
 def test_mass_property(bionc_type):
-
     if bionc_type == "numpy":
         from bionc import NaturalInertialParameters
 
@@ -75,7 +74,6 @@ def test_mass_property(bionc_type):
     ],
 )
 def test_natural_center_of_mass_property(bionc_type):
-
     if bionc_type == "numpy":
         from bionc import NaturalInertialParameters
 
@@ -93,7 +91,6 @@ def test_natural_center_of_mass_property(bionc_type):
     ],
 )
 def test_pseudo_inertia_matrix_property(bionc_type):
-
     if bionc_type == "numpy":
         from bionc import NaturalInertialParameters
 
@@ -112,7 +109,6 @@ def test_pseudo_inertia_matrix_property(bionc_type):
     ],
 )
 def test_from_cartesian_inertial_parameters(bionc_type):
-
     if bionc_type == "numpy":
         from bionc import (
             NaturalInertialParameters,
@@ -130,17 +126,21 @@ def test_from_cartesian_inertial_parameters(bionc_type):
         np.pi / 2 + 0.01,
     )
 
-    obj = NaturalInertialParameters.from_cartesian_inertial_parameters(mass, center_of_mass, inertia,
-                                                                       transformation_matrix)
+    obj = NaturalInertialParameters.from_cartesian_inertial_parameters(
+        mass, center_of_mass, inertia, transformation_matrix
+    )
     TestUtils.assert_equal(obj.mass, mass)
-    TestUtils.assert_equal(obj.natural_center_of_mass, np.array([[0.87212626],[2.29999071],[3.01872294]]))
+    TestUtils.assert_equal(obj.natural_center_of_mass, np.array([[0.87212626], [2.29999071], [3.01872294]]))
     TestUtils.assert_equal(
         obj.natural_pseudo_inertia,
         np.array(
-            [[ 58.25814425, -14.43488179, -17.05540064],
-             [-14.43488179,  54.77616526,  -8.35459409],
-             [-17.05540064,  -8.35459409,  57.71369183]]
-        ))
+            [
+                [58.25814425, -14.43488179, -17.05540064],
+                [-14.43488179, 54.77616526, -8.35459409],
+                [-17.05540064, -8.35459409, 57.71369183],
+            ]
+        ),
+    )
 
     TestUtils.assert_equal(obj._initial_transformation_matrix, transformation_matrix)
 
@@ -155,13 +155,16 @@ def test_from_cartesian_inertial_parameters(bionc_type):
         np.pi / 2 + 0.011,
     )
 
-    TestUtils.assert_equal(obj.center_of_mass(transformation_matrix_2),
-                           np.array([[0.99818507],[2.20011923],[2.9967137 ]])
-                           )
-    TestUtils.assert_equal(obj.inertia(transformation_matrix_2),
-                            np.array([[-2.23189053, -0.72722177,  0.90716309],
-               [-0.72722177,  9.69832619, -0.5630764 ],
-               [ 0.90716309, -0.5630764 , -2.39357526]])
-                            )
-
-
+    TestUtils.assert_equal(
+        obj.center_of_mass(transformation_matrix_2), np.array([[0.99818507], [2.20011923], [2.9967137]])
+    )
+    TestUtils.assert_equal(
+        obj.inertia(transformation_matrix_2),
+        np.array(
+            [
+                [-2.23189053, -0.72722177, 0.90716309],
+                [-0.72722177, 9.69832619, -0.5630764],
+                [0.90716309, -0.5630764, -2.39357526],
+            ]
+        ),
+    )

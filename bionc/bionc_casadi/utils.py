@@ -55,18 +55,27 @@ def to_numeric(mx: MX, expand: bool = False) -> MX:
 
     """
     if expand:
-        return Function(
+        return (
+            Function(
                 "f",
                 [],
                 [mx],
                 [],
                 ["f"],
-            ).expand()()["f"].toarray().squeeze()
+            )
+            .expand()()["f"]
+            .toarray()
+            .squeeze()
+        )
     else:
-        return Function(
+        return (
+            Function(
                 "f",
                 [],
                 [mx],
                 [],
                 ["f"],
-            )()["f"].toarray().squeeze()
+            )()["f"]
+            .toarray()
+            .squeeze()
+        )

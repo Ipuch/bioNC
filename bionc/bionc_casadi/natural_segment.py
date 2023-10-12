@@ -104,10 +104,7 @@ class NaturalSegment(AbstractNaturalSegment):
         )
 
     def set_natural_inertial_parameters(
-            self,
-            mass: float,
-            natural_center_of_mass: np.ndarray,
-            natural_pseudo_inertia: np.ndarray
+        self, mass: float, natural_center_of_mass: np.ndarray, natural_pseudo_inertia: np.ndarray
     ):
         self._mass = mass
         self._natural_center_of_mass = natural_center_of_mass
@@ -120,11 +117,11 @@ class NaturalSegment(AbstractNaturalSegment):
         self._mass_matrix = self._natural_inertial_parameters.mass_matrix
 
     def set_inertial_parameters(
-            self,
-            mass: float,
-            center_of_mass: np.ndarray,
-            inertia_matrix: np.ndarray,
-            transformation_matrix: TransformationMatrixType,
+        self,
+        mass: float,
+        center_of_mass: np.ndarray,
+        inertia_matrix: np.ndarray,
+        transformation_matrix: TransformationMatrixType,
     ):
         self._natural_inertial_parameters = NaturalInertialParameters.from_cartesian_inertial_parameters(
             mass=mass,
@@ -142,20 +139,19 @@ class NaturalSegment(AbstractNaturalSegment):
 
     @classmethod
     def with_cartesian_inertial_parameters(
-            cls,
-            name: str = None,
-            alpha: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-            beta: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-            gamma: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-            length: Union[MX, float, np.float64, np.ndarray] = None,
-            mass: Union[MX, float, np.float64, np.ndarray] = None,
-            center_of_mass: Union[MX, np.ndarray] = None,
-            inertia: Union[MX, np.ndarray] = None,
-            inertial_transformation_matrix: TransformationMatrixType = TransformationMatrixType.Buv,
-            index: int = None,
-            is_ground: bool = False
+        cls,
+        name: str = None,
+        alpha: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+        beta: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+        gamma: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+        length: Union[MX, float, np.float64, np.ndarray] = None,
+        mass: Union[MX, float, np.float64, np.ndarray] = None,
+        center_of_mass: Union[MX, np.ndarray] = None,
+        inertia: Union[MX, np.ndarray] = None,
+        inertial_transformation_matrix: TransformationMatrixType = TransformationMatrixType.Buv,
+        index: int = None,
+        is_ground: bool = False,
     ):
-
         cls._angle_sanity_check(alpha, beta, gamma)
 
         if inertia.shape != (3, 3):
@@ -166,7 +162,8 @@ class NaturalSegment(AbstractNaturalSegment):
             center_of_mass=center_of_mass,
             inertia_matrix=inertia,
             inertial_transformation_matrix=compute_transformation_matrix(
-                inertial_transformation_matrix, length, alpha, beta, gamma).T,
+                inertial_transformation_matrix, length, alpha, beta, gamma
+            ).T,
         )
 
         return cls(

@@ -67,7 +67,9 @@ class AbstractNaturalSegment(ABC):
 
         if mass is not None and natural_center_of_mass is not None and natural_pseudo_inertia is not None:
             self.set_natural_inertial_parameters(mass, natural_center_of_mass, natural_pseudo_inertia)
-            self._natural_inertial_parameters._initial_transformation_matrix = self.compute_transformation_matrix(inertial_transformation_matrix_type)
+            self._natural_inertial_parameters._initial_transformation_matrix = self.compute_transformation_matrix(
+                inertial_transformation_matrix_type
+            )
 
         # list of markers embedded in the segment
         self._markers = []
@@ -333,10 +335,10 @@ class AbstractNaturalSegment(ABC):
 
     @staticmethod
     def compute_pseudo_inertia_matrix(
-            mass,
-            cartesian_center_of_mass,
-            cartesian_inertia,
-            transformation_matrix,
+        mass,
+        cartesian_center_of_mass,
+        cartesian_inertia,
+        transformation_matrix,
     ):
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.

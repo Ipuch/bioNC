@@ -33,7 +33,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
             mass=1,
             center_of_mass=np.array([0, -0.5, 0]),  # in segment coordinates system
             inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
-            inertial_transformation_matrix=TransformationMatrixType.Buv
+            inertial_transformation_matrix=TransformationMatrixType.Buv,
         )
     # add a revolute joint (still experimental)
     # if you want to add a revolute joint,

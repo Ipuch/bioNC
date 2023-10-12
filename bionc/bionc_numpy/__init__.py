@@ -18,3 +18,4 @@ from .natural_vector import NaturalVector
 from .inverse_kinematics import InverseKinematics
 from .external_force import ExternalForceList, ExternalForce
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
+from .transformation_matrix import compute_transformation_matrix

@@ -1,4 +1,4 @@
-from bionc.bionc_numpy.transformation_matrix import transformation_matrix
+from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
 from bionc.utils.enums import TransformationMatrixType
 from bionc import NaturalAxis
 from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
@@ -46,7 +46,7 @@ gamma = 0.7
 
 
 def test_transformation_matrix_Buv():
-    result = transformation_matrix(TransformationMatrixType.Buv, length, alpha, beta, gamma)
+    result = compute_transformation_matrix(TransformationMatrixType.Buv, length, alpha, beta, gamma)
     assert isinstance(result, np.ndarray)
     assert result.shape == (3, 3)
     np.testing.assert_almost_equal(
@@ -55,7 +55,7 @@ def test_transformation_matrix_Buv():
 
 
 def test_transformation_matrix_Bvu():
-    result = transformation_matrix(TransformationMatrixType.Bvu, length, alpha, beta, gamma)
+    result = compute_transformation_matrix(TransformationMatrixType.Bvu, length, alpha, beta, gamma)
     assert isinstance(result, np.ndarray)
     assert result.shape == (3, 3)
     np.testing.assert_almost_equal(
@@ -67,7 +67,7 @@ def test_transformation_matrix_Bvu():
 
 
 def test_transformation_matrix_Bwu():
-    result = transformation_matrix(TransformationMatrixType.Bwu, length, alpha, beta, gamma)
+    result = compute_transformation_matrix(TransformationMatrixType.Bwu, length, alpha, beta, gamma)
     assert isinstance(result, np.ndarray)
     assert result.shape == (3, 3)
     np.testing.assert_almost_equal(
@@ -77,22 +77,22 @@ def test_transformation_matrix_Bwu():
 
 def test_transformation_matrix_Buw():
     with pytest.raises(NotImplementedError):
-        transformation_matrix(TransformationMatrixType.Buw, length, alpha, beta, gamma)
+        compute_transformation_matrix(TransformationMatrixType.Buw, length, alpha, beta, gamma)
 
 
 def test_transformation_matrix_Bvw():
     with pytest.raises(NotImplementedError):
-        transformation_matrix(TransformationMatrixType.Bvw, length, alpha, beta, gamma)
+        compute_transformation_matrix(TransformationMatrixType.Bvw, length, alpha, beta, gamma)
 
 
 def test_transformation_matrix_Bwv():
     with pytest.raises(NotImplementedError):
-        transformation_matrix(TransformationMatrixType.Bwv, length, alpha, beta, gamma)
+        compute_transformation_matrix(TransformationMatrixType.Bwv, length, alpha, beta, gamma)
 
 
 def test_invalid_matrix_type():
     with pytest.raises(ValueError):
-        transformation_matrix("INVALID_TYPE", length, alpha, beta, gamma)
+        compute_transformation_matrix("INVALID_TYPE", length, alpha, beta, gamma)
 
 
 @pytest.mark.parametrize(

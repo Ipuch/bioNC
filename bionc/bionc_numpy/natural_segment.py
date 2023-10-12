@@ -11,7 +11,7 @@ from ..bionc_numpy.natural_accelerations import SegmentNaturalAccelerations
 from ..bionc_numpy.homogenous_transform import HomogeneousTransform
 from ..bionc_numpy.natural_marker import NaturalMarker, SegmentNaturalVector
 from ..bionc_numpy.natural_vector import NaturalVector
-from ..bionc_numpy.transformation_matrix import transformation_matrix
+from ..bionc_numpy.transformation_matrix import compute_transformation_matrix
 from ..utils.enums import TransformationMatrixType, transformation_matrix_str_to_enum
 
 from ..protocols.natural_segment import AbstractNaturalSegment
@@ -140,7 +140,7 @@ class NaturalSegment(AbstractNaturalSegment):
         if inertia.shape != (3, 3):
             raise ValueError("Inertia matrix must be 3x3")
 
-        computed_transformation_matrix = transformation_matrix(
+        computed_transformation_matrix = compute_transformation_matrix(
             matrix_type=inertial_transformation_matrix,
             length=length,
             alpha=alpha,
@@ -152,7 +152,7 @@ class NaturalSegment(AbstractNaturalSegment):
             mass=mass,
             cartesian_center_of_mass=center_of_mass,
             cartesian_inertia=inertia,
-            transformation_matrix=computed_transformation_matrix,
+            transformation_mat=computed_transformation_matrix,
         )
 
         return cls(
@@ -272,7 +272,7 @@ class NaturalSegment(AbstractNaturalSegment):
         if matrix_type is None:
             matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
-        return transformation_matrix(
+        return compute_transformation_matrix(
             matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
         ).T
 

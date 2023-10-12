@@ -20,6 +20,7 @@ from .bionc_numpy import (
     JointType,
     ExternalForceList,
     ExternalForce,
+    compute_transformation_matrix,
 )
 
 from .protocols import natural_coordinates

@@ -25,7 +25,7 @@ def test_init_with_valid_parameters(bionc_type):
 
     TestUtils.assert_equal(obj.mass, mass)
     TestUtils.assert_equal(obj.natural_center_of_mass, natural_center_of_mass)
-    TestUtils.assert_equal(obj.pseudo_inertia_matrix, natural_pseudo_inertia)
+    TestUtils.assert_equal(obj.natural_pseudo_inertia, natural_pseudo_inertia)
 
 @pytest.mark.parametrize(
     "bionc_type",
@@ -40,7 +40,7 @@ def test_init_with_valid_parameters(bionc_type):
         from bionc import NaturalInertialParameters
 
     mass = 5.0
-    wrong_shape_center_of_mass = np.array([1.0, 2.0, 3.0])
+    wrong_shape_center_of_mass = np.array([1.0, 2.0])
     wrong_shape_pseudo_inertia = np.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]])
 
     with pytest.raises(ValueError, match="Center of mass must be 3x1"):
@@ -100,7 +100,7 @@ def test_pseudo_inertia_matrix_property(bionc_type):
     inertia = np.ones((3, 3))
     obj = NaturalInertialParameters(5.0, np.array([[1.0], [2.0], [3.0]]), inertia)
 
-    TestUtils.assert_equal(obj.pseudo_inertia_matrix, inertia)
+    TestUtils.assert_equal(obj.natural_pseudo_inertia, inertia)
     assert obj._initial_transformation_matrix is None
 
 
@@ -132,15 +132,10 @@ def test_from_cartesian_inertial_parameters(bionc_type):
 
     obj = NaturalInertialParameters.from_cartesian_inertial_parameters(mass, center_of_mass, inertia,
                                                                        transformation_matrix)
-
-    assert obj.mass == mass
-    assert np.array_equal(obj.natural_center_of_mass, center_of_mass)
-    assert np.array_equal(obj.pseudo_inertia_matrix, inertia)
-
     TestUtils.assert_equal(obj.mass, mass)
     TestUtils.assert_equal(obj.natural_center_of_mass, np.array([[0.87212626],[2.29999071],[3.01872294]]))
     TestUtils.assert_equal(
-        obj.pseudo_inertia_matrix,
+        obj.natural_pseudo_inertia,
         np.array(
             [[ 58.25814425, -14.43488179, -17.05540064],
              [-14.43488179,  54.77616526,  -8.35459409],

@@ -19,7 +19,7 @@ class NaturalInertialParameters:
         This function returns the mass of the segment in the natural coordinate system.
     natural_center_of_mass
         This function returns the center of mass of the segment in the natural coordinate system.
-    pseudo_inertia_matrix
+    natural_pseudo_inertia
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
     _update_mass_matrix
         This function returns the generalized mass matrix of the segment, denoted G_i (private).
@@ -44,7 +44,7 @@ class NaturalInertialParameters:
         The mass of the segment in kg
     _natural_center_of_mass
         The center of mass of the segment in the natural coordinate system [3x1]
-    _pseudo_inertia_matrix
+    _natural_pseudo_inertia
         The pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
     _mass_matrix
         The generalized mass matrix of the segment [12x12]
@@ -73,7 +73,7 @@ class NaturalInertialParameters:
 
         self._mass = mass
 
-        if natural_center_of_mass.shape != (3, 1):
+        if natural_center_of_mass.shape[0] != 3:
             raise ValueError("Center of mass must be 3x1")
 
         self._natural_center_of_mass = natural_center_of_mass
@@ -81,7 +81,7 @@ class NaturalInertialParameters:
         if natural_pseudo_inertia.shape != (3, 3):
             raise ValueError("Pseudo inertia matrix must be 3x3")
 
-        self._pseudo_inertia_matrix = natural_pseudo_inertia
+        self._natural_pseudo_inertia = natural_pseudo_inertia
         self._mass_matrix = self._update_mass_matrix()
 
         if initial_transformation_matrix is not None:
@@ -115,7 +115,7 @@ class NaturalInertialParameters:
         return self._natural_center_of_mass
 
     @property
-    def pseudo_inertia_matrix(self) -> np.ndarray:
+    def natural_pseudo_inertia(self) -> np.ndarray:
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
         It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
@@ -125,7 +125,7 @@ class NaturalInertialParameters:
         np.ndarray
             Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
         """
-        return self._pseudo_inertia_matrix
+        return self._natural_pseudo_inertia
 
     def _update_mass_matrix(self) -> np.ndarray:
         """
@@ -141,7 +141,7 @@ class NaturalInertialParameters:
             Dumas, R., Chèze, L., 2007 3D inverse dynamics in non-orthonormal segment coordinate system in section 2.2.2
         """
 
-        Ji = self.pseudo_inertia_matrix
+        Ji = self.natural_pseudo_inertia
         n_ci = self.natural_center_of_mass
 
         Gi = zeros((12, 12))
@@ -236,9 +236,9 @@ class NaturalInertialParameters:
         if transformation_matrix is None:
             transformation_matrix = self._initial_transformation_matrix
         if transformation_matrix is None:
-            raise ValueError("transformation_matrix must be provided")
+            raise ValueError("compute_transformation_matrix must be provided")
 
-        return transformation_matrix @ self.natural_center_of_mass
+        return np.array(transformation_matrix @ self.natural_center_of_mass)
 
     def inertia(self, transformation_matrix: np.ndarray = None) -> np.ndarray:
         """
@@ -256,7 +256,7 @@ class NaturalInertialParameters:
         return self.compute_cartesian_inertia_from_pseudo(
             mass=self.mass,
             cartesian_center_of_mass=self.center_of_mass(transformation_matrix),
-            pseudo_inertia=self.pseudo_inertia_matrix,
+            pseudo_inertia=self.natural_pseudo_inertia,
             transformation_mat=transformation_matrix,
         )
 
@@ -265,18 +265,18 @@ class NaturalInertialParameters:
             cls,
             mass: Union[np.ndarray, float, np.float64] = None,
             center_of_mass: np.ndarray = None,
-            inertia: np.ndarray = None,
+            inertia_matrix: np.ndarray = None,
             inertial_transformation_matrix: np.ndarray = None,
     ):
 
-        if inertia.shape != (3, 3):
+        if inertia_matrix.shape != (3, 3):
             raise ValueError("Inertia matrix must be 3x3")
 
         natural_center_of_mass = cls.compute_natural_center_of_mass(center_of_mass, inertial_transformation_matrix)
         pseudo_inertia_matrix = cls.compute_pseudo_inertia_matrix(
             mass=mass,
             cartesian_center_of_mass=center_of_mass,
-            cartesian_inertia=inertia,
+            cartesian_inertia=inertia_matrix,
             transformation_mat=inertial_transformation_matrix,
         )
 
@@ -344,15 +344,15 @@ class NaturalInertialParameters:
 
         return Binv @ (middle_block @ Binv_transpose)
 
-    # def to_mx(self) -> AbstractNaturalInertialParameters:
-    #     """
-    #     This function returns the segment in MX format
-    #     """
-    #     from ..bionc_casadi.natural_inertial_parameters import NaturalInertialParameters as NaturalInertialParametersMX
-    #
-    #     return NaturalInertialParametersMX(
-    #         mass,
-    #         natural_center_of_mass,
-    #         natural_pseudo_inertia,
-    #         initial_transformation_matrix,
-    #     )
+    def to_mx(self) -> "NaturalInertialParameters":
+        """
+        This function returns the segment in MX format
+        """
+        from ..bionc_casadi.natural_inertial_parameters import NaturalInertialParameters as NaturalInertialParametersMX
+
+        return NaturalInertialParametersMX(
+            mass=self.mass,
+            natural_center_of_mass=self.natural_center_of_mass,
+            natural_pseudo_inertia=self.natural_pseudo_inertia,
+            initial_transformation_matrix=self._initial_transformation_matrix,
+        )

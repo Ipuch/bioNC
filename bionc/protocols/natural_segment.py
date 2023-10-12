@@ -46,6 +46,7 @@ class AbstractNaturalSegment(ABC):
         mass: Union[MX, float, np.float64] = None,
         natural_center_of_mass: Union[MX, np.ndarray] = None,
         natural_pseudo_inertia: Union[MX, np.ndarray] = None,
+        inertial_transformation_matrix_type: TransformationMatrixType = None,
         index: int = None,
         is_ground: bool = False,
     ):
@@ -57,30 +58,16 @@ class AbstractNaturalSegment(ABC):
         self._beta = beta
         self._gamma = gamma
 
-        # todo: sanity check to make sure u, v or w are not collinear
-        # todo: implement all the transformations matrix according the Ph.D thesis of Alexandre Naaim
-
         self._mass = mass
-        if natural_center_of_mass is None:
-            self._center_of_mass = None
-            self._natural_center_of_mass = natural_center_of_mass
-        else:
-            if natural_center_of_mass.shape[0] != 3:
-                raise ValueError("Center of mass must be 3x1")
-            # self._center_of_mass = center_of_mass # should become a method
-            self._natural_center_of_mass = natural_center_of_mass
+        self._natural_center_of_mass = natural_center_of_mass
+        self._natural_pseudo_inertia = natural_pseudo_inertia
+        self._mass_matrix = None
+        self._natural_inertial_parameters = None
+        self._inertial_transformation_matrix_type = inertial_transformation_matrix_type
 
-        if natural_pseudo_inertia is None:
-            self._inertia = None
-            self._inertia_in_natural_coordinates_system = natural_pseudo_inertia
-            self._interpolation_matrix_inertia = None
-            self._mass_matrix = None
-        else:
-            if natural_pseudo_inertia.shape != (3, 3):
-                raise ValueError("natural_pseudo_inertia matrix must be 3x3")
-            # self._inertia = inertia  # should become a method
-            self._pseudo_inertia_matrix = natural_pseudo_inertia
-            self._mass_matrix = self._update_mass_matrix()
+        if mass is not None and natural_center_of_mass is not None and natural_pseudo_inertia is not None:
+            self.set_natural_inertial_parameters(mass, natural_center_of_mass, natural_pseudo_inertia)
+            self._natural_inertial_parameters._initial_transformation_matrix = self.compute_transformation_matrix(inertial_transformation_matrix_type)
 
         # list of markers embedded in the segment
         self._markers = []
@@ -203,6 +190,46 @@ class AbstractNaturalSegment(ABC):
     def mass(self):
         return self._mass
 
+    @property
+    def natural_center_of_mass(self):
+        return self._natural_center_of_mass
+
+    @property
+    def natural_pseudo_inertia(self):
+        return self._natural_pseudo_inertia
+
+    @abstractmethod
+    def set_natural_inertial_parameters(self, mass, natural_center_of_mass, natural_pseudo_inertia):
+        """
+        This function sets the natural inertial parameters of the segment
+
+        Parameters
+        ----------
+        mass
+            The mass of the segment
+        natural_center_of_mass
+            The center of mass of the segment in the natural coordinate system
+        natural_pseudo_inertia
+            The pseudo inertia matrix of the segment in the natural coordinate system
+        """
+
+    @abstractmethod
+    def set_inertial_parameters(self, mass, center_of_mass, inertia_matrix, transformation_matrix_type):
+        """
+        This function sets the natural inertial parameters of the segment
+
+        Parameters
+        ----------
+        mass
+            The mass of the segment
+        center_of_mass
+            The center of mass of the segment in the segment coordinate system
+        inertia_matrix
+            The inertia matrix of the segment in the segment coordinate system
+        transformation_matrix_type
+            The transformation matrix type
+        """
+
     @abstractmethod
     def center_of_mass(self, transformation_matrix: TransformationMatrixType):
         """
@@ -220,10 +247,6 @@ class AbstractNaturalSegment(ABC):
         """
 
     @property
-    def inertia(self):
-        return self._inertia
-
-    @property
     def mass_matrix(self):
         """
         This function returns the generalized mass matrix of the segment, denoted G_i.
@@ -235,32 +258,8 @@ class AbstractNaturalSegment(ABC):
 
         return self._mass_matrix
 
-    @property
-    def pseudo_inertia_matrix(self):
-        """
-        This function returns the pseudo-inertia matrix of the segment, denoted J_i.
-        It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
-
-        Returns
-        -------
-            Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
-        """
-        return self._pseudo_inertia_matrix
-
-    @property
-    def natural_center_of_mass(self):
-        """
-        This function returns the center of mass of the segment in the natural coordinate system.
-        It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
-
-        Returns
-        -------
-            Center of mass of the segment in the natural coordinate system [3x1]
-        """
-        return self._natural_center_of_mass
-
     @abstractmethod
-    def compute_transformation_matrix(self):
+    def compute_transformation_matrix(self, transformation_matrix_type: TransformationMatrixType):
         """
         This function returns the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
@@ -332,13 +331,6 @@ class AbstractNaturalSegment(ABC):
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
         """
 
-    @abstractmethod
-    def _pseudo_inertia_matrix(self):
-        """
-        This function returns the pseudo-inertia matrix of the segment, denoted J_i.
-        It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
-        """
-
     @staticmethod
     def compute_pseudo_inertia_matrix(
             mass,
@@ -349,26 +341,6 @@ class AbstractNaturalSegment(ABC):
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
         It transforms the inertia matrix of the segment in the segment coordinate system to the natural coordinate system.
-        """
-
-    @abstractmethod
-    def _natural_center_of_mass(self):
-        """
-        This function computes the center of mass of the segment in the natural coordinate system.
-        It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
-        """
-
-    @staticmethod
-    def compute_natural_center_of_mass(center_of_mass, transformation_matrix):
-        """
-        This function computes the center of mass of the segment in the natural coordinate system.
-        It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
-        """
-
-    @abstractmethod
-    def _update_mass_matrix(self):
-        """
-        This function returns the generalized mass matrix of the segment, denoted G_i.
         """
 
     @abstractmethod

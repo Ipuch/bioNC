@@ -43,7 +43,7 @@ def test_natural_segment(bionc_type):
     TestUtils.assert_equal(my_segment.length, 1)
     TestUtils.assert_equal(my_segment.mass, 1)
     TestUtils.assert_equal(my_segment.center_of_mass(), np.array([0, 0.01, 0]))
-    TestUtils.assert_equal(my_segment.inertia, np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
+    TestUtils.assert_equal(my_segment._natural_inertial_parameters.inertia(), np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]))
 
     TestUtils.assert_equal(my_segment.natural_center_of_mass, np.array([0, 0.01, 0]), expand=False)
     N = np.array(
@@ -232,7 +232,7 @@ def test_natural_segment(bionc_type):
 
     J = np.array([[1.0e00, -1.0e-04, -1.0e-04], [-1.0e-04, 1.0e00, -1.0e-04], [-1.0e-04, -1.0e-04, 1.0e00]])
 
-    TestUtils.assert_equal(my_segment._pseudo_inertia_matrix, J, expand=False)
+    TestUtils.assert_equal(my_segment._natural_pseudo_inertia, J, expand=False)
 
     # kinetic energy and potential energy
 
@@ -564,7 +564,7 @@ def test_center_of_mass(bionc_type):
 
     n_com = seg.natural_center_of_mass
     gravity_force = seg.gravity_force()
-    inertia = seg.pseudo_inertia_matrix
+    inertia = seg.natural_pseudo_inertia
     M = seg.mass_matrix
 
     TestUtils.assert_equal(n_com, np.array([0.1, 0.126213, 0.310178]), expand=False)

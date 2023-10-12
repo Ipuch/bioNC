@@ -2,6 +2,8 @@ from sys import platform
 import numpy as np
 import pytest
 
+from bionc import TransformationMatrixType
+
 from .utils import TestUtils
 
 
@@ -22,7 +24,7 @@ def test_forward_dynamics(bionc_type):
     module = TestUtils.load_module(bionc + "/examples/forward_dynamics/drop_the_box.py")
 
     # Let's create a segment
-    my_segment = NaturalSegment(
+    my_segment = NaturalSegment.with_cartesian_inertial_parameters(
         name="box",
         alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
         beta=np.pi / 2,
@@ -31,6 +33,7 @@ def test_forward_dynamics(bionc_type):
         mass=1,
         center_of_mass=np.array([0, 0, 0]),  # in segment coordinates system
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     # Let's create a motion now

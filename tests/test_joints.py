@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from bionc import JointType, NaturalAxis, CartesianAxis, NaturalMarker
+from bionc import JointType, NaturalAxis, CartesianAxis, TransformationMatrixType
 from .utils import TestUtils
 
 
@@ -31,7 +31,7 @@ def test_joints(bionc_type, joint_type: JointType):
             GroundJoint,
         )
 
-    box = NaturalSegment(
+    box = NaturalSegment.with_cartesian_inertial_parameters(
         name="box",
         alpha=np.pi / 2,
         beta=np.pi / 2,
@@ -40,9 +40,10 @@ def test_joints(bionc_type, joint_type: JointType):
         mass=1,
         center_of_mass=np.array([0, 0, 0]),  # scs
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
-    bbox = NaturalSegment(
+    bbox = NaturalSegment.with_cartesian_inertial_parameters(
         name="bbox",
         alpha=np.pi / 1.9,
         beta=np.pi / 2.3,
@@ -51,6 +52,7 @@ def test_joints(bionc_type, joint_type: JointType):
         mass=1.1,
         center_of_mass=np.array([0.1, 0.11, 0.111]),  # scs
         inertia=np.array([[1.1, 0, 0], [0, 1.2, 0], [0, 0, 1.3]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     model = BiomechanicalModel()

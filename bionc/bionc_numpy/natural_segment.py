@@ -24,13 +24,13 @@ class NaturalSegment(AbstractNaturalSegment):
     Methods
     -------
     to_mx()
-        This function returns the segment in MX format
+        This function returns the segment in MX format.
     from_experimental_Q()
-        It builds a NaturalSegment from the segment natural coordinates
+        It builds a NaturalSegment from the segment natural coordinates.
     parameters_from_Q()
-        It computes the parameters of the segment from SegmentNaturalCoordinates Q
+        It computes the parameters of the segment from SegmentNaturalCoordinates Q.
     set_experimental_Q_function()
-        This function sets the experimental Q function that evaluates Q from marker locations
+        This function sets the experimental Q function that evaluates Q from marker locations.
     _Qi_from_markers()
         This function evaluates segment natural coordinates Q from markers locations.
 

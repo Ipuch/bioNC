@@ -215,8 +215,8 @@ class NaturalInertialParameters:
         middle_block = B @ (pseudo_inertia @ transpose(B))
         inertia = (
             middle_block
-            - mass * dot(transpose(cartesian_center_of_mass), cartesian_center_of_mass) * MX.eye(3)
-            + dot(transpose(cartesian_center_of_mass), cartesian_center_of_mass)
+            - mass * transpose(cartesian_center_of_mass) @ cartesian_center_of_mass * MX.eye(3)
+            + transpose(cartesian_center_of_mass) @ cartesian_center_of_mass
         )
         return inertia
 

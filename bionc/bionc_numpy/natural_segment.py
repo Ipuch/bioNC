@@ -91,7 +91,7 @@ class NaturalSegment(AbstractNaturalSegment):
             gamma=gamma,
             length=length,
             mass=mass,
-            natural_center_of_mass=NaturalVector(natural_center_of_mass),
+            natural_center_of_mass=natural_center_of_mass,
             natural_pseudo_inertia=natural_pseudo_inertia,
             inertial_transformation_matrix_type=inertial_transformation_matrix_type,
             index=index,

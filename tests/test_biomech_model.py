@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pytest
 
+from bionc import TransformationMatrixType
+
 from .utils import TestUtils
 
 
@@ -8779,7 +8781,7 @@ def test_biomech_model_mass(bionc_type):
             BiomechanicalModel,
         )
 
-    my_segment = NaturalSegment(
+    my_segment = NaturalSegment.with_cartesian_inertial_parameters(
         name="box",
         alpha=np.pi / 2,
         beta=np.pi / 2,
@@ -8788,9 +8790,10 @@ def test_biomech_model_mass(bionc_type):
         mass=1,
         center_of_mass=np.array([0, 0, 0]),  # scs
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
-    my_segment_2 = NaturalSegment(
+    my_segment_2 = NaturalSegment.with_cartesian_inertial_parameters(
         name="box2",
         alpha=np.pi / 2,
         beta=np.pi / 2,
@@ -8799,6 +8802,7 @@ def test_biomech_model_mass(bionc_type):
         mass=1,
         center_of_mass=np.array([0, 0, 0]),  # scs
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     model = BiomechanicalModel()

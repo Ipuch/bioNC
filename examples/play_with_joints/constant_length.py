@@ -11,6 +11,7 @@ from bionc import (
     NaturalMarker,
     Viz,
     forward_integration,
+    TransformationMatrixType,
 )
 
 import numpy as np
@@ -23,7 +24,7 @@ def build_two_link_segment():
     # fill the biomechanical model with the segment
     for i in range(2):
         name = f"segment_{i}"
-        model[name] = NaturalSegment(
+        model[name] = NaturalSegment.with_cartesian_inertial_parameters(
             name=name,
             alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates an orthogonal coordinate system
             beta=np.pi / 2,
@@ -32,6 +33,7 @@ def build_two_link_segment():
             mass=1,
             center_of_mass=np.array([0, -0.5, 0]),  # in segment coordinates system
             inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+            inertial_transformation_matrix=TransformationMatrixType.Buv,
         )
 
     model["segment_0"].add_natural_marker(

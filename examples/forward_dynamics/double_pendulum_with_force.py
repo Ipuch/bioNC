@@ -11,7 +11,7 @@ from bionc.bionc_numpy import (
     ExternalForceList,
     ExternalForce,
 )
-from bionc import NaturalAxis, CartesianAxis, RK4
+from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 
 
 def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
@@ -24,7 +24,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
     # fill the biomechanical model with the segment
     for i in range(nb_segments):
         name = f"pendulum_{i}"
-        model[name] = NaturalSegment(
+        model[name] = NaturalSegment.with_cartesian_inertial_parameters(
             name=name,
             alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
             beta=np.pi / 2,
@@ -33,6 +33,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
             mass=1,
             center_of_mass=np.array([0, -0.5, 0]),  # in segment coordinates system
             inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+            inertial_transformation_matrix=TransformationMatrixType.Buv,
         )
     # add a revolute joint (still experimental)
     # if you want to add a revolute joint,

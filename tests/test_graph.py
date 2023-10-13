@@ -1,4 +1,4 @@
-from bionc import BiomechanicalModel, JointType, NaturalAxis, CartesianAxis, NaturalSegment
+from bionc import BiomechanicalModel, JointType, NaturalAxis, CartesianAxis, NaturalSegment, TransformationMatrixType
 import numpy as np
 import pytest
 
@@ -10,7 +10,7 @@ def build_model() -> BiomechanicalModel:
     # fill the biomechanical model with the segment
     for i in range(6):
         name = f"pendulum_{i}"
-        model[name] = NaturalSegment(
+        model[name] = NaturalSegment.with_cartesian_inertial_parameters(
             name=name,
             alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates an orthogonal coordinate system
             beta=np.pi / 2,
@@ -19,6 +19,7 @@ def build_model() -> BiomechanicalModel:
             mass=1,
             center_of_mass=np.array([0, 0.1, 0]),  # in segment coordinates system
             inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+            inertial_transformation_matrix=TransformationMatrixType.Buv,
         )
     # add a revolute joint (still experimental)
     # if you want to add a revolute joint,

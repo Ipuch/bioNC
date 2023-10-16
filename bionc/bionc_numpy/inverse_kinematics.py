@@ -430,99 +430,113 @@ class InverseKinematics:
             and the marker with highest residual
         """
 
+        nb_frames = self.nb_frames
+        nb_markers = self.nb_markers
+        nb_joints_constraints = 0
+        for ind, key in enumerate(self.model.joint_names):
+            nb_joints_constraints += self.model.joints[key].nb_constraints
+        nb_segments = len(self.model.segment_names)
+
         # Initialisation of all the different residuals that can be calculated
-        residuals_markers = dict()
-        residuals_makers_xyz = dict()
-        residuals_joints = dict()
-        residuals_rigidity = dict()
+        residuals_markers_norm = np.zeros((1, nb_markers,nb_frames))
+        residuals_makers_xyz = np.zeros((3, nb_markers,nb_frames))
+        residuals_joints = np.zeros((nb_joints_constraints,nb_frames))
+        residuals_rigidity = np.zeros((nb_segments,nb_frames))
 
         # Global will correspond to the squared sum of all the specifi residuals
-        residuals_markers["Global"] = np.zeros((1, self.nb_frames))
-        residuals_makers_xyz["Global"] = np.zeros((3 * self.nb_markers, self.nb_frames))
-        residual_marker_max_name = [None] * self.nb_frames
-        residuals_joints["Global"] = np.zeros((1, self.nb_frames))
-        residuals_rigidity["Global"] = np.zeros((1, self.nb_frames))
+        total_residuals_markers = np.zeros((nb_frames))
+        total_residuals_joints = np.zeros((nb_frames))
+        total_residual_rigity = np.zeros((nb_frames))
 
         # The residual will also be calculated for each marker, joint and segment individually
-        for ind, key in enumerate(self.model.marker_names):
-            residuals_markers[key] = np.zeros((1, self.nb_frames))
-            residuals_makers_xyz[key] = np.zeros((3, self.nb_frames))
-
-        for ind, key in enumerate(self.model.joint_names):
-            nb_constraint = self.model.joints[key].nb_constraints
-            residuals_joints[key] = np.zeros((nb_constraint, self.nb_frames))
-
-        for ind, key in enumerate(self.model.segment_names):
-            residuals_rigidity[key] = np.zeros((6, self.nb_frames))
+        # for ind, key in enumerate(self.model.marker_names):
+        #     residuals_markers[key] = np.zeros((1, self.nb_frames))
+        #     residuals_makers_xyz[key] = np.zeros((3, self.nb_frames))
+        #
+        # for ind, key in enumerate(self.model.joint_names):
+        #     nb_constraint = self.model.joints[key].nb_constraints
+        #     residuals_joints[key] = np.zeros((nb_constraint, self.nb_frames))
+        #
+        # for ind, key in enumerate(self.model.segment_names):
+        #     residuals_rigidity[key] = np.zeros((6, self.nb_frames))
 
         for i in range(self.nb_frames):
+            # Extraction of the residuals for each frame
             # Rigidity constraint
             phir_post_optim = self.model.rigid_body_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
-            residuals_rigidity["Global"][:, i] = np.sqrt(np.dot(phir_post_optim, phir_post_optim))
-            for ind, key in enumerate(self.model.segment_names):
-                residuals_rigidity[key][:, i] = phir_post_optim[ind * 6 : (ind + 1) * 6]
-
             # Kinematics constraints (associated with the joint of the model)
             phik_post_optim = self.model.joint_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
-            residuals_joints["Global"][:, i] = np.sqrt(np.dot(phik_post_optim, phik_post_optim))
-            nb_temp_constraint = 0
-            for ind, key in enumerate(self.model.joint_names):
-                nb_constraint = self.model.joints[key].nb_constraints
-                if nb_constraint > 0:
-                    residuals_joints[key][:, i] = phik_post_optim[
-                        nb_temp_constraint : nb_temp_constraint + nb_constraint
-                    ]
-                nb_temp_constraint += nb_constraint
-
             # Marker constraints
             phim_post_optim = self.model.markers_constraints(
                 self.experimental_markers[:, :, i], NaturalCoordinatesNumpy(self.Qopt[:, i]), only_technical=True
             )
-            residuals_markers["Global"][:, i] = np.sqrt(np.dot(phim_post_optim, phim_post_optim))
-            residuals_makers_xyz["Global"][:, i] = phim_post_optim
+            # Total residual by frame
+            total_residual_rigity[i] = np.sqrt(np.dot(phir_post_optim, phir_post_optim))
+            total_residuals_joints[i] = np.sqrt(np.dot(phik_post_optim, phik_post_optim))
+            total_residuals_markers[i] = np.sqrt(np.dot(phim_post_optim, phim_post_optim))
+
+            # Extraction of the residuals for each marker, joint and segment individually
+            nb_temp_constraint = 0
+            for ind, key in enumerate(self.model.joint_names):
+                nb_constraint = self.model.joints[key].nb_constraints
+                if nb_constraint > 0:
+                    residuals_joints[nb_temp_constraint, i] = phik_post_optim[
+                        nb_temp_constraint : nb_temp_constraint + nb_constraint
+                    ]
+                nb_temp_constraint += nb_constraint
 
             for ind, key in enumerate(self.model.marker_names_technical):
-                if ind == 0:
-                    max = 0
-                    residual_marker_max_name[i] = key
+                # if ind == 0:
+                #     max = 0
+                #     residual_marker_max_name[i] = key
 
-                residuals_markers[key][:, i] = np.sqrt(
+                residuals_markers_norm[:, ind, i] = np.sqrt(
                     np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3])
                 )
-                print(key)
-                residuals_makers_xyz[key][:, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
+
+                residuals_makers_xyz[:, ind, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
                 # Should we do this or do a huge matrix with all the residuals and then extract the max with a simple
                 # np.args(np.max(big_matrix) ?
-                if residuals_markers[key][:, i] > max:
-                    max = residuals_markers[key][:, i]
-                    residual_marker_max_name[i] = key
+                # if residuals_markers[key][:, i] > max:
+                #     max = residuals_markers[key][:, i]
+                #     residual_marker_max_name[i] = key
 
-        residuals_markers["max_name"] = residual_marker_max_name
-
-        residuals_markers["Full_Global"] = np.sqrt(
-            np.dot(residuals_markers["Global"], np.transpose(residuals_markers["Global"]))
-        )
-        residuals_joints["Full_Global"] = np.sqrt(
-            np.dot(residuals_joints["Global"], np.transpose(residuals_joints["Global"]))
-        )
-        residuals_rigidity["Full_Global"] = np.sqrt(
-            np.dot(residuals_rigidity["Global"], np.transpose(residuals_rigidity["Global"]))
+        # residuals_markers["max_name"] = residual_marker_max_name
+        #
+        # Calculation of the residual on all frames
+        all_frames_residuals_markers = np.sqrt(
+            np.dot(total_residuals_markers, np.transpose(total_residuals_markers))
         )
 
-        residual_marker_final = dict()
-        # TODO: Better name for this variable to find
-        residual_marker_final["sqrt_sum"] = residuals_markers
-        residual_marker_final["xyz"] = residuals_makers_xyz
+        all_frames_residuals_joints = np.sqrt(
+            np.dot(total_residuals_joints, np.transpose(total_residuals_joints))
+        )
 
-        residuals = dict()
-        residuals["markers"] = residual_marker_final
-        residuals["joints"] = residuals_joints
-        residuals["rigidity"] = residuals_rigidity
+        all_frames_residuals_rigity = np.sqrt(
+            np.dot(total_residual_rigity, np.transpose(total_residual_rigity))
+        )
+
+        # residual_marker_final = dict()
+        # # TODO: Better name for this variable to find
+        # residual_marker_final["sqrt_sum"] = residuals_markers_norm
+        # residual_marker_final["xyz"] = residuals_makers_xyz
+        #
+        # residuals = dict()
+        # residuals["markers"] = residual_marker_final
+        # residuals["joints"] = residuals_joints
+        # residuals["rigidity"] = residuals_rigidity
 
         self.output = dict(
-            markers=residual_marker_final,
-            joints=residuals_joints,
-            rigidity=residuals_rigidity,
+            residuals_markers_norm=residuals_markers_norm,
+            residuals_makers_xyz=residuals_makers_xyz,
+            total_residuals_markers=total_residuals_markers,
+            all_frames_residuals_markers=all_frames_residuals_markers,
+            residuals_joints=residuals_joints,
+            total_residuals_joints=total_residuals_joints,
+            all_frames_residuals_joints=all_frames_residuals_joints,
+            residuals_rigidity=residuals_rigidity,
+            total_residual_rigity=total_residual_rigity,
+            all_frames_residuals_rigity=all_frames_residuals_rigity,
             # message=[sol.message for sol in self.list_sol],
             # status=[sol.status for sol in self.list_sol],
             # success=[sol.success for sol in self.list_sol],

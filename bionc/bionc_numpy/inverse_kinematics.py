@@ -429,7 +429,6 @@ class InverseKinematics:
             The output of least_square function, such as number of iteration per frames,
             and the marker with highest residual
         """
-        from bionc.bionc_numpy.natural_coordinates import NaturalCoordinates
 
         # Initialisation of all the different residuals that can be calculated
         residuals_markers = dict()
@@ -458,13 +457,13 @@ class InverseKinematics:
 
         for i in range(self.nb_frames):
             # Rigidity constraint
-            phir_post_optim = self.model.rigid_body_constraints(NaturalCoordinates(self.Qopt[:, i]))
+            phir_post_optim = self.model.rigid_body_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
             residuals_rigidity["Global"][:, i] = np.sqrt(np.dot(phir_post_optim, phir_post_optim))
             for ind, key in enumerate(self.model.segment_names):
                 residuals_rigidity[key][:, i] = phir_post_optim[ind * 6 : (ind + 1) * 6]
 
             # Kinematics constraints (associated with the joint of the model)
-            phik_post_optim = self.model.joint_constraints(NaturalCoordinates(self.Qopt[:, i]))
+            phik_post_optim = self.model.joint_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
             residuals_joints["Global"][:, i] = np.sqrt(np.dot(phik_post_optim, phik_post_optim))
             nb_temp_constraint = 0
             for ind, key in enumerate(self.model.joint_names):
@@ -477,12 +476,12 @@ class InverseKinematics:
 
             # Marker constraints
             phim_post_optim = self.model.markers_constraints(
-                self.experimental_markers[:, :, i], NaturalCoordinates(self.Qopt[:, i]), only_technical=True
+                self.experimental_markers[:, :, i], NaturalCoordinatesNumpy(self.Qopt[:, i]), only_technical=True
             )
             residuals_markers["Global"][:, i] = np.sqrt(np.dot(phim_post_optim, phim_post_optim))
             residuals_makers_xyz["Global"][:, i] = phim_post_optim
 
-            for ind, key in enumerate(self.model.marker_names):
+            for ind, key in enumerate(self.model.marker_names_technical):
                 if ind == 0:
                     max = 0
                     residual_marker_max_name[i] = key
@@ -490,6 +489,7 @@ class InverseKinematics:
                 residuals_markers[key][:, i] = np.sqrt(
                     np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3])
                 )
+                print(key)
                 residuals_makers_xyz[key][:, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
                 # Should we do this or do a huge matrix with all the residuals and then extract the max with a simple
                 # np.args(np.max(big_matrix) ?

@@ -3,19 +3,10 @@ from typing import Callable
 from casadi import vertcat, horzcat, MX, nlpsol, SX, Function, sum1, dot, exp
 import numpy as np
 from pyomeca import Markers
-import ezc3d
 
-from ..bionc_casadi import (
-    NaturalCoordinates,
-    SegmentNaturalCoordinates,
-)
-
-from ..protocols.biomechanical_model import (
-    GenericBiomechanicalModel as BiomechanicalModel,
-)
-from ..bionc_numpy.natural_coordinates import (
-    NaturalCoordinates as NaturalCoordinatesNumpy,
-)
+from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
+from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
+from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 
 
 def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
@@ -37,14 +28,7 @@ def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
     return f(*symbolics)
 
 
-def _solve_nlp(
-    method: str,
-    nlp: dict,
-    Q_init: np.ndarray,
-    lbg: np.ndarray,
-    ubg: np.ndarray,
-    options: dict,
-):
+def _solve_nlp(method: str,nlp: dict,Q_init: np.ndarray,lbg: np.ndarray,ubg: np.ndarray,options: dict):
     """
     Solves a nonlinear program with CasADi
 
@@ -67,12 +51,7 @@ def _solve_nlp(
     -------
     The output of the solver
     """
-    S = nlpsol(
-        "InverseKinematics",
-        method,
-        nlp,
-        options,
-    )
+    S = nlpsol("InverseKinematics",method,nlp,options)
     r = S(x0=Q_init, lbg=lbg, ubg=ubg)
 
     if S.stats()["success"] is False:
@@ -103,7 +82,17 @@ def sarrus(matrix: MX):
         - matrix[0, 2] * matrix[1, 1] * matrix[2, 0]
     )
 
+def _compute_phim_hmp(X, cal, ratio, amp, pos, sigma):
+    phim = amp[0] * exp(-((((ratio*(dot(X, cal[1, 0:3]) + cal[1, 3])/(dot(X, cal[2, 0:3]) + cal[2, 3])- pos[0])** 2)/ (2 * sigma[0] ** 2))+ (((ratio*(dot(X, cal[0, 0:3]) + cal[0, 3])/(dot(X, cal[2, 0:3]) + cal[2, 3])- pos[1])** 2)/ (2 * sigma[1] ** 2))))
+    return phim # or return just phim?? as it is for one camera
 
+ind_name = [i for i in range(26)]
+param_name=['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear','left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 
+            'left_wrist', 'right_wrist', 'left_hip', 'right_hip', 'left_knee', 'right_knee',
+            'left_ankle', 'right_ankle', 'neck', 'top_head', 'left_Btoe', 'left_Stoe', 
+            'left_heel', 'right_Btoe', 'right_Stoe', 'right_heel', 'chest']
+kp2name  = dict(zip(ind_name, param_name))
+name2kp = dict(zip(param_name, ind_name))
 class InverseKinematics:
     """
     Inverse kinematics solver also known as Multibody Kinematics Optimization (MKO)
@@ -155,7 +144,7 @@ class InverseKinematics:
         self,
         model: BiomechanicalModel,
         experimental_markers: np.ndarray | str = None,
-        gaussian_parameters: str = None,
+        experimental_heatmaps: dict | str = None,
         Q_init: np.ndarray | NaturalCoordinates = None,
         solve_frame_per_frame: bool = True,
         active_direct_frame_constraints: bool = False,
@@ -188,11 +177,13 @@ class InverseKinematics:
         self.model = model
         self._model_mx = model.to_mx()
 
-        if isinstance(experimental_markers, str):
-            self.experimental_markers = Markers.from_c3d(
-                experimental_markers
-            ).to_numpy()
-            self.markerless = False
+
+        if experimental_markers is None and experimental_heatmaps is None:
+            raise ValueError("Please feed experimental data, either marker or heatmap data")
+        elif experimental_markers and experimental_heatmaps:
+            raise ValueError("Please choose between marker data and heatmap data")       
+        elif isinstance(experimental_markers, str):
+            self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
         elif isinstance(experimental_markers, np.ndarray):
             if (
                 experimental_markers.shape[0] != 3
@@ -201,26 +192,16 @@ class InverseKinematics:
             ):
                 raise ValueError("experimental_markers must be a 3xNxM numpy array")
             self.experimental_markers = experimental_markers
-            self.markerless = False
-        # else:
-        #     raise ValueError("experimental_markers must be a numpy array or a path to a c3d file") # to modify so it doesn't crash automatically
+        elif isinstance(experimental_heatmaps, dict): 
+            self.experimental_heatmaps = experimental_heatmaps
+            self.gaussian_parameters = experimental_heatmaps["gaussian_parameters"]
+            self.camera_parameters = experimental_heatmaps["camera_parameters"]
+            self.ratio = experimental_heatmaps["ratio"]
 
-        if isinstance(gaussian_parameters, str):
-            self.markerless = True
-            c3d_data = ezc3d.c3d(gaussian_parameters)
-
-            # data = np.array((3, 10000, c3d_data['parameters']['POINT']['FRAMES']['value'][0] )) # 10 000 à changer
-
-            ## comment est ce que je range mes données ici ??!
-
-            self._gaussian_parameters = c3d_data
-
-            # est ce qu'on va pas avoir des problèmes à chaque fois que experimental_markers devrait être appelé??!
-
-        if Q_init is None and self.markerless == False:
+        if Q_init is None and self.experimental_heatmaps is None:
             self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
-        elif Q_init is None and self.markerless == True:
-            raise ValueError("Q_init must be provided for markerless analysis")
+        elif Q_init is None and self.experimental_markers is None:
+            raise ValueError("Q_init must be provided for heatmap analysis")
         else:
             self.Q_init = Q_init
 
@@ -228,43 +209,26 @@ class InverseKinematics:
         self.segment_determinants = None
         self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
 
-        if self.markerless:
-            # self.nb_frames = self._gaussian_parameters['parameters']['POINT']['FRAMES']['value'][0]
-            self.nb_frames = 5
-            # self.nb_markers = 26  # voir si ça va pas générer des problèmes si 1) on utilise pas tous les keypoints et 2) si ils sont pas tous dans le c3d
-
-            self.objective_sym = [
-                self._objective_HMP(self._Q_sym, self._gaussian_parameters)
-            ]
+        if self.experimental_markers is None:
+            self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape(2)
+            self.nb_markers = 26  
+            self._camera_parameters_sym = MX.sym("cam_param", (3, 4, self.experimental_heatmaps["camera_parameters"].shape(2)))
+            self._gaussian_parameters_sym = MX.sym("gaussian_param", (5, self.nb_markers, self.nb_frames, self.experimental_heatmaps["gaussian_parameters"].shape(3)))
+            self._ratio_sym = MX.sym("ratio")
+            self.objective_sym = [self._objective_maximize_confidence(self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym, self._ratio_sym)]
 
             self._objective_function = None
-            self._update_objective_function_hmp()
 
         else:
             self.nb_frames = self.experimental_markers.shape[2]
             self.nb_markers = self.experimental_markers.shape[1]
 
             self._markers_sym = MX.sym("markers", (3, self.nb_markers))
-            self.objective_sym = [self._objective(self._Q_sym, self._markers_sym)]
+            self.objective_sym = [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
 
             self._objective_function = None
-            self._update_objective_function()
 
-    def _update_objective_function_hmp(self):
-        """
-        This method updates the objective function of the inverse kinematics problem in the case of heatmap input data.
-        It is called each time a new objective is added to the inverse kinematics problem.
-        It is based on the architecture of _update_objective_function(self)
-        """
-        ## là il faut vérifier si c'est bon ==> c'est pas bon
-        # voir ce qui est attendu en fait...
-        # self._objective_function = Function(
-        #     "objective_function", [self._Q_sym, self._gaussian_parameters], [sum1(vertcat(*self.objective_sym))]
-        # ).expand()
-
-        self._objective_function = Function(
-            "objective_function", [self._Q_sym], [sum1(vertcat(*self.objective_sym))]
-        ).expand()
+        self._update_objective_function()
 
     def _update_objective_function(self):
         """
@@ -272,11 +236,7 @@ class InverseKinematics:
         objective is added to the inverse kinematics problem.
         """
 
-        self._objective_function = Function(
-            "objective_function",
-            [self._Q_sym, self._markers_sym],
-            [sum1(vertcat(*self.objective_sym))],
-        ).expand()
+        self._objective_function = Function("objective_function",[self._Q_sym, self._markers_sym, self._camera_parameters_sym, self._gaussian_parameters_sym, self._ratio_sym],[sum1(vertcat(*self.objective_sym))]).expand()
 
     def add_objective(self, objective_function: Callable):
         """
@@ -319,11 +279,7 @@ class InverseKinematics:
         self.objective_sym.append(symbolic_objective)
         self._update_objective_function()
 
-    def solve(
-        self,
-        method: str = "ipopt",
-        options: dict = None,
-    ) -> np.ndarray:
+    def solve(self,method: str = "ipopt",options: dict = None) -> np.ndarray:
         """
         Solves the inverse kinematics
 
@@ -367,9 +323,7 @@ class InverseKinematics:
                     "ipopt.print_timing_statistics": "no",
                 }
         else:
-            raise ValueError(
-                "method must be one of the following str: 'sqpmethod' or 'ipopt'"
-            )
+            raise ValueError("method must be one of the following str: 'sqpmethod' or 'ipopt'")
 
         if self._frame_per_frame:
             Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
@@ -390,12 +344,9 @@ class InverseKinematics:
                 else constraints,
             )
             for f in range(self.nb_frames):
-                if self.markerless:
-                    objective = self._objective_function(self._Q_sym)
-                else:
-                    objective = self._objective_function(
-                        self._Q_sym, self.experimental_markers[:, :, f]
-                    )
+                
+                objective = self._objective_function(self._Q_sym, self.experimental_markers[:, :, f], self.camera_parameters, self.gaussian_parameters[:,:,f,:], self.ratio)
+
                 nlp["f"] = (
                     _mx_to_sx(objective, [self._vert_Q_sym])
                     if self.use_sx
@@ -410,10 +361,10 @@ class InverseKinematics:
                 constraints = vertcat(
                     constraints, self._direct_frame_constraints(self._Q_sym)
                 )
-            if self.markerless:
-                objective = self._objective_HMP(self._Q_sym, self._gaussian_parameters)
+            if self.experimental_heatmaps is None:
+                objective = self._objective_minimize_marker_distance(self._Q_sym, self.experimental_markers)
             else:
-                objective = self._objective(self._Q_sym, self.experimental_markers)
+                raise ValueError("Not possible to do all frames at the same time for the heatmaps")
             nlp = dict(
                 x=self._vert_Q_sym,
                 f=_mx_to_sx(objective, [self._vert_Q_sym])
@@ -459,7 +410,7 @@ class InverseKinematics:
         vert_Q = vertcat(*Q_sym)
         return Q, vert_Q
 
-    def _objective(self, Q, experimental_markers) -> MX:
+    def _objective_minimize_marker_distance(self, Q, experimental_markers) -> MX:
         """
         Computes the objective function and handle single frame or multi frames
 
@@ -483,160 +434,24 @@ class InverseKinematics:
             error_m += 1 / 2 * phim.T @ phim
         return error_m
 
-    def _compute_phim_hmp(self, X, cal, ratio, amp, pos, sigma):
-        # X doit être un vecteur de taille 4x1 en np ==> comment on fait en casadi??!
-        # première bidouille moche : on a toujours X de taille 3x1 et on rajoute le dernier terme a la mano
-        # phim = amp[0] * np.exp(- ((((ratio * (X@cal[1,0:3].T + cal[1,3])/(X@cal[2,0:3].T + cal[2,3])-pos[0])**2) / (2*sigma[0]**2)) + (((ratio * (X@cal[0,0:3].T + cal[0,3])/(X@cal[2,0:3].T + cal[2,3])-pos[1])**2) / (2*sigma[1]**2)))   )
-        phim = amp[0] * exp(
-            -(
-                (
-                    (
-                        (
-                            ratio
-                            * (dot(X, cal[1, 0:3]) + cal[1, 3])
-                            / (dot(X, cal[2, 0:3]) + cal[2, 3])
-                            - pos[0]
-                        )
-                        ** 2
-                    )
-                    / (2 * sigma[0] ** 2)
-                )
-                + (
-                    (
-                        (
-                            ratio
-                            * (dot(X, cal[0, 0:3]) + cal[0, 3])
-                            / (dot(X, cal[2, 0:3]) + cal[2, 3])
-                            - pos[1]
-                        )
-                        ** 2
-                    )
-                    / (2 * sigma[1] ** 2)
-                )
-            )
-        )
-        return 1 / phim
-
-    def _objective_HMP(self, Q, c3d_gaussian_parameters) -> MX:
-        # da = np.array([[1,1,1], [2,2,2]])
-        # dada = MX(da)
-        nb_cameras = [26580, 26582, 26586, 26587]
-
-        hmpData = c3d_gaussian_parameters["data"]["points"]
-        cal_matrix = c3d_gaussian_parameters["parameters"]["FORCE_PLATFORM"][
-            "CAL_MATRIX"
-        ]["value"]
-
-        names_list = []
-        for i in range(
-            len(c3d_gaussian_parameters["parameters"]["POINT"]["LABELS"]["value"])
-        ):
-            names_list.append(
-                c3d_gaussian_parameters["parameters"]["POINT"]["LABELS"]["value"][i]
-            )
-        for i in range(
-            len(c3d_gaussian_parameters["parameters"]["POINT"]["LABELS2"]["value"])
-        ):
-            names_list.append(
-                c3d_gaussian_parameters["parameters"]["POINT"]["LABELS2"]["value"][i]
-            )
-        for i in range(
-            len(c3d_gaussian_parameters["parameters"]["POINT"]["LABELS3"]["value"])
-        ):
-            names_list.append(
-                c3d_gaussian_parameters["parameters"]["POINT"]["LABELS3"]["value"][i]
-            )
-        for i in range(
-            len(c3d_gaussian_parameters["parameters"]["POINT"]["LABELS4"]["value"])
-        ):
-            names_list.append(
-                c3d_gaussian_parameters["parameters"]["POINT"]["LABELS4"]["value"][i]
-            )
-        names = {}
-        for i in range(len(names_list)):
-            names[names_list[i]] = i
+    def _objective_maximize_confidence(self, Q, camera_parameters, gaussian_parameters, ratio) -> MX:
+        # comment faire ici pour qu'on n'ait qu'une seule frame de gaussian_parameters??!
         error_m = 0
-        nb_frames = 1 if self._frame_per_frame else self.nb_frames
-        for f in range(nb_frames):
-            Q_f = NaturalCoordinates(Q[:, f])
-            markers_processed = []
-            for l in range(len(self.model.segment_names)):
-                markers2process = []
-                list_ind = []
-                compt = 0
-                n = len(self.model.segments[self.model.segment_names[l]]._markers)
-                for i in range(n):
-                    if (
-                        self.model.segments[self.model.segment_names[l]]
-                        ._markers[i]
-                        .name
-                        not in markers_processed
-                    ):
-                        list_ind.append(i)
-                        markers2process.append(
-                            self.model.segments[self.model.segment_names[l]]
-                            ._markers[i]
-                            .name
-                        )
-                        markers_processed.append(
-                            self.model.segments[self.model.segment_names[l]]
-                            ._markers[i]
-                            .name
-                        )  # avoid that we compute the motor constraints twice for the same vector
-                for (
-                    i
-                ) in (
-                    list_ind
-                ):  # calcul des contraintes motrices pour chacun des markers
-                    N = (
-                        self._model_mx.segments[self.model.segment_names[l]]
-                        ._markers[i]
-                        .interpolation_matrix
-                    )
-                    for k in range(len(nb_cameras)):
-                        pos = hmpData[
-                            :,
-                            names[
-                                "position_cam_"
-                                + str(nb_cameras[k])
-                                + "_"
-                                + self.model.segments[self.model.segment_names[l]]
-                                ._markers[i]
-                                .name
-                            ],
-                            f,
-                        ]
-                        sig = hmpData[
-                            :,
-                            names[
-                                "sigma_cam_"
-                                + str(nb_cameras[k])
-                                + "_"
-                                + self.model.segments[self.model.segment_names[l]]
-                                ._markers[i]
-                                .name
-                            ],
-                            f,
-                        ]
-                        amp = hmpData[
-                            :,
-                            names[
-                                "amplitude_cam_"
-                                + str(nb_cameras[k])
-                                + "_"
-                                + self.model.segments[self.model.segment_names[l]]
-                                ._markers[i]
-                                .name
-                            ],
-                            f,
-                        ]
-                        ratio = hmpData[0, names["ratio"], 0]
-                        X = (
-                            N @ Q_f[12 * l : 12 * (l + 1)]
-                        )  # probablement un problème ici entre numpy et casadi
-                        error_m += self._compute_phim_hmp(
-                            X, cal_matrix[k], ratio, amp, pos, sig
-                        )
+        Q_f = NaturalCoordinates(Q)
+        for s in range(len(self.model.segment_names)):
+            n = len(self.model.segments[self.model.segment_names[s]]._markers)
+            for m in range(n):
+                N = self._model_mx.segments[self.model.segment_names[s]]._markers[m].interpolation_matrix
+                X = N @ Q_f[12 * s : 12 * (s + 1)]
+                # calculer la confiance pour chaque cam, faire la somme et prendre l'inverse!! 
+                int_phim = 0
+                for c in range(camera_parameters.shape[2]):
+                    cal = camera_parameters[:,:,c]
+                    amp = gaussian_parameters[4, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name] , :, c]
+                    pos = gaussian_parameters[0:2, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name] , :, c]
+                    sig = gaussian_parameters[2:4, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name] , :, c]
+                    int_phim += _compute_phim_hmp(X, cal, ratio, amp, pos, sig)
+                error_m += 1/int_phim
         return error_m
 
     def _constraints(self, Q) -> MX:

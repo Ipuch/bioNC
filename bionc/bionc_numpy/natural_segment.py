@@ -66,7 +66,7 @@ class NaturalSegment(AbstractNaturalSegment):
     add_natural_marker()
         This function adds a marker to the segment
     add_natural_vector()
-        Add a new natual vector to the segment
+        Add a new natural vector to the segment
     add_natural_marker_from_segment_coordinates()
         Add a new marker to the segment
     add_natural_vector_from_segment_coordinates()
@@ -83,7 +83,7 @@ class NaturalSegment(AbstractNaturalSegment):
     kinetic_energy()
         This function returns the kinetic energy of the segment
     inverse_dynamics()
-        Computes inverse dynamics for one segment
+        Computes inverse dynamics for one segment.
 
 
     Attributes

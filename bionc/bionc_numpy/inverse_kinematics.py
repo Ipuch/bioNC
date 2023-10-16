@@ -480,7 +480,7 @@ class InverseKinematics:
             for ind, key in enumerate(self.model.joint_names):
                 nb_constraint = self.model.joints[key].nb_constraints
                 if nb_constraint > 0:
-                    residuals_joints[nb_temp_constraint, i] = phik_post_optim[
+                    residuals_joints[nb_temp_constraint:nb_temp_constraint + nb_constraint, i] = phik_post_optim[
                         nb_temp_constraint : nb_temp_constraint + nb_constraint
                     ]
                 nb_temp_constraint += nb_constraint

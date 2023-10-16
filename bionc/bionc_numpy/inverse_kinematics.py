@@ -66,7 +66,7 @@ def _solve_nlp(method: str, nlp: dict, Q_init: np.ndarray, lbg: np.ndarray, ubg:
     if S.stats()["success"] is False:
         print("Inverse Kinematics failed to converge")
 
-    return r
+    return r, S.stats()["success"]
 
 
 def sarrus(matrix: MX):
@@ -110,6 +110,8 @@ class InverseKinematics:
         The number of frames of the experimental markers
     nb_markers : int
         The number of markers of the experimental markers
+    sucess_optim : list[bool]
+        The success of convergence for each frame
     _frame_per_frame : bool
         If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
     _model_mx : BiomechanicalModel
@@ -198,6 +200,8 @@ class InverseKinematics:
 
         self.nb_frames = self.experimental_markers.shape[2]
         self.nb_markers = self.experimental_markers.shape[1]
+
+        self.success_optim = None
 
         self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
         self._markers_sym = MX.sym("markers", (3, self.nb_markers))
@@ -321,11 +325,13 @@ class InverseKinematics:
                 x=self._vert_Q_sym,
                 g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
+            self.success_optim = []
             for f in range(self.nb_frames):
                 objective = self._objective_function(self._Q_sym, self.experimental_markers[:, :, f])
                 nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
                 Q_init = self.Q_init[:, f : f + 1]
-                r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
+                r, success = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
+                self.success_optim.append(success)
                 Qopt[:, f : f + 1] = r["x"].toarray()
         else:
             constraints = self._constraints(self._Q_sym)
@@ -343,7 +349,8 @@ class InverseKinematics:
             if self._active_direct_frame_constraints:
                 lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
                 ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
-            r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
+            r, success = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
+            self.success_optim = [success] * self.nb_frames
             Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
@@ -491,6 +498,9 @@ class InverseKinematics:
 
         all_frames_residuals_rigity = np.sqrt(np.dot(total_residual_rigity, np.transpose(total_residual_rigity)))
 
+        # Extract optimisation details
+        success = self.success_optim
+
         self.output = dict(
             residuals_markers_norm=residuals_markers_norm,
             residuals_makers_xyz=residuals_makers_xyz,
@@ -504,6 +514,6 @@ class InverseKinematics:
             all_frames_residuals_rigity=all_frames_residuals_rigity,
             # message=[sol.message for sol in self.list_sol],
             # status=[sol.status for sol in self.list_sol],
-            # success=[sol.success for sol in self.list_sol],
+            success=success,
         )
         return self.output

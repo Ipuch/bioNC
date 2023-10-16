@@ -6,7 +6,8 @@ Inverse and Forward approach are implemented.
 ![Stars](https://img.shields.io/github/stars/Ipuch/bioNC?style=social)
 ![Forks](https://img.shields.io/github/forks/Ipuch/bioNC?style=social)
 
-![Release Version](https://img.shields.io/github/v/release/Ipuch/bioNC) <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a>  [![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/)  [![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![Release Version](https://img.shields.io/github/v/release/Ipuch/bioNC) <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a>  
+[![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/)  [![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ![Last Commit](https://img.shields.io/github/last-commit/Ipuch/bioNC)
 ![Contributors](https://img.shields.io/github/contributors/Ipuch/bioNC)
@@ -27,6 +28,9 @@ Inverse and Forward approach are implemented.
 
 # Installation
 - from conda:
+
+![Conda-version](https://anaconda.org/conda-forge/bionc/badges/version.svg)
+![Last-update](https://anaconda.org/conda-forge/bionc/badges/latest_release_relative_date.svg)
 ```
     conda install -c conda-forge bionc
 ```

@@ -28,7 +28,7 @@ def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
     return f(*symbolics)
 
 
-def _solve_nlp(method: str,nlp: dict,Q_init: np.ndarray,lbg: np.ndarray,ubg: np.ndarray,options: dict):
+def _solve_nlp(method: str, nlp: dict, Q_init: np.ndarray, lbg: np.ndarray, ubg: np.ndarray, options: dict):
     """
     Solves a nonlinear program with CasADi
 
@@ -51,7 +51,7 @@ def _solve_nlp(method: str,nlp: dict,Q_init: np.ndarray,lbg: np.ndarray,ubg: np.
     -------
     The output of the solver
     """
-    S = nlpsol("InverseKinematics",method,nlp,options)
+    S = nlpsol("InverseKinematics", method, nlp, options)
     r = S(x0=Q_init, lbg=lbg, ubg=ubg)
 
     if S.stats()["success"] is False:
@@ -82,17 +82,56 @@ def sarrus(matrix: MX):
         - matrix[0, 2] * matrix[1, 1] * matrix[2, 0]
     )
 
+
 def _compute_phim_hmp(X, cal, ratio, amp, pos, sigma):
-    phim = amp[0] * exp(-((((ratio*(dot(X, cal[1, 0:3]) + cal[1, 3])/(dot(X, cal[2, 0:3]) + cal[2, 3])- pos[0])** 2)/ (2 * sigma[0] ** 2))+ (((ratio*(dot(X, cal[0, 0:3]) + cal[0, 3])/(dot(X, cal[2, 0:3]) + cal[2, 3])- pos[1])** 2)/ (2 * sigma[1] ** 2))))
-    return phim # or return just phim?? as it is for one camera
+    phim = amp[0] * exp(
+        -(
+            (
+                ((ratio * (dot(X, cal[1, 0:3]) + cal[1, 3]) / (dot(X, cal[2, 0:3]) + cal[2, 3]) - pos[0]) ** 2)
+                / (2 * sigma[0] ** 2)
+            )
+            + (
+                ((ratio * (dot(X, cal[0, 0:3]) + cal[0, 3]) / (dot(X, cal[2, 0:3]) + cal[2, 3]) - pos[1]) ** 2)
+                / (2 * sigma[1] ** 2)
+            )
+        )
+    )
+    return phim
+
 
 ind_name = [i for i in range(26)]
-param_name=['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear','left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 
-            'left_wrist', 'right_wrist', 'left_hip', 'right_hip', 'left_knee', 'right_knee',
-            'left_ankle', 'right_ankle', 'neck', 'top_head', 'left_Btoe', 'left_Stoe', 
-            'left_heel', 'right_Btoe', 'right_Stoe', 'right_heel', 'chest']
-kp2name  = dict(zip(ind_name, param_name))
+param_name = [
+    "nose",
+    "left_eye",
+    "right_eye",
+    "left_ear",
+    "right_ear",
+    "left_shoulder",
+    "right_shoulder",
+    "left_elbow",
+    "right_elbow",
+    "left_wrist",
+    "right_wrist",
+    "left_hip",
+    "right_hip",
+    "left_knee",
+    "right_knee",
+    "left_ankle",
+    "right_ankle",
+    "neck",
+    "top_head",
+    "left_Btoe",
+    "left_Stoe",
+    "left_heel",
+    "right_Btoe",
+    "right_Stoe",
+    "right_heel",
+    "chest",
+]
+kp2name = dict(zip(ind_name, param_name))
 name2kp = dict(zip(param_name, ind_name))
+
+
 class InverseKinematics:
     """
     Inverse kinematics solver also known as Multibody Kinematics Optimization (MKO)
@@ -103,6 +142,8 @@ class InverseKinematics:
         The model considered (bionc.numpy)
     experimental_markers : np.ndarray | str
         The experimental markers (3xNxM numpy array), or a path to a c3d file
+    experimental_heatmaps : dict
+        The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array)
     Q_init : np.ndarray
         The initial guess for the inverse kinematics computed from the experimental markers
     Qopt : np.ndarray
@@ -157,6 +198,8 @@ class InverseKinematics:
             The model considered (bionc.numpy)
         experimental_markers : np.ndarray | str
             The experimental markers (3xNxM numpy array), or a path to a c3d file
+        experimental_heatmaps : dict
+            The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array)
         Q_init : np.ndarray | NaturalCoordinates
             The initial guess for the inverse kinematics computed from the experimental markers
         solve_frame_per_frame : bool
@@ -177,11 +220,10 @@ class InverseKinematics:
         self.model = model
         self._model_mx = model.to_mx()
 
-
         if experimental_markers is None and experimental_heatmaps is None:
             raise ValueError("Please feed experimental data, either marker or heatmap data")
-        elif experimental_markers and experimental_heatmaps:
-            raise ValueError("Please choose between marker data and heatmap data")       
+        elif experimental_markers is not None and experimental_heatmaps is not None:
+            raise ValueError("Please choose between marker data and heatmap data")
         elif isinstance(experimental_markers, str):
             self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
         elif isinstance(experimental_markers, np.ndarray):
@@ -192,11 +234,14 @@ class InverseKinematics:
             ):
                 raise ValueError("experimental_markers must be a 3xNxM numpy array")
             self.experimental_markers = experimental_markers
-        elif isinstance(experimental_heatmaps, dict): 
-            self.experimental_heatmaps = experimental_heatmaps
-            self.gaussian_parameters = experimental_heatmaps["gaussian_parameters"]
-            self.camera_parameters = experimental_heatmaps["camera_parameters"]
-            self.ratio = experimental_heatmaps["ratio"]
+        elif isinstance(experimental_heatmaps, dict):
+            if solve_frame_per_frame is False:
+                raise ValueError("Heatmap optimisation can only be performed frame by frame right now")
+            else:
+                self.experimental_heatmaps = experimental_heatmaps
+                self.gaussian_parameters = experimental_heatmaps["gaussian_parameters"]
+                self.camera_parameters = experimental_heatmaps["camera_parameters"]
+                self.ratio = experimental_heatmaps["ratio"]
 
         if Q_init is None and self.experimental_heatmaps is None:
             self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
@@ -209,17 +254,29 @@ class InverseKinematics:
         self.segment_determinants = None
         self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
 
-        if self.experimental_markers is None:
-            self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape(2)
-            self.nb_markers = 26  
-            self._camera_parameters_sym = MX.sym("cam_param", (3, 4, self.experimental_heatmaps["camera_parameters"].shape(2)))
-            self._gaussian_parameters_sym = MX.sym("gaussian_param", (5, self.nb_markers, self.nb_frames, self.experimental_heatmaps["gaussian_parameters"].shape(3)))
+        if experimental_markers is None:
+            self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape[2]
+            self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
+            self._camera_parameters_sym = MX.sym(
+                "cam_param", 3, 4, self.experimental_heatmaps["camera_parameters"].shape[2]
+            )
+            self._gaussian_parameters_sym = MX.sym(
+                "gaussian_param",
+                5,
+                self.nb_markers,
+                self.nb_frames,
+                self.experimental_heatmaps["gaussian_parameters"].shape[3],
+            )
             self._ratio_sym = MX.sym("ratio")
-            self.objective_sym = [self._objective_maximize_confidence(self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym, self._ratio_sym)]
+            self.objective_sym = [
+                self._objective_maximize_confidence(
+                    self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym, self._ratio_sym
+                )
+            ]
 
             self._objective_function = None
 
-        else:
+        elif experimental_heatmaps is None:
             self.nb_frames = self.experimental_markers.shape[2]
             self.nb_markers = self.experimental_markers.shape[1]
 
@@ -236,7 +293,17 @@ class InverseKinematics:
         objective is added to the inverse kinematics problem.
         """
 
-        self._objective_function = Function("objective_function",[self._Q_sym, self._markers_sym, self._camera_parameters_sym, self._gaussian_parameters_sym, self._ratio_sym],[sum1(vertcat(*self.objective_sym))]).expand()
+        self._objective_function = Function(
+            "objective_function",
+            [
+                self._Q_sym,
+                self._markers_sym,
+                self._camera_parameters_sym,
+                self._gaussian_parameters_sym,
+                self._ratio_sym,
+            ],
+            [sum1(vertcat(*self.objective_sym))],
+        ).expand()
 
     def add_objective(self, objective_function: Callable):
         """
@@ -279,7 +346,7 @@ class InverseKinematics:
         self.objective_sym.append(symbolic_objective)
         self._update_objective_function()
 
-    def solve(self,method: str = "ipopt",options: dict = None) -> np.ndarray:
+    def solve(self, method: str = "ipopt", options: dict = None) -> np.ndarray:
         """
         Solves the inverse kinematics
 
@@ -331,65 +398,48 @@ class InverseKinematics:
             ubg = np.zeros(self.model.nb_holonomic_constraints)
             constraints = self._constraints(self._Q_sym)
             if self._active_direct_frame_constraints:
-                constraints = vertcat(
-                    constraints, self._direct_frame_constraints(self._Q_sym)
-                )
+                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
                 lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments)))
                 # upper bounds infinity
                 ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
             nlp = dict(
                 x=self._vert_Q_sym,
-                g=_mx_to_sx(constraints, [self._vert_Q_sym])
-                if self.use_sx
-                else constraints,
+                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
             for f in range(self.nb_frames):
-                
-                objective = self._objective_function(self._Q_sym, self.experimental_markers[:, :, f], self.camera_parameters, self.gaussian_parameters[:,:,f,:], self.ratio)
-
-                nlp["f"] = (
-                    _mx_to_sx(objective, [self._vert_Q_sym])
-                    if self.use_sx
-                    else objective
+                objective = self._objective_function(
+                    self._Q_sym,
+                    self.experimental_markers[:, :, f],
+                    self.camera_parameters,
+                    self.gaussian_parameters[:, :, f, :],
+                    self.ratio,
                 )
+
+                nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
                 Q_init = self.Q_init[:, f : f + 1]
                 r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
                 Qopt[:, f : f + 1] = r["x"].toarray()
         else:
             constraints = self._constraints(self._Q_sym)
             if self._active_direct_frame_constraints:
-                constraints = vertcat(
-                    constraints, self._direct_frame_constraints(self._Q_sym)
-                )
+                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
             if self.experimental_heatmaps is None:
                 objective = self._objective_minimize_marker_distance(self._Q_sym, self.experimental_markers)
             else:
                 raise ValueError("Not possible to do all frames at the same time for the heatmaps")
             nlp = dict(
                 x=self._vert_Q_sym,
-                f=_mx_to_sx(objective, [self._vert_Q_sym])
-                if self.use_sx
-                else objective,
-                g=_mx_to_sx(constraints, [self._vert_Q_sym])
-                if self.use_sx
-                else constraints,
+                f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,
+                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
-            Q_init = self.Q_init.reshape(
-                (12 * self.model.nb_segments * self.nb_frames, 1)
-            )
+            Q_init = self.Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
             lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
             ubg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
             if self._active_direct_frame_constraints:
-                lbg = np.concatenate(
-                    (lbg, np.zeros(self.model.nb_segments * self.nb_frames))
-                )
-                ubg = np.concatenate(
-                    (ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf))
-                )
+                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
+                ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
             r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
-            Qopt = (
-                r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
-            )
+            Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
 
@@ -412,7 +462,7 @@ class InverseKinematics:
 
     def _objective_minimize_marker_distance(self, Q, experimental_markers) -> MX:
         """
-        Computes the objective function and handle single frame or multi frames
+        Computes the objective function that minimizes marker distance and handles single frame or multi frames
 
         Returns
         -------
@@ -424,18 +474,22 @@ class InverseKinematics:
         for f in range(nb_frames):
             Q_f = NaturalCoordinates(Q[:, f])
             xp_markers = (
-                experimental_markers[:3, :, f]
-                if isinstance(experimental_markers, np.ndarray)
-                else experimental_markers
+                experimental_markers[:3, :, f] if isinstance(experimental_markers, np.ndarray) else experimental_markers
             )
-            phim = self._model_mx.markers_constraints(
-                xp_markers, Q_f, only_technical=True
-            )
+            phim = self._model_mx.markers_constraints(xp_markers, Q_f, only_technical=True)
             error_m += 1 / 2 * phim.T @ phim
         return error_m
 
     def _objective_maximize_confidence(self, Q, camera_parameters, gaussian_parameters, ratio) -> MX:
-        # comment faire ici pour qu'on n'ait qu'une seule frame de gaussian_parameters??!
+        """
+        Computes the objective function that maximizes confidence value of the model keypoints
+        Does not handle multi frames !
+
+        Returns
+        -------
+        MX
+            The objective function that maximizes the confidence value of the model keypoints
+        """
         error_m = 0
         Q_f = NaturalCoordinates(Q)
         for s in range(len(self.model.segment_names)):
@@ -443,16 +497,20 @@ class InverseKinematics:
             for m in range(n):
                 N = self._model_mx.segments[self.model.segment_names[s]]._markers[m].interpolation_matrix
                 X = N @ Q_f[12 * s : 12 * (s + 1)]
-                # calculer la confiance pour chaque cam, faire la somme et prendre l'inverse!! 
-                int_phim = 0
                 for c in range(camera_parameters.shape[2]):
-                    cal = camera_parameters[:,:,c]
-                    amp = gaussian_parameters[4, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name] , :, c]
-                    pos = gaussian_parameters[0:2, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name] , :, c]
-                    sig = gaussian_parameters[2:4, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name] , :, c]
-                    int_phim += _compute_phim_hmp(X, cal, ratio, amp, pos, sig)
-                error_m += 1/int_phim
-        return error_m
+                    cal = camera_parameters[:, :, c]
+                    pos = gaussian_parameters[
+                        0:2, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name], :, c
+                    ]
+                    sig = gaussian_parameters[
+                        2:4, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name], :, c
+                    ]
+                    amp = gaussian_parameters[
+                        4, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name], :, c
+                    ]
+                    error_m += _compute_phim_hmp(X, cal, ratio, amp, pos, sig)
+
+        return 1 / error_m
 
     def _constraints(self, Q) -> MX:
         """Computes the constraints and handle single frame or multi frames"""
@@ -483,9 +541,7 @@ class InverseKinematics:
             Qi = NaturalCoordinatesNumpy(self.Qopt)[:, i : i + 1]
             for s in range(0, self.model.nb_segments):
                 u, v, w = Qi.vector(s).to_uvw()
-                matrix = np.concatenate(
-                    (u[:, np.newaxis], v[:, np.newaxis], w[:, np.newaxis]), axis=1
-                )
+                matrix = np.concatenate((u[:, np.newaxis], v[:, np.newaxis], w[:, np.newaxis]), axis=1)
                 self.segment_determinants[s, i] = np.linalg.det(matrix)
                 if self.segment_determinants[s, i] < 0:
                     print(f"Warning: frame {i} segment {s} has a negative determinant")

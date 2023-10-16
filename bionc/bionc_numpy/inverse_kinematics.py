@@ -472,23 +472,18 @@ class InverseKinematics:
 
             # Extraction of the residuals for each marker, joint and segment individually
             nb_temp_constraint = 0
+            # As the numbers of constraint is not the same for each joint, we need to create a list of constraint to find which joint is affected
+            list_constraint_to_joint = []
             for ind, key in enumerate(self.model.joint_names):
                 nb_constraint = self.model.joints[key].nb_constraints
                 if nb_constraint > 0:
-                    residuals_joints[nb_temp_constraint : nb_temp_constraint + nb_constraint, i] = phik_post_optim[
-                        nb_temp_constraint : nb_temp_constraint + nb_constraint
-                    ]
+                    residuals_joints[nb_temp_constraint : nb_temp_constraint + nb_constraint, i] = phik_post_optim[nb_temp_constraint : nb_temp_constraint + nb_constraint]
+                    list_to_add = [ind] * nb_constraint
+                    list_constraint_to_joint += list_to_add
                 nb_temp_constraint += nb_constraint
 
             for ind, key in enumerate(self.model.marker_names_technical):
-                # if ind == 0:
-                #     max = 0
-                #     residual_marker_max_name[i] = key
-
-                residuals_markers_norm[:, ind, i] = np.sqrt(
-                    np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3])
-                )
-
+                residuals_markers_norm[:, ind, i] = np.sqrt(np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3]))
                 residuals_makers_xyz[:, ind, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
 
         # Calculation of the residual on all frames
@@ -501,19 +496,33 @@ class InverseKinematics:
         # Extract optimisation details
         success = self.success_optim
 
+        ind_max_marker_distance = np.argmax(residuals_markers_norm, axis=1)
+        ind_max_rigidy_error = np.argmax(residuals_rigidity, axis=0)
+        ind_max_joint_constraint_error = np.argmax(residuals_joints, axis=0)
+
+        # Create a list of marker, segment and joint from the indices
+        toto = self.model.marker_names_technical
+        max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance[0,:]]
+        max_rigidbody_violation = [self.model.segment_names[ind_max] for ind_max in ind_max_rigidy_error]
+
+        # Currently incorrect
+        # Each line is an equation of the constraint but we need to find the joint associated with the constraint
+        max_joint_violation = [self.model.joint_names[list_constraint_to_joint[ind_max]] for ind_max in ind_max_joint_constraint_error]
+
         self.output = dict(
             residuals_markers_norm=residuals_markers_norm,
             residuals_makers_xyz=residuals_makers_xyz,
             total_residuals_markers=total_residuals_markers,
             all_frames_residuals_markers=all_frames_residuals_markers,
+            max_marker_distance=max_marker_distance,
             residuals_joints=residuals_joints,
             total_residuals_joints=total_residuals_joints,
             all_frames_residuals_joints=all_frames_residuals_joints,
+            max_joint_violation=max_joint_violation,
             residuals_rigidity=residuals_rigidity,
             total_residual_rigity=total_residual_rigity,
             all_frames_residuals_rigity=all_frames_residuals_rigity,
-            # message=[sol.message for sol in self.list_sol],
-            # status=[sol.status for sol in self.list_sol],
+            max_rigidbody_violation=max_rigidbody_violation,
             success=success,
         )
         return self.output

@@ -477,13 +477,17 @@ class InverseKinematics:
             for ind, key in enumerate(self.model.joint_names):
                 nb_constraint = self.model.joints[key].nb_constraints
                 if nb_constraint > 0:
-                    residuals_joints[nb_temp_constraint : nb_temp_constraint + nb_constraint, i] = phik_post_optim[nb_temp_constraint : nb_temp_constraint + nb_constraint]
+                    residuals_joints[nb_temp_constraint : nb_temp_constraint + nb_constraint, i] = phik_post_optim[
+                        nb_temp_constraint : nb_temp_constraint + nb_constraint
+                    ]
                     list_to_add = [ind] * nb_constraint
                     list_constraint_to_joint += list_to_add
                 nb_temp_constraint += nb_constraint
 
             for ind, key in enumerate(self.model.marker_names_technical):
-                residuals_markers_norm[:, ind, i] = np.sqrt(np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3]))
+                residuals_markers_norm[:, ind, i] = np.sqrt(
+                    np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3])
+                )
                 residuals_makers_xyz[:, ind, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
 
         # Calculation of the residual on all frames
@@ -502,12 +506,14 @@ class InverseKinematics:
 
         # Create a list of marker, segment and joint from the indices
         toto = self.model.marker_names_technical
-        max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance[0,:]]
+        max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance[0, :]]
         max_rigidbody_violation = [self.model.segment_names[ind_max] for ind_max in ind_max_rigidy_error]
 
         # Currently incorrect
         # Each line is an equation of the constraint but we need to find the joint associated with the constraint
-        max_joint_violation = [self.model.joint_names[list_constraint_to_joint[ind_max]] for ind_max in ind_max_joint_constraint_error]
+        max_joint_violation = [
+            self.model.joint_names[list_constraint_to_joint[ind_max]] for ind_max in ind_max_joint_constraint_error
+        ]
 
         self.output = dict(
             residuals_markers_norm=residuals_markers_norm,

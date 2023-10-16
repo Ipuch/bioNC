@@ -17,7 +17,7 @@ Inverse and Forward approach are implemented.
 
 # Table of Contents
 
--[Installation - from source](#installation---from-source)
+-[Installation](#installation)
 
 -[A first practical example](#a-first-practical-example)
 
@@ -25,8 +25,12 @@ Inverse and Forward approach are implemented.
 
 -[Natural coordinates reminders](#natural-coordinates-reminders)
 
-# Installation - from source
-One can install the package from source using the following command:
+# Installation
+- from conda:
+```
+    conda install -c conda-forge bionc
+```
+- from source:
 ```
     python setup.py install
 ```

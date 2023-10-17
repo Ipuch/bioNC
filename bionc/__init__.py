@@ -20,6 +20,8 @@ from .bionc_numpy import (
     JointType,
     ExternalForceList,
     ExternalForce,
+    NaturalInertialParameters,
+    compute_transformation_matrix,
 )
 
 from .protocols import natural_coordinates

@@ -4,7 +4,7 @@ from numpy import cos, sin
 from ..utils.enums import NaturalAxis, TransformationMatrixType
 
 
-def transformation_matrix(
+def compute_transformation_matrix(
     matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float
 ):
     """

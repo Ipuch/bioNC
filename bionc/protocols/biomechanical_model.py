@@ -29,8 +29,8 @@ class GenericBiomechanicalModel(ABC):
         This function saves the model to a file
     load(self, filename: str)
         This function loads the model from a file
-
-
+    marker_technical_index
+        This function returns the index of the marker with the given name
     """
 
     def __init__(
@@ -440,6 +440,22 @@ class GenericBiomechanicalModel(ABC):
         for key in self.segments_no_ground:
             marker_names += self.segments[key].marker_names_technical
         return marker_names
+
+    def marker_technical_index(self, name: str) -> int:
+        """
+        This function returns the index of the marker with the given name
+
+        Parameters
+        ----------
+        name : str
+            The name of the marker
+
+        Returns
+        -------
+        int
+            The index of the marker with the given name
+        """
+        return self.marker_names_technical.index(name)
 
     @property
     def nb_joints(self) -> int:

@@ -24,21 +24,67 @@ class NaturalSegment(AbstractNaturalSegment):
 
     Methods
     -------
+    to_mx()
+        This function returns the segment in MX format.
+    from_experimental_Q()
+        It builds a NaturalSegment from the segment natural coordinates.
+    parameters_from_Q()
+        It computes the parameters of the segment from SegmentNaturalCoordinates Q.
+    set_experimental_Q_function()
+        This function sets the experimental Q function that evaluates Q from marker locations.
+    _Qi_from_markers()
+        This function evaluates segment natural coordinates Q from markers locations.
     compute_transformation_matrix()
         This function returns the transformation matrix, denoted Bi
+    segment_coordinates_system()
+        This function computes the segment coordinates from the natural coordinates
+    location_from_homogenous_transform()
+        This function returns the location of the segment in natural coordinate from its homogenous transform
+
     rigid_body_constraint()
         This function returns the rigid body constraints of the segment, denoted phi_r
     rigid_body_constraint_jacobian()
         This function returns the jacobian of rigid body constraints of the segment, denoted K_r
+    rigid_body_constraint_derivative()
+        This function returns the derivative of the rigid body constraints denoted Phi_r_dot
+    rigid_body_constraint_jacobian_derivative()
+        This function returns the derivative of the Jacobian matrix of the rigid body constraints
+
+    _pseudo_inertia_matrix()
+        This function returns the pseudo-inertia matrix of the segment
+    _natural_center_of_mass()
+        This function computes the center of mass of the segment in the natural coordinate system.
+    center_of_mass_position()
+        This function returns the position of the center of mass of the segment in the global coordinate system.
+    _update_mass_matrix()
+        This function returns the generalized mass matrix of the segment
+    gravity_force()
+        This function returns the gravity_force applied on the segment through gravity force
+    differential_algebraic_equation()
+        This function returns the differential algebraic equation of the segment
 
     add_natural_marker()
         This function adds a marker to the segment
-    nb_markers
-        This function returns the number of markers in the segment
+    add_natural_vector()
+        Add a new natural vector to the segment
+    add_natural_marker_from_segment_coordinates()
+        Add a new marker to the segment
+    add_natural_vector_from_segment_coordinates()
+        Add a new marker to the segment
+
+    markers()
+        This function returns the position of the markers of the system as a function of the natural coordinates Q also referred as forward kinematics
     marker_constraints()
         This function returns the defects of the marker constraints of the segment, denoted Phi_m
     markers_jacobian()
         This function returns the jacobian of the marker constraints of the segment, denoted K_m
+    potential_energy()
+        This function returns the potential energy of the segment
+    kinetic_energy()
+        This function returns the kinetic energy of the segment
+    inverse_dynamics()
+        Computes inverse dynamics for one segment.
+
 
     Attributes
     ----------

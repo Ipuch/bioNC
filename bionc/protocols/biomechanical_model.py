@@ -5,7 +5,7 @@ from typing import Union, Any
 from abc import ABC, abstractmethod
 import dill as pickle
 
-from bionc.protocols.natural_coordinates import NaturalCoordinates
+from bionc.protocols.natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
 from bionc.protocols.natural_accelerations import NaturalAccelerations
 from bionc.protocols.external_force import ExternalForceList
@@ -440,6 +440,18 @@ class GenericBiomechanicalModel(ABC):
         for key in self.segments_no_ground:
             marker_names += self.segments[key].marker_names_technical
         return marker_names
+
+    @property
+    def dof_names(self) -> list[str]:
+        """
+        This function returns the names of the degrees of freedom in the model,
+        namely the names of each decision variable in the model, i.e. the natural coordinates
+        """
+        dof_names = []
+        for key in self.segments_no_ground:
+            dof_names += [f"{key}_{dof}" for dof in SegmentNaturalCoordinates.name_dofs]
+
+        return dof_names
 
     @property
     def nb_joints(self) -> int:

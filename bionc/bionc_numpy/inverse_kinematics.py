@@ -99,39 +99,6 @@ def _compute_phim_hmp(X, cal, ratio, amp, pos, sigma):
     return phim
 
 
-ind_name = [i for i in range(26)]
-param_name = [
-    "nose",
-    "left_eye",
-    "right_eye",
-    "left_ear",
-    "right_ear",
-    "left_shoulder",
-    "right_shoulder",
-    "left_elbow",
-    "right_elbow",
-    "left_wrist",
-    "right_wrist",
-    "left_hip",
-    "right_hip",
-    "left_knee",
-    "right_knee",
-    "left_ankle",
-    "right_ankle",
-    "neck",
-    "top_head",
-    "left_Btoe",
-    "left_Stoe",
-    "left_heel",
-    "right_Btoe",
-    "right_Stoe",
-    "right_heel",
-    "chest",
-]
-kp2name = dict(zip(ind_name, param_name))
-name2kp = dict(zip(param_name, ind_name))
-
-
 class InverseKinematics:
     """
     Inverse kinematics solver also known as Multibody Kinematics Optimization (MKO)
@@ -142,7 +109,7 @@ class InverseKinematics:
         The model considered (bionc.numpy)
     experimental_markers : np.ndarray | str
         The experimental markers (3xNxM numpy array), or a path to a c3d file
-    experimental_heatmaps : dict
+    experimental_heatmaps : dict[str, np.ndarray]
         The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array)
     Q_init : np.ndarray
         The initial guess for the inverse kinematics computed from the experimental markers
@@ -185,7 +152,7 @@ class InverseKinematics:
         self,
         model: BiomechanicalModel,
         experimental_markers: np.ndarray | str = None,
-        experimental_heatmaps: dict | str = None,
+        experimental_heatmaps: dict[str, np.ndarray] | str = None,
         Q_init: np.ndarray | NaturalCoordinates = None,
         solve_frame_per_frame: bool = True,
         active_direct_frame_constraints: bool = False,
@@ -198,7 +165,7 @@ class InverseKinematics:
             The model considered (bionc.numpy)
         experimental_markers : np.ndarray | str
             The experimental markers (3xNxM numpy array), or a path to a c3d file
-        experimental_heatmaps : dict
+        experimental_heatmaps : dict[str, np.ndarray]
             The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array)
         Q_init : np.ndarray | NaturalCoordinates
             The initial guess for the inverse kinematics computed from the experimental markers
@@ -222,30 +189,56 @@ class InverseKinematics:
 
         if experimental_markers is None and experimental_heatmaps is None:
             raise ValueError("Please feed experimental data, either marker or heatmap data")
-        elif experimental_markers is not None and experimental_heatmaps is not None:
+        if experimental_markers is not None and experimental_heatmaps is not None:
             raise ValueError("Please choose between marker data and heatmap data")
-        elif isinstance(experimental_markers, str):
-            self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
-        elif isinstance(experimental_markers, np.ndarray):
-            if (
-                experimental_markers.shape[0] != 3
-                or experimental_markers.shape[1] < 1
-                or len(experimental_markers.shape) < 3
-            ):
-                raise ValueError("experimental_markers must be a 3xNxM numpy array")
-            self.experimental_markers = experimental_markers
-        elif isinstance(experimental_heatmaps, dict):
-            if solve_frame_per_frame is False:
-                raise ValueError("Heatmap optimisation can only be performed frame by frame right now")
-            else:
-                self.experimental_heatmaps = experimental_heatmaps
-                self.gaussian_parameters = experimental_heatmaps["gaussian_parameters"]
-                self.camera_parameters = experimental_heatmaps["camera_parameters"]
-                self.ratio = experimental_heatmaps["ratio"]
+        
+        if experimental_markers is not None:
+            if isinstance(experimental_markers, str):
+                self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
+            if isinstance(experimental_markers, np.ndarray):
+                if (
+                    experimental_markers.shape[0] != 3
+                    or experimental_markers.shape[1] < 1
+                    or len(experimental_markers.shape) < 3
+                ):
+                    raise ValueError("experimental_markers must be a 3xNxM numpy array")
+                self.experimental_markers = experimental_markers
+            self.nb_markers = self.experimental_markers.shape[1]
+            self.nb_frames = self.experimental_markers.shape[2]
 
-        if Q_init is None and self.experimental_heatmaps is None:
+            self.nb_cameras = 0
+            self.experimental_heatmaps = None
+            self.gaussian_parameters = None
+            self.camera_parameters = None
+
+            self._markers_sym = MX.sym("markers", (3, self.nb_markers))
+            self.objective_sym = [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
+       
+        if experimental_heatmaps is not None:
+            if isinstance(experimental_heatmaps, dict):
+                if solve_frame_per_frame is False:
+                    raise ValueError("NotImplementedError")
+                else:
+                    self.experimental_heatmaps = experimental_heatmaps
+                    self.gaussian_parameters = experimental_heatmaps["gaussian_parameters"]
+                    self.camera_parameters = experimental_heatmaps["camera_parameters"]
+                    self.ratio = experimental_heatmaps["ratio"] # to be deleted
+                    self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
+                    self.nb_cameras = self.experimental_heatmaps["gaussian_parameters"].shape[3]
+
+                    self.experimental_markers = None
+
+                    self._camera_parameters_sym = MX.sym("cam_param", (3, 4*self.nb_cameras))
+                    self._gaussian_parameters_sym = MX.sym("gaussian_param", (5, self.nb_markers*self.nb_cameras))
+                    self._ratio_sym = MX.sym("ratio")
+                    self.objective_sym = [self._objective_maximize_confidence(self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym, self._ratio_sym)]
+
+            else:
+                raise ValueError("Please provide experimental_heatmaps as a dictionnary")
+
+        if Q_init is None and self.experimental_markers is not None:
             self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
-        elif Q_init is None and self.experimental_markers is None:
+        elif Q_init is None and self.experimental_heatmaps is not None:
             raise ValueError("Q_init must be provided for heatmap analysis")
         else:
             self.Q_init = Q_init
@@ -254,37 +247,7 @@ class InverseKinematics:
         self.segment_determinants = None
         self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
 
-        if experimental_markers is None:
-            self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape[2]
-            self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
-            self._camera_parameters_sym = MX.sym(
-                "cam_param", 3, 4, self.experimental_heatmaps["camera_parameters"].shape[2]
-            )
-            self._gaussian_parameters_sym = MX.sym(
-                "gaussian_param",
-                5,
-                self.nb_markers,
-                self.nb_frames,
-                self.experimental_heatmaps["gaussian_parameters"].shape[3],
-            )
-            self._ratio_sym = MX.sym("ratio")
-            self.objective_sym = [
-                self._objective_maximize_confidence(
-                    self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym, self._ratio_sym
-                )
-            ]
-
-            self._objective_function = None
-
-        elif experimental_heatmaps is None:
-            self.nb_frames = self.experimental_markers.shape[2]
-            self.nb_markers = self.experimental_markers.shape[1]
-
-            self._markers_sym = MX.sym("markers", (3, self.nb_markers))
-            self.objective_sym = [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
-
-            self._objective_function = None
-
+        self._objective_function = None
         self._update_objective_function()
 
     def _update_objective_function(self):
@@ -423,10 +386,10 @@ class InverseKinematics:
             constraints = self._constraints(self._Q_sym)
             if self._active_direct_frame_constraints:
                 constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
-            if self.experimental_heatmaps is None:
+            if self.experimental_markers is not None:
                 objective = self._objective_minimize_marker_distance(self._Q_sym, self.experimental_markers)
             else:
-                raise ValueError("Not possible to do all frames at the same time for the heatmaps")
+                raise ValueError("NotImplementedError")
             nlp = dict(
                 x=self._vert_Q_sym,
                 f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,

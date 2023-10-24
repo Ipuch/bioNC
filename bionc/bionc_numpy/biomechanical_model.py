@@ -1022,3 +1022,48 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             )
 
         return euler_angles
+
+    def name2kp(self) -> list:
+        """
+        This function associates the index of the joint based on its name for OpenPose model body 25B + the chest points
+        """
+        ind_name = [i for i in range(26)]
+        param_name = [
+            "nose",
+            "left_eye",
+            "right_eye",
+            "left_ear",
+            "right_ear",
+            "left_shoulder",
+            "right_shoulder",
+            "left_elbow",
+            "right_elbow",
+            "left_wrist",
+            "right_wrist",
+            "left_hip",
+            "right_hip",
+            "left_knee",
+            "right_knee",
+            "left_ankle",
+            "right_ankle",
+            "neck",
+            "top_head",
+            "left_Btoe",
+            "left_Stoe",
+            "left_heel",
+            "right_Btoe",
+            "right_Stoe",
+            "right_heel",
+            "chest",
+        ]
+        kp2name = dict(zip(ind_name, param_name))
+        name2kp = dict(zip(param_name, ind_name))
+
+        
+        names = self.marker_names_technical
+        index_list = []
+        for el in names:
+            index_list.append(name2kp[el])
+
+        return index_list
+

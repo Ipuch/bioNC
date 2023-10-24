@@ -250,9 +250,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return self._experimental_Q_function(markers, model)
 
-    def transformation_matrix(
-        self, matrix_type: str | TransformationMatrixType = None
-    ) -> np.ndarray:
+    def transformation_matrix(self, matrix_type: str | TransformationMatrixType = None) -> np.ndarray:
         """
         This function computes the transformation matrix, denoted Bi,
         from Natural Coordinate System to point to the orthogonal Segment Coordinate System.
@@ -307,9 +305,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return HomogeneousTransform.from_rt(
             rotation=self.transformation_matrix(transformation_matrix_type)
-            @ np.concatenate(
-                (Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1
-            ),
+            @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
             translation=Q.rp[:, np.newaxis],
         )
 
@@ -338,9 +334,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return SegmentNaturalCoordinates((u, rp, rd, w))
 
-    def rigid_body_constraint(
-        self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]
-    ) -> np.ndarray:
+    def rigid_body_constraint(self, Qi: Union[SegmentNaturalCoordinates, np.ndarray]) -> np.ndarray:
         """
         This function returns the rigid body constraints of the segment, denoted phi_r.
 
@@ -589,9 +583,7 @@ class NaturalSegment(AbstractNaturalSegment):
             Weight applied on the segment through gravity force [12 x 1]
         """
 
-        return (self.natural_center_of_mass.interpolate().T * self.mass) @ np.array(
-            [0, 0, -9.81]
-        )
+        return (self.natural_center_of_mass.interpolate().T * self.mass) @ np.array([0, 0, -9.81])
 
     def differential_algebraic_equation(
         self,
@@ -637,9 +629,9 @@ class NaturalSegment(AbstractNaturalSegment):
         biais = -Krdot @ Qdoti.vector
 
         if stabilization is not None:
-            biais -= stabilization["alpha"] * self.rigid_body_constraint(
-                Qi
-            ) + stabilization["beta"] * self.rigid_body_constraint_derivative(Qi, Qdoti)
+            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+                "beta"
+            ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
         A = zeros((18, 18))
         A[0:12, 0:12] = Gi
@@ -805,11 +797,7 @@ class NaturalSegment(AbstractNaturalSegment):
             The defects of the marker constraints of the segment (3 x N_markers)
         """
         nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
-        markers = (
-            [m for m in self._markers if m.is_technical]
-            if only_technical
-            else self._markers
-        )
+        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
 
         if marker_locations.shape != (3, nb_markers):
             raise ValueError(f"marker_locations should be of shape (3, {nb_markers})")
@@ -817,9 +805,7 @@ class NaturalSegment(AbstractNaturalSegment):
         defects = np.zeros((3, nb_markers))
 
         for i, marker in enumerate(markers):
-            defects[:, i] = marker.constraint(
-                marker_location=marker_locations[:, i], Qi=Qi
-            )
+            defects[:, i] = marker.constraint(marker_location=marker_locations[:, i], Qi=Qi)
 
         return defects
 
@@ -838,16 +824,8 @@ class NaturalSegment(AbstractNaturalSegment):
             The jacobian of the marker constraints of the segment [3, N_markers]
         """
         nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
-        markers = (
-            [m for m in self._markers if m.is_technical]
-            if only_technical
-            else self._markers
-        )
-        return (
-            np.vstack([-marker.interpolation_matrix for marker in markers])
-            if nb_markers > 0
-            else np.array([])
-        )
+        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
+        return np.vstack([-marker.interpolation_matrix for marker in markers]) if nb_markers > 0 else np.array([])
 
     def potential_energy(self, Qi: SegmentNaturalCoordinates) -> float:
         """

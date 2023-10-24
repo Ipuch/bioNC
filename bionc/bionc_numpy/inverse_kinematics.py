@@ -278,7 +278,7 @@ class InverseKinematics:
                     self.camera_parameters = np.reshape(experimental_heatmaps["camera_parameters"], (self.nb_cameras, 3*4)) 
                     self.ratio = experimental_heatmaps["ratio"] 
 
-                    self.experimental_markers = np.array([])
+                    self.experimental_markers = None
                     self._markers_sym = None
 
                     self._camera_parameters_sym = MX.sym("cam_param", (self.nb_cameras, 3*4))
@@ -417,9 +417,8 @@ class InverseKinematics:
                 if self.experimental_heatmaps is not None:
                     objective = self._objective_function(
                         self._Q_sym,
-                        self.experimental_markers[:, :, f],
                         self.camera_parameters,
-                        self.gaussian_parameters[:, :, :, f],
+                        self.gaussian_parameters[:, :, f],
                         self.ratio,
                     )
                 

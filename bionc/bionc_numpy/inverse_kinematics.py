@@ -114,7 +114,7 @@ def sarrus(matrix: MX):
     )
 
 
-def _compute_confidence_value_for_one_heatmap(model_keypoints, camera_calibration_matrix, ratio, gaussian_magnitude, gaussian_center, gaussian_standard_deviation):
+def _compute_confidence_value_for_one_heatmap(model_keypoints, camera_calibration_matrix, gaussian_magnitude, gaussian_center, gaussian_standard_deviation):
     """
     Computes the confidence value of one 3D point associated with one camera in the case of 2D heatmaps computations
 
@@ -124,8 +124,6 @@ def _compute_confidence_value_for_one_heatmap(model_keypoints, camera_calibratio
         The position of the 3D point in global reference frame
     camera_calibration_matrix : MX
         The 3x4 calibration matrix of the considered camera
-    ratio : MX
-        Value that makes the correspondence between heatmap resolution and image resolution (to be deleted)
     gaussian_magnitude : MX
         Amplitude of the gaussian considered
     gaussian_center : MX
@@ -133,7 +131,7 @@ def _compute_confidence_value_for_one_heatmap(model_keypoints, camera_calibratio
     gaussian_standard_deviation : MX
         Standard deviation of the gaussian considered
     """
-    confidence_value = gaussian_magnitude[0] * exp(-((((ratio * (dot(model_keypoints, camera_calibration_matrix[1, 0:3].T) + camera_calibration_matrix[1, 3]) / (dot(model_keypoints, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3]) - gaussian_center[0]) ** 2)/ (2 * gaussian_standard_deviation[0] ** 2))+(((ratio * (dot(model_keypoints, camera_calibration_matrix[0, 0:3].T) + camera_calibration_matrix[0, 3]) / (dot(model_keypoints, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3]) - gaussian_center[1]) ** 2)/ (2 * gaussian_standard_deviation[1] ** 2))))
+    confidence_value = gaussian_magnitude[0] * exp(-(((((dot(model_keypoints, camera_calibration_matrix[1, 0:3].T) + camera_calibration_matrix[1, 3]) / (dot(model_keypoints, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3]) - gaussian_center[0]) ** 2)/ (2 * gaussian_standard_deviation[0] ** 2))+((((dot(model_keypoints, camera_calibration_matrix[0, 0:3].T) + camera_calibration_matrix[0, 3]) / (dot(model_keypoints, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3]) - gaussian_center[1]) ** 2)/ (2 * gaussian_standard_deviation[1] ** 2))))
     return confidence_value
 
 
@@ -276,15 +274,13 @@ class InverseKinematics:
                     self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape[3]
                     self.gaussian_parameters = np.reshape(experimental_heatmaps["gaussian_parameters"], (self.nb_cameras, 5*self.nb_markers, self.nb_frames) ) 
                     self.camera_parameters = np.reshape(experimental_heatmaps["camera_parameters"], (self.nb_cameras, 3*4)) 
-                    self.ratio = experimental_heatmaps["ratio"] 
 
                     self.experimental_markers = None
                     self._markers_sym = None
 
                     self._camera_parameters_sym = MX.sym("cam_param", (self.nb_cameras, 3*4))
                     self._gaussian_parameters_sym = MX.sym("gaussian_param", (self.nb_cameras, 5*self.nb_markers))
-                    self._ratio_sym = MX.sym("ratio")
-                    self.objective_sym = [self._objective_maximize_confidence(self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym, self._ratio_sym)]
+                    self.objective_sym = [self._objective_maximize_confidence(self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym)]
 
             else:
                 raise ValueError("Please provide experimental_heatmaps as a dictionnary")
@@ -304,7 +300,6 @@ class InverseKinematics:
                     self._Q_sym,
                     self._camera_parameters_sym,
                     self._gaussian_parameters_sym,
-                    self._ratio_sym,
                 ],
                 [sum1(vertcat(*self.objective_sym))],
             ).expand()
@@ -419,7 +414,6 @@ class InverseKinematics:
                         self._Q_sym,
                         self.camera_parameters,
                         self.gaussian_parameters[:, :, f],
-                        self.ratio,
                     )
                 
                 if self.experimental_markers is not None:
@@ -493,7 +487,7 @@ class InverseKinematics:
             error_m += 1 / 2 * phim.T @ phim
         return error_m
     
-    def _objective_maximize_confidence(self, Q, camera_parameters, gaussian_parameters, ratio) -> MX:
+    def _objective_maximize_confidence(self, Q, camera_parameters, gaussian_parameters) -> MX:
         """
         Computes the objective function that maximizes confidence value of the model keypoints
         Does not handle multi frames 
@@ -507,6 +501,7 @@ class InverseKinematics:
         Q_f = NaturalCoordinates(Q)
         for m in range(self.model.nb_markers):
             X = self._model_mx.markers(Q_f)[:,m]
+            index = self.model.name2kp
             for c in range(self.nb_cameras):
                 cal = reshape(camera_parameters[c,:], (3,4))
                 gaussian = reshape(gaussian_parameters[c,:], (5,26))
@@ -517,11 +512,11 @@ class InverseKinematics:
                 pos = gaussian[0:2, nb_keypoint]
                 sig = gaussian[2:4, nb_keypoint]
 
-                error_m += _compute_confidence_value_for_one_heatmap(X, cal, ratio, amp, pos, sig)
+                error_m += _compute_confidence_value_for_one_heatmap(X, cal, amp, pos, sig)
         return 1 / error_m
 
 
-    # def _objective_maximize_confidence(self, Q, camera_parameters, gaussian_parameters, ratio) -> MX:
+    # def _objective_maximize_confidence(self, Q, camera_parameters, gaussian_parameters) -> MX:
     #     """
     #     Computes the objective function that maximizes confidence value of the model keypoints
     #     Does not handle multi frames !
@@ -549,7 +544,7 @@ class InverseKinematics:
     #                 amp = gaussian_parameters[
     #                     4, name2kp[self._model_mx.segments[self.model.segment_names[s]]._markers[m].name], :, c
     #                 ]
-    #                 error_m += _compute_confidence_value_for_one_heatmap(X, cal, ratio, amp, pos, sig)
+    #                 error_m += _compute_confidence_value_for_one_heatmap(X, cal, amp, pos, sig)
 
     #     return 1 / error_m
 

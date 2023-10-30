@@ -110,7 +110,7 @@ class InverseKinematics:
         The number of frames of the experimental markers
     nb_markers : int
         The number of markers of the experimental markers
-    sucess_optim : list[bool]
+    success_optim : list[bool]
         The success of convergence for each frame
     _frame_per_frame : bool
         If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
@@ -201,7 +201,7 @@ class InverseKinematics:
         self.nb_frames = self.experimental_markers.shape[2]
         self.nb_markers = self.experimental_markers.shape[1]
 
-        self.success_optim = None
+        self.success_optim = []
 
         self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
         self._markers_sym = MX.sym("markers", (3, self.nb_markers))
@@ -325,7 +325,7 @@ class InverseKinematics:
                 x=self._vert_Q_sym,
                 g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
-            self.success_optim = []
+
             for f in range(self.nb_frames):
                 objective = self._objective_function(self._Q_sym, self.experimental_markers[:, :, f])
                 nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
@@ -432,17 +432,19 @@ class InverseKinematics:
         Create and return a dict that contains the output of each optimization.
         Return
         ------
-        self.output: dict()
+        self.output: dict[str, np.ndarray | list[str]]
             The output of least_square function, such as number of iteration per frames,
             and the marker with highest residual
+            - 'result_1' : np.ndarray
+                A numpy array with processed data.
+            - 'result_2' : list[str]
+                A list of processed string data.
         """
 
         nb_frames = self.nb_frames
         nb_markers = self.nb_markers
-        nb_joints_constraints = 0
-        for ind, key in enumerate(self.model.joint_names):
-            nb_joints_constraints += self.model.joints[key].nb_constraints
-        nb_segments = len(self.model.segment_names)
+        nb_joints_constraints = self.model.nb_joint_constraints
+        nb_segments = self.model.nb_segments
 
         # Initialisation of all the different residuals that can be calculated
         residuals_markers_norm = np.zeros((1, nb_markers, nb_frames))

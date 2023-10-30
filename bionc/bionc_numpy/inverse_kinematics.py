@@ -433,12 +433,29 @@ class InverseKinematics:
         Return
         ------
         self.output: dict[str, np.ndarray | list[str]]
-            The output of least_square function, such as number of iteration per frames,
-            and the marker with highest residual
-            - 'result_1' : np.ndarray
-                A numpy array with processed data.
-            - 'result_2' : list[str]
-                A list of processed string data.
+            - 'marker_residuals_norm' : np.ndarray
+                Norm of the residuals for each marker
+            - 'marker_residuals_xyz' : np.ndarray
+                Residuals of the marker on all axis
+            - 'total_marker_residuals' : np.ndarray
+                Residuals of all marker for each frame
+            - 'max_marker_distance' : list[str]
+                A list of the marker with the highest residual for each frame
+            - 'joint_residuals' : np.ndarray
+                Joint constraint residual for each joint and each frame
+            - 'total_joint_residuals' : list[str]
+                Global joint constraint residual for each frame
+            - 'max_joint_violation' : list[str]
+                A list of the joint with the highest residual for each frame
+            - 'rigidity_residuals' : np.ndarray
+                Residuals of the rigidity constraint for each segment and each frame
+            - 'total_rigity_residuals' : np.ndarray
+                Global rigidity constraint residual for each frame
+            - 'max_rigidbody_violation' : list[str]
+                A list of the segment with the highest rigidity residual for each frame
+            - 'success' : list[bool]
+                A list of boolean indicating for each frame of the sucess of the optimization.
+
         """
 
         nb_frames = self.nb_frames

@@ -492,13 +492,6 @@ class InverseKinematics:
                 )
                 residuals_makers_xyz[:, ind, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
 
-        # Calculation of the residual on all frames
-        all_frames_residuals_markers = np.sqrt(np.dot(total_residuals_markers, np.transpose(total_residuals_markers)))
-
-        all_frames_residuals_joints = np.sqrt(np.dot(total_residuals_joints, np.transpose(total_residuals_joints)))
-
-        all_frames_residuals_rigity = np.sqrt(np.dot(total_residual_rigity, np.transpose(total_residual_rigity)))
-
         # Extract optimisation details
         success = self.success_optim
 
@@ -507,7 +500,6 @@ class InverseKinematics:
         ind_max_joint_constraint_error = np.argmax(residuals_joints, axis=0)
 
         # Create a list of marker, segment and joint from the indices
-        toto = self.model.marker_names_technical
         max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance[0, :]]
         max_rigidbody_violation = [self.model.segment_names[ind_max] for ind_max in ind_max_rigidy_error]
 
@@ -521,15 +513,12 @@ class InverseKinematics:
             residuals_markers_norm=residuals_markers_norm,
             residuals_makers_xyz=residuals_makers_xyz,
             total_residuals_markers=total_residuals_markers,
-            all_frames_residuals_markers=all_frames_residuals_markers,
             max_marker_distance=max_marker_distance,
             residuals_joints=residuals_joints,
             total_residuals_joints=total_residuals_joints,
-            all_frames_residuals_joints=all_frames_residuals_joints,
             max_joint_violation=max_joint_violation,
             residuals_rigidity=residuals_rigidity,
             total_residual_rigity=total_residual_rigity,
-            all_frames_residuals_rigity=all_frames_residuals_rigity,
             max_rigidbody_violation=max_rigidbody_violation,
             success=success,
         )

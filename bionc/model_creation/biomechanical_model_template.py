@@ -122,10 +122,10 @@ class BiomechanicalModelTemplate:
             inertia_parameters = None
             if s.inertia_parameters is not None:
                 natural_segment.set_inertial_parameters(
-                    mass = s.inertia_parameters.relative_mass,
-                    center_of_mass = s.inertia_parameters.center_of_mass,
-                    inertia_matrix = s.inertia_parameters.inertia,
-                    transformation_matrix=TransformationMatrixType.Buv
+                    mass=s.inertia_parameters.relative_mass,
+                    center_of_mass=s.inertia_parameters.center_of_mass,
+                    inertia_matrix=s.inertia_parameters.inertia,
+                    transformation_matrix=TransformationMatrixType.Buv,
                 )
 
             model[s.name] = natural_segment

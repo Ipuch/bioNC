@@ -416,13 +416,15 @@ class InverseKinematics:
                 experimental_marker_frame = None
                 if self.experimental_heatmaps is not None:
                     gaussian_parameters_frame = self.gaussian_parameters[:, :, f]
+                    camera_parameters = self.camera_parameters
                     experimental_marker_frame = []
                 if self.experimental_markers is not None:
                     experimental_marker_frame = self.experimental_markers[:, :, f]
                     gaussian_parameters_frame = []
+                    camera_parameters = []
 
                 objective = self._objective_function(
-                    self._Q_sym, experimental_marker_frame, self.camera_parameters, gaussian_parameters_frame
+                    self._Q_sym, experimental_marker_frame, camera_parameters, gaussian_parameters_frame
                 )
 
                 nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective

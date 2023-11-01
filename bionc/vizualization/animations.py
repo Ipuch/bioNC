@@ -10,7 +10,7 @@ from pyomeca import Markers
 
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..bionc_numpy.joint import Joint
+from ..bionc_numpy.joints import Joint
 from .cylinder import displace_from_start_and_end, generate_cylinder_triangles, generate_cylinder_vertices
 
 

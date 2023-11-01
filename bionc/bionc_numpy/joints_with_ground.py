@@ -80,7 +80,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import GroundJoint as CasadiGroundJoint
+            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiGroundJoint
 
             return CasadiGroundJoint.Free(
                 name=self.name,
@@ -231,7 +231,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import GroundJoint as CasadiGroundJoint
+            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiGroundJoint
 
             return CasadiGroundJoint.Hinge(
                 name=self.name,
@@ -499,7 +499,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import GroundJoint as CasadiGroundJoint
+            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiGroundJoint
 
             return CasadiGroundJoint.Spherical(
                 name=self.name,
@@ -609,7 +609,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import GroundJoint as CasadiGroundJoint
+            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiGroundJoint
 
             return CasadiGroundJoint.Weld(
                 name=self.name,

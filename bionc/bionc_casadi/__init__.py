@@ -12,7 +12,8 @@ from .natural_axis import Axis
 from .natural_marker import NaturalMarker, Marker, SegmentNaturalVector
 from .natural_segment import NaturalSegment
 from .inertia_parameters import InertiaParameters
-from .joint import Joint, GroundJoint
+from .joints import Joint
+from .joints_with_ground import GroundJoint
 from .natural_vector import NaturalVector
 from .external_force import ExternalForceList, ExternalForce
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis

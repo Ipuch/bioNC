@@ -493,8 +493,8 @@ class InverseKinematics:
             # As the numbers of constraint is not the same for each joint, we need to create a list of constraint to find which joint is affected
             list_constraint_to_joint = []
             for ind, key in enumerate(self.model.joint_names):
-                joint_residuals[self.model.joint_constraint_index(key), i] = phik_post_optim[
-                    self.model.joint_constraint_index(key)
+                joint_residuals[self.model.joint_constraints_index(key), i] = phik_post_optim[
+                    self.model.joint_constraints_index(key)
                 ]
                 list_to_add = [ind] * self.model.joints[key].nb_constraints
                 list_constraint_to_joint += list_to_add

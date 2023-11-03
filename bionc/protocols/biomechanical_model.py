@@ -571,7 +571,7 @@ class GenericBiomechanicalModel(ABC):
         joint_dof_inx = [joint.index + i for i in range(joint.nb_joint_dof)]
         return tuple(joint_dof_inx)
 
-    def joint_constraint_index(self, joint_id: int | str) -> slice:
+    def joint_constraints_index(self, joint_id: int | str) -> slice:
         """
         This function returns the slice of constrain of a given joint.
 

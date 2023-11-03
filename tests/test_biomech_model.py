@@ -6972,6 +6972,24 @@ def test_biomech_model(bionc_type):
 
     assert natural_model.segment_names == segment_names
 
+    assert natural_model.joint_constraints_index(0) == natural_model.joint_constraints_index("free_joint_PELVIS")
+    assert natural_model.joint_constraints_index(1) == natural_model.joint_constraints_index("hip")
+    assert natural_model.joint_constraints_index(2) == natural_model.joint_constraints_index("knee")
+    assert natural_model.joint_constraints_index(3) == natural_model.joint_constraints_index("ankle")
+
+    assert natural_model.joint_constraints_index(0) == slice(0, 0, None)
+    assert natural_model.joint_constraints_index("hip") == slice(0, 3, None)
+    assert natural_model.joint_constraints_index(2) == slice(3, 6, None)
+    assert natural_model.joint_constraints_index("ankle") == slice(6, 9, None)
+
+    with pytest.raises(ValueError) as error_index:
+        incorrect_joint_index = 10000
+        natural_model.joint_constraints_index(incorrect_joint_index)
+    assert str(error_index.value) == "The joint index 10000 does not exist"
+    with pytest.raises(ValueError) as error_name:
+        natural_model.joint_constraints_index("incorrect_joint_name")
+    assert str(error_name.value) == "The joint name incorrect_joint_name does not exist"
+
     filename = "natural_model.nc"
     if bionc_type == "numpy":
         natural_model.save(filename)

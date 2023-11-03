@@ -583,6 +583,41 @@ class GenericBiomechanicalModel(ABC):
         joint_dof_inx = [joint.index + i for i in range(joint.nb_joint_dof)]
         return tuple(joint_dof_inx)
 
+    def joint_constraints_index(self, joint_id: int | str) -> slice:
+        """
+        This function returns the slice of constrain of a given joint.
+
+        Parameters
+        ----------
+        joint_id : int | str
+            The index or the name of the joint for which the joint constraint indexes are returned
+
+        Returns
+        -------
+        slice_joint_constraint: slice
+            The slice of the given constraint
+        """
+        if isinstance(joint_id, str):
+            if joint_id not in self.joint_names:
+                raise ValueError("The joint name " + joint_id + " does not exist")
+            joint_id = self.joint_names.index(joint_id)
+
+        if isinstance(joint_id, int):
+            if joint_id > self.nb_joints:
+                raise ValueError("The joint index " + str(joint_id) + " does not exist")
+
+        nb_constraint_before_joint = 0
+        for ind_joint in range(joint_id):
+            nb_constraint_before_joint += self.joints[self.joint_names[ind_joint]].nb_constraints
+
+        begin_slice = nb_constraint_before_joint
+        nb_joint_constraints = self.joints[self.joint_names[joint_id]].nb_constraints
+        end_slice = nb_constraint_before_joint + nb_joint_constraints
+
+        slice_joint_constraint = slice(begin_slice, end_slice)
+
+        return slice_joint_constraint
+
     def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
         """
         This function returns the joints that have the given child index

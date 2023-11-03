@@ -585,28 +585,22 @@ class GenericBiomechanicalModel(ABC):
         slice_joint_constraint: slice
             The slice of the given constraint
         """
+        if isinstance(joint_id, str):
+            if joint_id not in self.joint_names:
+                raise ValueError("The joint name " + joint_id + " does not exist")
+            joint_id = self.joint_names.index(joint_id)
+
         if isinstance(joint_id, int):
-            # We check that the joint index exists
             if joint_id > self.nb_joints:
                 raise ValueError("The joint index " + str(joint_id) + " does not exist")
 
-        if isinstance(joint_id, str):
-            # We check that the joint name exists
-            if joint_id not in self.joint_names:
-                raise ValueError("The joint name " + joint_id + " does not exist")
-            else:
-                joint_id = self.joint_names.index(joint_id)
+        nb_constraint_before_joint = 0
+        for ind_joint in range(joint_id):
+            nb_constraint_before_joint += self.joints[self.joint_names[ind_joint]].nb_constraints
 
-        # We extract all the number of constraints of each joint in a ndarray of size nb_joints
-        list_nb_constraint_joint = np.zeros(self.nb_joints)
-        for ind, key in enumerate(self.joint_names):
-            list_nb_constraint_joint[ind] = self.joints[key].nb_constraints
-
-        # The beginning of the slice is equal to the sum of the number of constraints of all the previous joints
-        begin_slice = int(np.sum(list_nb_constraint_joint[0:joint_id]))
-        # The end of the slice is equal to the sum of the number of constraints
-        # of all the previous joints + the number of constraints of the current joint
-        end_slice = int(np.sum(list_nb_constraint_joint[0 : joint_id + 1]))
+        begin_slice = nb_constraint_before_joint
+        nb_joint_constraints = self.joints[self.joint_names[joint_id]].nb_constraints
+        end_slice = nb_constraint_before_joint + nb_joint_constraints
 
         slice_joint_constraint = slice(begin_slice, end_slice)
 

@@ -571,6 +571,45 @@ class GenericBiomechanicalModel(ABC):
         joint_dof_inx = [joint.index + i for i in range(joint.nb_joint_dof)]
         return tuple(joint_dof_inx)
 
+    def joint_constraint_index(self, joint_id: int | str) -> slice:
+        """
+        This function returns the slice of constrain of a given joint.
+
+        Parameters
+        ----------
+        joint_id : int | str
+            The index or the name of the joint for which the joint constraint indexes are returned
+
+        Returns
+        -------
+        slice_joint_constraint: slice
+            The slice of the given constraint
+        """
+        if isinstance(joint_id, int):
+            # We check that the joint index exists
+            if joint_id > self.nb_joints:
+                raise ValueError("The joint index "+ str(joint_id)+ " does not exist")
+
+        if isinstance(joint_id, str):
+            # we check that the joint name exists
+            if joint_id not in self.joints_names:
+                raise ValueError("The joint name "+ joint_id+ " does not exist")
+            else:
+                joint_id = self.joint_names.index('knee')
+
+        # We extract all the number of constraints of each joint in a ndarray of size nb_joints
+        list_nb_constraint_joint = np.zeros(self.nb_joints)
+        for ind, key in enumerate(self.joint_names):
+            list_nb_constraint_joint[ind] = self.joints[key].nb_constraints
+
+        # The beginning of the slice is equal to the sum of the number of constraints of all the previous joints
+        begin_slice = int(np.sum(list_nb_constraint_joint[0:joint_id]))
+        # The end of the slice is equal to the sum of the number of constraints of all the previous joints + the number of constraints of the current joint
+        end_slice = int(np.sum(list_nb_constraint_joint[0 : joint_id + 1]))
+
+        slice_joint_constraint = slice(begin_slice, end_slice)
+
+        return slice_joint_constraint
     def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
         """
         This function returns the joints that have the given child index

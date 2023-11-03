@@ -491,7 +491,7 @@ class InverseKinematics:
 
             # Extraction of the residuals for each marker, joint and segment individually
             # As the numbers of constraint is not the same for each joint, we need to create a list of constraint to find which joint is affected
-            list_constraint_to_joint = np.zeros((self.model.nb_joint_constraints),dtype=np.int64)
+            list_constraint_to_joint = np.zeros((self.model.nb_joint_constraints), dtype=np.int64)
             for ind in range(self.model.nb_joints):
                 joint_constraints_slice = self.model.joint_constraints_index(ind)
                 joint_residuals[joint_constraints_slice, i] = phik_post_optim[joint_constraints_slice]

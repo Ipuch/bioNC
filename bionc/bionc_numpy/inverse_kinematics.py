@@ -490,18 +490,14 @@ class InverseKinematics:
             total_marker_residuals[i] = np.sqrt(np.dot(phim_post_optim, phim_post_optim))
 
             # Extraction of the residuals for each marker, joint and segment individually
-            nb_temp_constraint = 0
             # As the numbers of constraint is not the same for each joint, we need to create a list of constraint to find which joint is affected
             list_constraint_to_joint = []
             for ind, key in enumerate(self.model.joint_names):
-                nb_constraint = self.model.joints[key].nb_constraints
-                if nb_constraint > 0:
-                    joint_residuals[nb_temp_constraint : nb_temp_constraint + nb_constraint, i] = phik_post_optim[
-                        nb_temp_constraint : nb_temp_constraint + nb_constraint
-                    ]
-                    list_to_add = [ind] * nb_constraint
-                    list_constraint_to_joint += list_to_add
-                nb_temp_constraint += nb_constraint
+                joint_residuals[self.model.joint_constraint_index(key), i] = phik_post_optim[
+                    self.model.joint_constraint_index(key)
+                ]
+                list_to_add = [ind] * self.model.joints[key].nb_constraints
+                list_constraint_to_joint += list_to_add
 
             for ind, key in enumerate(self.model.marker_names_technical):
                 marker_residuals_norm[:, ind, i] = np.sqrt(

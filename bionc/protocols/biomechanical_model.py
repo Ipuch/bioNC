@@ -588,14 +588,14 @@ class GenericBiomechanicalModel(ABC):
         if isinstance(joint_id, int):
             # We check that the joint index exists
             if joint_id > self.nb_joints:
-                raise ValueError("The joint index "+ str(joint_id)+ " does not exist")
+                raise ValueError("The joint index " + str(joint_id) + " does not exist")
 
         if isinstance(joint_id, str):
-            # we check that the joint name exists
-            if joint_id not in self.joints_names:
-                raise ValueError("The joint name "+ joint_id+ " does not exist")
+            # We check that the joint name exists
+            if joint_id not in self.joint_names:
+                raise ValueError("The joint name " + joint_id + " does not exist")
             else:
-                joint_id = self.joint_names.index('knee')
+                joint_id = self.joint_names.index(joint_id)
 
         # We extract all the number of constraints of each joint in a ndarray of size nb_joints
         list_nb_constraint_joint = np.zeros(self.nb_joints)
@@ -604,12 +604,14 @@ class GenericBiomechanicalModel(ABC):
 
         # The beginning of the slice is equal to the sum of the number of constraints of all the previous joints
         begin_slice = int(np.sum(list_nb_constraint_joint[0:joint_id]))
-        # The end of the slice is equal to the sum of the number of constraints of all the previous joints + the number of constraints of the current joint
+        # The end of the slice is equal to the sum of the number of constraints
+        # of all the previous joints + the number of constraints of the current joint
         end_slice = int(np.sum(list_nb_constraint_joint[0 : joint_id + 1]))
 
         slice_joint_constraint = slice(begin_slice, end_slice)
 
         return slice_joint_constraint
+
     def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
         """
         This function returns the joints that have the given child index

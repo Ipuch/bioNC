@@ -146,9 +146,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
         This function returns the segment in MX format
         """
-        from ..bionc_casadi.natural_segment import (
-            NaturalSegment as NaturalSegmentCasadi,
-        )
+        from ..bionc_casadi.natural_segment import (NaturalSegment as NaturalSegmentCasadi)
 
         natural_segment = NaturalSegmentCasadi(
             name=self.name,
@@ -272,19 +270,9 @@ class NaturalSegment(AbstractNaturalSegment):
         if matrix_type is None:
             matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
-        return transformation_matrix(
-            matrix_type,
-            length=self.length,
-            alpha=self.alpha,
-            beta=self.beta,
-            gamma=self.gamma,
-        ).T
+        return transformation_matrix(matrix_type,length=self.length,alpha=self.alpha,beta=self.beta,gamma=self.gamma,).T
 
-    def segment_coordinates_system(
-        self,
-        Q: SegmentNaturalCoordinates,
-        transformation_matrix_type: TransformationMatrixType | str = None,
-    ) -> HomogeneousTransform:
+    def segment_coordinates_system(self,Q: SegmentNaturalCoordinates,transformation_matrix_type: TransformationMatrixType | str = None) -> HomogeneousTransform:
         """
         This function computes the segment coordinates from the natural coordinates
 
@@ -303,15 +291,9 @@ class NaturalSegment(AbstractNaturalSegment):
         if not isinstance(Q, SegmentNaturalCoordinates):
             Q = SegmentNaturalCoordinates(Q)
 
-        return HomogeneousTransform.from_rt(
-            rotation=self.transformation_matrix(transformation_matrix_type)
-            @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
-            translation=Q.rp[:, np.newaxis],
-        )
+        return HomogeneousTransform.from_rt(rotation=self.transformation_matrix(transformation_matrix_type)@ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),translation=Q.rp[:, np.newaxis])
 
-    def location_from_homogenous_transform(
-        self, T: Union[np.ndarray, HomogeneousTransform]
-    ) -> SegmentNaturalCoordinates:
+    def location_from_homogenous_transform(self, T: Union[np.ndarray, HomogeneousTransform]) -> SegmentNaturalCoordinates:
         """
         This function returns the location of the segment in natural coordinate from its homogenous transform
 
@@ -414,9 +396,7 @@ class NaturalSegment(AbstractNaturalSegment):
         return self.rigid_body_constraint_jacobian(Qi) @ np.array(Qdoti)
 
     @staticmethod
-    def rigid_body_constraint_jacobian_derivative(
-        Qdoti: SegmentNaturalVelocities,
-    ) -> np.ndarray:
+    def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> np.ndarray:
         """
         This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
 
@@ -629,9 +609,7 @@ class NaturalSegment(AbstractNaturalSegment):
         biais = -Krdot @ Qdoti.vector
 
         if stabilization is not None:
-            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
-                "beta"
-            ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
+            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization["beta"] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
         A = zeros((18, 18))
         A[0:12, 0:12] = Gi
@@ -773,12 +751,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return markers
 
-    def marker_constraints(
-        self,
-        marker_locations: np.ndarray,
-        Qi: SegmentNaturalCoordinates,
-        only_technical: bool = True,
-    ) -> np.ndarray:
+    def marker_constraints(self,marker_locations: np.ndarray,Qi: SegmentNaturalCoordinates,only_technical: bool = True) -> np.ndarray:
         """
         This function returns the marker constraints of the segment
 
@@ -871,26 +844,11 @@ class NaturalSegment(AbstractNaturalSegment):
         rigid_body_constraints_jacobian = self.rigid_body_constraint_jacobian(Qi=Qi)
 
         # make a matrix out of it, todo: would be great to know if there is an analytical way to compute this matrix
-        front_matrix = np.hstack(
-            (
-                proximal_interpolation_matrix.T,
-                pseudo_interpolation_matrix.T,
-                -rigid_body_constraints_jacobian.T,
-            )
-        )
+        front_matrix = np.hstack((proximal_interpolation_matrix.T,pseudo_interpolation_matrix.T,-rigid_body_constraints_jacobian.T,))
 
-        b = (
-            (self.mass_matrix @ Qddoti)[:, np.newaxis]
-            - self.gravity_force()[:, np.newaxis]
-            - segment_external_forces
-            - subtree_intersegmental_generalized_forces
-        )
+        b = ((self.mass_matrix @ Qddoti)[:, np.newaxis]- self.gravity_force()[:, np.newaxis]- segment_external_forces- subtree_intersegmental_generalized_forces)
 
         # compute the generalized forces
         generalized_forces = np.linalg.inv(front_matrix) @ b
 
-        return (
-            generalized_forces[:3, 0],
-            generalized_forces[3:6, 0],
-            generalized_forces[6:, 0],
-        )
+        return (generalized_forces[:3, 0], generalized_forces[3:6, 0],generalized_forces[6:, 0])

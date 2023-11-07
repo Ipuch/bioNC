@@ -128,7 +128,7 @@ class InverseKinematics:
     experimental_markers : np.ndarray | str
         The experimental markers (3xNxM numpy array), or a path to a c3d file
     experimental_heatmaps : dict[str, np.ndarray]
-        The experimental heatmaps, composed of two arrays and one float : camera_parameters (nb_cameras x 3 x 4 numpy array), gaussian_parameters (nb_cameras x 5 x M x N numpy array)
+        The experimental heatmaps, composed of two arrays and one float : camera_parameters (nb_cameras x 3 x 4 numpy array), gaussian_parameters (nb_cameras x 5 x M x N numpy array). gaussian_parameters[:, 0:2, :, :] is an array of the position (x, y) of the center of the gaussian. gaussian_parameters[:, 2:4, :, :] is an array of the standard deviation (x, y) of the gaussian. gaussian_parameters[:,4,:,:] is an array of the magnitude of the gaussian.
     Q_init : np.ndarray
         The initial guess for the inverse kinematics computed from the experimental markers
     Qopt : np.ndarray
@@ -247,12 +247,16 @@ class InverseKinematics:
 
         if experimental_heatmaps is not None:
             if solve_frame_per_frame is False:
-                NotImplementedError("Not possible to solve for all frames with heatmap parameters")
+                NotImplementedError(
+                    "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
+                )
             if not isinstance(experimental_heatmaps, dict):
                 raise ValueError("Please feed experimental heatmaps as a dictionnary")
 
             if not len(experimental_heatmaps["camera_parameters"].shape) == 3:
-                raise ValueError("Length of camera parameters must be 3")
+                raise ValueError(
+                    'The number of dimensions of the NumPy array stored in experimental_heatmaps["camera_parameters"] must be 3 and the expected shape is nb_cameras x 3 x 4'
+                )
             if not experimental_heatmaps["camera_parameters"].shape[1] == 3:
                 raise ValueError("Second dimension of camera parameters must be 3")
             if not experimental_heatmaps["camera_parameters"].shape[2] == 4:
@@ -267,8 +271,12 @@ class InverseKinematics:
                 not experimental_heatmaps["camera_parameters"].shape[0]
                 == experimental_heatmaps["gaussian_parameters"].shape[0]
             ):
-                raise ValueError("First dimension should be equal for camera parameters and gaussian parameters")
-
+                raise ValueError(
+                    'First dimension of experimental_heatmaps["camera_parameters"] and experimental_heatmaps["gaussian_parameters"] should be equal. Currently we have '
+                    + str(experimental_heatmaps["camera_parameters"].shape[0])
+                    + " and "
+                    + str(experimental_heatmaps["gaussian_parameters"].shape[0])
+                )
             self.experimental_heatmaps = experimental_heatmaps
             self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[2]
             self.nb_cameras = self.experimental_heatmaps["gaussian_parameters"].shape[0]
@@ -412,19 +420,11 @@ class InverseKinematics:
                 g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
             for f in range(self.nb_frames):
-                gaussian_parameters_frame = None
-                experimental_marker_frame = None
-                if self.experimental_heatmaps is not None:
-                    gaussian_parameters_frame = self.gaussian_parameters[:, :, f]
-                    camera_parameters = self.camera_parameters
-                    experimental_marker_frame = []
-                if self.experimental_markers is not None:
-                    experimental_marker_frame = self.experimental_markers[:, :, f]
-                    gaussian_parameters_frame = []
-                    camera_parameters = []
-
                 objective = self._objective_function(
-                    self._Q_sym, experimental_marker_frame, camera_parameters, gaussian_parameters_frame
+                    self._Q_sym,
+                    [] if self.experimental_markers is None else self.experimental_markers[:, :, f],
+                    [] if self.experimental_heatmaps is None else self.camera_parameters,
+                    [] if self.experimental_heatmaps is None else self.gaussian_parameters[:, :, f],
                 )
 
                 nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
@@ -438,7 +438,9 @@ class InverseKinematics:
             if self.experimental_markers is not None:
                 objective = self._objective_minimize_marker_distance(self._Q_sym, self.experimental_markers)
             else:
-                NotImplementedError("Not possible to solve for all frames with heatmap parameters")
+                NotImplementedError(
+                    "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
+                )
             nlp = dict(
                 x=self._vert_Q_sym,
                 f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,

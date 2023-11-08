@@ -1,6 +1,6 @@
 from typing import Callable
 
-from casadi import vertcat, horzcat, MX, nlpsol, SX, Function, sum1, dot, exp, reshape
+from casadi import vertcat, horzcat, MX, nlpsol, SX, Function, sum1, dot, exp, reshape, transpose
 import numpy as np
 from pyomeca import Markers
 
@@ -504,26 +504,33 @@ class InverseKinematics:
         MX
             The objective function that maximizes the confidence value of the model keypoints
         """
-        error_m = 0
+        total_confidence = 0
         Q_f = NaturalCoordinates(Q)
         marker_position = self._model_mx.markers(Q_f)
+
+        # todo: we only want technical markers, implement a model.markers(Q_f, only_technical=True)
+        marker_names_technical = self._model_mx.marker_names_technical
+        marker_names = self._model_mx.marker_names
+        technical_index = [marker_names.index(m) for m in marker_names_technical]
+        marker_position = marker_position[:, technical_index]
+
         for m in range(self.model.nb_markers):
             for c in range(self.nb_cameras):
-                camera_calibration_matrix = reshape(camera_parameters[c, :], (3, 4))
-                gaussian = reshape(gaussian_parameters[c, :], (5, self.nb_markers))
+                camera_calibration_matrix = transpose(reshape(camera_parameters[c, :], (4,3)))
+                gaussian = transpose(reshape(gaussian_parameters[c, :], (self.nb_markers, 5)))
 
                 gaussian_magnitude = gaussian[4, m]
                 gaussian_center = gaussian[0:2, m]
                 gaussian_standard_deviation = gaussian[2:4, m]
 
-                error_m += _compute_confidence_value_for_one_heatmap(
+                total_confidence += _compute_confidence_value_for_one_heatmap(
                     marker_position[:, m],
                     camera_calibration_matrix,
                     gaussian_magnitude,
                     gaussian_center,
                     gaussian_standard_deviation,
                 )
-        return 1 / error_m
+        return 1 / total_confidence
 
     def _constraints(self, Q) -> MX:
         """Computes the constraints and handle single frame or multi frames"""

@@ -73,7 +73,6 @@ def add_point_from_dictionary(acq, point_to_add):
     temp_camera_mask[:, : acq["data"]["meta_points"]["residuals"].shape[1], :] = old_camera_mask
     acq["data"]["meta_points"]["residuals"] = temp_residuals
     acq["data"]["meta_points"]["camera_masks"] = temp_camera_mask.astype(dtype=bool)
-    # Add the new analogs to the c3d file used for the type 2 platform
     acq["data"]["points"] = new_array
 
     return acq

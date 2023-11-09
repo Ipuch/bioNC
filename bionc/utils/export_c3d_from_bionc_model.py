@@ -77,6 +77,7 @@ def add_point_from_dictionary(acq, point_to_add):
 
     return acq
 
+
 def add_technical_markers_to_c3d(acq, model, Q):
     """
     This function add the technical markers of the model to the c3d file. This point are the markers that are rigidly associated to the
@@ -109,6 +110,7 @@ def add_technical_markers_to_c3d(acq, model, Q):
     add_point_from_dictionary(acq, dict_to_add)
 
     return acq
+
 
 def add_natural_coordinate_to_c3d(acq, model, Q):
     """
@@ -148,4 +150,3 @@ def add_natural_coordinate_to_c3d(acq, model, Q):
     add_point_from_dictionary(acq, dict_to_add)
 
     return acq
-

@@ -3,6 +3,7 @@ import numpy as np
 from bionc.bionc_numpy import NaturalCoordinates
 from math import ceil, floor, log10
 
+
 def get_points_ezc3d(acq):
     """
     Extract the points from a c3d file in a more readable format for user allowing to find the index of the points in the numpy array using text using a dictionnary.

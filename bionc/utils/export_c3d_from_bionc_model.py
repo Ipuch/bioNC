@@ -77,26 +77,23 @@ def add_point_from_dictionary(acq, point_to_add):
 
     return acq
 
-
-def export_c3d_biomechanical(model, Q, filename_export, filename_initial=None, fq_file=None):
+def add_technical_markers_to_c3d(acq, model, Q):
     """
-
+    This function add the technical markers of the model to the c3d file. This point are the markers that are rigidly associated to the
+    segments of the model.
     Parameters
     ----------
+    acq : ezc3d.c3d
+        The c3d file to add the points to
     model : BiomechanicalModel
         The biomechanical model from which the data can be exported
     Q : numpy.ndarray | NaturalCoordinates
         The natural coordinates of the model, should be given as a Natural coordinates but if given as a numpy array it will be converted
-    filename_export : str | path
-        The path to the c3d file to export
-    initial_file : str | path
-        initial c3d file to add the data to, if let to the None value a new c3d file will be created
-    fq_file : int
-        frequency of the data if no initial file is given
 
     Returns
     -------
-
+    acq : ezc3d.c3d
+        The c3d file with natural coordinate points added
     """
 
     if Q is not isinstance(Q, NaturalCoordinates):
@@ -109,6 +106,32 @@ def export_c3d_biomechanical(model, Q, filename_export, filename_initial=None, f
     for ind_marker, name_marker in enumerate(model.marker_names):
         dict_to_add[f"{name_marker}_optim"] = model_markers[:, ind_marker, :]
 
+    add_point_from_dictionary(acq, dict_to_add)
+
+    return acq
+
+def add_natural_coordinate_to_c3d(acq, model, Q):
+    """
+    This function add the natural coordinate of the model to the c3d file. It add the segment rp,rd,u,w to the c3d file.
+    Parameters
+    ----------
+    acq : ezc3d.c3d
+        The c3d file to add the points to
+    model : BiomechanicalModel
+        The biomechanical model from which the data can be exported
+    Q : numpy.ndarray | NaturalCoordinates
+        The natural coordinates of the model, should be given as a Natural coordinates but if given as a numpy array it will be converted
+
+    Returns
+    -------
+    acq : ezc3d.c3d
+        The c3d file with natural coordinate points added
+    """
+
+    if Q is not isinstance(Q, NaturalCoordinates):
+        Q = NaturalCoordinates(Q)
+
+    dict_to_add = dict()
     # We add the segment rp,rd,u,w to the c3d file
     for s in range(Q.nb_qi()):
         name_segment = model.segment_names[s]
@@ -122,14 +145,7 @@ def export_c3d_biomechanical(model, Q, filename_export, filename_initial=None, f
         dict_to_add[f"rd_{name_segment}"] = rd_temp
         dict_to_add[f"w_{name_segment}"] = rd_temp + w_temp / 10
 
-    if filename_initial is None:
-        original_c3d = ezc3d.ezc3dRead()
-        if fq_file is not None:
-            original_c3d.parameters.POINT.RATE.DATA = fq_file
-        else:
-            original_c3d.parameters.POINT.RATE.DATA = 100
-    else:
-        original_c3d = ezc3d.c3d(filename_initial)
+    add_point_from_dictionary(acq, dict_to_add)
 
-    add_point_from_dictionary(original_c3d, dict_to_add)
-    original_c3d.write(filename_export)
+    return acq
+

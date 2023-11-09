@@ -145,8 +145,8 @@ def add_natural_coordinate_to_c3d(acq, model, Q):
         u_mean = np.mean(np.linalg.norm(u_temp, axis=0))
         list_factor.append(ceil(log10(u_mean / v_mean)))
 
-    most_occurence = max(set(list_factor), key=list_factor.count)
-    factor = 10**most_occurence
+    most_occurence_factor = max(set(list_factor), key=list_factor.count)
+    factor = 10**most_occurence_factor
 
     dict_to_add = dict()
     # We add the segment rp,rd,u,w to the c3d file

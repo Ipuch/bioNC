@@ -8,7 +8,7 @@ from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 
-from .heatmap_helpers import _compute_confidence_value_for_one_heatmap
+from .. utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
 
 def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
     """

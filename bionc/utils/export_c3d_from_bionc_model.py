@@ -1,7 +1,7 @@
 import ezc3d
 import numpy as np
 from bionc.bionc_numpy import NaturalCoordinates
-
+from math import ceil, floor, log10
 
 def get_points_ezc3d(acq):
     """
@@ -132,6 +132,20 @@ def add_natural_coordinate_to_c3d(acq, model, Q):
 
     if Q is not isinstance(Q, NaturalCoordinates):
         Q = NaturalCoordinates(Q)
+    # Calulation of a reasonable factor for the u and w
+    list_factor = []
+    for s in range(Q.nb_qi()):
+        name_segment = model.segment_names[s]
+        Qi = Q.vector(s)
+        rp_temp = Qi.rp
+        rd_temp = Qi.rd
+        u_temp = Qi.u
+        v_mean = np.mean(np.linalg.norm(rd_temp - rp_temp, axis=0))
+        u_mean = np.mean(np.linalg.norm(u_temp, axis=0))
+        list_factor.append(ceil(log10(u_mean / v_mean)))
+
+    most_occurence = max(set(list_factor), key=list_factor.count)
+    factor = 10**most_occurence
 
     dict_to_add = dict()
     # We add the segment rp,rd,u,w to the c3d file
@@ -142,10 +156,13 @@ def add_natural_coordinate_to_c3d(acq, model, Q):
         rd_temp = Qi.rd
         u_temp = Qi.u
         w_temp = Qi.w
-        dict_to_add[f"u_{name_segment}"] = rp_temp + u_temp / 10
+
+        v_mean = np.mean(np.linalg.norm(rd_temp - rp_temp, axis=0))
+        u_mean = np.mean(np.linalg.norm(u_temp, axis=0))
+        dict_to_add[f"u_{name_segment}"] = rp_temp + u_temp / factor
         dict_to_add[f"rp_{name_segment}"] = rp_temp
         dict_to_add[f"rd_{name_segment}"] = rd_temp
-        dict_to_add[f"w_{name_segment}"] = rd_temp + w_temp / 10
+        dict_to_add[f"w_{name_segment}"] = rd_temp + w_temp / factor
 
     add_point_from_dictionary(acq, dict_to_add)
 

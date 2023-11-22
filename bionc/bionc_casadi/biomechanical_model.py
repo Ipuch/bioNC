@@ -13,7 +13,7 @@ from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 class BiomechanicalModel(GenericBiomechanicalModel):
     """
-    
+
     Attributes
     ----------
     _numpy_model : NumpyBiomechanicalModel

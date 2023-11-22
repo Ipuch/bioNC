@@ -22,6 +22,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
     express_joint_torques_in_euler_basis
         This function returns the joint torques expressed in the euler basis
     """
+
     def __init__(self):
         super().__init__()
 
@@ -704,9 +705,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = self.holonomic_constraints_jacobian(Q)
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
-        external_forces = (
-            self.external_force_set() if external_forces is None else external_forces
-        )
+        external_forces = self.external_force_set() if external_forces is None else external_forces
         fext = external_forces.to_natural_external_forces(Q)
 
         joint_generalized_forces_object = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_segments)

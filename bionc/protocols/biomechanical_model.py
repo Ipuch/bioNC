@@ -1147,14 +1147,14 @@ class GenericBiomechanicalModel(ABC):
     @abstractmethod
     def external_force_set(self) -> ExternalForceSet:
         """
-         This method creates an empty ExternalForceSet object with the number of segments in the current biomechanical model.
-         The ExternalForceSet object is used to store and manage the external forces applied to each segment in the model.
+        This method creates an empty ExternalForceSet object with the number of segments in the current biomechanical model.
+        The ExternalForceSet object is used to store and manage the external forces applied to each segment in the model.
 
-         Returns
-         -------
-         ExternalForceSet
-             An empty ExternalForceSet object with the same number of segment as the biomechanical model.
-         """
+        Returns
+        -------
+        ExternalForceSet
+            An empty ExternalForceSet object with the same number of segment as the biomechanical model.
+        """
 
     @abstractmethod
     def inverse_dynamics(

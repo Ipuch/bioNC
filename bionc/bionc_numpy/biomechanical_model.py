@@ -6,7 +6,8 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
-from .external_force import ExternalForceSet, ExternalForce, JointGeneralizedForces, JointGeneralizedForcesList
+from .external_force import ExternalForceSet, ExternalForce
+from .generalized_force import JointGeneralizedForces, JointGeneralizedForcesList
 from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 

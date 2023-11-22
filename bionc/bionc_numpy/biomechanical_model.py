@@ -766,6 +766,18 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
         return InverseKinematics(self, experimental_markers, Q_init, solve_frame_per_frame)
 
+    def external_force_set(self):
+        """
+         This method creates an empty ExternalForceSet object with the number of segments in the current biomechanical model.
+         The ExternalForceSet object is used to store and manage the external forces applied to each segment in the model.
+
+         Returns
+         -------
+         ExternalForceSet
+             An empty ExternalForceSet object with the same number of segment as the biomechanical model.
+         """
+        return ExternalForceSet.empty_from_nb_segment(self.nb_segments)
+
     def inverse_dynamics(
         self,
         Q: NaturalCoordinates,

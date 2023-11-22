@@ -664,6 +664,18 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lagrange_multipliers = x[self.nb_Qddot :]
         return NaturalAccelerations(Qddot), lagrange_multipliers
 
+    def external_force_set(self):
+        """
+         This method creates an empty ExternalForceSet object with the number of segments in the current biomechanical model.
+         The ExternalForceSet object is used to store and manage the external forces applied to each segment in the model.
+
+         Returns
+         -------
+         ExternalForceSet
+             An empty ExternalForceSet object with the same number of segment as the biomechanical model.
+         """
+        return ExternalForceSet.empty_from_nb_segment(self.nb_segments)
+
     def inverse_dynamics(
         self,
         Q: NaturalCoordinates,

@@ -695,7 +695,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
         external_forces = (
-            ExternalForceSet.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
+            self.external_force_set() if external_forces is None else external_forces
         )
         fext = external_forces.to_natural_external_forces(Q)
 
@@ -785,7 +785,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         external_forces: ExternalForceSet = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if external_forces is None:
-            external_forces = ExternalForceSet.empty_from_nb_segment(self.nb_segments)
+            external_forces = self.external_force_set()
         else:
             if external_forces.nb_segments != self.nb_segments:
                 raise ValueError(

@@ -18,7 +18,7 @@ from .bionc_numpy import (
     InertiaParameters,
     BiomechanicalModel,
     JointType,
-    ExternalForceList,
+    ExternalForceSet,
     ExternalForce,
     NaturalInertialParameters,
     compute_transformation_matrix,

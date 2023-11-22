@@ -8,7 +8,7 @@ import dill as pickle
 from bionc.protocols.natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
 from bionc.protocols.natural_accelerations import NaturalAccelerations
-from bionc.protocols.external_force import ExternalForceList
+from bionc.protocols.external_force import ExternalForceSet
 from ..utils.enums import EulerSequence
 
 
@@ -1021,7 +1021,7 @@ class GenericBiomechanicalModel(ABC):
 
     @abstractmethod
     def inverse_dynamics(
-        self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceList = None
+        self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceSet = None
     ) -> tuple[np.ndarray | MX, np.ndarray | MX, np.ndarray | MX]:
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
@@ -1038,7 +1038,7 @@ class GenericBiomechanicalModel(ABC):
            The generalized coordinates of the model
         Qddot: NaturalAccelerations
            The generalized accelerations of the model
-        external_forces: ExternalForceList
+        external_forces: ExternalForceSet
            The external forces applied to the model
 
         Returns

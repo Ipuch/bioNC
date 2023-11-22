@@ -6,7 +6,7 @@ from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .inverse_kinematics import InverseKinematics
-from .external_force import ExternalForceList, ExternalForce, JointGeneralizedForces, JointGeneralizedForcesList
+from .external_force import ExternalForceSet, ExternalForce, JointGeneralizedForces, JointGeneralizedForcesList
 from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
@@ -659,7 +659,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
         joint_generalized_forces: np.ndarray = None,
-        external_forces: ExternalForceList = None,
+        external_forces: ExternalForceSet = None,
         stabilization: dict = None,
     ) -> np.ndarray:
         """
@@ -674,7 +674,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         joint_generalized_forces : np.ndarray
             The joint generalized forces in joint euler-basis, and forces in parent basis, like in minimal coordinates,
             one per dof of the system. If None, the joint generalized forces are set to 0
-        external_forces : ExternalForceList
+        external_forces : ExternalForceSet
             The list of external forces applied on the system
         stabilization: dict
             Dictionary containing the Baumgarte's stabilization parameters:
@@ -695,7 +695,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
         external_forces = (
-            ExternalForceList.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
+            ExternalForceSet.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
         )
         fext = external_forces.to_natural_external_forces(Q)
 
@@ -770,10 +770,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qddot: NaturalAccelerations,
-        external_forces: ExternalForceList = None,
+        external_forces: ExternalForceSet = None,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         if external_forces is None:
-            external_forces = ExternalForceList.empty_from_nb_segment(self.nb_segments)
+            external_forces = ExternalForceSet.empty_from_nb_segment(self.nb_segments)
         else:
             if external_forces.nb_segments != self.nb_segments:
                 raise ValueError(
@@ -830,7 +830,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qddot: NaturalAccelerations,
-        external_forces: ExternalForceList,
+        external_forces: ExternalForceSet,
         segment_index: int = 0,
         visited_segments: list[bool, ...] = None,
         torques: np.ndarray = None,
@@ -846,7 +846,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The generalized coordinates of the model
         Qddot: NaturalAccelerations
             The generalized accelerations of the model
-        external_forces: ExternalForceList
+        external_forces: ExternalForceSet
             The external forces applied to the model
         segment_index: int
             The index of the segment to start the search from

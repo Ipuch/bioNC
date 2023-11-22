@@ -6,12 +6,29 @@ from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
 from .natural_accelerations import NaturalAccelerations
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
-from .external_force import ExternalForceList, ExternalForce
+from .external_force import ExternalForceSet, ExternalForce
 from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
+    """
+
+    Attributes
+    ----------
+    _numpy_model : NumpyBiomechanicalModel
+        The numpy model from which the casadi model is built
+
+    Methods
+    -------
+    set_numpy_model(numpy_model: BiomechanicalModel)
+        Set the numpy model from which the casadi model is built
+    numpy_model
+        Return the numpy model from which the casadi model is built
+    express_joint_torques_in_euler_basis
+        This function returns the joint torques expressed in the euler basis
+    """
+
     def __init__(self):
         super().__init__()
         self._numpy_model = None
@@ -612,7 +629,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
-        external_forces: ExternalForceList = None,
+        external_forces: ExternalForceSet = None,
         # external_forces: ExternalForces
     ):
         """
@@ -624,7 +641,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
-        external_forces : ExternalForceList
+        external_forces : ExternalForceSet
             The list of external forces applied on the system
 
         Returns
@@ -638,9 +655,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         K = self.holonomic_constraints_jacobian(Q)
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
-        external_forces = (
-            ExternalForceList.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
-        )
+        external_forces = self.external_force_set() if external_forces is None else external_forces
         fext = external_forces.to_natural_external_forces(Q)
         # if stabilization is not None:
         #     biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
@@ -664,14 +679,17 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         lagrange_multipliers = x[self.nb_Qddot :]
         return NaturalAccelerations(Qddot), lagrange_multipliers
 
+    def external_force_set(self) -> ExternalForceSet:
+        return ExternalForceSet.empty_from_nb_segment(self.nb_segments)
+
     def inverse_dynamics(
         self,
         Q: NaturalCoordinates,
         Qddot: NaturalAccelerations,
-        external_forces: ExternalForceList = None,
+        external_forces: ExternalForceSet = None,
     ) -> tuple[MX, MX, MX]:
         if external_forces is None:
-            external_forces = ExternalForceList.empty_from_nb_segment(self.nb_segments)
+            external_forces = self.external_force_set()
         else:
             if external_forces.nb_segments != self.nb_segments:
                 raise ValueError(
@@ -728,7 +746,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qddot: NaturalAccelerations,
-        external_forces: ExternalForceList,
+        external_forces: ExternalForceSet,
         segment_index: int = 0,
         visited_segments: list[bool, ...] = None,
         torques: MX = None,
@@ -744,7 +762,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The generalized coordinates of the model
         Qddot: NaturalAccelerations
             The generalized accelerations of the model
-        external_forces: ExternalForceList
+        external_forces: ExternalForceSet
             The external forces applied to the model
         segment_index: int
             The index of the segment to start the search from

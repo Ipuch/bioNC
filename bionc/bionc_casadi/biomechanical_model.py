@@ -12,6 +12,22 @@ from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
+    """
+    
+    Attributes
+    ----------
+    _numpy_model : NumpyBiomechanicalModel
+        The numpy model from which the casadi model is built
+
+    Methods
+    -------
+    set_numpy_model(numpy_model: BiomechanicalModel)
+        Set the numpy model from which the casadi model is built
+    numpy_model
+        Return the numpy model from which the casadi model is built
+    express_joint_torques_in_euler_basis
+        This function returns the joint torques expressed in the euler basis
+    """
     def __init__(self):
         super().__init__()
         self._numpy_model = None

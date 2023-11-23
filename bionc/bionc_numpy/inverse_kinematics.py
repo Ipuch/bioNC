@@ -8,7 +8,8 @@ from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 
-from .. utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
+from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
+
 
 def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
     """
@@ -83,6 +84,7 @@ def sarrus(matrix: MX):
         - matrix[0, 2] * matrix[1, 1] * matrix[2, 0]
     )
 
+
 class InverseKinematics:
     """
     Inverse kinematics solver also known as Multibody Kinematics Optimization (MKO)
@@ -94,7 +96,7 @@ class InverseKinematics:
     experimental_markers : np.ndarray | str
         The experimental markers (3xNxM numpy array), or a path to a c3d file
     experimental_heatmaps : dict[str, np.ndarray]
-        The experimental heatmaps, composed of two arrays and one float : camera_parameters (nb_cameras x 3 x 4 numpy array), gaussian_parameters (nb_cameras x 5 x M x N numpy array). gaussian_parameters[:, 0:2, :, :] is an array of the position (x, y) of the center of the gaussian. gaussian_parameters[:, 2:4, :, :] is an array of the standard deviation (x, y) of the gaussian. gaussian_parameters[:,4,:,:] is an array of the magnitude of the gaussian.
+        The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array). gaussian_parameters[0:2, :, :, :] is an array of the position (x, y) of the center of the gaussian. gaussian_parameters[2:4, :, :, :] is an array of the standard deviation (x, y) of the gaussian. gaussian_parameters[4,:,:,:] is an array of the magnitude of the gaussian.
     Q_init : np.ndarray
         The initial guess for the inverse kinematics computed from the experimental markers
     Qopt : np.ndarray
@@ -150,7 +152,7 @@ class InverseKinematics:
         experimental_markers : np.ndarray | str
             The experimental markers (3xNxM numpy array), or a path to a c3d file
         experimental_heatmaps : dict[str, np.ndarray]
-            The experimental heatmaps, composed of two arrays and one float : camera_parameters (nb_cameras x 3 x 4 numpy array), gaussian_parameters (nb_cameras x 5 x M x N numpy array)
+            The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array)
         Q_init : np.ndarray | NaturalCoordinates
             The initial guess for the inverse kinematics computed from the experimental markers
         solve_frame_per_frame : bool
@@ -166,6 +168,11 @@ class InverseKinematics:
         self._active_direct_frame_constraints = active_direct_frame_constraints
         self.use_sx = use_sx
 
+        if experimental_heatmaps is not None and solve_frame_per_frame is False:
+            raise NotImplementedError(
+                "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
+            )
+
         if not isinstance(model, BiomechanicalModel):
             raise ValueError("model must be a BiomechanicalModel")
         self.model = model
@@ -173,8 +180,9 @@ class InverseKinematics:
 
         if Q_init is None:
             if experimental_heatmaps is not None:
-                NotImplementedError("Not available yet, please provide Q_init")
-            self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
+                raise NotImplementedError("Not available yet, please provide Q_init")
+            else:
+                self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
         else:
             self.Q_init = Q_init
 
@@ -212,52 +220,52 @@ class InverseKinematics:
             self.objective_sym = [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
 
         if experimental_heatmaps is not None:
-            if solve_frame_per_frame is False:
-                NotImplementedError(
-                    "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
-                )
             if not isinstance(experimental_heatmaps, dict):
                 raise ValueError("Please feed experimental heatmaps as a dictionnary")
 
             if not len(experimental_heatmaps["camera_parameters"].shape) == 3:
                 raise ValueError(
-                    'The number of dimensions of the NumPy array stored in experimental_heatmaps["camera_parameters"] must be 3 and the expected shape is nb_cameras x 3 x 4'
+                    'The number of dimensions of the NumPy array stored in experimental_heatmaps["camera_parameters"] must be 3 and the expected shape is 3 x 4 x nb_cameras'
                 )
-            if not experimental_heatmaps["camera_parameters"].shape[1] == 3:
-                raise ValueError("Second dimension of camera parameters must be 3")
-            if not experimental_heatmaps["camera_parameters"].shape[2] == 4:
-                raise ValueError("Third dimension of camera parameters must be 4")
+            if not experimental_heatmaps["camera_parameters"].shape[0] == 3:
+                raise ValueError("First dimension of camera parameters must be 3")
+            if not experimental_heatmaps["camera_parameters"].shape[1] == 4:
+                raise ValueError("Second dimension of camera parameters must be 4")
 
             if not len(experimental_heatmaps["gaussian_parameters"].shape) == 4:
-                raise ValueError("Length of gaussian parameters must be 4")
-            if not experimental_heatmaps["gaussian_parameters"].shape[1] == 5:
-                raise ValueError("Second dimension of gaussian parameters must be 5")
+                raise ValueError(
+                    'The number of dimensions of the NumPy array stored in experimental_heatmaps["gaussian_parameters"] must be 4 and the expected shape is 5 x nb_markers x nb_frames x nb_cameras'
+                )
+            if not experimental_heatmaps["gaussian_parameters"].shape[0] == 5:
+                raise ValueError("First dimension of gaussian parameters must be 5")
 
             if (
-                not experimental_heatmaps["camera_parameters"].shape[0]
-                == experimental_heatmaps["gaussian_parameters"].shape[0]
+                not experimental_heatmaps["camera_parameters"].shape[2]
+                == experimental_heatmaps["gaussian_parameters"].shape[3]
             ):
                 raise ValueError(
-                    'First dimension of experimental_heatmaps["camera_parameters"] and experimental_heatmaps["gaussian_parameters"] should be equal. Currently we have '
-                    + str(experimental_heatmaps["camera_parameters"].shape[0])
+                    'Third dimension of experimental_heatmaps["camera_parameters"] and fourth dimension of experimental_heatmaps["gaussian_parameters"] should be equal. Currently we have '
+                    + str(experimental_heatmaps["camera_parameters"].shape[2])
                     + " and "
-                    + str(experimental_heatmaps["gaussian_parameters"].shape[0])
+                    + str(experimental_heatmaps["gaussian_parameters"].shape[3])
                 )
             self.experimental_heatmaps = experimental_heatmaps
-            self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[2]
-            self.nb_cameras = self.experimental_heatmaps["gaussian_parameters"].shape[0]
-            self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape[3]
+
+            self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
+            self.nb_cameras = self.experimental_heatmaps["gaussian_parameters"].shape[3]
+            self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape[2]
+
             self.gaussian_parameters = np.reshape(
                 experimental_heatmaps["gaussian_parameters"],
-                (self.nb_cameras, 5 * self.nb_markers, self.nb_frames),
+                (5 * self.nb_markers, self.nb_frames, self.nb_cameras),
             )
-            self.camera_parameters = np.reshape(experimental_heatmaps["camera_parameters"], (self.nb_cameras, 3 * 4))
+            self.camera_parameters = np.reshape(experimental_heatmaps["camera_parameters"], (3 * 4, self.nb_cameras))
 
             self.experimental_markers = None
             self._markers_sym = MX.sym("markers", (0, 0))
 
-            self._camera_parameters_sym = MX.sym("cam_param", (self.nb_cameras, 3 * 4))
-            self._gaussian_parameters_sym = MX.sym("gaussian_param", (self.nb_cameras, 5 * self.nb_markers))
+            self._camera_parameters_sym = MX.sym("cam_param", (3 * 4, self.nb_cameras))
+            self._gaussian_parameters_sym = MX.sym("gaussian_param", (5 * self.nb_markers, self.nb_cameras))
             self.objective_sym = [
                 self._objective_maximize_confidence(
                     self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym
@@ -390,7 +398,7 @@ class InverseKinematics:
                     self._Q_sym,
                     [] if self.experimental_markers is None else self.experimental_markers[:, :, f],
                     [] if self.experimental_heatmaps is None else self.camera_parameters,
-                    [] if self.experimental_heatmaps is None else self.gaussian_parameters[:, :, f],
+                    [] if self.experimental_heatmaps is None else self.gaussian_parameters[:, f, :],
                 )
 
                 nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
@@ -482,8 +490,8 @@ class InverseKinematics:
 
         for m in range(self.model.nb_markers):
             for c in range(self.nb_cameras):
-                camera_calibration_matrix = transpose(reshape(camera_parameters[c, :], (4,3)))
-                gaussian = transpose(reshape(gaussian_parameters[c, :], (self.nb_markers, 5)))
+                camera_calibration_matrix = transpose(reshape(camera_parameters[:, c], (4, 3)))
+                gaussian = transpose(reshape(gaussian_parameters[:, c], (self.nb_markers, 5)))
 
                 gaussian_magnitude = gaussian[4, m]
                 gaussian_center = gaussian[0:2, m]

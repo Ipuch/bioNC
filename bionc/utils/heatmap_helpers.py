@@ -2,7 +2,7 @@ from casadi import dot, exp
 
 
 def _projection(model_markers, camera_calibration_matrix, x, y):
-    '''
+    """
     Projects a point on the camera output in either x or y direction
 
     Parameters
@@ -15,16 +15,20 @@ def _projection(model_markers, camera_calibration_matrix, x, y):
         True to obtain the result of the projection in x direction
     y : boolean
         True to obtain the result of the projection in x direction
-    '''
+    """
     if x:
-        marker_projected = (dot(model_markers, camera_calibration_matrix[1, 0:3].T) + camera_calibration_matrix[1, 3]) / (dot(model_markers, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3])
+        marker_projected = (
+            dot(model_markers, camera_calibration_matrix[1, 0:3].T) + camera_calibration_matrix[1, 3]
+        ) / (dot(model_markers, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3])
 
     if y:
-        marker_projected = (dot(model_markers, camera_calibration_matrix[0, 0:3].T) + camera_calibration_matrix[0, 3]) / (dot(model_markers, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3])
-    
+        marker_projected = (
+            dot(model_markers, camera_calibration_matrix[0, 0:3].T) + camera_calibration_matrix[0, 3]
+        ) / (dot(model_markers, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3])
+
     if x and y:
         raise ValueError("Project in only one direction please, either x or y")
-    
+
     if not x and not y:
         raise ValueError("Project in one direction please, either x or y")
     return marker_projected

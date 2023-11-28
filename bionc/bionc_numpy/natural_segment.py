@@ -825,7 +825,11 @@ class NaturalSegment(AbstractNaturalSegment):
 
         # make a matrix out of it, todo: would be great to know if there is an analytical way to compute this matrix
         front_matrix = np.hstack(
-            (proximal_interpolation_matrix.T, pseudo_interpolation_matrix.T, -rigid_body_constraints_jacobian.T)
+            (
+                proximal_interpolation_matrix.T,
+                pseudo_interpolation_matrix.T,
+                -rigid_body_constraints_jacobian.T,
+            )
         )
 
         b = (
@@ -838,4 +842,4 @@ class NaturalSegment(AbstractNaturalSegment):
         # compute the generalized forces
         generalized_forces = np.linalg.inv(front_matrix) @ b
 
-        return generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0]
+        return (generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0])

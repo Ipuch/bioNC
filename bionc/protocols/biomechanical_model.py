@@ -156,6 +156,8 @@ class GenericBiomechanicalModel(ABC):
         Returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm.
     natural_coordinates_to_joint_angles(self, Q: NaturalCoordinates)
         Converts the natural coordinates to joint angles with Euler Sequences defined for each joint.
+    marker_technical_index
+        This function returns the index of the marker with the given name
     """
 
     def __init__(
@@ -565,6 +567,22 @@ class GenericBiomechanicalModel(ABC):
         for key in self.segments_no_ground:
             marker_names += self.segments[key].marker_names_technical
         return marker_names
+
+    def marker_technical_index(self, name: str) -> int:
+        """
+        This function returns the index of the marker with the given name
+
+        Parameters
+        ----------
+        name : str
+            The name of the marker
+
+        Returns
+        -------
+        int
+            The index of the marker with the given name
+        """
+        return self.marker_names_technical.index(name)
 
     @property
     def dof_names(self) -> list[str]:

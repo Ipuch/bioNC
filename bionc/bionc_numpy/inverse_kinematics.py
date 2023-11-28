@@ -175,29 +175,16 @@ class InverseKinematics:
                 "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
             )
 
-        if not isinstance(model, BiomechanicalModel):
-            raise ValueError("model must be a BiomechanicalModel")
-        self.model = model
-        self._model_mx = model.to_mx()
-
-        if Q_init is None:
-            if experimental_heatmaps is not None:
-                raise NotImplementedError("Not available yet, please provide Q_init")
-            else:
-                self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
-        else:
-            self.Q_init = Q_init
-
-        self.Qopt = None
-        self.segment_determinants = None
-        self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
-
         if experimental_markers is None and experimental_heatmaps is None:
             raise ValueError("Please feed experimental data, either marker or heatmap data")
         if experimental_markers is not None and experimental_heatmaps is not None:
             raise ValueError("Please choose between marker data and heatmap data")
 
-        self.success_optim = []
+        if not isinstance(model, BiomechanicalModel):
+            raise ValueError("model must be a BiomechanicalModel")
+        self.model = model
+        self._model_mx = model.to_mx()
+
         if experimental_markers is not None:
             if isinstance(experimental_markers, str):
                 self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
@@ -209,6 +196,27 @@ class InverseKinematics:
                 ):
                     raise ValueError("experimental_markers must be a 3xNxM numpy array")
                 self.experimental_markers = experimental_markers
+
+        if Q_init is None:
+            if experimental_heatmaps is not None:
+                raise NotImplementedError("Not available yet, please provide Q_init")
+            else:
+                self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
+        else:
+            self.Q_init = Q_init
+
+        self.Qopt = None
+        self.segment_determinants = None
+
+        # has to be declared before to handle multiple_frame_optimisation when declaring_sym_Q
+        if solve_frame_per_frame is False:
+            self.nb_frames = self.experimental_markers.shape[2]
+
+        self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
+
+        self.success_optim = []
+        if experimental_markers is not None:
+
             self.nb_markers = self.experimental_markers.shape[1]
             self.nb_frames = self.experimental_markers.shape[2]
 
@@ -255,8 +263,8 @@ class InverseKinematics:
             self.experimental_heatmaps = experimental_heatmaps
 
             self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
+            self.nb_frames = experimental_heatmaps["gaussian_parameters"].shape[2]
             self.nb_cameras = self.experimental_heatmaps["gaussian_parameters"].shape[3]
-            self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape[2]
 
             self.gaussian_parameters = np.reshape(
                 experimental_heatmaps["gaussian_parameters"],
@@ -335,7 +343,7 @@ class InverseKinematics:
         self.objective_sym.append(symbolic_objective)
         self._update_objective_function()
 
-    def solve(self, method: str = "ipopt", options: dict = None, print_level=0) -> np.ndarray:
+    def solve(self, method: str = "ipopt", options: dict = None) -> np.ndarray:
         """
         Solves the inverse kinematics
 
@@ -369,14 +377,13 @@ class InverseKinematics:
                     "tol_du": 0.1,
                     "tol_pr": 0.1,
                     "qpsol_options": {"error_on_fail": False},
-                    "print_level": print_level,
                 }
         elif method == "ipopt":
             if options is None:
                 options = {
                     "ipopt.hessian_approximation": "exact",  # recommended
                     "ipopt.warm_start_init_point": "no",
-                    "ipopt.print_level": print_level,
+                    "ipopt.print_level": 0,
                     "ipopt.print_timing_statistics": "no",
                 }
         else:

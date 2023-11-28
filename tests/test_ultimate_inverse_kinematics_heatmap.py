@@ -3,8 +3,7 @@ import numpy as np
 import pytest
 import ezc3d
 
-from utils import TestUtils
-from utils_markerless import model_creation
+from .utils import TestUtils
 
 from bionc import InverseKinematics, NaturalCoordinates
 
@@ -34,7 +33,6 @@ def test_compute_confidence():
     np.testing.assert_almost_equal(conf_ankle, np.array(0.7188), decimal=1e-4)
 
 
-
 def test_compute_projection():
     right_knee = DM([-1.08386636, -0.0476904, 0.45526105])
     cam = DM(
@@ -44,7 +42,7 @@ def test_compute_projection():
             [-6.56528711e-01, -6.57654285e-01, -3.69406223e-01, 2.99309301e00],
         ]
     )
-    proj_knee_on_x = _projection(right_knee, cam, axis=1 )
+    proj_knee_on_x = _projection(right_knee, cam, axis=1)
     proj_knee_on_y = _projection(right_knee, cam, axis=0)
 
     np.testing.assert_almost_equal(proj_knee_on_x, np.array(957.55), decimal=1e-2)
@@ -187,8 +185,13 @@ Q_initialize = NaturalCoordinates(
 
 
 def test_global_heatmap_ik():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     ik = InverseKinematics(
-        model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        model=module.model_creation_markerless(c3d_filename, False),
         experimental_heatmaps=experimental_heatmap_parameters,
         solve_frame_per_frame=True,
         Q_init=Q_initialize,
@@ -230,12 +233,17 @@ def test_global_heatmap_ik():
 
 
 def test_error_solve_frame_per_frame():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(
         NotImplementedError,
         match=f"Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True",
     ):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
             solve_frame_per_frame=False,
@@ -243,9 +251,14 @@ def test_error_solve_frame_per_frame():
 
 
 def test_error_Qinit_is_none():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(NotImplementedError, match=f"Not available yet, please provide Q_init"):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=None,
             solve_frame_per_frame=True,
@@ -254,9 +267,15 @@ def test_error_Qinit_is_none():
 
 def test_error_markers_and_heatmaps():
     experimental_markers = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(ValueError, match=f"Please choose between marker data and heatmap data"):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_markers=experimental_markers,
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
@@ -265,9 +284,14 @@ def test_error_markers_and_heatmaps():
 
 
 def test_error_no_markers_and_no_heatmaps():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(ValueError, match=f"Please feed experimental data, either marker or heatmap data"):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_markers=None,
             experimental_heatmaps=None,
             Q_init=Q_initialize,
@@ -350,9 +374,15 @@ def test_error_experimental_heatmaps_is_not_a_dictionnary():
             ],
         ]
     )
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(ValueError, match=f"Please feed experimental heatmaps as a dictionnary"):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
@@ -380,9 +410,15 @@ def test_error_first_dim_cam_param_is_not_3():
         "camera_parameters": camera_parameters,
         "gaussian_parameters": gaussian_parameters,
     }
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(ValueError, match=f"First dimension of camera parameters must be 3"):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
@@ -403,12 +439,18 @@ def test_error_len_cam_param_is_not_3():
         "camera_parameters": camera_parameters,
         "gaussian_parameters": gaussian_parameters,
     }
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(
         ValueError,
         match=f'The number of dimensions of the NumPy array stored in experimental_heatmaps\["camera_parameters"\] must be 3 and the expected shape is 3 x 4 x nb_cameras',
     ):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
@@ -440,9 +482,14 @@ def test_error_second_dim_cam_param_is_not_4():
         "gaussian_parameters": gaussian_parameters,
     }
 
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(ValueError, match=f"Second dimension of camera parameters must be 4"):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
@@ -476,12 +523,18 @@ def test_error_len_gaussian_param_is_not_4():
         "camera_parameters": camera_parameters,
         "gaussian_parameters": gaussian_parameters,
     }
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(
         ValueError,
         match=f'The number of dimensions of the NumPy array stored in experimental_heatmaps\["gaussian_parameters"\] must be 4 and the expected shape is 5 x nb_markers x nb_frames x nb_cameras',
     ):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
@@ -554,9 +607,15 @@ def test_error_first_dim_gaussian_param_is_not_5():
         "camera_parameters": camera_parameters,
         "gaussian_parameters": gaussian_parameters,
     }
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(ValueError, match=f"First dimension of gaussian parameters must be 5"):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
@@ -667,6 +726,11 @@ def test_error_same_nb_cam_for_gaussian_and_cam_param():
         "gaussian_parameters": gaussian_parameters,
     }
 
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
+
+    c3d_filename = module.generate_c3d_file()
+
     with pytest.raises(
         ValueError,
         match=f'Third dimension of experimental_heatmaps\["camera_parameters"\] and fourth dimension of experimental_heatmaps\["gaussian_parameters"\] should be equal. Currently we have '
@@ -674,8 +738,8 @@ def test_error_same_nb_cam_for_gaussian_and_cam_param():
         + " and "
         + str(experimental_heatmap_parameters["gaussian_parameters"].shape[3]),
     ):
-        ik = InverseKinematics(
-            model=model_creation("D:/Users/chaumeil/these/openpose/sujet5/wDLT_results_static.c3d", False, False),
+        InverseKinematics(
+            model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
             Q_init=Q_initialize,
             solve_frame_per_frame=True,

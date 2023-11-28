@@ -773,7 +773,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         InverseKinematics
             The inverse kinematics object
         """
-        return InverseKinematics(self, experimental_markers, Q_init, solve_frame_per_frame)
+        return InverseKinematics(self, experimental_markers=experimental_markers, Q_init=Q_init, solve_frame_per_frame=solve_frame_per_frame)
 
     def external_force_set(self) -> ExternalForceSet:
         return ExternalForceSet.empty_from_nb_segment(self.nb_segments)

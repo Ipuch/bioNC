@@ -9912,7 +9912,7 @@ def test_inverse_kinematics_class():
     ik = InverseKinematics(natural_model, markers)
     ik = natural_model.inverse_kinematics(markers)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(AttributeError):
         ik = InverseKinematics(natural_model, 1)
 
     with pytest.raises(ValueError):

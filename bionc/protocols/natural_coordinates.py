@@ -58,6 +58,11 @@ class SegmentNaturalCoordinates(Protocol):
         """
         ...
 
+    @property
+    def name_dofs(self) -> list[str]:
+        """This function returns the names of the natural coordinates"""
+        return ["u_x", "u_y", "u_z", "rp_x", "rp_y", "rp_z", "rd_x", "rd_y", "rd_z", "w_x", "w_y", "w_z"]
+
 
 class NaturalCoordinates(Protocol):
     """

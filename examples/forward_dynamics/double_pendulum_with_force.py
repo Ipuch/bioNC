@@ -8,10 +8,10 @@ from bionc.bionc_numpy import (
     NaturalCoordinates,
     SegmentNaturalVelocities,
     NaturalVelocities,
-    ExternalForceList,
+    ExternalForceSet,
     ExternalForce,
 )
-from bionc import NaturalAxis, CartesianAxis, RK4
+from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 
 
 def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
@@ -24,7 +24,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
     # fill the biomechanical model with the segment
     for i in range(nb_segments):
         name = f"pendulum_{i}"
-        model[name] = NaturalSegment(
+        model[name] = NaturalSegment.with_cartesian_inertial_parameters(
             name=name,
             alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
             beta=np.pi / 2,
@@ -33,6 +33,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
             mass=1,
             center_of_mass=np.array([0, -0.5, 0]),  # in segment coordinates system
             inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # in segment coordinates system
+            inertial_transformation_matrix=TransformationMatrixType.Buv,
         )
     # add a revolute joint (still experimental)
     # if you want to add a revolute joint,
@@ -67,7 +68,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
     return model
 
 
-def apply_force_and_drop_pendulum(t_final: float = 10, external_forces: ExternalForceList = None, nb_segments: int = 1):
+def apply_force_and_drop_pendulum(t_final: float = 10, external_forces: ExternalForceSet = None, nb_segments: int = 1):
     """
     This function is used to test the external force
 
@@ -75,7 +76,7 @@ def apply_force_and_drop_pendulum(t_final: float = 10, external_forces: External
     ----------
     t_final: float
         The final time of the simulation
-    external_forces: ExternalForceList
+    external_forces: ExternalForceSet
         The external forces applied to the model
     nb_segments: int
         The number of segments of the model
@@ -123,7 +124,7 @@ def drop_the_pendulum(
     model: BiomechanicalModel,
     Q_init: NaturalCoordinates,
     Qdot_init: NaturalVelocities,
-    external_forces: ExternalForceList,
+    external_forces: ExternalForceSet,
     t_final: float = 2,
     steps_per_second: int = 50,
 ):
@@ -138,7 +139,7 @@ def drop_the_pendulum(
         The initial natural coordinates of the segment
     Qdot_init : SegmentNaturalVelocities
         The initial natural velocities of the segment
-    external_forces : ExternalForceList
+    external_forces : ExternalForceSet
         The external forces applied to the model
     t_final : float, optional
         The final time of the simulation, by default 2
@@ -199,7 +200,7 @@ def main(mode: str = "force_equilibrium"):
     nb_segments = 2
     # add an external force applied on the segment 0
     # first build the object
-    fext = ExternalForceList.empty_from_nb_segment(nb_segment=nb_segments)
+    fext = ExternalForceSet.empty_from_nb_segment(nb_segment=nb_segments)
     # then add a force
     if mode == "force_equilibrium":
         force1 = ExternalForce.from_components(

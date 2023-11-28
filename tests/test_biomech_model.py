@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pytest
 
+from bionc import TransformationMatrixType
+
 from .utils import TestUtils
 
 
@@ -6970,6 +6972,24 @@ def test_biomech_model(bionc_type):
 
     assert natural_model.segment_names == segment_names
 
+    assert natural_model.joint_constraints_index(0) == natural_model.joint_constraints_index("free_joint_PELVIS")
+    assert natural_model.joint_constraints_index(1) == natural_model.joint_constraints_index("hip")
+    assert natural_model.joint_constraints_index(2) == natural_model.joint_constraints_index("knee")
+    assert natural_model.joint_constraints_index(3) == natural_model.joint_constraints_index("ankle")
+
+    assert natural_model.joint_constraints_index(0) == slice(0, 0, None)
+    assert natural_model.joint_constraints_index("hip") == slice(0, 3, None)
+    assert natural_model.joint_constraints_index(2) == slice(3, 6, None)
+    assert natural_model.joint_constraints_index("ankle") == slice(6, 9, None)
+
+    with pytest.raises(ValueError) as error_index:
+        incorrect_joint_index = 10000
+        natural_model.joint_constraints_index(incorrect_joint_index)
+    assert str(error_index.value) == "The joint index 10000 does not exist"
+    with pytest.raises(ValueError) as error_name:
+        natural_model.joint_constraints_index("incorrect_joint_name")
+    assert str(error_name.value) == "The joint name incorrect_joint_name does not exist"
+
     filename = "natural_model.nc"
     if bionc_type == "numpy":
         natural_model.save(filename)
@@ -8779,7 +8799,7 @@ def test_biomech_model_mass(bionc_type):
             BiomechanicalModel,
         )
 
-    my_segment = NaturalSegment(
+    my_segment = NaturalSegment.with_cartesian_inertial_parameters(
         name="box",
         alpha=np.pi / 2,
         beta=np.pi / 2,
@@ -8788,9 +8808,10 @@ def test_biomech_model_mass(bionc_type):
         mass=1,
         center_of_mass=np.array([0, 0, 0]),  # scs
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
-    my_segment_2 = NaturalSegment(
+    my_segment_2 = NaturalSegment.with_cartesian_inertial_parameters(
         name="box2",
         alpha=np.pi / 2,
         beta=np.pi / 2,
@@ -8799,6 +8820,7 @@ def test_biomech_model_mass(bionc_type):
         mass=1,
         center_of_mass=np.array([0, 0, 0]),  # scs
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
     model = BiomechanicalModel()

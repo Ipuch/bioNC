@@ -5,30 +5,157 @@ from typing import Union, Any
 from abc import ABC, abstractmethod
 import dill as pickle
 
-from bionc.protocols.natural_coordinates import NaturalCoordinates
+from bionc.protocols.natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
 from bionc.protocols.natural_accelerations import NaturalAccelerations
-from bionc.protocols.external_force import ExternalForceList
+from bionc.protocols.external_force import ExternalForceSet
 from ..utils.enums import EulerSequence
 
 
 class GenericBiomechanicalModel(ABC):
     """
-    This class is the base with simple methods for all biomechanical models.
-    It contains the segments and the joints of the model.
+    This is an abstract base class that provides the basic structure and methods for all biomechanical models.
+    It contains the segments and the joints of the model. The implemented methods are not specific to numpy or casadi.
 
-    The implemented method are not specific to numpy or casadi.
+    Attributes
+    ----------
+    segments : dict
+        A dictionary containing the segments of the model. The keys are the names of the segments and the values are the corresponding segment objects.
+    joints : dict
+        A dictionary containing the joints of the model. The keys are the names of the joints and the values are the corresponding joint objects.
+    _mass_matrix : np.ndarray
+        The generalized mass matrix of the system.
 
     Methods
-    ----------
+    -------
     __getitem__(self, name: str)
-        This function returns the segment with the given name
+        Returns the segment with the given name.
     __setitem__(self, name: str, segment: Any)
-        This function adds a segment to the model
+        Adds a segment to the model.
     save(self, filename: str)
-        This function saves the model to a file
+        Saves the model to a file.
     load(self, filename: str)
-        This function loads the model from a file
+        Loads the model from a file.
+    set_ground_segment(self, name: str)
+        Sets the ground segment of the model.
+    has_ground_segment(self) -> bool
+        Returns true if the model has a ground segment.
+    segments_no_ground(self)
+        Returns the dictionary of all the segments except the ground segment.
+    _add_joint(self, joint: dict)
+        Adds a joint to the biomechanical model. It is not recommended to use this function directly.
+    joints_with_constraints(self) -> dict
+        Returns the dictionary of all the joints with constraints.
+    has_free_joint(self, segment_idx: int) -> bool
+        Returns true if the segment has a free joint with the ground.
+    _remove_free_joint(self, segment_idx: int)
+        Removes the free joint of the segment.
+    children(self, segment: str | int) -> list[int]
+        Returns the children of the given segment.
+    parents(self, segment: str | int) -> list[int]
+        Returns the parents of the given segment.
+    segment_subtrees(self) -> list[list[int]]
+        Returns the subtrees of the segments.
+    segment_subtree(self, segment: str | int) -> list[int]
+        Returns the subtree of the given segment.
+    nb_segments(self) -> int
+        Returns the number of segments in the model.
+    nb_markers(self) -> int
+        Returns the number of markers in the model.
+    nb_markers_technical(self) -> int
+        Returns the number of technical markers in the model.
+    segment_names(self) -> list[str]
+        Returns the names of the segments in the model.
+    marker_names(self) -> list[str]
+        Returns the names of the markers in the model.
+    marker_names_technical(self) -> list[str]
+        Returns the names of the technical markers in the model.
+    dof_names(self) -> list[str]
+        Returns the names of the degrees of freedom in the model.
+    nb_joints(self) -> int
+        Returns the number of joints in the model.
+    nb_joints_with_constraints(self) -> int
+        Returns the number of joints with constraints in the model.
+    remove_joint(self, name: str)
+        Removes a joint from the model.
+    nb_joint_constraints(self) -> int
+        Returns the number of joint constraints in the model.
+    nb_joint_dof(self) -> int
+        Returns the number of joint degrees of freedom in the model.
+    joint_names(self) -> list[str]
+        Returns the names of the joints in the model.
+    nb_rigid_body_constraints(self) -> int
+        Returns the number of rigid body constraints in the model.
+    nb_holonomic_constraints(self) -> int
+        Returns the number of holonomic constraints in the model.
+    nb_Q(self) -> int
+        Returns the number of generalized coordinates in the model.
+    nb_Qdot(self) -> int
+        Returns the number of generalized velocities in the model.
+    nb_Qddot(self) -> int
+        Returns the number of generalized accelerations in the model.
+    joint_from_index(self, index: int)
+        Returns the joint with the given index.
+    joint_dof_indexes(self, joint_id: int) -> tuple[int, ...]
+        Returns the index of a given joint.
+    joint_constraints_index(self, joint_id: int | str) -> slice
+        Returns the slice of constrain of a given joint.
+    joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list
+        Returns the joints that have the given child index.
+    segment_from_index(self, index: int)
+        Returns the segment with the given index.
+    normalized_coordinates(self) -> tuple[tuple[int, ...]]
+        Returns the normalized coordinates.
+    mass_matrix(self)
+        Returns the generalized mass matrix of the system.
+    rigid_body_constraints(self, Q: NaturalCoordinates)
+        Returns the rigid body constraints of all segments.
+    rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates)
+        Returns the derivative of the rigid body constraints.
+    rigid_body_constraints_jacobian(self, Q: NaturalCoordinates)
+        Returns the rigid body constraints of all segments.
+    rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray
+        Returns the derivative of the Jacobian matrix of the rigid body constraints.
+    joint_constraints(self, Q: NaturalCoordinates)
+        Returns the joint constraints of all joints.
+    joint_constraints_jacobian(self, Q: NaturalCoordinates)
+        Returns the joint constraints of all joints.
+    joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities)
+        Returns the derivative of the Jacobian matrix of the joint constraints.
+    _update_mass_matrix(self)
+        Computes the generalized mass matrix of the system.
+    kinetic_energy(self, Qdot: NaturalVelocities) -> Union[np.ndarray, MX]
+        Computes the kinetic energy of the system.
+    potential_energy(self, Q: NaturalCoordinates) -> Union[np.ndarray, MX]
+        Computes the potential energy of the system.
+    lagrangian(self, Q: NaturalCoordinates, Qdot: NaturalVelocities)
+        Returns the lagrangian of the system as a function of the natural coordinates Q and Qdot.
+    energy(self, Q: NaturalCoordinates, Qdot: NaturalVelocities)
+        Returns the total energy of the model from current Q and Qdot.
+    markers(self, Q: NaturalCoordinates)
+        Returns the position of the markers of the system as a function of the natural coordinates Q.
+    markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates)
+        Returns the marker constraints of all segments.
+    markers_constraints_jacobian(self)
+        Returns the Jacobian matrix the markers constraints.
+    holonomic_constraints(self, Q: NaturalCoordinates) -> MX | np.ndarray
+        Returns the holonomic constraints of the system.
+    holonomic_constraints_jacobian(self, Q: NaturalCoordinates)
+        Returns the Jacobian matrix the holonomic constraints.
+    gravity_forces(self)
+        Returns the weights caused by the gravity forces on each segment.
+    forward_dynamics(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates)
+        Computes the forward dynamics of the system, i.e. the acceleration of the segments.
+    center_of_mass_position(self, Q: NaturalCoordinates)
+        Returns the position of the center of mass of each segment as a function of the natural coordinates Q.
+    _depth_first_search(self, segment_index, visited_segments=None) -> list[bool]
+        Returns the segments in a depth first search order.
+    external_force_set(self) -> ExternalForceSet
+        Creates an empty ExternalForceSet object with the number of segments in the current biomechanical model.
+    inverse_dynamics(self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceSet = None) -> tuple[np.ndarray | MX, np.ndarray | MX, np.ndarray | MX]
+        Returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm.
+    natural_coordinates_to_joint_angles(self, Q: NaturalCoordinates)
+        Converts the natural coordinates to joint angles with Euler Sequences defined for each joint.
     marker_technical_index
         This function returns the index of the marker with the given name
     """
@@ -458,6 +585,18 @@ class GenericBiomechanicalModel(ABC):
         return self.marker_names_technical.index(name)
 
     @property
+    def dof_names(self) -> list[str]:
+        """
+        This function returns the names of the degrees of freedom in the model,
+        namely the names of each decision variable in the model, i.e. the natural coordinates
+        """
+        dof_names = []
+        for key in self.segments_no_ground:
+            dof_names += [f"{key}_{dof}" for dof in SegmentNaturalCoordinates.name_dofs]
+
+        return dof_names
+
+    @property
     def nb_joints(self) -> int:
         """
         This function returns the number of joints in the model
@@ -586,6 +725,41 @@ class GenericBiomechanicalModel(ABC):
         joint = self.joint_from_index(joint_id)
         joint_dof_inx = [joint.index + i for i in range(joint.nb_joint_dof)]
         return tuple(joint_dof_inx)
+
+    def joint_constraints_index(self, joint_id: int | str) -> slice:
+        """
+        This function returns the slice of constrain of a given joint.
+
+        Parameters
+        ----------
+        joint_id : int | str
+            The index or the name of the joint for which the joint constraint indexes are returned
+
+        Returns
+        -------
+        slice_joint_constraint: slice
+            The slice of the given constraint
+        """
+        if isinstance(joint_id, str):
+            if joint_id not in self.joint_names:
+                raise ValueError("The joint name " + joint_id + " does not exist")
+            joint_id = self.joint_names.index(joint_id)
+
+        if isinstance(joint_id, int):
+            if joint_id > self.nb_joints:
+                raise ValueError("The joint index " + str(joint_id) + " does not exist")
+
+        nb_constraint_before_joint = 0
+        for ind_joint in range(joint_id):
+            nb_constraint_before_joint += self.joints[self.joint_names[ind_joint]].nb_constraints
+
+        begin_slice = nb_constraint_before_joint
+        nb_joint_constraints = self.joints[self.joint_names[joint_id]].nb_constraints
+        end_slice = nb_constraint_before_joint + nb_joint_constraints
+
+        slice_joint_constraint = slice(begin_slice, end_slice)
+
+        return slice_joint_constraint
 
     def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
         """
@@ -989,8 +1163,20 @@ class GenericBiomechanicalModel(ABC):
         return visited_segments
 
     @abstractmethod
+    def external_force_set(self) -> ExternalForceSet:
+        """
+        This method creates an empty ExternalForceSet object with the number of segments in the current biomechanical model.
+        The ExternalForceSet object is used to store and manage the external forces applied to each segment in the model.
+
+        Returns
+        -------
+        ExternalForceSet
+            An empty ExternalForceSet object with the same number of segment as the biomechanical model.
+        """
+
+    @abstractmethod
     def inverse_dynamics(
-        self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceList = None
+        self, Q: NaturalCoordinates, Qddot: NaturalAccelerations, external_forces: ExternalForceSet = None
     ) -> tuple[np.ndarray | MX, np.ndarray | MX, np.ndarray | MX]:
         """
         This function returns the forces, torques and lambdas computes through recursive Newton-Euler algorithm
@@ -1007,7 +1193,7 @@ class GenericBiomechanicalModel(ABC):
            The generalized coordinates of the model
         Qddot: NaturalAccelerations
            The generalized accelerations of the model
-        external_forces: ExternalForceList
+        external_forces: ExternalForceSet
            The external forces applied to the model
 
         Returns

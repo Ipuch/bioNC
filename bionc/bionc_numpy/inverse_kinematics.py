@@ -59,7 +59,7 @@ def _solve_nlp(method: str, nlp: dict, Q_init: np.ndarray, lbg: np.ndarray, ubg:
     if S.stats()["success"] is False:
         print("Inverse Kinematics failed to converge")
 
-    return r
+    return r, S.stats()["success"]
 
 
 def sarrus(matrix: MX):
@@ -105,6 +105,8 @@ class InverseKinematics:
         The number of frames of the experimental markers
     nb_markers : int
         The number of markers of the experimental markers
+    success_optim : list[bool]
+        The success of convergence for each frame
     _frame_per_frame : bool
         If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
     _model_mx : BiomechanicalModel
@@ -195,6 +197,7 @@ class InverseKinematics:
         if experimental_markers is not None and experimental_heatmaps is not None:
             raise ValueError("Please choose between marker data and heatmap data")
 
+        self.success_optim = []
         if experimental_markers is not None:
             if isinstance(experimental_markers, str):
                 self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
@@ -393,6 +396,7 @@ class InverseKinematics:
                 x=self._vert_Q_sym,
                 g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
             )
+
             for f in range(self.nb_frames):
                 objective = self._objective_function(
                     self._Q_sym,
@@ -403,7 +407,8 @@ class InverseKinematics:
 
                 nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
                 Q_init = self.Q_init[:, f : f + 1]
-                r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
+                r, success = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
+                self.success_optim.append(success)
                 Qopt[:, f : f + 1] = r["x"].toarray()
         else:
             constraints = self._constraints(self._Q_sym)
@@ -426,7 +431,8 @@ class InverseKinematics:
             if self._active_direct_frame_constraints:
                 lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
                 ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
-            r = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
+            r, success = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
+            self.success_optim = [success] * self.nb_frames
             Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
@@ -541,26 +547,112 @@ class InverseKinematics:
                     print(f"Warning: frame {i} segment {s} has a negative determinant")
 
     # todo: def sol() -> dict that returns the details of the inverse kinematics such as all the metrics, etc...
-    #     def sol(self):
-    #             """
-    #             Create and return a dict that contains the output of each optimization.
-    #             Return
-    #             ------
-    #             self.output: dict()
-    #                 The output of least_square function, such as number of iteration per frames,
-    #                 and the marker with highest residual
-    #             """
-    #             residuals_xyz = np.zeros((self.nb_markers * self.nb_dim, self.nb_frames))
-    #             residuals = np.zeros((self.nb_markers, self.nb_frames))
-    #             for f in range(self.nb_frames):
-    #                 #  residuals_xyz must contains position for each markers on axis x, y and z
-    #                 #  (or less depending on number of dimensions)
-    #             self.output = dict(
-    #                 residuals=residuals,
-    #                 residuals_xyz=residuals_xyz,
-    #                 max_marker=[self.marker_names[i] for i in np.argmax(residuals, axis=0)],
-    #                 message=[sol.message for sol in self.list_sol],
-    #                 status=[sol.status for sol in self.list_sol],
-    #                 success=[sol.success for sol in self.list_sol],
-    #             )
-    #             return self.output
+    def sol(self):
+        """
+        Create and return a dict that contains the output of each optimization.
+        Return
+        ------
+        self.output: dict[str, np.ndarray | list[str]]
+            - 'marker_residuals_norm' : np.ndarray
+                Norm of the residuals for each marker
+            - 'marker_residuals_xyz' : np.ndarray
+                Residuals of the marker on all axis
+            - 'total_marker_residuals' : np.ndarray
+                Residuals of all marker for each frame
+            - 'max_marker_distance' : list[str]
+                A list of the marker with the highest residual for each frame
+            - 'joint_residuals' : np.ndarray
+                Joint constraint residual for each joint and each frame
+            - 'total_joint_residuals' : list[str]
+                Global joint constraint residual for each frame
+            - 'max_joint_violation' : list[str]
+                A list of the joint with the highest residual for each frame
+            - 'rigidity_residuals' : np.ndarray
+                Residuals of the rigidity constraint for each segment and each frame
+            - 'total_rigity_residuals' : np.ndarray
+                Global rigidity constraint residual for each frame
+            - 'max_rigidbody_violation' : list[str]
+                A list of the segment with the highest rigidity residual for each frame
+            - 'success' : list[bool]
+                A list of boolean indicating for each frame of the sucess of the optimization.
+
+        """
+
+        nb_frames = self.nb_frames
+        nb_markers = self.nb_markers
+        nb_joints_constraints = self.model.nb_joint_constraints
+        nb_segments = self.model.nb_segments
+
+        # Initialisation of all the different residuals that can be calculated
+        marker_residuals_norm = np.zeros((1, nb_markers, nb_frames))
+        marker_residuals_xyz = np.zeros((3, nb_markers, nb_frames))
+        joint_residuals = np.zeros((nb_joints_constraints, nb_frames))
+        rigidity_residuals = np.zeros((nb_segments, nb_frames))
+
+        # Global will correspond to the squared sum of all the specifi residuals
+        total_marker_residuals = np.zeros((nb_frames))
+        total_joint_residuals = np.zeros((nb_frames))
+        total_rigity_residuals = np.zeros((nb_frames))
+
+        for i in range(self.nb_frames):
+            # Extraction of the residuals for each frame
+            # Rigidity constraint
+            phir_post_optim = self.model.rigid_body_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
+            # Kinematics constraints (associated with the joint of the model)
+            phik_post_optim = self.model.joint_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
+            # Marker constraints
+            phim_post_optim = self.model.markers_constraints(
+                self.experimental_markers[:, :, i], NaturalCoordinatesNumpy(self.Qopt[:, i]), only_technical=True
+            )
+            # Total residual by frame
+            total_rigity_residuals[i] = np.sqrt(np.dot(phir_post_optim, phir_post_optim))
+            total_joint_residuals[i] = np.sqrt(np.dot(phik_post_optim, phik_post_optim))
+            total_marker_residuals[i] = np.sqrt(np.dot(phim_post_optim, phim_post_optim))
+
+            # Extraction of the residuals for each marker, joint and segment individually
+            # As the numbers of constraint is not the same for each joint, we need to create a list of constraint to find which joint is affected
+            for ind in range(self.model.nb_joints):
+                joint_constraints_slice = self.model.joint_constraints_index(ind)
+                joint_residuals[joint_constraints_slice, i] = phik_post_optim[joint_constraints_slice]
+
+            for ind, key in enumerate(self.model.marker_names_technical):
+                marker_residuals_norm[:, ind, i] = np.sqrt(
+                    np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3])
+                )
+                marker_residuals_xyz[:, ind, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
+
+        # Extract optimisation details
+        success = self.success_optim
+
+        ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=1)
+        ind_max_rigidy_error = np.argmax(rigidity_residuals, axis=0)
+        ind_max_joint_constraint_error = np.argmax(joint_residuals, axis=0)
+
+        # Create a list of marker, segment and joint from the indices
+        max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance[0, :]]
+        max_rigidbody_violation = [self.model.segment_names[ind_max] for ind_max in ind_max_rigidy_error]
+
+        # Each line is an equation of the constraint but we need to find the joint associated with the constraint
+        list_constraint_to_joint = np.zeros((self.model.nb_joint_constraints), dtype=np.int64)
+        for ind in range(self.model.nb_joints):
+            joint_constraints_slice = self.model.joint_constraints_index(ind)
+            list_constraint_to_joint[joint_constraints_slice] = ind
+
+        max_joint_violation = [
+            self.model.joint_names[list_constraint_to_joint[ind_max]] for ind_max in ind_max_joint_constraint_error
+        ]
+
+        self.output = dict(
+            marker_residuals_norm=marker_residuals_norm,
+            marker_residuals_xyz=marker_residuals_xyz,
+            total_marker_residuals=total_marker_residuals,
+            max_marker_distance=max_marker_distance,
+            joint_residuals=joint_residuals,
+            total_joint_residuals=total_joint_residuals,
+            max_joint_violation=max_joint_violation,
+            rigidity_residuals=rigidity_residuals,
+            total_rigity_residuals=total_rigity_residuals,
+            max_rigidbody_violation=max_rigidbody_violation,
+            success=success,
+        )
+        return self.output

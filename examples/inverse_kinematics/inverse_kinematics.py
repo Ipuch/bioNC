@@ -46,7 +46,17 @@ def main():
 if __name__ == "__main__":
     ik_solver, Qopt, _, model, markers = main()
 
-    model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0]))
+    stats = ik_solver.sol()
+
+    print(f"Max marker distance: {stats['max_marker_distance']}")
+    print(f"Max rigidbody violation: {stats['max_rigidbody_violation']}")
+    print(f"Max joint violation: {stats['max_joint_violation']}")
+
+    print("RKNI residuals along x, y, z for each frame")
+    idx = model.marker_names.index("RKNI")
+    for f in range(ik_solver.nb_markers):
+        marker_residuals = stats["marker_residuals_xyz"][:, idx, :].squeeze()
+        print(f"X,\tY,\tZ\t:\t{marker_residuals[0,f]}\t{marker_residuals[1,f]}\t{marker_residuals[2,f]}")
 
     # convert the natural coordinates to joint angles (still experimental)
     print(model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0])))

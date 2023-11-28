@@ -6,7 +6,8 @@ Inverse and Forward approach are implemented.
 ![Stars](https://img.shields.io/github/stars/Ipuch/bioNC?style=social)
 ![Forks](https://img.shields.io/github/forks/Ipuch/bioNC?style=social)
 
-![Release Version](https://img.shields.io/github/v/release/Ipuch/bioNC) <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a>  [![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/)  [![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![Release Version](https://img.shields.io/github/v/release/Ipuch/bioNC) <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a>  
+[![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/) <a href="https://codeclimate.com/github/Ipuch/bioNC/maintainability"><img src="https://api.codeclimate.com/v1/badges/1f46b245f72858ae8bd5/maintainability" /></a> [![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ![Last Commit](https://img.shields.io/github/last-commit/Ipuch/bioNC)
 ![Contributors](https://img.shields.io/github/contributors/Ipuch/bioNC)
@@ -17,7 +18,7 @@ Inverse and Forward approach are implemented.
 
 # Table of Contents
 
--[Installation - from source](#installation---from-source)
+-[Installation](#installation)
 
 -[A first practical example](#a-first-practical-example)
 
@@ -25,8 +26,15 @@ Inverse and Forward approach are implemented.
 
 -[Natural coordinates reminders](#natural-coordinates-reminders)
 
-# Installation - from source
-One can install the package from source using the following command:
+# Installation
+- from conda:
+
+![Conda-version](https://anaconda.org/conda-forge/bionc/badges/version.svg)
+![Last-update](https://anaconda.org/conda-forge/bionc/badges/latest_release_relative_date.svg)
+```
+    conda install -c conda-forge bionc
+```
+- from source:
 ```
     python setup.py install
 ```

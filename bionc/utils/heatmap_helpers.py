@@ -1,7 +1,7 @@
 from casadi import dot, exp
 
 
-def _projection(model_markers, camera_calibration_matrix, x, y):
+def _projection(model_markers, camera_calibration_matrix, axis):
     """
     Projects a point on the camera output in either x or y direction
 
@@ -11,26 +11,14 @@ def _projection(model_markers, camera_calibration_matrix, x, y):
         [3 x 1] symbolic expression. Represents the position of the 3D point in global reference frame, is also known as model keypoints in OpenPose for example
     camera_calibration_matrix : MX
         [3 x 4] symbolic expression. Represents the calibration matrix of the considered camera.
-    x : boolean
-        True to obtain the result of the projection in x direction
-    y : boolean
-        True to obtain the result of the projection in x direction
+    axis : int
+        Is equal to 0 or 1 according to if the projection is given in x axis (1) or y axis (0)
     """
-    if x:
-        marker_projected = (
-            dot(model_markers, camera_calibration_matrix[1, 0:3].T) + camera_calibration_matrix[1, 3]
-        ) / (dot(model_markers, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3])
-
-    if y:
-        marker_projected = (
-            dot(model_markers, camera_calibration_matrix[0, 0:3].T) + camera_calibration_matrix[0, 3]
-        ) / (dot(model_markers, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3])
-
-    if x and y:
-        raise ValueError("Project in only one direction please, either x or y")
-
-    if not x and not y:
-        raise ValueError("Project in one direction please, either x or y")
+    if axis > 1:
+        raise ValueError("Please set axis to 0 or 1")
+    numerator = dot(model_markers, camera_calibration_matrix[axis, 0:3].T) + camera_calibration_matrix[axis, 3]
+    denominator = dot(model_markers, camera_calibration_matrix[2, 0:3].T) + camera_calibration_matrix[2, 3]
+    marker_projected = numerator / denominator
     return marker_projected
 
 

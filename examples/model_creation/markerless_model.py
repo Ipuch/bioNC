@@ -4,6 +4,104 @@ from pathlib import Path
 import ezc3d
 import numpy as np
 
+from pyomeca import Markers
+
+"""
+Test the inverse kinematics
+"""
+
+from bionc import (
+    Axis,
+    AxisTemplate,
+    AxisFunctionTemplate,
+    BiomechanicalModelTemplate,
+    MarkerTemplate,
+    Marker,
+    SegmentTemplate,
+    NaturalSegmentTemplate,
+    C3dData,
+    BiomechanicalModel,
+    JointType,
+    EulerSequence,
+    TransformationMatrixUtil,
+    NaturalAxis,
+)
+
+
+def model_creation_markerless(c3d_filename: str, is_static: bool) -> BiomechanicalModel:
+    model = BiomechanicalModelTemplate()
+
+    midRToes = lambda m, bio: MarkerTemplate.middle_of(m, bio, "right_Btoe", "right_Stoe")
+
+    model["RFOOT"] = SegmentTemplate(
+        natural_segment=NaturalSegmentTemplate(
+            u_axis=AxisTemplate(start="right_heel", end=midRToes),
+            proximal_point=lambda m, bio: m["right_ankle"],
+            distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "right_Btoe", "right_Stoe"),
+            w_axis=AxisFunctionTemplate(
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, "right_ankle", midRToes(m, bio), "right_knee")
+            ),
+        )
+    )
+    model["RFOOT"].add_marker(
+        MarkerTemplate(name="right_ankle", parent_name="RFOOT", is_technical=True, is_anatomical=False)
+    )
+    model["RFOOT"].add_marker(
+        MarkerTemplate(name="right_heel", parent_name="RFOOT", is_technical=True, is_anatomical=False)
+    )
+
+    if is_static == True:
+        model["RFOOT"].add_marker(
+            MarkerTemplate(name="right_Btoe", parent_name="RFOOT", is_technical=True, is_anatomical=False)
+        )
+        model["RFOOT"].add_marker(
+            MarkerTemplate(name="right_Stoe", parent_name="RFOOT", is_technical=True, is_anatomical=False)
+        )
+
+    wrshank = lambda m, bio: MarkerTemplate.normal_to(m, bio, "right_ankle", midRToes(m, bio), "right_knee")
+
+    vrshank = lambda m, bio: Axis(
+        start=Marker(name="right_ankle", position=m["right_ankle"]),
+        end=Marker(name="right_knee", position=m["right_knee"]),
+    ).axis()
+
+    model["RSHANK"] = SegmentTemplate(
+        natural_segment=NaturalSegmentTemplate(
+            u_axis=AxisFunctionTemplate(
+                function=lambda m, bio: AxisTemplate.normalized_cross_product(m, bio, vrshank(m, bio), wrshank(m, bio))
+            ),
+            proximal_point=lambda m, bio: m["right_knee"],
+            distal_point=lambda m, bio: m["right_ankle"],
+            w_axis=AxisFunctionTemplate(function=wrshank),
+        )
+    )
+    model["RSHANK"].add_marker(
+        MarkerTemplate(name="right_knee", parent_name="RSHANK", is_technical=True, is_anatomical=False)
+    )
+
+    model.add_joint(
+        name="rankle",
+        joint_type=JointType.REVOLUTE,
+        parent="RSHANK",
+        child="RFOOT",
+        parent_axis=[NaturalAxis.W, NaturalAxis.W],
+        child_axis=[NaturalAxis.V, NaturalAxis.U],
+        theta=[np.pi / 2, np.pi / 2],
+        projection_basis=EulerSequence.ZXY,
+        parent_basis=TransformationMatrixUtil(
+            plane=(NaturalAxis.W, NaturalAxis.U),
+            axis_to_keep=NaturalAxis.W,
+        ).to_enum(),
+    )
+
+    c3d_data = C3dData(f"{c3d_filename}")
+
+    # Put the model together, print it and print it to a bioMod file
+    natural_model = model.update(c3d_data)
+
+    return natural_model
+
+
 def generate_c3d_file():
     """
     This function generates a c3d file with full body open pose markerset
@@ -17,7 +115,10 @@ def generate_c3d_file():
     # Load an empty c3d structure
     c3d = ezc3d.c3d()
 
-    marker_tuple = ('nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear', 'left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist', 'left_hip', 'right_hip', 'left_knee', 'right_knee', 'left_ankle', 'right_ankle', 'neck', 'top_head', 'left_Btoe', 'left_Stoe', 'left_heel', 'right_Btoe', 'right_Stoe', 'right_heel', 'chest')
+    marker_tuple = ('nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear', 'left_shoulder', 'right_shoulder',
+                    'left_elbow', 'right_elbow', 'left_wrist', 'right_wrist', 'left_hip', 'right_hip', 'left_knee',
+                    'right_knee', 'left_ankle', 'right_ankle', 'neck', 'top_head', 'left_Btoe', 'left_Stoe',
+                    'left_heel', 'right_Btoe', 'right_Stoe', 'right_heel', 'chest')
 
     # Fill it with random data
     c3d["parameters"]["POINT"]["RATE"]["value"] = [60]
@@ -73,7 +174,7 @@ def generate_c3d_file():
        [ 0.13325864,  0.13386433],
        [ 0.8722074 ,  0.87232262]])
 
-    c3d["data"]["points"][:3, 12, :] = np.aarray([[-1.06865537, -1.06281137],
+    c3d["data"]["points"][:3, 12, :] = np.array([[-1.06865537, -1.06281137],
            [-0.05479637, -0.05288993],
            [ 0.87060797,  0.86970109]])
 
@@ -134,3 +235,22 @@ def generate_c3d_file():
     c3d.write(filename)
 
     return filename
+
+def main():
+    # create a c3d file with data
+    filename = generate_c3d_file()
+    # Create the model from a c3d file and markers as template
+    model = model_creation_markerless(filename, is_static=False)
+
+    # load experimental markers
+    markers_xp = Markers.from_c3d(filename).to_numpy()
+
+    # remove the c3d file
+    os.remove(filename)
+
+    # dump the model in a pickle format
+    model.save("../models/lower_limb.nc")
+
+
+if __name__ == "__main__":
+    main()

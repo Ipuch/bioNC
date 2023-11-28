@@ -41,8 +41,8 @@ def _compute_confidence_value_for_one_heatmap(
     gaussian_standard_deviation : MX
         [2 x 1] symbolic expression. Represents the standard deviation of the gaussian considered along x and y directions.
     """
-    marker_projected_on_x = _projection(model_markers, camera_calibration_matrix, x=True, y=False)
-    marker_projected_on_y = _projection(model_markers, camera_calibration_matrix, x=False, y=True)
+    marker_projected_on_x = _projection(model_markers, camera_calibration_matrix, axis=1)
+    marker_projected_on_y = _projection(model_markers, camera_calibration_matrix, axis=0)
 
     x_xg_sigx = ((marker_projected_on_x - gaussian_center[0]) ** 2) / (2 * gaussian_standard_deviation[0] ** 2)
     y_yg_sigy = ((marker_projected_on_y - gaussian_center[1]) ** 2) / (2 * gaussian_standard_deviation[1] ** 2)

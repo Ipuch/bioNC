@@ -3,8 +3,8 @@ import numpy as np
 import pytest
 import ezc3d
 
-from tests.utils import TestUtils
-from tests.utils_markerless import model_creation 
+from utils import TestUtils
+from utils_markerless import model_creation
 
 from bionc import InverseKinematics, NaturalCoordinates
 
@@ -234,7 +234,6 @@ def test_global_heatmap_ik():
     )
 
 
-
 def test_error_solve_frame_per_frame():
     with pytest.raises(
         NotImplementedError,
@@ -246,7 +245,6 @@ def test_error_solve_frame_per_frame():
             Q_init=Q_initialize,
             solve_frame_per_frame=False,
         )
-
 
 
 def test_error_Qinit_is_none():
@@ -280,6 +278,7 @@ def test_error_no_markers_and_no_heatmaps():
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
+
 
 def test_error_experimental_heatmaps_is_not_a_dictionnary():
     experimental_heatmap_parameters = np.array(
@@ -395,7 +394,6 @@ def test_error_first_dim_cam_param_is_not_3():
         )
 
 
-
 def test_error_len_cam_param_is_not_3():
     camera_parameters = np.array(
         [
@@ -420,6 +418,7 @@ def test_error_len_cam_param_is_not_3():
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
+
 
 def test_error_second_dim_cam_param_is_not_4():
     camera_parameters = np.array(
@@ -453,9 +452,6 @@ def test_error_second_dim_cam_param_is_not_4():
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
-
-
-
 
 
 def test_error_len_gaussian_param_is_not_4():
@@ -495,7 +491,6 @@ def test_error_len_gaussian_param_is_not_4():
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
-
 
 
 def test_error_first_dim_gaussian_param_is_not_5():
@@ -571,7 +566,6 @@ def test_error_first_dim_gaussian_param_is_not_5():
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
-
 
 
 def test_error_same_nb_cam_for_gaussian_and_cam_param():
@@ -691,6 +685,3 @@ def test_error_same_nb_cam_for_gaussian_and_cam_param():
             Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
-
-
-

@@ -216,7 +216,6 @@ class InverseKinematics:
 
         self.success_optim = []
         if experimental_markers is not None:
-
             self.nb_markers = self.experimental_markers.shape[1]
             self.nb_frames = self.experimental_markers.shape[2]
 

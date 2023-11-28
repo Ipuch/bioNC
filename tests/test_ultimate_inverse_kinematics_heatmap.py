@@ -34,7 +34,6 @@ def test_compute_confidence():
     np.testing.assert_almost_equal(conf_ankle, np.array(0.7188), decimal=1e-4)
 
 
-
 def test_compute_projection():
     right_knee = DM([-1.08386636, -0.0476904, 0.45526105])
     cam = DM(
@@ -44,7 +43,7 @@ def test_compute_projection():
             [-6.56528711e-01, -6.57654285e-01, -3.69406223e-01, 2.99309301e00],
         ]
     )
-    proj_knee_on_x = _projection(right_knee, cam, axis=1 )
+    proj_knee_on_x = _projection(right_knee, cam, axis=1)
     proj_knee_on_y = _projection(right_knee, cam, axis=0)
 
     np.testing.assert_almost_equal(proj_knee_on_x, np.array(957.55), decimal=1e-2)

@@ -64,4 +64,4 @@ def gaussian_exponent(value, expected_value, standard_deviation):
     standard_deviation : MX
         [1 x 1] symbolic expression. Represents the standard deviation of the variable of the gaussian function.
     """
-    return ((value - expected_value) ** 2) / (2 * standard_deviation ** 2)
+    return ((value - expected_value) ** 2) / (2 * standard_deviation**2)

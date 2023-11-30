@@ -44,8 +44,24 @@ def _compute_confidence_value_for_one_heatmap(
     marker_projected_on_x = _projection(model_markers, camera_calibration_matrix, axis=1)
     marker_projected_on_y = _projection(model_markers, camera_calibration_matrix, axis=0)
 
-    x_xg_sigx = ((marker_projected_on_x - gaussian_center[0]) ** 2) / (2 * gaussian_standard_deviation[0] ** 2)
-    y_yg_sigy = ((marker_projected_on_y - gaussian_center[1]) ** 2) / (2 * gaussian_standard_deviation[1] ** 2)
+    x_exponent = gaussian_exponent(marker_projected_on_x, gaussian_center[0], gaussian_standard_deviation[0])
+    y_exponent = gaussian_exponent(marker_projected_on_y, gaussian_center[1], gaussian_standard_deviation[1])
 
-    confidence_value = gaussian_magnitude[0] * exp(-(x_xg_sigx + y_yg_sigy))
+    confidence_value = gaussian_magnitude[0] * exp(-(x_exponent + y_exponent))
     return confidence_value
+
+
+def gaussian_exponent(value, expected_value, standard_deviation):
+    """
+    Computes the exponent of a gaussian function
+
+    Parameters
+    ----------
+    value : MX
+        [1 x 1] symbolic expression. Represents the value of the variable of the gaussian function.
+    expected_value : MX
+        [1 x 1] symbolic expression. Represents the expected value of the variable of the gaussian function.
+    standard_deviation : MX
+        [1 x 1] symbolic expression. Represents the standard deviation of the variable of the gaussian function.
+    """
+    return ((value - expected_value) ** 2) / (2 * standard_deviation ** 2)

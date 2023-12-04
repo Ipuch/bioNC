@@ -14,22 +14,22 @@ def get_points_ezc3d(c3d_file):
         The c3d file to extract the points from
     Returns
     -------
-    points_data : numpy.ndarray
+    marker_data : numpy.ndarray
         The points data in a numpy array of shape (3, nb_points, nb_frames)
-    points_name : list
+    marker_names : list
         The name of the points
-    points_ind : dict
+    marker_idx : dict
         The dictionnary allowing to find the index of the points in the numpy array
     """
 
-    points_name = c3d_file["parameters"]["POINT"]["LABELS"]["value"]
+    marker_names = c3d_file["parameters"]["POINT"]["LABELS"]["value"]
 
-    points_data = c3d_file["data"]["points"][0:3, :, :]
-    points_ind = dict()
-    for index_point, name_point in enumerate(points_name):
-        points_ind[name_point] = index_point
+    marker_data = c3d_file["data"]["points"][0:3, :, :]
+    marker_idx = dict()
+    for index_point, name_point in enumerate(marker_names):
+        marker_idx[name_point] = index_point
 
-    return points_data, points_name, points_ind
+    return marker_data, marker_names, marker_idx
 
 
 def add_point_from_dictionary(c3d_file, point_to_add):
@@ -47,9 +47,9 @@ def add_point_from_dictionary(c3d_file, point_to_add):
         The c3d file with the points added
     """
 
-    points, points_name, points_ind = get_points_ezc3d(c3d_file)
+    points, marker_names, points_ind = get_points_ezc3d(c3d_file)
     # copy points informations
-    new_list = points_name.copy()
+    new_list = marker_names.copy()
     new_array = c3d_file["data"]["points"]
     nb_frame = c3d_file["data"]["points"].shape[2]
 

@@ -18,7 +18,7 @@ from pyomeca import Markers
         "casadi",
     ],
 )
-def test_biomech_model(bionc_type):
+def test_export_c3d(bionc_type):
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 

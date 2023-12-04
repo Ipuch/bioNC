@@ -4,13 +4,13 @@ from bionc.bionc_numpy import NaturalCoordinates
 from math import ceil, floor, log10
 
 
-def get_points_ezc3d(acq):
+def get_points_ezc3d(c3d_file):
     """
     Extract the points from a c3d file in a more readable format for user allowing to find the index of the points in the numpy array using text using a dictionnary.
     It allows to keep the data in the numpy array format for processing, but allow a more human way of using the data.(Using str instead of indexes)
     Parameters
     ----------
-    acq : ezc3d.c3d
+    c3d_file : ezc3d.c3d
         The c3d file to extract the points from
     Returns
     -------
@@ -22,9 +22,9 @@ def get_points_ezc3d(acq):
         The dictionnary allowing to find the index of the points in the numpy array
     """
 
-    points_name = acq["parameters"]["POINT"]["LABELS"]["value"]
+    points_name = c3d_file["parameters"]["POINT"]["LABELS"]["value"]
 
-    points_data = acq["data"]["points"][0:3, :, :]
+    points_data = c3d_file["data"]["points"][0:3, :, :]
     points_ind = dict()
     for index_point, name_point in enumerate(points_name):
         points_ind[name_point] = index_point
@@ -32,26 +32,26 @@ def get_points_ezc3d(acq):
     return points_data, points_name, points_ind
 
 
-def add_point_from_dictionary(acq, point_to_add):
+def add_point_from_dictionary(c3d_file, point_to_add):
     """
 
     Parameters
     ----------
-    acq : ezc3d.c3d
+    c3d_file : ezc3d.c3d
         The c3d file to add the points to
     point_to_add : dict
         The dictionnary containing the points to add to the c3d file. The key are the name of the points and the value are the position of the points in a numpy array of shape (3, nb_frames)
     Returns
     -------
-    acq : ezc3d.c3d
+    c3d_file : ezc3d.c3d
         The c3d file with the points added
     """
 
-    points, points_name, points_ind = get_points_ezc3d(acq)
+    points, points_name, points_ind = get_points_ezc3d(c3d_file)
     # copy points informations
     new_list = points_name.copy()
-    new_array = acq["data"]["points"]
-    nb_frame = acq["data"]["points"].shape[2]
+    new_array = c3d_file["data"]["points"]
+    nb_frame = c3d_file["data"]["points"].shape[2]
 
     for ind_point, (name_point, value_point) in enumerate(point_to_add.items()):
         new_point = np.zeros((4, 1, nb_frame))
@@ -61,30 +61,30 @@ def add_point_from_dictionary(acq, point_to_add):
         new_array = np.append(new_array, new_point, axis=1)
 
     # Add the new points to the c3d file
-    acq["parameters"]["POINT"]["LABELS"]["value"] = new_list
-    acq["parameters"]["POINT"]["DESCRIPTIONS"]["value"] = new_list.copy()
+    c3d_file["parameters"]["POINT"]["LABELS"]["value"] = new_list
+    c3d_file["parameters"]["POINT"]["DESCRIPTIONS"]["value"] = new_list.copy()
 
     # Some parameters need to be modified for the c3d to be working
     temp_residuals = np.zeros((1, new_array.shape[1], new_array.shape[2]))
-    temp_residuals[0, : acq["data"]["meta_points"]["residuals"].shape[1], :] = acq["data"]["meta_points"]["residuals"]
-    old_camera_mask = acq["data"]["meta_points"]["camera_masks"]
+    temp_residuals[0, : c3d_file["data"]["meta_points"]["residuals"].shape[1], :] = c3d_file["data"]["meta_points"]["residuals"]
+    old_camera_mask = c3d_file["data"]["meta_points"]["camera_masks"]
     temp_camera_mask = np.zeros((old_camera_mask.shape[0], new_array.shape[1], old_camera_mask.shape[2]))
     temp_camera_mask[:, :, :] = False
-    temp_camera_mask[:, : acq["data"]["meta_points"]["residuals"].shape[1], :] = old_camera_mask
-    acq["data"]["meta_points"]["residuals"] = temp_residuals
-    acq["data"]["meta_points"]["camera_masks"] = temp_camera_mask.astype(dtype=bool)
-    acq["data"]["points"] = new_array
+    temp_camera_mask[:, : c3d_file["data"]["meta_points"]["residuals"].shape[1], :] = old_camera_mask
+    c3d_file["data"]["meta_points"]["residuals"] = temp_residuals
+    c3d_file["data"]["meta_points"]["camera_masks"] = temp_camera_mask.astype(dtype=bool)
+    c3d_file["data"]["points"] = new_array
 
-    return acq
+    return c3d_file
 
 
-def add_technical_markers_to_c3d(acq, model, Q):
+def add_technical_markers_to_c3d(c3d_file, model, Q):
     """
     This function add the technical markers of the model to the c3d file. This point are the markers that are rigidly associated to the
     segments of the model.
     Parameters
     ----------
-    acq : ezc3d.c3d
+    c3d_file : ezc3d.c3d
         The c3d file to add the points to
     model : BiomechanicalModel
         The biomechanical model from which the data can be exported
@@ -93,7 +93,7 @@ def add_technical_markers_to_c3d(acq, model, Q):
 
     Returns
     -------
-    acq : ezc3d.c3d
+    c3d_file : ezc3d.c3d
         The c3d file with natural coordinate points added
     """
 
@@ -107,17 +107,17 @@ def add_technical_markers_to_c3d(acq, model, Q):
     for ind_marker, name_marker in enumerate(model.marker_names):
         dict_to_add[f"{name_marker}_optim"] = model_markers[:, ind_marker, :]
 
-    add_point_from_dictionary(acq, dict_to_add)
+    add_point_from_dictionary(c3d_file, dict_to_add)
 
-    return acq
+    return c3d_file
 
 
-def add_natural_coordinate_to_c3d(acq, model, Q):
+def add_natural_coordinate_to_c3d(c3d_file, model, Q):
     """
     This function add the natural coordinate of the model to the c3d file. It add the segment rp,rd,u,w to the c3d file.
     Parameters
     ----------
-    acq : ezc3d.c3d
+    c3d_file : ezc3d.c3d
         The c3d file to add the points to
     model : BiomechanicalModel
         The biomechanical model from which the data can be exported
@@ -126,7 +126,7 @@ def add_natural_coordinate_to_c3d(acq, model, Q):
 
     Returns
     -------
-    acq : ezc3d.c3d
+    c3d_file : ezc3d.c3d
         The c3d file with natural coordinate points added
     """
 
@@ -164,6 +164,6 @@ def add_natural_coordinate_to_c3d(acq, model, Q):
         dict_to_add[f"rd_{name_segment}"] = rd_temp
         dict_to_add[f"w_{name_segment}"] = rd_temp + w_temp / factor
 
-    add_point_from_dictionary(acq, dict_to_add)
+    add_point_from_dictionary(c3d_file, dict_to_add)
 
-    return acq
+    return c3d_file

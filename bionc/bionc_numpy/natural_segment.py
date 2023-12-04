@@ -350,8 +350,12 @@ class NaturalSegment(AbstractNaturalSegment):
         if matrix_type is None:
             matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
-        return compute_transformation_matrix(
-            matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
+        return transformation_matrix(
+            matrix_type,
+            length=self.length,
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
         ).T
 
     def segment_coordinates_system(

@@ -25,9 +25,7 @@ def get_points_ezc3d(c3d_file):
     marker_names = c3d_file["parameters"]["POINT"]["LABELS"]["value"]
 
     marker_data = c3d_file["data"]["points"][0:3, :, :]
-    marker_idx = dict()
-    for index_point, name_point in enumerate(marker_names):
-        marker_idx[name_point] = index_point
+    marker_idx = dict(zip(marker_names, range(len(marker_names))))
 
     return marker_data, marker_names, marker_idx
 

@@ -4,13 +4,14 @@ from bionc.bionc_numpy import NaturalCoordinates
 from math import ceil, floor, log10
 from export_c3d_from_bionc_model import add_point_from_dictionary
 
+
 class C3DInverseKinematicsExporter:
     def __init__(self, filename, model):
-            self.filename = filename
-            self.c3d_file = ezc3d.c3d(filename)
-            self.model = model
+        self.filename = filename
+        self.c3d_file = ezc3d.c3d(filename)
+        self.model = model
 
-    def add_technical_markers_to_c3d(self, Q)->None:
+    def add_technical_markers_to_c3d(self, Q) -> None:
         """
         This function add the technical markers of the model to the c3d file. This point are the markers that are rigidly associated to the
         segments of the model.
@@ -41,7 +42,7 @@ class C3DInverseKinematicsExporter:
 
         add_point_from_dictionary(self.c3d_file, dict_to_add)
 
-    def add_natural_coordinate_to_c3d(self, Q)->None:
+    def add_natural_coordinate_to_c3d(self, Q) -> None:
         """
         This function add the natural coordinate of the model to the c3d file. It add the segment rp,rd,u,w to the c3d file.
         Parameters
@@ -74,7 +75,7 @@ class C3DInverseKinematicsExporter:
             list_factor.append(ceil(log10(u_mean / v_mean)))
 
         most_occurence_factor = max(set(list_factor), key=list_factor.count)
-        factor = 10 ** most_occurence_factor
+        factor = 10**most_occurence_factor
 
         dict_to_add = dict()
         # We add the segment rp,rd,u,w to the c3d file
@@ -95,11 +96,11 @@ class C3DInverseKinematicsExporter:
 
         add_point_from_dictionary(self.c3d_file, dict_to_add)
 
-    def export(self,newfilename=None)->None:
-            """
-            This function export the c3d file from the model and the natural coordinate
-            """
-            if newfilename is None:
-                newfilename = self.filename[:-4] + "_ik.c3d"
+    def export(self, newfilename=None) -> None:
+        """
+        This function export the c3d file from the model and the natural coordinate
+        """
+        if newfilename is None:
+            newfilename = self.filename[:-4] + "_ik.c3d"
 
-            ezc3d.write(newfilename, self.c3d_file)
+        ezc3d.write(newfilename, self.c3d_file)

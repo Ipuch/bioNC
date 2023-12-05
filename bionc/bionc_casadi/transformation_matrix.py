@@ -134,7 +134,33 @@ def _transformation_matrix_Bwu(length: float, alpha: float, beta: float, gamma: 
 
 
 def _transformation_matrix_Buw(length: float, alpha: float, beta: float, gamma: float) -> MX:
-    raise NotImplementedError("The transformation matrix Buw is not implemented yet.")
+    """
+    Create a transformation matrix of type Buw
+
+    Parameters
+    ----------
+    length: float
+        The length of the segment
+    alpha: float
+        The alpha angle
+    beta: float
+        The beta angle
+    gamma: float
+        The gamma angle
+
+    Returns
+    -------
+    numpy.ndarray
+        The transformation matrix
+    """
+    B = MX.zeros(3, 3)
+    B[0, 0] = 1
+    B[0, 1] = length * cos(gamma)
+    B[0, 2] = cos(beta)
+    B[1, 1] = length * sqrt(1 - cos(gamma) ** 2 - ((cos(alpha) - cos(gamma) * cos(beta)) / sin(beta)) ** 2)
+    B[2, 1] = length * (cos(alpha) - cos(gamma) * cos(beta) / sin(beta))
+    B[2, 2] = sin(beta)
+    return B
 
 
 def _transformation_matrix_Bvw(length: float, alpha: float, beta: float, gamma: float) -> MX:

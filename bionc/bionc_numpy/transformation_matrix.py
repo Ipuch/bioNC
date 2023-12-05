@@ -155,8 +155,8 @@ def _transformation_matrix_Buw(length: float, alpha: float, beta: float, gamma: 
     return np.array(
         [
             [1, length * cos(gamma), cos(beta)],
-            [0, length * np.sqrt(1 - cos(gamma) ** 2 - ((cos(alpha) - cos(gamma) * cos(beta)) / sin(beta)) ** 2), 0], 
-            [0, length*(cos(alpha) - cos(gamma) * cos(beta) / sin(beta)), sin(beta)],
+            [0, length * np.sqrt(1 - cos(gamma) ** 2 - ((cos(alpha) - cos(gamma) * cos(beta)) / sin(beta)) ** 2), 0],
+            [0, length * (cos(alpha) - cos(gamma) * cos(beta) / sin(beta)), sin(beta)],
         ]
     )
 

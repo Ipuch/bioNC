@@ -132,7 +132,6 @@ def _transformation_matrix_Bwu(length: float, alpha: float, beta: float, gamma: 
 
 
 def _transformation_matrix_Buw(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
-    # raise NotImplementedError("The transformation matrix Buw is not implemented yet.")
     """
     Create a transformation matrix of type Bwu
 

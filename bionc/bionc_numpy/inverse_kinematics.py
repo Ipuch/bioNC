@@ -134,7 +134,6 @@ class InverseKinematics:
 
         self.Qopt = None
         self.segment_determinants = None
-        self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
 
         # has to be declared before to handle multiple_frame_optimisation when declaring_sym_Q
         if solve_frame_per_frame is False:
@@ -304,7 +303,6 @@ class InverseKinematics:
                     "tol_du": 0.1,
                     "tol_pr": 0.1,
                     "qpsol_options": {"error_on_fail": False},
-                    "print_level": 0,
                 }
         elif method == "ipopt":
             if options is None:

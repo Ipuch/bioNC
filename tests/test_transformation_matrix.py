@@ -76,8 +76,12 @@ def test_transformation_matrix_Bwu():
 
 
 def test_transformation_matrix_Buw():
-    with pytest.raises(NotImplementedError):
-        compute_transformation_matrix(TransformationMatrixType.Buw, length, alpha, beta, gamma)
+    result = compute_transformation_matrix(TransformationMatrixType.Buw, length, alpha, beta, gamma)
+    assert isinstance(result, np.ndarray)
+    assert result.shape == (3, 3)
+    np.testing.assert_almost_equal(
+        result, np.array([[1.0, 1.5296843, 0.8253356], [0.0, 0.9480367, 0.0], [0.0, -0.4807683, 0.5646427]])
+    )
 
 
 def test_transformation_matrix_Bvw():

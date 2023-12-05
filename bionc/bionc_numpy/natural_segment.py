@@ -350,7 +350,7 @@ class NaturalSegment(AbstractNaturalSegment):
         if matrix_type is None:
             matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
-        return transformation_matrix(
+        return compute_transformation_matrix(
             matrix_type,
             length=self.length,
             alpha=self.alpha,

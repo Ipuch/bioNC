@@ -304,14 +304,14 @@ class InverseKinematics:
                     "tol_du": 0.1,
                     "tol_pr": 0.1,
                     "qpsol_options": {"error_on_fail": False},
-                    "print_level": print_level,
+                    "print_level": 0,
                 }
         elif method == "ipopt":
             if options is None:
                 options = {
                     "ipopt.hessian_approximation": "exact",  # recommended
                     "ipopt.warm_start_init_point": "no",
-                    "ipopt.print_level": print_level,
+                    "ipopt.print_level": 0,
                     "ipopt.print_timing_statistics": "no",
                 }
         else:

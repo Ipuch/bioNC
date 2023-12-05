@@ -146,7 +146,13 @@ def test_segment_transformation_matrix(bionc_type):
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bwu), res_Bwu)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bwu"), res_Bwu)
 
-    res_Buw = np.array([[1.0, 0.0, 0.0], [0.11209514, 1.48828491, -0.14716265], [0.20345601, 0, 0.97908408],])
+    res_Buw = np.array(
+        [
+            [1.0, 0.0, 0.0],
+            [0.11209514, 1.48828491, -0.14716265],
+            [0.20345601, 0, 0.97908408],
+        ]
+    )
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Buw), res_Buw)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Buw"), res_Buw)
 

@@ -134,9 +134,3 @@ sandbox/
 tests/pendulum.nmod
 
 examples/forward_dynamics/pendulum_3d.nmod
-
-essai_comprendre_classe_IK.py
-debug_classe_IK_hmp.py
-
-utils/export_c3d_from_bionc_model.py
-utils/C3DInverseKinematicsExporter.py

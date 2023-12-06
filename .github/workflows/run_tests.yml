@@ -39,7 +39,7 @@ jobs:
           mamba list
           
       - name: Install extra dependencies
-        run: mamba install pytest-cov pytest codecov -cconda-forge coveragepy
+        run: mamba install pytest-cov pytest codecov -cconda-forge coverage
 
       - name: Run the actual tests on LINUX
         run: |

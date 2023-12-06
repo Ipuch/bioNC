@@ -48,7 +48,7 @@ jobs:
         if: matrix.label == 'linux-64'
 
       - name: Run the actual tests
-        run: pytest -v --color=yes --cov-report=xml --cov=bionc tests
+        run: pytest -v --color=yes --cov-report=xml:coverage.xml term-missing --cov=bionc tests
         if: matrix.label == 'osx-64'
 
       - name: Show current dir content with new .coverage file

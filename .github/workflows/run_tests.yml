@@ -44,15 +44,18 @@ jobs:
       - name: Run the actual tests on LINUX
         run: |
           sudo apt-get install xvfb
-          xvfb-run --server-args="-screen 0 1024x768x24" pytest -v --color=yes --cov-report term-missing --cov=bionc tests
+          xvfb-run --server-args="-screen 0 1024x768x24" 
+          pytest -v --color=yes --cov-report=xml term-missing --cov=bionc tests
         if: matrix.label == 'linux-64'
 
       - name: Run the actual tests
-        run: pytest -v --color=yes --cov-report=xml:coverage.xml term-missing --cov=bionc tests
+        run: pytest -v --color=yes --cov-report=xml term-missing --cov=bionc tests
         if: matrix.label == 'osx-64'
 
       - name: Show current dir content with new .coverage file
         run: pwd; ls -a
+             cd tests; ls -a
+             cd ..
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
@@ -61,7 +64,7 @@ jobs:
           fail_ci_if_error: true
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: .coverage
+          file: coverage.xml
         if: matrix.label == 'linux-64'
 
       - name: Test installed version of bioviz on LINUX

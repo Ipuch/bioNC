@@ -1,6 +1,6 @@
 from typing import Callable
 
-from casadi import vertcat, horzcat, MX, nlpsol, SX, Function, sum1, dot, exp, reshape, transpose
+from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
 import numpy as np
 from pyomeca import Markers
 
@@ -10,7 +10,7 @@ from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoord
 
 from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
 from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
-
+from ..utils import constants
 
 class InverseKinematics:
     """
@@ -286,33 +286,10 @@ class InverseKinematics:
             The optimal solution of the inverse kinematics
         """
 
-        if method == "sqpmethod":
-            if options is None:
-                options = {
-                    "beta": 0.8,  # default value
-                    "c1": 0.0001,  # default value
-                    # "hessian_approximation": "exact",
-                    "hessian_approximation": "limited-memory",  # faster but might fail to converge
-                    "lbfgs_memory": 10,
-                    "max_iter": 50,
-                    "max_iter_ls": 3,
-                    "merit_memory": 4,
-                    "print_header": False,
-                    "print_time": True,
-                    "qpsol": "qpoases",
-                    "tol_du": 0.1,
-                    "tol_pr": 0.1,
-                    "qpsol_options": {"error_on_fail": False},
-                }
-        elif method == "ipopt":
-            if options is None:
-                options = {
-                    "ipopt.hessian_approximation": "exact",  # recommended
-                    "ipopt.warm_start_init_point": "no",
-                    "ipopt.print_level": 0,
-                    "ipopt.print_timing_statistics": "no",
-                }
-        else:
+        default_options = {"sqpmethod": constants.SQP_IK_VALUES, "ipopt": constants.IPOPT_IK_VALUES}
+
+        options = options or default_options.get(method)
+        if options is None:
             raise ValueError("method must be one of the following str: 'sqpmethod' or 'ipopt'")
 
         if self._frame_per_frame:

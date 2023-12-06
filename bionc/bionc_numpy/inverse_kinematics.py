@@ -12,6 +12,7 @@ from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
 from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
 from ..utils import constants
 
+
 class InverseKinematics:
     """
     Inverse kinematics solver also known as Multibody Kinematics Optimization (MKO)

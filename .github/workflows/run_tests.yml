@@ -58,6 +58,7 @@ jobs:
           fail_ci_if_error: true
           verbose: true
           token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
         if: matrix.label == 'linux-64'
 
       - name: Test installed version of bioviz on LINUX

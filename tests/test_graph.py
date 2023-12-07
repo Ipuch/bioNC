@@ -1,6 +1,7 @@
-from bionc import BiomechanicalModel, JointType, NaturalAxis, CartesianAxis, NaturalSegment, TransformationMatrixType
 import numpy as np
 import pytest
+
+from bionc import BiomechanicalModel, JointType, NaturalAxis, CartesianAxis, NaturalSegment, TransformationMatrixType
 
 
 def build_model() -> BiomechanicalModel:

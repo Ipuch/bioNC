@@ -2,9 +2,9 @@ import numpy as np
 from casadi import MX
 from casadi import vertcat
 
-from ..protocols.natural_segment_markers import AbstractNaturalSegmentMarkers
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_marker import NaturalMarker
+from ..protocols.natural_segment_markers import AbstractNaturalSegmentMarkers
 
 
 class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):
@@ -16,6 +16,7 @@ class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):
     _markers : list[NaturalMarker]
         name of the segment
     """
+
     def __init__(self):
         super(NaturalSegmentMarkers, self).__init__()
 
@@ -44,9 +45,7 @@ class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):
 
         return markers
 
-    def constraints(
-            self, marker_locations: MX, Qi: SegmentNaturalCoordinates, only_technical: bool = True
-    ) -> MX:
+    def constraints(self, marker_locations: MX, Qi: SegmentNaturalCoordinates, only_technical: bool = True) -> MX:
         """
         This function returns the marker constraints of the segment
 

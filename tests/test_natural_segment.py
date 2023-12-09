@@ -1,7 +1,7 @@
-from bionc import TransformationMatrixType
 import numpy as np
 import pytest
 
+from bionc import TransformationMatrixType
 from .utils import TestUtils
 
 
@@ -259,7 +259,7 @@ def test_natural_segment(bionc_type):
 @pytest.mark.parametrize(
     "bionc_type",
     [
-        # "numpy",
+        "numpy",
         "casadi",
     ],
 )
@@ -330,7 +330,7 @@ def test_marker_features(bionc_type):
     TestUtils.assert_equal(my_segment.nb_markers, 2)
     TestUtils.assert_equal(
         my_segment.marker_constraints(
-            marker_locations=transpose(DM([[1, 2, 3], [1, 2, 3]])),
+            marker_locations=np.array([[1, 2, 3], [1, 2, 3]]).T,
             Qi=Qi,
         ),
         np.array([[-2, -2, -7], [-2, -2, -9]]).T,

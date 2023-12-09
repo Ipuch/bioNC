@@ -1,7 +1,7 @@
-from bionc import TransformationMatrixType
 import numpy as np
 import pytest
 
+from bionc import TransformationMatrixType
 from .utils import TestUtils
 
 
@@ -258,7 +258,10 @@ def test_natural_segment(bionc_type):
 
 @pytest.mark.parametrize(
     "bionc_type",
-    ["numpy", "casadi"],
+    [
+        "numpy",
+        "casadi",
+    ],
 )
 def test_marker_features(bionc_type):
     if bionc_type == "casadi":
@@ -288,14 +291,6 @@ def test_marker_features(bionc_type):
         inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
         inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
-
-    # NaturalMarker(
-    #     name="my_marker1",
-    #     parent_name="Thigh",
-    #     position=np.eye(3),
-    #     is_technical=True,
-    #     is_anatomical=False,
-    # )
 
     # Let's add a marker
     with pytest.raises(ValueError, match="The position must be a 3d vector with only one column"):

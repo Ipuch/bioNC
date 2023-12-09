@@ -1,7 +1,6 @@
-from casadi import Function, sumsqr, MX, DM
+from casadi import DM
 import numpy as np
 import pytest
-import ezc3d
 
 from .utils import TestUtils
 

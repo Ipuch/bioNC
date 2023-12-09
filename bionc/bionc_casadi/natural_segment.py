@@ -1,21 +1,19 @@
-from typing import Union, Tuple
-
 import numpy as np
 from casadi import MX
-from casadi import cos, sin, transpose, vertcat, sqrt, inv, dot, sum1, cross, norm_2, horzcat, solve
+from casadi import cos, transpose, vertcat, inv, dot, sum1, horzcat, solve
+from typing import Union, Tuple
 
-from ..bionc_casadi.natural_coordinates import SegmentNaturalCoordinates
-from ..bionc_casadi.natural_velocities import SegmentNaturalVelocities
-from ..bionc_casadi.natural_accelerations import SegmentNaturalAccelerations
-from ..bionc_casadi.homogenous_transform import HomogeneousTransform
-from ..bionc_casadi.natural_marker import NaturalMarker, SegmentNaturalVector
-from ..bionc_casadi.natural_vector import NaturalVector
-from ..bionc_casadi.transformation_matrix import compute_transformation_matrix
-from ..bionc_casadi.natural_inertial_parameters import NaturalInertialParameters
-
-from ..protocols.natural_segment import AbstractNaturalSegment
-
+from .homogenous_transform import HomogeneousTransform
+from .natural_accelerations import SegmentNaturalAccelerations
+from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_inertial_parameters import NaturalInertialParameters
+from .natural_marker import NaturalMarker, SegmentNaturalVector
+from .natural_segment_markers import NaturalSegmentMarkers
+from .natural_vector import NaturalVector
+from .natural_velocities import SegmentNaturalVelocities
+from .transformation_matrix import compute_transformation_matrix
 from .utils import to_numeric_MX
+from ..protocols.natural_segment import AbstractNaturalSegment
 from ..utils.enums import TransformationMatrixType
 
 
@@ -65,6 +63,8 @@ class NaturalSegment(AbstractNaturalSegment):
         index of the segment in the model
     _is_ground : bool
         is_ground to indicate if the segment is the ground segment
+    _markers : NaturalSegmentMarkers
+        markers of the segment
     """
 
     def __init__(
@@ -102,6 +102,8 @@ class NaturalSegment(AbstractNaturalSegment):
             index=index,
             is_ground=is_ground,
         )
+
+        self._markers = NaturalSegmentMarkers()
 
     def set_natural_inertial_parameters(
         self, mass: float, natural_center_of_mass: np.ndarray, natural_pseudo_inertia: np.ndarray
@@ -503,23 +505,6 @@ class NaturalSegment(AbstractNaturalSegment):
         lambda_i = x[12:]
         return SegmentNaturalAccelerations(Qddoti), lambda_i
 
-    def add_natural_marker(self, marker: NaturalMarker):
-        """
-        Add a new marker to the segment
-
-        Parameters
-        ----------
-        marker
-            The marker to add
-        """
-        if marker.parent_name is not None and marker.parent_name != self.name:
-            raise ValueError(
-                "The marker name should be the same as the 'key'. Alternatively, marker.name can be left undefined"
-            )
-
-        marker.parent_name = self.name
-        self._markers.append(marker)
-
     def add_natural_vector(self, vector: SegmentNaturalVector):
         """
         Add a new vector to the segment
@@ -536,6 +521,71 @@ class NaturalSegment(AbstractNaturalSegment):
 
         vector.parent_name = self.name
         self._vectors.append(vector)
+
+    def add_natural_vector_from_segment_coordinates(
+        self,
+        name: str,
+        direction: np.ndarray,
+        normalize: bool = True,
+    ):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        name: str
+            The name of the vector
+        direction: np.ndarray
+            The location of the vector in the segment coordinate system
+        normalize: bool
+            True if the vector should be normalized, False otherwise
+        """
+
+        direction = direction / np.linalg.norm(direction) if normalize else direction
+        direction = to_numeric_MX(inv(self.compute_transformation_matrix())) @ direction
+
+        natural_vector = SegmentNaturalVector(
+            name=name,
+            parent_name=self.name,
+            direction=direction,
+        )
+        self.add_natural_vector(natural_vector)
+
+    @property
+    def nb_markers(self) -> int:
+        return self._markers.nb_markers
+
+    @property
+    def nb_markers_technical(self) -> int:
+        return self._markers.nb_markers_technical
+
+    @property
+    def marker_names(self) -> list[str]:
+        return self._markers.marker_names
+
+    @property
+    def marker_names_technical(self) -> list[str]:
+        return self._markers.marker_names_technical
+
+    def marker_from_name(self, marker_name: str) -> NaturalMarker:
+        return self._markers.marker_from_name(marker_name)
+
+    def add_natural_marker(self, marker: NaturalMarker):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        marker
+            The marker to add
+        """
+        if marker.parent_name is not None and marker.parent_name != self.name:
+            raise ValueError(
+                "The marker name should be the same as the 'key'. Alternatively, marker.name can be left undefined"
+            )
+
+        marker.parent_name = self.name
+        self._markers.add(marker)
 
     def add_natural_marker_from_segment_coordinates(
         self,
@@ -573,112 +623,18 @@ class NaturalSegment(AbstractNaturalSegment):
             is_technical=is_technical,
             is_anatomical=is_anatomical,
         )
-        self.add_natural_marker(natural_marker)
-
-    def add_natural_vector_from_segment_coordinates(
-        self,
-        name: str,
-        direction: np.ndarray,
-        normalize: bool = True,
-    ):
-        """
-        Add a new marker to the segment
-
-        Parameters
-        ----------
-        name: str
-            The name of the vector
-        direction: np.ndarray
-            The location of the vector in the segment coordinate system
-        normalize: bool
-            True if the vector should be normalized, False otherwise
-        """
-
-        direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = to_numeric_MX(inv(self.compute_transformation_matrix())) @ direction
-
-        natural_vector = SegmentNaturalVector(
-            name=name,
-            parent_name=self.name,
-            direction=direction,
-        )
-        self.add_natural_vector(natural_vector)
+        self._markers.add(natural_marker)
 
     def markers(self, Qi: SegmentNaturalCoordinates) -> MX:
-        """
-        This function returns the position of the markers of the system as a function of the natural coordinates Q
-        also referred as forward kinematics
-
-        Parameters
-        ----------
-        Qi : SegmentNaturalCoordinates
-            The natural coordinates of the segment [12 x n, 1]
-
-        Returns
-        -------
-        MX
-            The position of the markers [3, nbMarkers]
-            in the global coordinate system/ inertial coordinate system
-        """
-        if not isinstance(Qi, SegmentNaturalCoordinates):
-            Qi = SegmentNaturalCoordinates(Qi)
-
-        markers = MX.zeros((3, self.nb_markers))
-        for i, marker in enumerate(self._markers):
-            markers[:, i] = marker.position_in_global(Qi)
-
-        return markers
+        return self._markers.positions(Qi)
 
     def marker_constraints(
         self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
     ) -> MX:
-        """
-        This function returns the marker constraints of the segment
-
-        Parameters
-        ----------
-        marker_locations: np.ndarray
-            Marker locations in the global/inertial coordinate system (3 x N_markers)
-        Qi: SegmentNaturalCoordinates
-            Natural coordinates of the segment
-        only_technical: bool
-            If True, only the constraints of technical markers are returned, by default True
-
-        Returns
-        -------
-        MX
-            The defects of the marker constraints of the segment (3 x N_markers)
-        """
-        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
-        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
-
-        if marker_locations.shape != (3, nb_markers):
-            raise ValueError(f"marker_locations should be of shape (3, {nb_markers})")
-
-        defects = MX.zeros((3, nb_markers))
-
-        for i, marker in enumerate(markers):
-            defects[:, i] = marker.constraint(marker_location=marker_locations[:, i], Qi=Qi)
-
-        return defects
+        return self._markers.constraints(marker_locations, Qi, only_technical)
 
     def markers_jacobian(self, only_technical: bool = True) -> MX:
-        """
-        This function returns the marker jacobian of the segment
-
-        Parameters
-        ----------
-        only_technical: bool
-            If True, only the jacobian of technical markers are returned, by default True
-
-        Returns
-        -------
-        MX
-            The jacobian of the marker constraints of the segment (3 x N_markers)
-        """
-        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
-        markers = [m for m in self._markers if m.is_technical] if only_technical else self._markers
-        return vertcat(*[-marker.interpolation_matrix for marker in markers]) if nb_markers > 0 else MX.zeros((0, 12))
+        return self._markers.jacobian(only_technical)
 
     def potential_energy(self, Qi: SegmentNaturalCoordinates) -> MX:
         """

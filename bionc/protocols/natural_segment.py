@@ -71,8 +71,6 @@ class AbstractNaturalSegment(ABC):
                 inertial_transformation_matrix_type
             )
 
-        # list of markers embedded in the segment
-        self._markers = []
         # list of vectors embedded in the segment
         self._vectors = []
 
@@ -375,38 +373,6 @@ class AbstractNaturalSegment(ABC):
                 Stabilization parameter for the constraint derivative
         """
 
-    def add_natural_marker(self, marker: AbstractNaturalMarker):
-        """
-        Add a new marker to the segment
-
-        Parameters
-        ----------
-        marker
-            The marker to add
-        """
-        if marker.parent_name is not None and marker.parent_name != self.name:
-            raise ValueError(
-                "The marker name should be the same as the 'key'. Alternatively, marker.name can be left undefined"
-            )
-
-        marker.parent_name = self.name
-        self._markers.append(marker)
-
-    def marker_from_name(self, marker_name: str) -> AbstractNaturalMarker:
-        """
-        This function returns the marker with the given name
-
-        Parameters
-        ----------
-        marker_name: str
-            Name of the marker
-        """
-        for marker in self._markers:
-            if marker.name == marker_name:
-                return marker
-
-        raise ValueError(f"No marker with name {marker_name} was found")
-
     def vector_from_name(self, vector_name: str) -> AbstractSegmentNaturalVector:
         """
         This function returns the vector with the given name
@@ -422,21 +388,43 @@ class AbstractNaturalSegment(ABC):
 
         raise ValueError(f"No vector with name {vector_name} was found")
 
-    @property
+    @abstractmethod
+    def add_natural_marker(self, marker: AbstractNaturalMarker):
+        """
+        Add a new marker to the segment
+
+        Parameters
+        ----------
+        marker
+            The marker to add
+        """
+
+    @abstractmethod
+    def marker_from_name(self, marker_name: str) -> AbstractNaturalMarker:
+        """
+        This function returns the marker with the given name
+
+        Parameters
+        ----------
+        marker_name: str
+            Name of the marker
+        """
+
+    @abstractmethod
     def nb_markers(self) -> int:
-        return len(self._markers)
+        """Returns the number of markers of the segment"""
 
-    @property
+    @abstractmethod
     def nb_markers_technical(self) -> int:
-        return len(self.marker_names_technical)
+        """Returns the number of technical markers of the segment"""
 
-    @property
+    @abstractmethod
     def marker_names(self) -> list[str]:
-        return [marker.name for marker in self._markers]
+        """Returns the names of the markers of the segment"""
 
-    @property
+    @abstractmethod
     def marker_names_technical(self) -> list[str]:
-        return [marker.name for marker in self._markers if marker.is_technical]
+        """Returns the names of the technical markers of the segment"""
 
     @abstractmethod
     def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates) -> MX:

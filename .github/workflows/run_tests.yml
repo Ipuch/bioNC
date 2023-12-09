@@ -39,7 +39,7 @@ jobs:
           mamba list
           
       - name: Install extra dependencies
-        run: mamba install pytest-cov pytest codecov -cconda-forge
+        run: mamba install pytest-cov pytest codecov coverage -cconda-forge
 
       - name: Run the actual tests on LINUX
         run: |
@@ -51,19 +51,18 @@ jobs:
         run: pytest -v --color=yes --cov-report=xml --cov=bionc tests
         if: matrix.label == 'osx-64'
 
-#      - name: Upload coverage to Codecov
-#        run: codecov --token ${{ secrets.CODECOV_TOKEN }}
-#        if: matrix.label == 'linux-64'
-#
-#      - name: Upload coverage to Codecov
-#        uses: codecov/codecov-action@v3
-#        with:
-#          token: ${{ secrets.CODECOV_TOKEN }}
-#          fail_ci_if_error: true
-#          directory: /home/runner/work/bioNC
-#          files: ./coverage.xml
-#        if: matrix.label == 'linux-64'
+      - name: Show current dir content with new .coverage file
+        run: pwd; ls -a
 
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          flags: unittests
+          fail_ci_if_error: true
+          verbose: true
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage.xml
+        if: matrix.label == 'osx-64'
 
       - name: Test installed version of bioviz on LINUX
         run: |

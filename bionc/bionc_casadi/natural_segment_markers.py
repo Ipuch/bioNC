@@ -2,18 +2,14 @@ from casadi import MX
 from casadi import vertcat
 
 from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_marker import NaturalMarker
 from ..protocols.natural_segment_markers import AbstractNaturalSegmentMarkers
 
 
 class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):
     """
-    Class used to define markers of a segment based on natural coordinate.
-
-    Attributes
-    ----------
-    _markers : list[NaturalMarker]
-        name of the segment
+    This class provides an interface for adding markers to a segment for CASADI Backend (MX), retrieving the number of markers,
+    retrieving the names of the markers, and performing operations related to the markers' positions,
+    constraints, and jacobian.
     """
 
     def __init__(self):

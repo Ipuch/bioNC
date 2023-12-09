@@ -1,4 +1,3 @@
-import numpy as np
 from casadi import MX
 from casadi import vertcat
 
@@ -69,7 +68,7 @@ class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):
         if marker_locations.shape != (3, nb_markers):
             raise ValueError(f"marker_locations should be of shape (3, {nb_markers})")
 
-        defects = np.zeros((3, nb_markers))
+        defects = MX.zeros((3, nb_markers))
 
         for i, marker in enumerate(markers):
             defects[:, i] = marker.constraint(marker_location=marker_locations[:, i], Qi=Qi)

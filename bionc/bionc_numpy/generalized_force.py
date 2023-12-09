@@ -3,7 +3,7 @@ import numpy as np
 from bionc.bionc_numpy.mecamaths.rotations import euler_axes_from_rotation_matrices
 from .external_force import ExternalForce
 from .natural_vectors.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..protocols.joint import JointBase as Joint
+from ..protocols import JointBase as Joint
 from ..utils.enums import CartesianAxis, EulerSequence
 
 

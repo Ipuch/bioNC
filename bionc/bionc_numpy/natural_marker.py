@@ -4,8 +4,8 @@ from typing import Callable
 from .biomechanical_model import BiomechanicalModel
 from .natural_vectors.natural_vector import NaturalVector
 from ..model_creation.protocols import Data
-from ..protocols.natural_coordinates import SegmentNaturalCoordinates
-from ..protocols.natural_markers import AbstractNaturalMarker, AbstractSegmentNaturalVector
+from ..protocols import AbstractNaturalMarker
+from ..protocols import SegmentNaturalCoordinates
 
 
 class NaturalMarker(AbstractNaturalMarker):

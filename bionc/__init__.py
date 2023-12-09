@@ -1,7 +1,6 @@
 from bionc import bionc_casadi
 from bionc import bionc_numpy
-from bionc.bionc_numpy.mecamaths.homogenous_transform import HomogeneousTransform
-from bionc.bionc_numpy.natural_vectors.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from .algorithms.inverse_kinematics import InverseKinematics
 from .bionc_numpy import (
     Axis,
     NaturalMarker,
@@ -15,8 +14,9 @@ from .bionc_numpy import (
     NaturalInertialParameters,
     compute_transformation_matrix,
 )
-from .bionc_numpy import InverseKinematics
-from .bionc_numpy.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
+from .bionc_numpy.mecamaths.homogenous_transform import HomogeneousTransform
+from .bionc_numpy.natural_vectors.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations
+from .bionc_numpy.natural_vectors.natural_velocities import SegmentNaturalVelocities, NaturalVelocities
 from .model_creation import (
     AxisTemplate,
     AxisFunctionTemplate,

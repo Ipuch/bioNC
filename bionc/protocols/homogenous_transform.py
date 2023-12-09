@@ -1,5 +1,4 @@
 from typing import Protocol
-import numpy as np
 
 
 class HomogeneousTransform(Protocol):

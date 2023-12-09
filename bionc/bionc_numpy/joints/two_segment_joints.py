@@ -4,7 +4,7 @@ from ..natural_vectors.natural_coordinates import SegmentNaturalCoordinates
 from ..natural_vectors.natural_vector import NaturalVector
 from ..natural_vectors.natural_velocities import SegmentNaturalVelocities
 from ..segment.natural_segment import NaturalSegment
-from ...protocols.joint import JointBase
+from ...protocols import JointBase
 from ...utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 
 

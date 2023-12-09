@@ -3,17 +3,17 @@ from numpy import cos, zeros, sum, dot, transpose
 from numpy.linalg import inv
 from typing import Union, Tuple, Callable
 
-from bionc.bionc_numpy.mecamaths.homogenous_transform import HomogeneousTransform
-from bionc.bionc_numpy.mecamaths.transformation_matrix import compute_transformation_matrix
-from bionc.bionc_numpy.natural_marker import NaturalMarker, SegmentNaturalVector
-from bionc.bionc_numpy.natural_vectors.natural_accelerations import SegmentNaturalAccelerations
-from bionc.bionc_numpy.natural_vectors.natural_vector import NaturalVector
-from bionc.bionc_numpy.segment.natural_inertial_parameters import NaturalInertialParameters
-from bionc.model_creation.protocols import Data
-from bionc.protocols.natural_segment import AbstractNaturalSegment
-from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_segment_markers import NaturalSegmentMarkers
-from .natural_velocities import SegmentNaturalVelocities
+from .natural_inertial_parameters import NaturalInertialParameters
+# from .natural_segment_markers import NaturalSegmentMarkers
+from ..mecamaths.homogenous_transform import HomogeneousTransform
+from ..mecamaths.transformation_matrix import compute_transformation_matrix
+from ..natural_marker import NaturalMarker, SegmentNaturalVector
+from ..natural_vectors.natural_accelerations import SegmentNaturalAccelerations
+from ..natural_vectors.natural_coordinates import SegmentNaturalCoordinates
+from ..natural_vectors.natural_vector import NaturalVector
+from ..natural_vectors.natural_velocities import SegmentNaturalVelocities
+from ...model_creation.protocols import Data
+from ...protocols.natural_segment import AbstractNaturalSegment
 from ...utils.enums import TransformationMatrixType
 
 

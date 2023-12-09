@@ -1,6 +1,6 @@
 import numpy as np
 
-from bionc.bionc_numpy.misc.interface_biorbd import rotation_matrix_to_euler_angles
+from ..misc.interface_biorbd import rotation_matrix_to_euler_angles
 from ...utils.enums import CartesianAxis, EulerSequence
 
 

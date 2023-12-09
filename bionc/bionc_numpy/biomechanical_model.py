@@ -1,15 +1,15 @@
 import numpy as np
 from numpy import transpose
 
-from bionc.algorithms.inverse_kinematics import InverseKinematics
-from bionc.bionc_numpy.mecamaths.cartesian_vector import vector_projection_in_non_orthogonal_basis
-from bionc.bionc_numpy.mecamaths.rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
-from bionc.bionc_numpy.natural_vectors.natural_accelerations import NaturalAccelerations
 from .external_force import ExternalForceSet, ExternalForce
 from .generalized_force import JointGeneralizedForcesList
+from .mecamaths.cartesian_vector import vector_projection_in_non_orthogonal_basis
+from .mecamaths.rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
+from .natural_vectors.natural_accelerations import NaturalAccelerations
 from .natural_vectors.natural_coordinates import NaturalCoordinates
 from .natural_vectors.natural_velocities import NaturalVelocities
-from ..protocols.biomechanical_model import GenericBiomechanicalModel
+from ..algorithms.inverse_kinematics import InverseKinematics
+from ..protocols import GenericBiomechanicalModel
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):

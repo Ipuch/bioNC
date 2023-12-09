@@ -1,6 +1,5 @@
-from abc import ABC, abstractmethod
-
 import numpy as np
+from abc import ABC, abstractmethod
 
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_markers import AbstractNaturalMarker
@@ -8,7 +7,11 @@ from .natural_markers import AbstractNaturalMarker
 
 class AbstractNaturalSegmentMarkers(ABC):
     """
-        Class used to define anatomical segment based on natural coordinate.
+    Abstract class used to define anatomical segment based on natural markers.
+
+    This class provides an interface for adding markers to a segment, retrieving the number of markers,
+    retrieving the names of the markers, and performing operations related to the markers' positions,
+    constraints, and jacobian.
 
     Methods
     -------
@@ -55,18 +58,50 @@ class AbstractNaturalSegmentMarkers(ABC):
 
     @property
     def nb_markers(self) -> int:
+        """
+        Get the number of markers in the segment.
+
+        Returns
+        -------
+        int
+            The number of markers in the segment.
+        """
         return len(self._markers)
 
     @property
     def nb_markers_technical(self) -> int:
+        """
+        Get the number of technical markers in the segment.
+
+        Returns
+        -------
+        int
+            The number of technical markers in the segment.
+        """
         return len(self.marker_names_technical)
 
     @property
     def marker_names(self) -> list[str]:
+        """
+        Get the names of the markers in the segment.
+
+        Returns
+        -------
+        list[str]
+            The names of the markers in the segment.
+        """
         return [marker.name for marker in self._markers]
 
     @property
     def marker_names_technical(self) -> list[str]:
+        """
+        Get the names of the technical markers in the segment.
+
+        Returns
+        -------
+        list[str]
+            The names of the technical markers in the segment.
+        """
         return [marker.name for marker in self._markers if marker.is_technical]
 
     @abstractmethod
@@ -115,6 +150,16 @@ class AbstractNaturalSegmentMarkers(ABC):
         ----------
         marker_name: str
             Name of the marker
+
+        Returns
+        -------
+        AbstractNaturalMarker
+            The marker with the given name.
+
+        Raises
+        ------
+        ValueError
+            If no marker with the given name is found.
         """
         for marker in self._markers:
             if marker.name == marker_name:
@@ -123,4 +168,12 @@ class AbstractNaturalSegmentMarkers(ABC):
         raise ValueError(f"No marker with name {marker_name} was found")
 
     def __iter__(self):
+        """
+        Get an iterator for the markers in the segment.
+
+        Returns
+        -------
+        iterator
+            An iterator for the markers in the segment.
+        """
         return iter(self._markers)

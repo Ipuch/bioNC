@@ -412,19 +412,19 @@ class AbstractNaturalSegment(ABC):
 
     @abstractmethod
     def nb_markers(self) -> int:
-        """ Returns the number of markers of the segment """
+        """Returns the number of markers of the segment"""
 
     @abstractmethod
     def nb_markers_technical(self) -> int:
-        """ Returns the number of technical markers of the segment """
+        """Returns the number of technical markers of the segment"""
 
     @abstractmethod
     def marker_names(self) -> list[str]:
-        """ Returns the names of the markers of the segment """
+        """Returns the names of the markers of the segment"""
 
     @abstractmethod
     def marker_names_technical(self) -> list[str]:
-        """ Returns the names of the technical markers of the segment """
+        """Returns the names of the technical markers of the segment"""
 
     @abstractmethod
     def marker_constraints(self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates) -> MX:

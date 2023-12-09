@@ -14,6 +14,7 @@ class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):
     _markers : list[NaturalMarker]
         name of the segment
     """
+
     def __init__(self):
         super(NaturalSegmentMarkers, self).__init__()
 
@@ -43,7 +44,7 @@ class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):
         return markers
 
     def constraints(
-            self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
+        self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
     ) -> np.ndarray:
         """
         This function returns the marker constraints of the segment

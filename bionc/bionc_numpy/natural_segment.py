@@ -1,22 +1,20 @@
-from typing import Union, Tuple, Callable
-
 import numpy as np
 from numpy import cos, zeros, sum, dot, transpose
 from numpy.linalg import inv
+from typing import Union, Tuple, Callable
 
-from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_velocities import SegmentNaturalVelocities
-from .natural_accelerations import SegmentNaturalAccelerations
 from .homogenous_transform import HomogeneousTransform
+from .natural_accelerations import SegmentNaturalAccelerations
+from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_inertial_parameters import NaturalInertialParameters
 from .natural_marker import NaturalMarker, SegmentNaturalVector
 from .natural_segment_markers import NaturalSegmentMarkers
 from .natural_vector import NaturalVector
+from .natural_velocities import SegmentNaturalVelocities
 from .transformation_matrix import compute_transformation_matrix
-from .natural_inertial_parameters import NaturalInertialParameters
-
 from ..model_creation.protocols import Data
-from ..utils.enums import TransformationMatrixType
 from ..protocols.natural_segment import AbstractNaturalSegment
+from ..utils.enums import TransformationMatrixType
 
 
 class NaturalSegment(AbstractNaturalSegment):
@@ -113,6 +111,8 @@ class NaturalSegment(AbstractNaturalSegment):
         index of the segment in the model
     _is_ground : bool
         is_ground to indicate if the segment is the ground segment
+    _markers : NaturalSegmentMarkers
+        markers of the segment
     """
 
     def __init__(

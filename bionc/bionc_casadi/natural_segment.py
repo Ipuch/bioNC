@@ -63,6 +63,8 @@ class NaturalSegment(AbstractNaturalSegment):
         index of the segment in the model
     _is_ground : bool
         is_ground to indicate if the segment is the ground segment
+    _markers : NaturalSegmentMarkers
+        markers of the segment
     """
 
     def __init__(

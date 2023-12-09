@@ -1,10 +1,11 @@
-from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
-from bionc.utils.enums import TransformationMatrixType
-from bionc import NaturalAxis
-from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
 import numpy as np
 import pytest
+
+from bionc import NaturalAxis
+from bionc.bionc_numpy.mecamaths.transformation_matrix import compute_transformation_matrix
 from .utils import TestUtils
+from ...utils.enums import TransformationMatrixType
+from ...utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
 
 
 def test_check_plane():

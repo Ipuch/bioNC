@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from bionc.bionc_numpy.rotations import (
+from bionc.bionc_numpy.mecamaths.rotations import (
     rotation_x,
     rotation_y,
     rotation_z,

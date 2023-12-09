@@ -1,7 +1,7 @@
 import numpy as np
 
-from .natural_vector import NaturalVector
-from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from bionc.bionc_numpy.natural_vectors.natural_vector import NaturalVector
+from .natural_vectors.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 
 
 class ExternalForce:

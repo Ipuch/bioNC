@@ -1,7 +1,8 @@
 import numpy as np
 
-from .interface_biorbd import rotation_matrix_to_euler_angles
-from ..utils.enums import CartesianAxis, EulerSequence
+from bionc.bionc_numpy.misc.interface_biorbd import rotation_matrix_to_euler_angles
+from ...utils.enums import CartesianAxis, EulerSequence
+
 
 # todo: test the whole file
 

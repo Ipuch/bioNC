@@ -152,7 +152,7 @@ def _subtest_rotations(euler_rot_angles_1: list, euler_rot_angles_2: list, bionc
         )
         from biorbd_casadi import Rotation
     else:
-        from bionc.bionc_numpy.rotations import (
+        from bionc.bionc_numpy.mecamaths.rotations import (
             euler_axes_from_rotation_matrices,
         )
         from biorbd import Rotation
@@ -200,7 +200,7 @@ def test_euler_vectors_with_interpretable_values(bionc_type):
         )
         from biorbd_casadi import Rotation
     else:
-        from bionc.bionc_numpy.rotations import (
+        from bionc.bionc_numpy.mecamaths.rotations import (
             euler_axes_from_rotation_matrices,
         )
         from biorbd import Rotation

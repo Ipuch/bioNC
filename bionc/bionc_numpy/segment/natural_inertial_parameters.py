@@ -3,7 +3,7 @@ from numpy import eye, zeros
 from numpy.linalg import inv
 from typing import Union
 
-from ..bionc_numpy.natural_vector import NaturalVector
+from bionc.bionc_numpy.natural_vectors.natural_vector import NaturalVector
 
 
 class NaturalInertialParameters:

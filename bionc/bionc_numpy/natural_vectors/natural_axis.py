@@ -1,9 +1,9 @@
+import numpy as np
 from typing import Callable
 
-import numpy as np
-from .natural_marker import Marker
-from .biomechanical_model import BiomechanicalModel
-from ..model_creation.protocols import Data
+from ..biomechanical_model import BiomechanicalModel
+from ..natural_marker import Marker
+from ...model_creation.protocols import Data
 
 
 class Axis:

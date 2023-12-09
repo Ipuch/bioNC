@@ -1,12 +1,10 @@
-from casadi import DM
 import numpy as np
 import pytest
-
-from .utils import TestUtils
+from casadi import DM
 
 from bionc import InverseKinematics, NaturalCoordinates
-
-from bionc.utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, _projection
+from bionc.algorithms.heatmap_helpers import _compute_confidence_value_for_one_heatmap, _projection
+from .utils import TestUtils
 
 
 def test_compute_confidence():

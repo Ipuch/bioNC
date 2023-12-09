@@ -1,8 +1,7 @@
 from .protocols import Data
-
 from .segment_template import SegmentTemplate
 from ..bionc_numpy.biomechanical_model import BiomechanicalModel
-from ..bionc_numpy.enums import JointType
+from ..bionc_numpy.misc.enums import JointType
 from ..utils.enums import NaturalAxis, EulerSequence, TransformationMatrixType
 
 

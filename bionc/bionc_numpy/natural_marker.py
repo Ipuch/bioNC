@@ -1,12 +1,11 @@
+import numpy as np
 from typing import Callable
 
-import numpy as np
-
 from .biomechanical_model import BiomechanicalModel
+from .natural_vectors.natural_vector import NaturalVector
 from ..model_creation.protocols import Data
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_markers import AbstractNaturalMarker, AbstractSegmentNaturalVector
-from .natural_vector import NaturalVector
 
 
 class NaturalMarker(AbstractNaturalMarker):

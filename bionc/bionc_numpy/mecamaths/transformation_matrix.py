@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import cos, sin
 
-from ..utils.enums import NaturalAxis, TransformationMatrixType
+from ...utils.enums import TransformationMatrixType
 
 
 def compute_transformation_matrix(

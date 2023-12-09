@@ -1,12 +1,11 @@
+import numpy as np
 from typing import Callable
 
-import numpy as np
-
-from ..bionc_numpy.natural_axis import Axis
-from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
+from ..bionc_numpy.biomechanical_model import BiomechanicalModel
+from ..bionc_numpy.natural_vectors.natural_axis import Axis
+from ..bionc_numpy.segment.natural_segment import NaturalSegment
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from ..bionc_numpy.natural_segment import NaturalSegment
 
 
 class AxisTemplate:

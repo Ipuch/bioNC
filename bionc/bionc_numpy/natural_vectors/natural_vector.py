@@ -1,9 +1,10 @@
-from typing import Union
 import numpy as np
 from numpy import eye
-from ..protocols.natural_vector import AbstractNaturalVector
-from ..protocols.interpolation_matrix import AbstractInterpolationMatrix
-from ..utils.enums import NaturalAxis
+from typing import Union
+
+from ...protocols.interpolation_matrix import AbstractInterpolationMatrix
+from ...protocols.natural_vector import AbstractNaturalVector
+from ...utils.enums import NaturalAxis
 
 
 class NaturalVector(AbstractNaturalVector, np.ndarray):

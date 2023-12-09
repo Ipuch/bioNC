@@ -1,15 +1,10 @@
+import numpy as np
 from typing import Callable, Union
 
-import numpy as np
-
-from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
-from ..bionc_numpy.natural_marker import NaturalMarker, Marker
-
-# from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
-from ..bionc_numpy.natural_segment import NaturalSegment
-
-# from ..utils.natural_coordinates import SegmentNaturalCoordinates
+from ..bionc_numpy.biomechanical_model import BiomechanicalModel
+from ..bionc_numpy.natural_marker import NaturalMarker, Marker
+from ..bionc_numpy.segment.natural_segment import NaturalSegment
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 
 

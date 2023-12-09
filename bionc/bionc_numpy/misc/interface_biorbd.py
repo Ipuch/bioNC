@@ -1,6 +1,4 @@
 from biorbd import Rotation
-
-# from scipy.spatial.transform import Rotation
 import numpy as np
 
 

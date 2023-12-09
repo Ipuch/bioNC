@@ -1,12 +1,12 @@
 import numpy as np
 
-from .cartesian_vector import CartesianVector
-from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_segment import NaturalSegment
-from .natural_vector import NaturalVector
-from .natural_velocities import SegmentNaturalVelocities
-from ..protocols.joint import JointBase
-from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
+from ..mecamaths.cartesian_vector import CartesianVector
+from ..natural_vectors.natural_coordinates import SegmentNaturalCoordinates
+from ..natural_vectors.natural_vector import NaturalVector
+from ..natural_vectors.natural_velocities import SegmentNaturalVelocities
+from ..segment.natural_segment import NaturalSegment
+from ...protocols.joint import JointBase
+from ...utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 
 
 class GroundJoint:

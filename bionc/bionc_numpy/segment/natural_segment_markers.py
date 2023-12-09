@@ -1,7 +1,7 @@
 import numpy as np
 
+from bionc.protocols.natural_segment_markers import AbstractNaturalSegmentMarkers
 from .natural_coordinates import SegmentNaturalCoordinates
-from ..protocols.natural_segment_markers import AbstractNaturalSegmentMarkers
 
 
 class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):

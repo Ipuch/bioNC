@@ -1,5 +1,6 @@
 import numpy as np
-from ..utils.enums import CartesianAxis
+
+from ...utils.enums import CartesianAxis
 
 
 class CartesianVector(np.ndarray):

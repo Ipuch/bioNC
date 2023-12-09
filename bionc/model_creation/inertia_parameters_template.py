@@ -1,11 +1,10 @@
+import numpy as np
 from typing import Callable
 
-import numpy as np
-
-from ..bionc_numpy.inertia_parameters import InertiaParameters
-from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
-from ..bionc_numpy.natural_segment import NaturalSegment
 from .protocols import Data
+from ..bionc_numpy.biomechanical_model import BiomechanicalModel
+from ..bionc_numpy.mecamaths.inertia_parameters import InertiaParameters
+from ..bionc_numpy.segment.natural_segment import NaturalSegment
 
 
 class InertiaParametersTemplate:

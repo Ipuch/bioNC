@@ -1,8 +1,9 @@
 import numpy as np
 from typing import Union
-from .natural_vector import NaturalVector
-from ..utils.enums import NaturalAxis
-from .cartesian_vector import vector_projection_in_non_orthogonal_basis
+
+from ..mecamaths.cartesian_vector import vector_projection_in_non_orthogonal_basis
+from ..natural_vectors.natural_vector import NaturalVector
+from ...utils.enums import NaturalAxis
 
 
 class SegmentNaturalCoordinates(np.ndarray):

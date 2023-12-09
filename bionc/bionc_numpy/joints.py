@@ -1,12 +1,12 @@
 import numpy as np
 
-from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_velocities import SegmentNaturalVelocities
 from .natural_marker import NaturalMarker
+from .natural_segment import NaturalSegment
+from .natural_vector import NaturalVector
+from .natural_velocities import SegmentNaturalVelocities
 from ..protocols.joint import JointBase
 from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
-from .natural_vector import NaturalVector
 
 
 class Joint:
@@ -176,7 +176,7 @@ class Joint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import Joint as CasadiJoint
+            from bionc.bionc_casadi.joints.two_segment_joints import Joint as CasadiJoint
 
             return CasadiJoint.Hinge(
                 name=self.name,
@@ -353,7 +353,7 @@ class Joint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import Joint as CasadiJoint
+            from bionc.bionc_casadi.joints.two_segment_joints import Joint as CasadiJoint
 
             return CasadiJoint.Universal(
                 name=self.name,
@@ -498,7 +498,7 @@ class Joint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import Joint as CasadiJoint
+            from bionc.bionc_casadi.joints.two_segment_joints import Joint as CasadiJoint
 
             return CasadiJoint.Spherical(
                 name=self.name,
@@ -663,7 +663,7 @@ class Joint:
                 The joint as a mx joint
             """
 
-            from ..bionc_casadi.joints import Joint as CasadiJoint
+            from bionc.bionc_casadi.joints.two_segment_joints import Joint as CasadiJoint
 
             return CasadiJoint.SphereOnPlane(
                 name=self.name,
@@ -830,7 +830,7 @@ class Joint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import Joint as CasadiJoint
+            from bionc.bionc_casadi.joints.two_segment_joints import Joint as CasadiJoint
 
             return CasadiJoint.ConstantLength(
                 name=self.name,

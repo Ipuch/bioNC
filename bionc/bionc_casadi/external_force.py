@@ -1,8 +1,8 @@
-from casadi import MX, inv, cross, vertcat
 import numpy as np
+from casadi import MX, cross, vertcat
 
-from .natural_vector import NaturalVector
-from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from bionc.bionc_casadi.natural_vectors.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
+from .natural_vectors.natural_vector import NaturalVector
 
 
 class ExternalForce:

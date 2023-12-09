@@ -1,14 +1,13 @@
-import numpy as np
-from casadi import MX
-
-from typing import Union, Any
-from abc import ABC, abstractmethod
 import dill as pickle
+import numpy as np
+from abc import ABC, abstractmethod
+from casadi import MX
+from typing import Union, Any
 
+from bionc.protocols.external_force import ExternalForceSet
+from bionc.protocols.natural_accelerations import NaturalAccelerations
 from bionc.protocols.natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
 from bionc.protocols.natural_velocities import NaturalVelocities
-from bionc.protocols.natural_accelerations import NaturalAccelerations
-from bionc.protocols.external_force import ExternalForceSet
 from ..utils.enums import EulerSequence
 
 
@@ -217,7 +216,7 @@ class GenericBiomechanicalModel(ABC):
 
             # adding a default joint with the world frame to defined standard transformations.
             from ..bionc_numpy.enums import JointType  # prevent circular import
-            from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+            from bionc.bionc_casadi.misc.enums import JointType as CasadiJointType  # prevent circular import
 
             self._add_joint(
                 dict(
@@ -395,7 +394,7 @@ class GenericBiomechanicalModel(ABC):
             True if the segment has a free joint with the ground
         """
         from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+        from bionc.bionc_casadi.misc.enums import JointType as CasadiJointType  # prevent circular import
 
         joints = self.joints_from_child_index(segment_idx, remove_free_joints=False)
         for joint in joints:
@@ -417,7 +416,7 @@ class GenericBiomechanicalModel(ABC):
             The index of the segment
         """
         from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+        from bionc.bionc_casadi.misc.enums import JointType as CasadiJointType  # prevent circular import
 
         joints = self.joints_from_child_index(segment_idx, remove_free_joints=False)
         free_joint_found = False
@@ -778,7 +777,7 @@ class GenericBiomechanicalModel(ABC):
             The joints that have the given child index
         """
         from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+        from bionc.bionc_casadi.misc.enums import JointType as CasadiJointType  # prevent circular import
 
         joints = []
         for joint in self.joints.values():

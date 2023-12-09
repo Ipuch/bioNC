@@ -1,8 +1,8 @@
-from casadi import MX, cos, sin, vertcat, horzcat, transpose
 import numpy as np
+from casadi import MX, cos, sin, vertcat, horzcat, transpose
 
-from .interface_biorbd import rotation_matrix_to_euler_angles
-from ..utils.enums import CartesianAxis, EulerSequence
+from ..misc.interface_biorbd import rotation_matrix_to_euler_angles
+from ...utils.enums import CartesianAxis, EulerSequence
 
 
 def rotation_x(angle) -> MX:

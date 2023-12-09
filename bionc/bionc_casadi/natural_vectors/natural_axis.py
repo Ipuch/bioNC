@@ -1,6 +1,6 @@
-import numpy as np
 from casadi import MX, norm_1
-from .natural_marker import Marker
+
+from ..natural_marker import Marker
 
 
 class Axis:

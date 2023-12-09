@@ -1,10 +1,6 @@
 from casadi import MX
 
 from .external_force import ExternalForce
-from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..utils.enums import CartesianAxis, EulerSequence
-from .rotations import euler_axes_from_rotation_matrices
-from ..protocols.joint import JointBase as Joint
 
 
 class JointGeneralizedForces(ExternalForce):

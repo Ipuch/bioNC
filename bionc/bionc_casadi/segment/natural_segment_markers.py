@@ -1,8 +1,8 @@
 from casadi import MX
 from casadi import vertcat
 
-from .natural_coordinates import SegmentNaturalCoordinates
-from ..protocols.natural_segment_markers import AbstractNaturalSegmentMarkers
+from ..natural_vectors.natural_coordinates import SegmentNaturalCoordinates
+from ...protocols.natural_segment_markers import AbstractNaturalSegmentMarkers
 
 
 class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):

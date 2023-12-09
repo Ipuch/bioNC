@@ -185,7 +185,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
         This function returns the segment in MX format
         """
-        from ..bionc_casadi.natural_segment import NaturalSegment as NaturalSegmentCasadi
+        from bionc.bionc_casadi.segment.natural_segment import NaturalSegment as NaturalSegmentCasadi
 
         natural_segment = NaturalSegmentCasadi(
             name=self.name,

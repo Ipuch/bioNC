@@ -1,12 +1,12 @@
 import numpy as np
 
-from .natural_segment import NaturalSegment
+from .cartesian_vector import CartesianVector
 from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_segment import NaturalSegment
+from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
 from ..protocols.joint import JointBase
 from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
-from .natural_vector import NaturalVector
-from .cartesian_vector import CartesianVector
 
 
 class GroundJoint:
@@ -80,7 +80,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiGroundJoint
+            from bionc.bionc_casadi.joints.ground_joints import GroundJoint as CasadiGroundJoint
 
             return CasadiGroundJoint.Free(
                 name=self.name,
@@ -231,7 +231,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiGroundJoint
+            from bionc.bionc_casadi.joints.ground_joints import GroundJoint as CasadiGroundJoint
 
             return CasadiGroundJoint.Hinge(
                 name=self.name,
@@ -385,7 +385,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import Joint as CasadiJoint
+            from bionc.bionc_casadi.joints.two_segment_joints import Joint as CasadiJoint
 
             return CasadiJoint.Universal(
                 name=self.name,
@@ -499,7 +499,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiGroundJoint
+            from bionc.bionc_casadi.joints.ground_joints import GroundJoint as CasadiGroundJoint
 
             return CasadiGroundJoint.Spherical(
                 name=self.name,
@@ -609,7 +609,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiGroundJoint
+            from bionc.bionc_casadi.joints.ground_joints import GroundJoint as CasadiGroundJoint
 
             return CasadiGroundJoint.Weld(
                 name=self.name,

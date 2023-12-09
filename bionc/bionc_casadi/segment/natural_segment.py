@@ -3,18 +3,18 @@ from casadi import MX
 from casadi import cos, transpose, vertcat, inv, dot, sum1, horzcat, solve
 from typing import Union, Tuple
 
-from .homogenous_transform import HomogeneousTransform
-from .natural_accelerations import SegmentNaturalAccelerations
-from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_inertial_parameters import NaturalInertialParameters
-from .natural_marker import NaturalMarker, SegmentNaturalVector
 from .natural_segment_markers import NaturalSegmentMarkers
-from .natural_vector import NaturalVector
-from .natural_velocities import SegmentNaturalVelocities
-from .transformation_matrix import compute_transformation_matrix
-from .utils import to_numeric_MX
-from ..protocols.natural_segment import AbstractNaturalSegment
-from ..utils.enums import TransformationMatrixType
+from ..mecamaths.homogenous_transform import HomogeneousTransform
+from ..mecamaths.transformation_matrix import compute_transformation_matrix
+from ..misc.utils import to_numeric_MX
+from ..natural_marker import NaturalMarker, SegmentNaturalVector
+from ..natural_vectors.natural_accelerations import SegmentNaturalAccelerations
+from ..natural_vectors.natural_coordinates import SegmentNaturalCoordinates
+from ..natural_vectors.natural_vector import NaturalVector
+from ..natural_vectors.natural_velocities import SegmentNaturalVelocities
+from ...protocols.natural_segment import AbstractNaturalSegment
+from ...utils.enums import TransformationMatrixType
 
 
 class NaturalSegment(AbstractNaturalSegment):

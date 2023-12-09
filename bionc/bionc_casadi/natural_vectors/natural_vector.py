@@ -1,8 +1,9 @@
-from casadi import MX
 import numpy as np
-from ..protocols.natural_vector import AbstractNaturalVector
-from ..protocols.interpolation_matrix import AbstractInterpolationMatrix
-from ..utils.enums import NaturalAxis
+from casadi import MX
+
+from ...protocols.interpolation_matrix import AbstractInterpolationMatrix
+from ...protocols.natural_vector import AbstractNaturalVector
+from ...utils.enums import NaturalAxis
 
 
 class NaturalVector(AbstractNaturalVector, MX):

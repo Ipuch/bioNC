@@ -1,14 +1,13 @@
 import numpy as np
 from casadi import MX, transpose, horzcat, vertcat, solve
-import pickle
 
-from .natural_coordinates import NaturalCoordinates
-from .natural_velocities import NaturalVelocities
-from .natural_accelerations import NaturalAccelerations
-from ..protocols.biomechanical_model import GenericBiomechanicalModel
 from .external_force import ExternalForceSet, ExternalForce
-from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
-from .cartesian_vector import vector_projection_in_non_orthogonal_basis
+from .mecamaths.cartesian_vector import vector_projection_in_non_orthogonal_basis
+from .mecamaths.rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
+from .natural_vectors.natural_accelerations import NaturalAccelerations
+from .natural_vectors.natural_coordinates import NaturalCoordinates
+from .natural_vectors.natural_velocities import NaturalVelocities
+from ..protocols.biomechanical_model import GenericBiomechanicalModel
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):

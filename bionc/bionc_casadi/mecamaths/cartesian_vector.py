@@ -1,6 +1,7 @@
-from casadi import MX, sum1, cross
 import numpy as np
-from ..utils.enums import CartesianAxis
+from casadi import MX, sum1, cross
+
+from ...utils.enums import CartesianAxis
 
 
 class CartesianVector(MX):

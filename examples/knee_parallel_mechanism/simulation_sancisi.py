@@ -1,7 +1,6 @@
 import numpy as np
-from bionc import NaturalCoordinates, SegmentNaturalCoordinates, Viz, SegmentNaturalVelocities, NaturalVelocities
-from bionc.bionc_casadi.utils import to_numeric_MX
 
+from bionc import NaturalCoordinates, SegmentNaturalCoordinates, Viz, SegmentNaturalVelocities, NaturalVelocities
 from knee_sancisi import create_knee_model
 from utils import forward_integration, post_computations
 

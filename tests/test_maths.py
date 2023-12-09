@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
-from .utils import TestUtils
 
 from bionc import EulerSequence
+from .utils import TestUtils
 
 
 @pytest.mark.parametrize(
@@ -147,7 +147,7 @@ def test_euler_vectors(bionc_type):
 
 def _subtest_rotations(euler_rot_angles_1: list, euler_rot_angles_2: list, bionc_type: str, seq: EulerSequence):
     if bionc_type == "casadi":
-        from bionc.bionc_casadi.rotations import (
+        from bionc.bionc_casadi.mecamaths.rotations import (
             euler_axes_from_rotation_matrices,
         )
         from biorbd_casadi import Rotation
@@ -195,7 +195,7 @@ def _subtest_rotations(euler_rot_angles_1: list, euler_rot_angles_2: list, bionc
 )
 def test_euler_vectors_with_interpretable_values(bionc_type):
     if bionc_type == "casadi":
-        from bionc.bionc_casadi.rotations import (
+        from bionc.bionc_casadi.mecamaths.rotations import (
             euler_axes_from_rotation_matrices,
         )
         from biorbd_casadi import Rotation

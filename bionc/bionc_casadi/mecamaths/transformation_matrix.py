@@ -1,6 +1,6 @@
 from casadi import cos, sin, MX, sqrt
 
-from ..utils.enums import NaturalAxis, TransformationMatrixType
+from ...utils.enums import TransformationMatrixType
 
 
 def compute_transformation_matrix(

@@ -1,6 +1,5 @@
-from typing import Union
-from casadi import MX, vertcat, horzcat, transpose
 import numpy as np
+from casadi import MX, vertcat, horzcat, transpose
 
 
 class HomogeneousTransform(MX):

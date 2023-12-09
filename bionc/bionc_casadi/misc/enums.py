@@ -1,6 +1,7 @@
 from enum import Enum
-from .joints import Joint
-from .joints_with_ground import GroundJoint
+
+from ..joints.ground_joints import GroundJoint
+from ..joints.two_segment_joints import Joint
 
 
 class JointType(Enum):

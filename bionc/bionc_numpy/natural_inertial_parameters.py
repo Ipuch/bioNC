@@ -1,8 +1,7 @@
-from typing import Union
-
 import numpy as np
 from numpy import eye, zeros
 from numpy.linalg import inv
+from typing import Union
 
 from ..bionc_numpy.natural_vector import NaturalVector
 
@@ -348,7 +347,9 @@ class NaturalInertialParameters:
         """
         This function returns the segment in MX format
         """
-        from ..bionc_casadi.natural_inertial_parameters import NaturalInertialParameters as NaturalInertialParametersMX
+        from bionc.bionc_casadi.segment.natural_inertial_parameters import (
+            NaturalInertialParameters as NaturalInertialParametersMX,
+        )
 
         return NaturalInertialParametersMX(
             mass=self.mass,

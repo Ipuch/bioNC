@@ -1,14 +1,13 @@
-from casadi import MX, dot, cos, transpose, sumsqr, vertcat
 import numpy as np
+from casadi import MX, dot, cos, transpose, sumsqr
 
-from .natural_segment import NaturalSegment
-from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_velocities import SegmentNaturalVelocities
-from .natural_marker import NaturalMarker
-from ..protocols.joint import JointBase
-from .natural_vector import NaturalVector
-from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
-from .cartesian_vector import CartesianVector
+from ..natural_marker import NaturalMarker
+from ..natural_vectors.natural_coordinates import SegmentNaturalCoordinates
+from ..natural_vectors.natural_vector import NaturalVector
+from ..natural_vectors.natural_velocities import SegmentNaturalVelocities
+from ..segment.natural_segment import NaturalSegment
+from ...protocols.joint import JointBase
+from ...utils.enums import NaturalAxis, EulerSequence, TransformationMatrixType
 
 
 class Joint:

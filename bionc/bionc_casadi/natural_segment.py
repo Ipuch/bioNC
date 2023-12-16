@@ -513,7 +513,7 @@ class NaturalSegment(AbstractNaturalSegment):
     def nb_vectors(self) -> int:
         return self._vectors.nb_vectors
 
-    def natural_vector_from_name(self, vector_name: str) -> SegmentNaturalVector:
+    def vector_from_name(self, vector_name: str) -> SegmentNaturalVector:
         return self._vectors.vector_from_name(vector_name)
 
     def add_natural_vector(self, vector: SegmentNaturalVector):

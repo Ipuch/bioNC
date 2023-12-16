@@ -145,7 +145,7 @@ class NaturalSegment(AbstractNaturalSegment):
         )
 
         self._markers = NaturalSegmentMarkers()  # list of markers embedded in the segment
-        self_vectors = NaturalSegmentVectors()  # list of vectors embedded in the segment
+        self._vectors = NaturalSegmentVectors()  # list of vectors embedded in the segment
 
     def set_natural_inertial_parameters(
         self, mass: float, natural_center_of_mass: np.ndarray, natural_pseudo_inertia: np.ndarray
@@ -606,6 +606,9 @@ class NaturalSegment(AbstractNaturalSegment):
         lambda_i = x[12:]
         return SegmentNaturalAccelerations(Qddoti), lambda_i
 
+    def vector_from_name(self, vector_name: str) -> SegmentNaturalVector:
+        return self._vectors.vector_from_name(vector_name)
+
     def add_natural_vector(self, vector: SegmentNaturalVector):
         """
         Add a new vector to the segment
@@ -653,7 +656,7 @@ class NaturalSegment(AbstractNaturalSegment):
             parent_name=self.name,
             direction=direction,
         )
-        self.add(natural_vector)
+        self._vectors.add(natural_vector)
 
     @property
     def nb_markers(self) -> int:

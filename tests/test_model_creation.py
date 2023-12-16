@@ -1,6 +1,5 @@
-import os
-
 import numpy as np
+import os
 
 from bionc import (
     AxisTemplate,
@@ -76,7 +75,7 @@ def test_model_creation():
     # Create the model from a c3d file
     model = model_creation_from_measured_data(filename)
 
-    assert isinstance(model.segments, dict)
+    assert isinstance(model.segments.segments, dict)
     assert len(model.segments) == 4
     assert model.segments["FOOT"].name == "FOOT"
     assert model.segments["SHANK"].name == "SHANK"

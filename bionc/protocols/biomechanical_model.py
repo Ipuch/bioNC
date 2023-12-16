@@ -1,14 +1,14 @@
-import numpy as np
-from casadi import MX
-
-from typing import Union, Any
-from abc import ABC, abstractmethod
 import dill as pickle
+import numpy as np
+from abc import ABC, abstractmethod
+from casadi import MX
+from typing import Union, Any
 
-from bionc.protocols.natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
-from bionc.protocols.natural_velocities import NaturalVelocities
-from bionc.protocols.natural_accelerations import NaturalAccelerations
-from bionc.protocols.external_force import ExternalForceSet
+from .biomechanical_model_segments import GenericBiomechanicalModelSegments
+from .external_force import ExternalForceSet
+from .natural_accelerations import NaturalAccelerations
+from .natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
+from .natural_velocities import NaturalVelocities
 from ..utils.enums import EulerSequence
 
 
@@ -162,13 +162,13 @@ class GenericBiomechanicalModel(ABC):
 
     def __init__(
         self,
-        segments: dict[str:Any, ...] = None,
+        segments: GenericBiomechanicalModelSegments = None,
         joints: dict[str:Any, ...] = None,
     ):
-        from .natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
         from .joint import JointBase  # Imported here to prevent from circular imports
 
-        self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
+        # self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
+        self.segments = segments
         self.joints: dict[str:JointBase, ...] = {} if joints is None else joints
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # the order of the segment matters
@@ -188,14 +188,15 @@ class GenericBiomechanicalModel(ABC):
         NaturalSegment
             The segment with the given name
         """
-        if name == "ground":
-            for segment in self.segments.values():
-                if segment.is_ground:
-                    return segment
-            else:
-                raise ValueError("No ground segment found")
-        else:
-            return self.segments[name]
+        # if name == "ground":
+        #     for segment in self.segments.values():
+        #         if segment.is_ground:
+        #             return segment
+        #     else:
+        #         raise ValueError("No ground segment found")
+        # else:
+        #     return self.segments[name]
+        return self.segments[name]
 
     def __setitem__(self, name: str, segment: Any):
         """
@@ -208,36 +209,32 @@ class GenericBiomechanicalModel(ABC):
         segment : NaturalSegment
             The segment to add
         """
-        if segment.name == name:  # Make sure the name of the segment fits the internal one
-            segment.set_index(len(self.segments))
-            self.segments[name] = segment
-            self._update_mass_matrix()  # Update the generalized mass matrix
-            if name in ("ground", "GROUND", "Ground"):
-                self.set_ground_segment(name)
+        self.segments[name] = segment
+        self._update_mass_matrix()  # Update the generalized mass matrix
+        if name in ("ground", "GROUND", "Ground"):
+            self.set_ground_segment(name)
 
-            # adding a default joint with the world frame to defined standard transformations.
-            from ..bionc_numpy.enums import JointType  # prevent circular import
-            from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+        # adding a default joint with the world frame to defined standard transformations.
+        from ..bionc_numpy.enums import JointType  # prevent circular import
+        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
 
-            self._add_joint(
-                dict(
-                    name=f"free_joint_{name}",
-                    joint_type=CasadiJointType.GROUND_FREE
-                    if hasattr(self, "numpy_model")
-                    else JointType.GROUND_FREE,  # not satisfying
-                    parent="GROUND",  # to be popped out
-                    child=name,
-                    parent_point=None,
-                    child_point=None,
-                    length=None,
-                    theta=None,
-                    projection_basis=EulerSequence.XYZ,
-                    parent_basis=None,
-                    child_basis=None,
-                ),
-            )
-        else:
-            raise ValueError("The name of the segment does not match the name of the segment")
+        self._add_joint(
+            dict(
+                name=f"free_joint_{name}",
+                joint_type=CasadiJointType.GROUND_FREE
+                if hasattr(self, "numpy_model")
+                else JointType.GROUND_FREE,  # not satisfying
+                parent="GROUND",  # to be popped out
+                child=name,
+                parent_point=None,
+                child_point=None,
+                length=None,
+                theta=None,
+                projection_basis=EulerSequence.XYZ,
+                parent_basis=None,
+                child_basis=None,
+            ),
+        )
 
     def save(self, filename: str):
         """
@@ -303,31 +300,11 @@ class GenericBiomechanicalModel(ABC):
 
     @property
     def has_ground_segment(self) -> bool:
-        """
-        This function returns true if the model has a ground segment
-
-        Returns
-        -------
-        bool
-            True if the model has a ground segment
-        """
-        for segment in self.segments.values():
-            if segment._is_ground:
-                return True
-        else:
-            return False
+        return self.segments.has_ground_segment
 
     @property
     def segments_no_ground(self):
-        """
-        This function returns the dictionary of all the segments except the ground segment
-
-        Returns
-        -------
-        dict[str: NaturalSegment, ...]
-            The dictionary of all the segments except the ground segment
-        """
-        return {name: segment for name, segment in self.segments.items() if not segment._is_ground}
+        return self.segments.segments_no_ground
 
     def _add_joint(self, joint: dict):
         """
@@ -516,10 +493,7 @@ class GenericBiomechanicalModel(ABC):
 
     @property
     def nb_segments(self) -> int:
-        """
-        This function returns the number of segments in the model
-        """
-        return len(self.segments) - 1 if self.has_ground_segment else len(self.segments)
+        return self.segments.nb_segments
 
     @property
     def nb_markers(self) -> int:
@@ -543,10 +517,7 @@ class GenericBiomechanicalModel(ABC):
 
     @property
     def segment_names(self) -> list[str]:
-        """
-        This function returns the names of the segments in the model
-        """
-        return list(self.segments.keys())
+        return self.segments.segment_names
 
     @property
     def marker_names(self) -> list[str]:
@@ -656,10 +627,7 @@ class GenericBiomechanicalModel(ABC):
 
     @property
     def nb_rigid_body_constraints(self) -> int:
-        """
-        This function returns the number of rigid body constraints in the model
-        """
-        return 6 * self.nb_segments
+        return self.segments.nb_rigid_body_constraints
 
     @property
     def nb_holonomic_constraints(self) -> int:
@@ -670,24 +638,15 @@ class GenericBiomechanicalModel(ABC):
 
     @property
     def nb_Q(self) -> int:
-        """
-        This function returns the number of generalized coordinates in the model
-        """
-        return 12 * self.nb_segments
+        return self.segments.nb_Q
 
     @property
     def nb_Qdot(self) -> int:
-        """
-        This function returns the number of generalized velocities in the model
-        """
-        return 12 * self.nb_segments
+        return self.segments.nb_Qdot
 
     @property
     def nb_Qddot(self) -> int:
-        """
-        This function returns the number of generalized accelerations in the model
-        """
-        return 12 * self.nb_segments
+        return self.segments.nb_Qddot
 
     def joint_from_index(self, index: int):
         """
@@ -792,34 +751,11 @@ class GenericBiomechanicalModel(ABC):
         return joints
 
     def segment_from_index(self, index: int):
-        """
-        This function returns the segment with the given index
-
-        Parameters
-        ----------
-        index : int
-            The index of the segment
-
-        Returns
-        -------
-        Segment
-            The segment with the given index
-        """
-        for segment in self.segments.values():
-            if segment.index == index:
-                return segment
-        raise ValueError(f"The segment index does not exist, the model has only {self.nb_segments} segments")
+        return self.segments.segment_from_index(index)
 
     @property
     def normalized_coordinates(self) -> tuple[tuple[int, ...]]:
-        idx = []
-        for i in range(self.nb_segments):
-            # create list from i* 12 to (i+1) * 12
-            segment_idx = [i for i in range(i * 12, (i + 1) * 12)]
-            idx.append(segment_idx[0:3])
-            idx.append(segment_idx[9:12])
-
-        return idx
+        return self.segments.normalized_coordinates
 
     @property
     def mass_matrix(self):
@@ -834,61 +770,17 @@ class GenericBiomechanicalModel(ABC):
         """
         return self._mass_matrix
 
-    @abstractmethod
     def rigid_body_constraints(self, Q: NaturalCoordinates):
-        """
-        This function returns the rigid body constraints of all segments, denoted Phi_r
-        as a function of the natural coordinates Q.
+        return self.segments.rigid_body_constraints(Q)
 
-        Returns
-        -------
-        np.ndarray
-            Rigid body constraints of the segment [6 * nb_segments, 1]
-        """
-
-    @abstractmethod
     def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates):
-        """
-        This function returns the derivative of the rigid body constraints denoted Phi_r_dot
+        return self.segments.rigid_body_constraints_derivative(Q, Qdot)
 
-        Parameters
-        ----------
-        Q : NaturalCoordinates
-            The natural coordinates of the model
-        Qdot : NaturalVelocities
-            The natural velocities of the model
-
-        Returns
-        -------
-            Derivative of the rigid body constraints
-        """
-
-    @abstractmethod
     def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates):
-        """
-        This function returns the rigid body constraints of all segments, denoted K_r
-        as a function of the natural coordinates Q.
+        return self.segments.rigid_body_constraints_jacobian(Q)
 
-        Returns
-        -------
-        np.ndarray
-            Rigid body constraints of the segment [6 * nb_segments, nbQ]
-        """
-
-    @abstractmethod
     def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
-        """
-        This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot
-
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-            The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
-        """
+        return self.segments.rigid_body_constraint_jacobian_derivative(Qdot)
 
     @abstractmethod
     def joint_constraints(self, Q: NaturalCoordinates):

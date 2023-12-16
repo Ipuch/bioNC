@@ -1,15 +1,17 @@
 import numpy as np
 from numpy import transpose
+from typing import Any
 
+from .biomechanical_model_segments import BiomechanicalModelSegments
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
+from .external_force import ExternalForceSet, ExternalForce
+from .generalized_force import JointGeneralizedForcesList
+from .inverse_kinematics import InverseKinematics
+from .natural_accelerations import NaturalAccelerations
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
-from .natural_accelerations import NaturalAccelerations
-from ..protocols.biomechanical_model import GenericBiomechanicalModel
-from .inverse_kinematics import InverseKinematics
-from .external_force import ExternalForceSet, ExternalForce
-from .generalized_force import JointGeneralizedForces, JointGeneralizedForcesList
 from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
-from .cartesian_vector import vector_projection_in_non_orthogonal_basis
+from ..protocols.biomechanical_model import GenericBiomechanicalModel
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
@@ -23,8 +25,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         This function returns the joint torques expressed in the euler basis
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, segments: dict[str, Any] | BiomechanicalModelSegments = None):
+        segments = BiomechanicalModelSegments() if segments is None else segments
+        super().__init__(segments=segments)
 
     def to_mx(self):
         """
@@ -36,9 +39,14 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The equivalent of the current BiomechanicalModel with casadi MX variables
         """
         from ..bionc_casadi.biomechanical_model import BiomechanicalModel as CasadiBiomechanicalModel
+        from ..bionc_casadi.biomechanical_model_segments import (
+            BiomechanicalModelSegments as CasadiBiomechanicalModelSegments,
+        )
 
-        biomechanical_model = CasadiBiomechanicalModel()
-        biomechanical_model.segments = {key: segment.to_mx() for key, segment in self.segments.items()}
+        casadi_segments = CasadiBiomechanicalModelSegments(
+            segments={key: segment.to_mx() for key, segment in self.segments.items()}
+        )
+        biomechanical_model = CasadiBiomechanicalModel(segments=casadi_segments)
         biomechanical_model.joints = {key: joint.to_mx() for key, joint in self.joints.items()}
         biomechanical_model._update_mass_matrix()
         biomechanical_model.set_numpy_model(self)

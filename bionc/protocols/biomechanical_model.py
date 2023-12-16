@@ -188,14 +188,6 @@ class GenericBiomechanicalModel(ABC):
         NaturalSegment
             The segment with the given name
         """
-        # if name == "ground":
-        #     for segment in self.segments.values():
-        #         if segment.is_ground:
-        #             return segment
-        #     else:
-        #         raise ValueError("No ground segment found")
-        # else:
-        #     return self.segments[name]
         return self.segments[name]
 
     def __setitem__(self, name: str, segment: Any):

@@ -1,12 +1,13 @@
-from typing import Union
-from abc import ABC, abstractmethod
 import numpy as np
+from abc import ABC, abstractmethod
 from casadi import MX
-from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_velocities import SegmentNaturalVelocities
-from .natural_accelerations import SegmentNaturalAccelerations
+from typing import Union
+
 from .homogenous_transform import HomogeneousTransform
-from .natural_markers import AbstractNaturalMarker, AbstractSegmentNaturalVector
+from .natural_accelerations import SegmentNaturalAccelerations
+from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_markers import AbstractNaturalMarker
+from .natural_velocities import SegmentNaturalVelocities
 from ..utils.enums import TransformationMatrixType
 
 
@@ -70,9 +71,6 @@ class AbstractNaturalSegment(ABC):
             self._natural_inertial_parameters._initial_transformation_matrix = self.compute_transformation_matrix(
                 inertial_transformation_matrix_type
             )
-
-        # list of vectors embedded in the segment
-        self._vectors = []
 
         # to know if the segment is the ground
         self._is_ground = is_ground
@@ -372,21 +370,6 @@ class AbstractNaturalSegment(ABC):
             * beta: float
                 Stabilization parameter for the constraint derivative
         """
-
-    def vector_from_name(self, vector_name: str) -> AbstractSegmentNaturalVector:
-        """
-        This function returns the vector with the given name
-
-        Parameters
-        ----------
-        vector_name: str
-            Name of the vector
-        """
-        for vector in self._vectors:
-            if vector.name == vector_name:
-                return vector
-
-        raise ValueError(f"No vector with name {vector_name} was found")
 
     @abstractmethod
     def add_natural_marker(self, marker: AbstractNaturalMarker):

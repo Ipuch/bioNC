@@ -9,6 +9,7 @@ from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_inertial_parameters import NaturalInertialParameters
 from .natural_marker import NaturalMarker, SegmentNaturalVector
 from .natural_segment_markers import NaturalSegmentMarkers
+from .natural_segment_vectors import NaturalSegmentVectors
 from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
 from .transformation_matrix import compute_transformation_matrix
@@ -65,6 +66,8 @@ class NaturalSegment(AbstractNaturalSegment):
         is_ground to indicate if the segment is the ground segment
     _markers : NaturalSegmentMarkers
         markers of the segment
+    _vectors : NaturalSegmentVectors
+        vectors of the segment
     """
 
     def __init__(
@@ -104,6 +107,7 @@ class NaturalSegment(AbstractNaturalSegment):
         )
 
         self._markers = NaturalSegmentMarkers()
+        self._vectors = NaturalSegmentVectors()
 
     def set_natural_inertial_parameters(
         self, mass: float, natural_center_of_mass: np.ndarray, natural_pseudo_inertia: np.ndarray
@@ -498,12 +502,19 @@ class NaturalSegment(AbstractNaturalSegment):
         B = vertcat([self.gravity_force(), biais])
 
         # solve the linear system Ax = B with numpy
-        raise NotImplementedError("This function is not implemented yet")
-        # todo in casadi
+        raise NotImplementedError("This function is not implemented yet. You should invert the a matrix with casadi")
+        # todo in casadi with symbolicqr 'solve(A, B, "symbolicqr")' ??
         x = np.linalg.solve(A, B)
         Qddoti = x[0:12]
         lambda_i = x[12:]
         return SegmentNaturalAccelerations(Qddoti), lambda_i
+
+    @property
+    def nb_vectors(self) -> int:
+        return self._vectors.nb_vectors
+
+    def vector_from_name(self, vector_name: str) -> SegmentNaturalVector:
+        return self._vectors.vector_from_name(vector_name)
 
     def add_natural_vector(self, vector: SegmentNaturalVector):
         """
@@ -520,13 +531,14 @@ class NaturalSegment(AbstractNaturalSegment):
             )
 
         vector.parent_name = self.name
-        self._vectors.append(vector)
+        self._vectors.add(vector)
 
     def add_natural_vector_from_segment_coordinates(
         self,
         name: str,
         direction: np.ndarray,
         normalize: bool = True,
+        transformation_matrix_type: TransformationMatrixType = None,
     ):
         """
         Add a new marker to the segment
@@ -539,17 +551,19 @@ class NaturalSegment(AbstractNaturalSegment):
             The location of the vector in the segment coordinate system
         normalize: bool
             True if the vector should be normalized, False otherwise
+        transformation_matrix_type: TransformationMatrixType
+            The type of the transformation matrix to compute, either "Buv" or TransformationMatrixType.Buv
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = to_numeric_MX(inv(self.compute_transformation_matrix())) @ direction
+        direction = to_numeric_MX(inv(self.compute_transformation_matrix(transformation_matrix_type))) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,
             parent_name=self.name,
             direction=direction,
         )
-        self.add_natural_vector(natural_vector)
+        self._vectors.add(natural_vector)
 
     @property
     def nb_markers(self) -> int:
@@ -594,6 +608,7 @@ class NaturalSegment(AbstractNaturalSegment):
         is_distal_location: bool = False,
         is_technical: bool = True,
         is_anatomical: bool = False,
+        transformation_matrix_type: TransformationMatrixType = None,
     ):
         """
         Add a new marker to the segment
@@ -610,9 +625,11 @@ class NaturalSegment(AbstractNaturalSegment):
             True if the marker is technical, False otherwise
         is_anatomical: bool
             True if the marker is anatomical, False otherwise
+        transformation_matrix_type: TransformationMatrixType
+            The type of the transformation matrix to compute, TransformationMatrixType.Buv by default
         """
 
-        location = to_numeric_MX(inv(self.compute_transformation_matrix())) @ location
+        location = to_numeric_MX(inv(self.compute_transformation_matrix(transformation_matrix_type))) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 

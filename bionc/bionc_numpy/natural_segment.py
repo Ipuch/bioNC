@@ -9,6 +9,7 @@ from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_inertial_parameters import NaturalInertialParameters
 from .natural_marker import NaturalMarker, SegmentNaturalVector
 from .natural_segment_markers import NaturalSegmentMarkers
+from .natural_segment_vectors import NaturalSegmentVectors
 from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
 from .transformation_matrix import compute_transformation_matrix
@@ -103,16 +104,14 @@ class NaturalSegment(AbstractNaturalSegment):
         center of mass of the segment in Segment Coordinate System
     _inertia: np.ndarray
         inertia matrix of the segment in Segment Coordinate System
-    _markers : list
-        list of markers in the segment
-    _vector : list
+    _markers : NaturalSegmentMarkers
+        markers of the segment
+    _vector : NaturalSegmentVectors
         list of vectors in the segment
     _index : int
         index of the segment in the model
     _is_ground : bool
         is_ground to indicate if the segment is the ground segment
-    _markers : NaturalSegmentMarkers
-        markers of the segment
     """
 
     def __init__(
@@ -146,6 +145,7 @@ class NaturalSegment(AbstractNaturalSegment):
         )
 
         self._markers = NaturalSegmentMarkers()  # list of markers embedded in the segment
+        self_vectors = NaturalSegmentVectors()  # list of vectors embedded in the segment
 
     def set_natural_inertial_parameters(
         self, mass: float, natural_center_of_mass: np.ndarray, natural_pseudo_inertia: np.ndarray
@@ -617,11 +617,11 @@ class NaturalSegment(AbstractNaturalSegment):
         """
         if vector.parent_name is not None and vector.parent_name != self.name:
             raise ValueError(
-                "The marker name should be the same as the 'key'. Alternatively, marker.name can be left undefined"
+                "The vector name should be the same as the 'key'. Alternatively, vector.name can be left undefined"
             )
 
         vector.parent_name = self.name
-        self._vectors.append(vector)
+        self._vectors.add(vector)
 
     def add_natural_vector_from_segment_coordinates(
         self,
@@ -650,7 +650,7 @@ class NaturalSegment(AbstractNaturalSegment):
             parent_name=self.name,
             direction=direction,
         )
-        self.add_natural_vector(natural_vector)
+        self.add(natural_vector)
 
     @property
     def nb_markers(self) -> int:

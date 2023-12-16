@@ -59,18 +59,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         #
         # return model
 
-    def rigid_body_constraints(self, Q: NaturalCoordinates) -> MX:
-        return self.segments.rigid_body_constraints(Q)
-
-    def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates) -> MX:
-        return self.segments.rigid_body_constraints_derivative(Q, Qdot)
-
-    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates) -> MX:
-        return self.segments.rigid_body_constraints_jacobian(Q)
-
-    def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
-        return self.segments.rigid_body_constraint_jacobian_derivative(Qdot)
-
     def joint_constraints(self, Q: NaturalCoordinates) -> MX:
         """
         This function returns the joint constraints of all joints, denoted Phi_k

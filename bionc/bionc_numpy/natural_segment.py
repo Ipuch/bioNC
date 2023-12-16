@@ -628,6 +628,7 @@ class NaturalSegment(AbstractNaturalSegment):
         name: str,
         direction: np.ndarray,
         normalize: bool = True,
+        transformation_matrix_type: TransformationMatrixType = None,
     ):
         """
         Add a new marker to the segment
@@ -640,10 +641,12 @@ class NaturalSegment(AbstractNaturalSegment):
             The location of the vector in the segment coordinate system
         normalize: bool
             True if the vector should be normalized, False otherwise
+        transformation_matrix_type : TransformationMatrixType
+            The type of the transformation matrix to compute, TransformationMatrixType.Buv by default
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = inv(self.compute_transformation_matrix()) @ direction
+        direction = inv(self.compute_transformation_matrix(transformation_matrix_type)) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,
@@ -695,6 +698,7 @@ class NaturalSegment(AbstractNaturalSegment):
         is_distal_location: bool = False,
         is_technical: bool = True,
         is_anatomical: bool = False,
+        transformation_matrix_type: TransformationMatrixType = None,
     ):
         """
         Add a new marker to the segment
@@ -711,9 +715,11 @@ class NaturalSegment(AbstractNaturalSegment):
             True if the marker is technical, False otherwise
         is_anatomical: bool
             True if the marker is anatomical, False otherwise
+        transformation_matrix_type : TransformationMatrixType
+            The type of the transformation matrix to compute, TransformationMatrixType.Buv by default
         """
 
-        location = inv(self.compute_transformation_matrix()) @ location
+        location = inv(self.compute_transformation_matrix(transformation_matrix_type)) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 

@@ -8,8 +8,7 @@ class AbstractNaturalSegmentVectors(ABC):
     Abstract class used to define anatomical segment based on natural vectors.
 
     This class provides an interface for adding vectors to a segment, retrieving the number,
-    retrieving the names of the markers, and performing operations related to the markers' positions,
-    constraints, and jacobian.
+    retrieving the names of the markers, and performing operations related to the vectors' positions, or more
 
     Methods
     -------
@@ -65,6 +64,21 @@ class AbstractNaturalSegmentVectors(ABC):
             The names of the markers in the segment.
         """
         return [vector.name for vector in self._vectors]
+
+    def vector_from_name(self, vector_name: str) -> AbstractSegmentNaturalVector:
+        """
+        This function returns the vector with the given name
+
+        Parameters
+        ----------
+        vector_name: str
+            Name of the vector
+        """
+        for vector in self._vectors:
+            if vector.name == vector_name:
+                return vector
+
+        raise ValueError(f"No vector with name {vector_name} was found")
 
     def __iter__(self):
         """

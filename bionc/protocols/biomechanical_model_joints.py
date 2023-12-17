@@ -338,12 +338,10 @@ class GenericBiomechanicalModelJoints(ABC):
 
         joints = []
         for joint in self.joints.values():
+            is_free_joint = isinstance(joint, (JointType.GROUND_FREE.value, CasadiJointType.GROUND_FREE.value))
+            if remove_free_joints and is_free_joint:
+                continue
             if joint.child.index == child_index:
-                if remove_free_joints and (
-                    isinstance(joint, JointType.GROUND_FREE.value)
-                    or isinstance(joint, CasadiJointType.GROUND_FREE.value)
-                ):
-                    continue
                 joints.append(joint)
         return joints
 

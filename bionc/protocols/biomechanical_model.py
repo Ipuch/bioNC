@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from casadi import MX
 from typing import Union, Any
 
+from .biomechanical_model_joints import GenericBiomechanicalModelJoints
 from .biomechanical_model_segments import GenericBiomechanicalModelSegments
 from .external_force import ExternalForceSet
 from .natural_accelerations import NaturalAccelerations
@@ -163,13 +164,11 @@ class GenericBiomechanicalModel(ABC):
     def __init__(
         self,
         segments: GenericBiomechanicalModelSegments = None,
-        joints: dict[str:Any, ...] = None,
+        joints: GenericBiomechanicalModelJoints = None,
     ):
-        from .joint import JointBase  # Imported here to prevent from circular imports
-
         # self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
         self.segments = segments
-        self.joints: dict[str:JointBase, ...] = {} if joints is None else joints
+        self.joints = joints
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # the order of the segment matters
         self._mass_matrix = self._update_mass_matrix()
@@ -299,104 +298,18 @@ class GenericBiomechanicalModel(ABC):
         return self.segments.segments_no_ground
 
     def _add_joint(self, joint: dict):
-        """
-        This function adds a joint to the biomechanical model. It is not recommended to use this function directly.
-
-        Parameters
-        ----------
-        joint : dict
-            A dictionary containing the joints to be added to the biomechanical model:
-            {name: str, joint: Joint, parent: str, child: str}
-        """
-        if joint["parent"] is not None and joint["parent"] != "GROUND" and joint["parent"] not in self.segments.keys():
-            raise ValueError("The parent segment does not exist")
-        if joint["child"] not in self.segments.keys():
-            raise ValueError("The child segment does not exist")
-        if joint["name"] in self.joints.keys():
-            raise ValueError("The joint name already exists")
-        # remove the default joint GROUND_FREE if it still exists
-        # There is automatically a free joint for each segment when created. This joint is not needed anymore when
-        # adding a new joint to the segment
-        if self.has_free_joint(self.segments[joint["child"]].index):
-            self._remove_free_joint(self.segments[joint["child"]].index)
-
-        # remove name of the joint_type from the dictionary
-        joint_type = joint.pop("joint_type")
-        # remove None values from the dictionary
-        joint = {key: value for key, value in joint.items() if value is not None}
-        # replace parent field by the parent segment
-        if joint["parent"] == "GROUND":
-            joint.pop("parent")
-        else:
-            joint["parent"] = self.segments[joint["parent"]]
-
-        # replace child field by the child segment
-        joint["child"] = self.segments[joint["child"]]
-        joint["index"] = self.nb_joints
-
-        self.joints[joint["name"]] = joint_type.value(**joint)
+        """todo: we may select the two segments of interest before calling the function"""
+        return self.joints._add_joint(joint, self.segments)
 
     @property
     def joints_with_constraints(self) -> dict:
-        """
-        This function returns the dictionary of all the joints with constraints
-        It removes the joints with no constraints from self.joints
-
-        Returns
-        -------
-        dict[str: Joint, ...]
-            The dictionary of all the joints with constraints
-        """
-        return {name: joint for name, joint in self.joints.items() if joint.nb_constraints > 0}
+        return self.joints.joints_with_constraints
 
     def has_free_joint(self, segment_idx: int) -> bool:
-        """
-        This function returns true if the segment has a free joint with the ground
-
-        Parameters
-        ----------
-        segment_idx : int
-            The index of the segment
-
-        Returns
-        -------
-        bool
-            True if the segment has a free joint with the ground
-        """
-        from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
-
-        joints = self.joints_from_child_index(segment_idx, remove_free_joints=False)
-        for joint in joints:
-            if isinstance(joint, JointType.GROUND_FREE.value) or isinstance(joint, CasadiJointType.GROUND_FREE.value):
-                return True
-        return False
+        return self.joints.has_free_joint(segment_idx)
 
     def _remove_free_joint(self, segment_idx: int):
-        """
-        This function removes the free joint of the segment
-
-        Notes
-        -----
-        Don't use this function if you don't know what you are doing
-
-        Parameters
-        ----------
-        segment_idx : int
-            The index of the segment
-        """
-        from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
-
-        joints = self.joints_from_child_index(segment_idx, remove_free_joints=False)
-        free_joint_found = False
-        for i, joint in enumerate(joints):
-            if isinstance(joint, JointType.GROUND_FREE.value) or isinstance(joint, CasadiJointType.GROUND_FREE.value):
-                self.remove_joint(joint.name)
-                free_joint_found = True
-
-        if not free_joint_found:
-            raise ValueError("The segment does not have a free joint")
+        return self.joints._remove_free_joint(segment_idx)
 
     def children(self, segment: str | int) -> list[int]:
         """
@@ -561,61 +474,26 @@ class GenericBiomechanicalModel(ABC):
 
     @property
     def nb_joints(self) -> int:
-        """
-        This function returns the number of joints in the model
-        """
-        return len(self.joints)
+        return self.joints.nb_joints
 
     @property
     def nb_joints_with_constraints(self) -> int:
-        """
-        This function returns the number of joints with constraints in the model
-        """
-        return len(self.joints_with_constraints)
+        return self.joints.nb_joints_with_constraints
 
     def remove_joint(self, name: str):
-        """
-        This function removes a joint from the model
-
-        Parameters
-        ----------
-        name : str
-            The name of the joint to be removed
-        """
-        if name not in self.joints.keys():
-            raise ValueError("The joint does not exist")
-        joint_index_to_remove = self.joints[name].index
-        self.joints.pop(name)
-        for joint in self.joints.values():
-            if joint.index > joint_index_to_remove:
-                joint.index -= 1
+        return self.joints.remove_joint(name)
 
     @property
     def nb_joint_constraints(self) -> int:
-        """
-        This function returns the number of joint constraints in the model
-        """
-        nb_joint_constraints = 0
-        for _, joint in self.joints.items():
-            nb_joint_constraints += joint.nb_constraints
-        return nb_joint_constraints
+        return self.joints.nb_constraints
 
     @property
     def nb_joint_dof(self) -> int:
-        """
-        This function returns the number of joint degrees of freedom in the model
-        """
-        nb_joint_dof = 0
-        for _, joint in self.joints.items():
-            nb_joint_dof += joint.nb_joint_dof
-        return nb_joint_dof
+        return self.joints.nb_joint_dof
 
     @property
     def joint_names(self) -> list[str]:
-        """
-        This function returns the names of the joints in the model
-        """
-        return list(self.joints.keys())
+        return self.joints.joint_names
 
     @property
     def nb_rigid_body_constraints(self) -> int:
@@ -641,106 +519,16 @@ class GenericBiomechanicalModel(ABC):
         return self.segments.nb_Qddot
 
     def joint_from_index(self, index: int):
-        """
-        This function returns the joint with the given index
-
-        Parameters
-        ----------
-        index : int
-            The index of the joint
-
-        Returns
-        -------
-        Joint
-            The joint with the given index
-        """
-        for joint in self.joints.values():
-            if joint.index == index:
-                return joint
-        raise ValueError("No joint with index " + str(index))
+        return self.joints.joint_from_index(index)
 
     def joint_dof_indexes(self, joint_id: int) -> tuple[int, ...]:
-        """
-        This function returns the index of a given joint.
-
-        Parameters
-        ----------
-        joint_id : int
-            The index of the joint for which the joint dof indexes are returned
-
-        Returns
-        -------
-        tuple[int, ...]
-            The indexes of the joint dof
-        """
-        joint = self.joint_from_index(joint_id)
-        joint_dof_inx = [joint.index + i for i in range(joint.nb_joint_dof)]
-        return tuple(joint_dof_inx)
+        return self.joints.dof_indexes(joint_id)
 
     def joint_constraints_index(self, joint_id: int | str) -> slice:
-        """
-        This function returns the slice of constrain of a given joint.
-
-        Parameters
-        ----------
-        joint_id : int | str
-            The index or the name of the joint for which the joint constraint indexes are returned
-
-        Returns
-        -------
-        slice_joint_constraint: slice
-            The slice of the given constraint
-        """
-        if isinstance(joint_id, str):
-            if joint_id not in self.joint_names:
-                raise ValueError("The joint name " + joint_id + " does not exist")
-            joint_id = self.joint_names.index(joint_id)
-
-        if isinstance(joint_id, int):
-            if joint_id > self.nb_joints:
-                raise ValueError("The joint index " + str(joint_id) + " does not exist")
-
-        nb_constraint_before_joint = 0
-        for ind_joint in range(joint_id):
-            nb_constraint_before_joint += self.joints[self.joint_names[ind_joint]].nb_constraints
-
-        begin_slice = nb_constraint_before_joint
-        nb_joint_constraints = self.joints[self.joint_names[joint_id]].nb_constraints
-        end_slice = nb_constraint_before_joint + nb_joint_constraints
-
-        slice_joint_constraint = slice(begin_slice, end_slice)
-
-        return slice_joint_constraint
+        return self.joints.constraints_index(joint_id)
 
     def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
-        """
-        This function returns the joints that have the given child index
-
-        Parameters
-        ----------
-        child_index : int
-            The child index
-        remove_free_joints : bool
-            If True, the free joints are not returned
-
-        Returns
-        -------
-        list[JointBase]
-            The joints that have the given child index
-        """
-        from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
-
-        joints = []
-        for joint in self.joints.values():
-            if joint.child.index == child_index:
-                if remove_free_joints and (
-                    isinstance(joint, JointType.GROUND_FREE.value)
-                    or isinstance(joint, CasadiJointType.GROUND_FREE.value)
-                ):
-                    continue
-                joints.append(joint)
-        return joints
+        return self.joints.joints_from_child_index(child_index, remove_free_joints)
 
     def segment_from_index(self, index: int):
         return self.segments.segment_from_index(index)
@@ -774,41 +562,14 @@ class GenericBiomechanicalModel(ABC):
     def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
         return self.segments.rigid_body_constraint_jacobian_derivative(Qdot)
 
-    @abstractmethod
-    def joint_constraints(self, Q: NaturalCoordinates):
-        """
-        This function returns the joint constraints of all joints, denoted Phi_k
-        as a function of the natural coordinates Q.
+    def joint_constraints(self, Q: NaturalCoordinates) -> MX:
+        return self.joints.constraints(Q, self.segments)
 
-        Returns
-        -------
-            Joint constraints of the segment [nb_joint_constraints, 1]
-        """
+    def joint_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
+        return self.joints.constraints_jacobian(Q, self.segments)
 
-    @abstractmethod
-    def joint_constraints_jacobian(self, Q: NaturalCoordinates):
-        """
-        This function returns the joint constraints of all joints, denoted K_k
-
-        Returns
-        -------
-            Joint constraints of the segment [nb_joint_constraints, 1]
-        """
-
-    @abstractmethod
-    def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities):
-        """
-        This function returns the derivative of the Jacobian matrix of the joint constraints denoted Kk_dot
-
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-            The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
-        """
+    def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
+        return self.joints.constraints_jacobian_derivative(Qdot, self.segments)
 
     @abstractmethod
     def _update_mass_matrix(self):

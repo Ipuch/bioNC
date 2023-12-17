@@ -2,6 +2,7 @@ import numpy as np
 from numpy import transpose
 from typing import Any
 
+from .biomechanical_model_joints import BiomechanicalModelJoints
 from .biomechanical_model_segments import BiomechanicalModelSegments
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .external_force import ExternalForceSet, ExternalForce
@@ -25,9 +26,14 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         This function returns the joint torques expressed in the euler basis
     """
 
-    def __init__(self, segments: dict[str, Any] | BiomechanicalModelSegments = None):
+    def __init__(
+        self,
+        segments: dict[str, Any] | BiomechanicalModelSegments = None,
+        joints: dict[str, Any] | BiomechanicalModelJoints = None,
+    ):
         segments = BiomechanicalModelSegments() if segments is None else segments
-        super().__init__(segments=segments)
+        joints = BiomechanicalModelJoints() if joints is None else joints
+        super().__init__(segments=segments, joints=joints)
 
     def to_mx(self):
         """
@@ -42,122 +48,23 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         from ..bionc_casadi.biomechanical_model_segments import (
             BiomechanicalModelSegments as CasadiBiomechanicalModelSegments,
         )
+        from ..bionc_casadi.biomechanical_model_joints import BiomechanicalModelJoints as CasadiBiomechanicalModelJoints
 
         casadi_segments = CasadiBiomechanicalModelSegments(
             segments={key: segment.to_mx() for key, segment in self.segments.items()}
         )
-        biomechanical_model = CasadiBiomechanicalModel(segments=casadi_segments)
-        biomechanical_model.joints = {key: joint.to_mx() for key, joint in self.joints.items()}
+        casadi_joints = CasadiBiomechanicalModelJoints(
+            joints={key: joint.to_mx() for key, joint in self.joints.items()}
+        )
+        biomechanical_model = CasadiBiomechanicalModel(
+            segments=casadi_segments,
+            joints=casadi_joints,
+        )
+
         biomechanical_model._update_mass_matrix()
         biomechanical_model.set_numpy_model(self)
 
         return biomechanical_model
-
-    def joint_constraints(self, Q: NaturalCoordinates) -> np.ndarray:
-        """
-        This function returns the joint constraints of all joints, denoted Phi_k
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        np.ndarray
-            Joint constraints of the segment [nb_joint_constraints, 1]
-        """
-
-        Phi_k = np.zeros(self.nb_joint_constraints)
-        nb_constraints = 0
-        for joint_name, joint in self.joints_with_constraints.items():
-            idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
-
-            Q_parent = (
-                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
-            )  # if the joint is a joint with the ground, the parent is None
-            Q_child = Q.vector(self.segments[joint.child.name].index)
-            Phi_k[idx] = joint.constraint(Q_parent, Q_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
-
-        return Phi_k
-
-    def joint_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
-        """
-        This function returns the Jacobian matrix the joint constraints, denoted K_k
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        np.ndarray
-            Joint constraints of the segment [nb_joint_constraints, nbQ]
-        """
-
-        K_k = np.zeros((self.nb_joint_constraints, Q.shape[0]))
-        nb_constraints = 0
-        for joint_name, joint in self.joints_with_constraints.items():
-            idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
-
-            idx_col_child = slice(
-                12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
-            )
-            idx_col_parent = (
-                slice(12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1))
-                if joint.parent is not None
-                else None
-            )
-
-            Q_parent = (
-                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
-            )  # if the joint is a joint with the ground, the parent is None
-            Q_child = Q.vector(self.segments[joint.child.name].index)
-
-            if joint.parent is not None:  # If the joint is not a ground joint
-                K_k[idx_row, idx_col_parent] = joint.parent_constraint_jacobian(Q_parent, Q_child)
-
-            K_k[idx_row, idx_col_child] = joint.child_constraint_jacobian(Q_parent, Q_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
-
-        return K_k
-
-    def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
-        """
-        This function returns the derivative of the Jacobian matrix of the joint constraints denoted K_k_dot
-
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-        MX
-            The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
-        """
-
-        K_k_dot = np.zeros((self.nb_joint_constraints, Qdot.shape[0]))
-        nb_constraints = 0
-        for joint_name, joint in self.joints_with_constraints.items():
-            idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
-
-            idx_col_parent = slice(
-                12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
-            )
-            idx_col_child = slice(
-                12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
-            )
-
-            Qdot_parent = (
-                None if joint.parent is None else Qdot.vector(self.segments[joint.parent.name].index)
-            )  # if the joint is a joint with the ground, the parent is None
-            Qdot_child = Qdot.vector(self.segments[joint.child.name].index)
-
-            if joint.parent is not None:  # If the joint is not a ground joint
-                K_k_dot[idx_row, idx_col_parent] = joint.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-            K_k_dot[idx_row, idx_col_child] = joint.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
-
-        return K_k_dot
 
     def _update_mass_matrix(self):
         """

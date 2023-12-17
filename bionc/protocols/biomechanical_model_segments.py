@@ -23,8 +23,16 @@ class GenericBiomechanicalModelSegments(ABC):
         Returns the segment with the given name.
     __setitem__(self, name: str, segment: Any)
         Adds a segment to the model.
+    keys(self)
+        Returns the keys of the segments dictionary.
+    values(self)
+        Returns the values of the segments dictionary.
+    items(self)
+        Returns the items of the segments dictionary.
     has_ground_segment(self) -> bool
         Returns true if the model has a ground segment.
+    get_ground_segment(self)
+        Returns the ground segment of the model.
     segments_no_ground(self)
         Returns the dictionary of all the segments except the ground segment.
     children(self, segment: str | int) -> list[int]

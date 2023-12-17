@@ -3,6 +3,7 @@ from casadi import MX, transpose, horzcat, vertcat, solve
 from typing import Any
 
 from .biomechanical_model_segments import BiomechanicalModelSegments
+from .biomechanical_model_joints import BiomechanicalModelJoints
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .external_force import ExternalForceSet, ExternalForce
 from .natural_accelerations import NaturalAccelerations
@@ -30,9 +31,14 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         This function returns the joint torques expressed in the euler basis
     """
 
-    def __init__(self, segments: dict[str, Any] | BiomechanicalModelSegments = None):
+    def __init__(
+            self,
+            segments: dict[str, Any] | BiomechanicalModelSegments = None,
+            joints: dict[str, Any] | BiomechanicalModelJoints = None,
+    ):
         segments = BiomechanicalModelSegments() if segments is None else segments
-        super().__init__(segments=segments)
+        joints = BiomechanicalModelJoints() if joints is None else joints
+        super().__init__(segments=segments, joints=joints)
         self._numpy_model = None
 
     def set_numpy_model(self, numpy_model: GenericBiomechanicalModel):

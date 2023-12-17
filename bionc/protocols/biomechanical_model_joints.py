@@ -43,15 +43,15 @@ class GenericBiomechanicalModelJoints(ABC):
         Returns the joint with the given index.
     joint_dof_indexes(self, joint_id: int) -> tuple[int, ...]
         Returns the index of a given joint.
-    joint_constraints_index(self, joint_id: int | str) -> slice
+    constraints_index(self, joint_id: int | str) -> slice
         Returns the slice of constrain of a given joint.
     joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list
         Returns the joints that have the given child index.
-    joint_constraints(self, Q: NaturalCoordinates)
+    constraints(self, Q: NaturalCoordinates)
         Returns the joint constraints of all joints.
-    joint_constraints_jacobian(self, Q: NaturalCoordinates)
+    constraints_jacobian(self, Q: NaturalCoordinates)
         Returns the joint constraints of all joints.
-    joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities)
+    constraints_jacobian_derivative(self, Qdot: NaturalVelocities)
         Returns the derivative of the Jacobian matrix of the joint constraints.
     """
 
@@ -262,7 +262,29 @@ class GenericBiomechanicalModelJoints(ABC):
         for joint in self.joints.values():
             if joint.index == index:
                 return joint
-        raise ValueError("No joint with index " + str(index))
+        raise ValueError(
+            f"No joint with index {str(index)}. "
+            f"You may have ask for joint id superior to the number of joints {str(self.nb_joints)}."
+            f" Index up to {str(self.nb_joints - 1)}."
+        )
+
+    def joint_id_from_name(self, name: str) -> int:
+        """
+        This function returns the index of the joint with the given name
+
+        Parameters
+        ----------
+        name : str
+            The name of the joint
+
+        Returns
+        -------
+        int
+            The index of the joint with the given name
+        """
+        if name not in self.joint_names:
+            raise ValueError("The joint name " + name + " does not exist")
+        return self.joint_names.index(name)
 
     def dof_indexes(self, joint_id: int) -> tuple[int, ...]:
         """
@@ -297,25 +319,17 @@ class GenericBiomechanicalModelJoints(ABC):
             The slice of the given constraint
         """
         if isinstance(joint_id, str):
-            if joint_id not in self.joint_names:
-                raise ValueError("The joint name " + joint_id + " does not exist")
-            joint_id = self.joint_names.index(joint_id)
+            joint_id = self.joint_id_from_name(joint_id)
 
-        if isinstance(joint_id, int):
-            if joint_id > self.nb_joints:
-                raise ValueError("The joint index " + str(joint_id) + " does not exist")
-
-        nb_constraint_before_joint = 0
-        for ind_joint in range(joint_id):
-            nb_constraint_before_joint += self.joints[self.joint_names[ind_joint]].nb_constraints
+        nb_constraint_before_joint = sum(
+            self.joint_from_index(ind_joint).nb_constraints for ind_joint in range(joint_id)
+        )
 
         begin_slice = nb_constraint_before_joint
         nb_joint_constraints = self.joints[self.joint_names[joint_id]].nb_constraints
         end_slice = nb_constraint_before_joint + nb_joint_constraints
 
-        slice_joint_constraint = slice(begin_slice, end_slice)
-
-        return slice_joint_constraint
+        return slice(begin_slice, end_slice)
 
     def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
         """

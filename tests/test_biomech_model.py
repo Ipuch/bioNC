@@ -1,9 +1,8 @@
-import os
 import numpy as np
+import os
 import pytest
 
 from bionc import TransformationMatrixType
-
 from .utils import TestUtils
 
 
@@ -6985,7 +6984,10 @@ def test_biomech_model(bionc_type):
     with pytest.raises(ValueError) as error_index:
         incorrect_joint_index = 10000
         natural_model.joint_constraints_index(incorrect_joint_index)
-    assert str(error_index.value) == "The joint index 10000 does not exist"
+    assert (
+        str(error_index.value)
+        == "No joint with index 4. You may have ask for joint id superior to the number of joints 4. Index up to 3."
+    )
     with pytest.raises(ValueError) as error_name:
         natural_model.joint_constraints_index("incorrect_joint_name")
     assert str(error_name.value) == "The joint name incorrect_joint_name does not exist"

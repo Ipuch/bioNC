@@ -30,17 +30,15 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         """
 
         Phi_k = np.zeros(self.nb_constraints)
-        nb_constraints = 0
+
         for joint_name, joint in self.joints_with_constraints.items():
-            idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
+            constraint_slice = self.constraints_index(joint.index)
 
             Q_parent = (
                 None if joint.parent is None else Q.vector(segments[joint.parent.name].index)
             )  # if the joint is a joint with the ground, the parent is None
             Q_child = Q.vector(segments[joint.child.name].index)
-            Phi_k[idx] = joint.constraint(Q_parent, Q_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
+            Phi_k[constraint_slice] = joint.constraint(Q_parent, Q_child)
 
         return Phi_k
 
@@ -63,9 +61,9 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         """
 
         K_k = np.zeros((self.nb_constraints, Q.shape[0]))
-        nb_constraints = 0
+
         for joint_name, joint in self.joints_with_constraints.items():
-            idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
+            idx_row = self.constraints_index(joint.index)
 
             idx_col_child = slice(12 * segments[joint.child.name].index, 12 * (segments[joint.child.name].index + 1))
             idx_col_parent = (
@@ -83,8 +81,6 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
                 K_k[idx_row, idx_col_parent] = joint.parent_constraint_jacobian(Q_parent, Q_child)
 
             K_k[idx_row, idx_col_child] = joint.child_constraint_jacobian(Q_parent, Q_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
 
         return K_k
 
@@ -108,9 +104,8 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         """
 
         K_k_dot = np.zeros((self.nb_constraints, Qdot.shape[0]))
-        nb_constraints = 0
         for joint_name, joint in self.joints_with_constraints.items():
-            idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
+            idx_row = self.constraints_index(joint.index)
 
             idx_col_parent = slice(12 * segments[joint.parent.name].index, 12 * (segments[joint.parent.name].index + 1))
             idx_col_child = slice(12 * segments[joint.child.name].index, 12 * (segments[joint.child.name].index + 1))
@@ -124,7 +119,5 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
                 K_k_dot[idx_row, idx_col_parent] = joint.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
             K_k_dot[idx_row, idx_col_child] = joint.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
 
         return K_k_dot

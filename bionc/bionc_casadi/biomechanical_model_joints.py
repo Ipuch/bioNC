@@ -30,7 +30,7 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         """
 
         Phi_k = MX.zeros(self.nb_constraints)
-        nb_constraints = 0
+
         for joint_name, joint in self.joints_with_constraints.items():
             constraint_slice = self.constraints_index(joint.index)
 

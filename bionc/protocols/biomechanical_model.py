@@ -563,13 +563,13 @@ class GenericBiomechanicalModel(ABC):
         return self.segments.rigid_body_constraint_jacobian_derivative(Qdot)
 
     def joint_constraints(self, Q: NaturalCoordinates) -> MX:
-        return self.joints.constraints(Q, self.segments)
+        return self.joints.constraints(Q)
 
     def joint_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
-        return self.joints.constraints_jacobian(Q, self.segments)
+        return self.joints.constraints_jacobian(Q)
 
     def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
-        return self.joints.constraints_jacobian_derivative(Qdot, self.segments)
+        return self.joints.constraints_jacobian_derivative(Qdot)
 
     @abstractmethod
     def _update_mass_matrix(self):

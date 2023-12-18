@@ -169,6 +169,10 @@ class AbstractNaturalSegment(ABC):
         return self._index
 
     @property
+    def coordinates_slice(self):
+        return slice(12 * self._index, 12 * (self._index + 1))
+
+    @property
     def length(self):
         return self._length
 

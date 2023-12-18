@@ -35,9 +35,10 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
             constraint_slice = self.constraints_index(joint.index)
 
             Q_parent = (
-                None if joint.parent is None else Q.vector(segments[joint.parent.name].index)
+                None if joint.parent is None else Q.vector(joint.parent.index)
             )  # if the joint is a joint with the ground, the parent is None
-            Q_child = Q.vector(segments[joint.child.name].index)
+            Q_child = Q.vector(joint.child.index)
+
             Phi_k[constraint_slice] = joint.constraint(Q_parent, Q_child)
 
         return Phi_k
@@ -65,17 +66,13 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         for joint_name, joint in self.joints_with_constraints.items():
             idx_row = self.constraints_index(joint.index)
 
-            idx_col_child = slice(12 * segments[joint.child.name].index, 12 * (segments[joint.child.name].index + 1))
-            idx_col_parent = (
-                slice(12 * segments[joint.parent.name].index, 12 * (segments[joint.parent.name].index + 1))
-                if joint.parent is not None
-                else None
-            )
+            idx_col_child = joint.child.coordinates_slice
+            idx_col_parent = joint.parent.coordinates_slice if joint.parent is not None else None
 
             Q_parent = (
-                None if joint.parent is None else Q.vector(segments[joint.parent.name].index)
+                None if joint.parent is None else Q.vector(joint.parent.index)
             )  # if the joint is a joint with the ground, the parent is None
-            Q_child = Q.vector(segments[joint.child.name].index)
+            Q_child = Q.vector(joint.child.index)
 
             if joint.parent is not None:  # If the joint is not a ground joint
                 K_k[idx_row, idx_col_parent] = joint.parent_constraint_jacobian(Q_parent, Q_child)
@@ -107,13 +104,13 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         for joint_name, joint in self.joints_with_constraints.items():
             idx_row = self.constraints_index(joint.index)
 
-            idx_col_parent = slice(12 * segments[joint.parent.name].index, 12 * (segments[joint.parent.name].index + 1))
-            idx_col_child = slice(12 * segments[joint.child.name].index, 12 * (segments[joint.child.name].index + 1))
+            idx_col_child = joint.child.coordinates_slice
+            idx_col_parent = joint.parent.coordinates_slice if joint.parent is not None else None
 
             Qdot_parent = (
-                None if joint.parent is None else Qdot.vector(segments[joint.parent.name].index)
+                None if joint.parent is None else Qdot.vector(joint.parent.index)
             )  # if the joint is a joint with the ground, the parent is None
-            Qdot_child = Qdot.vector(segments[joint.child.name].index)
+            Qdot_child = Qdot.vector(joint.child.index)
 
             if joint.parent is not None:  # If the joint is not a ground joint
                 K_k_dot[idx_row, idx_col_parent] = joint.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)

@@ -1,7 +1,6 @@
 import numpy as np
 from typing import Any
 
-from .biomechanical_model_segments import BiomechanicalModelSegments
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
 from ..protocols.biomechanical_model_joints import GenericBiomechanicalModelJoints
@@ -11,7 +10,7 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
     def __init__(self, joints: dict[str, Any] = None):
         super().__init__(joints=joints)
 
-    def constraints(self, Q: NaturalCoordinates, segments: BiomechanicalModelSegments) -> np.ndarray:
+    def constraints(self, Q: NaturalCoordinates) -> np.ndarray:
         """
         This function returns the joint constraints of all joints, denoted Phi_k
         as a function of the natural coordinates Q.
@@ -20,8 +19,6 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         ----------
         Q : NaturalCoordinates
             The natural coordinates of the segment [12 * nb_segments, 1]
-        segments : BiomechanicalModelSegments
-            The segments of the model
 
         Returns
         -------
@@ -43,7 +40,7 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
 
         return Phi_k
 
-    def constraints_jacobian(self, Q: NaturalCoordinates, segments: BiomechanicalModelSegments) -> np.ndarray:
+    def constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
         """
         This function returns the Jacobian matrix the joint constraints, denoted K_k
         as a function of the natural coordinates Q.
@@ -52,8 +49,6 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         ----------
         Q : NaturalCoordinates
             The natural coordinates of the segment [12 * nb_segments, 1]
-        segments : BiomechanicalModelSegments
-            The segments of the model
 
         Returns
         -------
@@ -81,9 +76,7 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
 
         return K_k
 
-    def constraints_jacobian_derivative(
-        self, Qdot: NaturalVelocities, segments: BiomechanicalModelSegments
-    ) -> np.ndarray:
+    def constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
         """
         This function returns the derivative of the Jacobian matrix of the joint constraints denoted K_k_dot
 
@@ -91,8 +84,6 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         ----------
         Qdot : NaturalVelocities
             The natural velocities of the segment [12 * nb_segments, 1]
-        segments : BiomechanicalModelSegments
-            The segments of the model
 
         Returns
         -------

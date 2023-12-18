@@ -11,7 +11,7 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
     def __init__(self, joints: dict[str, Any] = None):
         super().__init__(joints=joints)
 
-    def constraints(self, Q: NaturalCoordinates, segments: BiomechanicalModelSegments) -> MX:
+    def constraints(self, Q: NaturalCoordinates) -> MX:
         """
         This function returns the joint constraints of all joints, denoted Phi_k
         as a function of the natural coordinates Q.
@@ -20,8 +20,6 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         ----------
         Q : NaturalCoordinates
             The natural coordinates of the segment [12 * nb_segments, 1]
-        segments : BiomechanicalModelSegments
-            The segments of the model
 
         Returns
         -------
@@ -43,7 +41,7 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
 
         return Phi_k
 
-    def constraints_jacobian(self, Q: NaturalCoordinates, segments: BiomechanicalModelSegments) -> MX:
+    def constraints_jacobian(self, Q: NaturalCoordinates) -> MX:
         """
         This function returns the joint constraints of all joints, denoted K_k
         as a function of the natural coordinates Q.
@@ -52,8 +50,6 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         ----------
         Q : NaturalCoordinates
             The natural coordinates of the segment [12 * nb_segments, 1]
-        segments : BiomechanicalModelSegments
-            The segments of the model
 
         Returns
         -------
@@ -81,7 +77,7 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
 
         return K_k
 
-    def constraints_jacobian_derivative(self, Qdot: NaturalVelocities, segments: BiomechanicalModelSegments) -> MX:
+    def constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
         """
         This function returns the derivative of the Jacobian matrix of the joint constraints denoted K_k_dot
 
@@ -89,8 +85,6 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
         ----------
         Qdot : NaturalVelocities
             The natural velocities of the segment [12 * nb_segments, 1]
-        segments : BiomechanicalModelSegments
-            The segments of the model
 
         Returns
         -------

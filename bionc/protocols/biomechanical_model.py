@@ -5,6 +5,7 @@ from casadi import MX
 from typing import Union, Any
 
 from .biomechanical_model_joints import GenericBiomechanicalModelJoints
+from .biomechanical_model_markers import GenericBiomechanicalModelMarkers
 from .biomechanical_model_segments import GenericBiomechanicalModelSegments
 from .external_force import ExternalForceSet
 from .natural_accelerations import NaturalAccelerations
@@ -165,10 +166,11 @@ class GenericBiomechanicalModel(ABC):
         self,
         segments: GenericBiomechanicalModelSegments = None,
         joints: GenericBiomechanicalModelJoints = None,
+        markers: GenericBiomechanicalModelMarkers = None,
     ):
-        # self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
         self.segments = segments
         self.joints = joints
+        self._markers = markers
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # the order of the segment matters
         self._mass_matrix = self._update_mass_matrix()
@@ -402,23 +404,11 @@ class GenericBiomechanicalModel(ABC):
 
     @property
     def nb_markers(self) -> int:
-        """
-        This function returns the number of markers in the model
-        """
-        nb_markers = 0
-        for key in self.segments_no_ground:
-            nb_markers += self.segments[key].nb_markers
-        return nb_markers
+        return self._markers.nb_markers
 
     @property
     def nb_markers_technical(self) -> int:
-        """
-        This function returns the number of technical markers in the model
-        """
-        nb_markers = 0
-        for key in self.segments_no_ground:
-            nb_markers += self.segments[key].nb_markers_technical
-        return nb_markers
+        return self._markers.nb_markers_technical
 
     @property
     def segment_names(self) -> list[str]:
@@ -426,38 +416,13 @@ class GenericBiomechanicalModel(ABC):
 
     @property
     def marker_names(self) -> list[str]:
-        """
-        This function returns the names of the markers in the model
-        """
-        marker_names = []
-        for key in self.segments_no_ground:
-            marker_names += self.segments[key].marker_names
-        return marker_names
+        return self._markers.names
 
     @property
     def marker_names_technical(self) -> list[str]:
-        """
-        This function returns the names of the technical markers in the model
-        """
-        marker_names = []
-        for key in self.segments_no_ground:
-            marker_names += self.segments[key].marker_names_technical
-        return marker_names
+        return self._markers.names_technical
 
     def marker_technical_index(self, name: str) -> int:
-        """
-        This function returns the index of the marker with the given name
-
-        Parameters
-        ----------
-        name : str
-            The name of the marker
-
-        Returns
-        -------
-        int
-            The index of the marker with the given name
-        """
         return self.marker_names_technical.index(name)
 
     @property
@@ -650,49 +615,20 @@ class GenericBiomechanicalModel(ABC):
 
         return self.kinetic_energy(Qdot) + self.potential_energy(Q)
 
-    @abstractmethod
+    def Q_from_markers(self, markers: np.ndarray) -> NaturalCoordinates:
+        return self._markers.Q_from_markers(markers)
+
     def markers(self, Q: NaturalCoordinates):
-        """
-        This function returns the position of the markers of the system as a function of the natural coordinates Q
-        also referred as forward kinematics
+        return self._markers.markers(Q)
 
-        Parameters
-        ----------
-        Q : NaturalCoordinates
-            The natural coordinates of the segment [12 x n, 1]
+    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool = True):
+        return self._markers.constraints(markers, Q, only_technical)
 
-        Returns
-        -------
-            The position of the markers [3, nbMarkers, nbFrames]
-            in the global coordinate system/ inertial coordinate system
-        """
+    def markers_constraints_jacobian(self, only_technical: bool = True):
+        return self._markers.constraints_jacobian(only_technical)
 
-    @abstractmethod
-    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates):
-        """
-        This function returns the marker constraints of all segments, denoted Phi_r
-        as a function of the natural coordinates Q.
-
-        markers : np.ndarray | MX
-            The markers positions [3,nb_markers]
-
-        Q : NaturalCoordinates
-            The natural coordinates of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-            Rigid body constraints of the segment [nb_markers x 3, 1]
-        """
-
-    @abstractmethod
-    def markers_constraints_jacobian(self):
-        """
-        This function returns the Jacobian matrix the markers constraints, denoted k_m.
-
-        Returns
-        -------
-            Joint constraints of the marker [nb_markers x 3, nb_Q]
-        """
+    def center_of_mass_position(self, Q: NaturalCoordinates):
+        return self._markers.center_of_mass_position(Q)
 
     @abstractmethod
     def holonomic_constraints(self, Q: NaturalCoordinates) -> MX | np.ndarray:
@@ -759,22 +695,6 @@ class GenericBiomechanicalModel(ABC):
         -------
             Qddot : NaturalAccelerations
                 The natural accelerations [12 * nb_segments, 1]
-        """
-
-    @abstractmethod
-    def center_of_mass_position(self, Q: NaturalCoordinates):
-        """
-        This function returns the position of the center of mass of each segment as a function of the natural coordinates Q
-
-        Parameters
-        ----------
-        Q : NaturalCoordinates
-            The natural coordinates of the segment [12 x n, 1]
-
-        Returns
-        -------
-            The position of the center of mass [3, nbSegments]
-            in the global coordinate system/ inertial coordinate system
         """
 
     def _depth_first_search(self, segment_index, visited_segments=None) -> list[bool]:

@@ -122,8 +122,6 @@ class GenericBiomechanicalModelMarkers(ABC):
         for i_segment, segment in enumerate(self.segments.segments_no_ground.values()):
             nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
 
-            if nb_segment_markers == 0:
-                continue
             if i_segment == segment_index:
                 break
 

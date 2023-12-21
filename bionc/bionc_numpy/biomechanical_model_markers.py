@@ -104,9 +104,6 @@ class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):
         phi_m = np.zeros((nb_markers * 3))
 
         for i_segment, segment in enumerate(self.segments.segments_no_ground.values()):
-            nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
-            if nb_segment_markers == 0:
-                continue
             constraint_idx = self.direction_index(i_segment, only_technical)
             marker_idx = self.indexes(i_segment, only_technical)
 
@@ -134,14 +131,11 @@ class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):
 
         km = np.zeros((3 * nb_markers, 12 * self.segments.nb_segments))
         for i_segment, segment in enumerate(self.segments.segments_no_ground.values()):
-            nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
-            if nb_segment_markers == 0:
-                continue
-
             constraint_idx = self.direction_index(i_segment, only_technical)
             segment_idx = segment.coordinates_slice
 
-            km[constraint_idx, segment_idx] = segment.markers_jacobian()
+            if constraint_idx.stop - constraint_idx.start != 0:
+                km[constraint_idx, segment_idx] = segment.markers_jacobian()
 
         return km
 

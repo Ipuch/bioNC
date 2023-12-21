@@ -46,11 +46,10 @@ class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):
             in the global coordinate system/ inertial coordinate system
         """
         markers = MX.zeros((3, self.nb_markers))
-        nb_markers = 0
+
         for segment in self.segments.segments_no_ground.values():
-            idx = slice(nb_markers, nb_markers + segment.nb_markers)
+            idx = self.indexes(segment.index, only_technical=False)
             markers[:, idx] = segment.markers(Q.vector(segment.index))
-            nb_markers += segment.nb_markers
 
         return markers
 
@@ -106,14 +105,13 @@ class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):
             )
 
         phi_m = MX.zeros((nb_markers * 3, 1))
-        marker_count = 0
 
         for i_segment, segment in enumerate(self.segments.segments_no_ground.values()):
             nb_segment_markers = segment.nb_markers_technical if only_technical else self.segments[name].nb_markers
             if nb_segment_markers == 0:
                 continue
-            constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
-            marker_idx = slice(marker_count, marker_count + nb_segment_markers)
+            constraint_idx = self.direction_index(i_segment, only_technical)
+            marker_idx = self.indexes(i_segment, only_technical)
 
             markers_temp = markers[:, marker_idx]
             phi_m[constraint_idx] = segment.marker_constraints(
@@ -121,8 +119,6 @@ class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):
             )[
                 :
             ]  # [:] to flatten the array
-
-            marker_count += nb_segment_markers
 
         return phi_m
 
@@ -144,15 +140,16 @@ class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):
         nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
 
         km = MX.zeros((3 * nb_markers, 12 * self.segments.nb_segments))
-        marker_count = 0
+
         for i_segment, segment in enumerate(self.segments.segments_no_ground.values()):
             nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
             if nb_segment_markers == 0:
                 continue
-            constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
-            segment_idx = slice(12 * i_segment, 12 * (i_segment + 1))
+
+            constraint_idx = self.direction_index(i_segment, only_technical)
+            segment_idx = segment.coordinates_slice
+
             km[constraint_idx, segment_idx] = segment.markers_jacobian()
-            marker_count += nb_segment_markers
 
         return km
 

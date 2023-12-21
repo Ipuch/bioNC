@@ -102,6 +102,56 @@ class GenericBiomechanicalModelMarkers(ABC):
         """
         return self.names_technical.index(name)
 
+    def indexes(self, segment_index: int, only_technical) -> slice:
+        """
+        This function returns the indexes of the markers of the given segment
+
+        Parameters
+        ----------
+        segment_index: int
+            The index of the segment
+        only_technical:
+            If True, only the technical markers are considered
+
+        Returns
+        -------
+        slice
+            The indexes of the markers of the given segment
+        """
+        marker_count = 0
+        for i_segment, segment in enumerate(self.segments.segments_no_ground.values()):
+            nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
+
+            if nb_segment_markers == 0:
+                continue
+            if i_segment == segment_index:
+                break
+
+            marker_count += nb_segment_markers
+
+        return slice(marker_count, marker_count + nb_segment_markers)
+
+    def direction_index(self, segment_index: int, only_technical) -> slice:
+        """
+        This function returns the direction indexes (x,y,z) of the markers of the given segment
+
+        Parameters
+        ----------
+        segment_index: int
+            The index of the segment
+        only_technical:
+            If True, only the technical markers are considered
+
+        Returns
+        -------
+        slice
+            The indexes of the markers of the given segment
+        """
+        start = self.indexes(segment_index, only_technical).start
+        stop = self.indexes(segment_index, only_technical).stop
+
+        return slice(start * 3, stop * 3)
+
     @abstractmethod
     def markers(self, Q: NaturalCoordinates):
         """

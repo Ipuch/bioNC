@@ -7,6 +7,7 @@ from typing import Union, Any
 from .biomechanical_model_joints import GenericBiomechanicalModelJoints
 from .biomechanical_model_markers import GenericBiomechanicalModelMarkers
 from .biomechanical_model_segments import GenericBiomechanicalModelSegments
+from .biomechanical_model_tree import GenericBiomechanicalModelTree
 from .external_force import ExternalForceSet
 from .natural_accelerations import NaturalAccelerations
 from .natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
@@ -27,6 +28,8 @@ class GenericBiomechanicalModel(ABC):
         A dictionary containing the joints of the model. The keys are the names of the joints and the values are the corresponding joint objects.
     _mass_matrix : np.ndarray
         The generalized mass matrix of the system.
+    _markers : GenericBiomechanicalModelMarkers
+        The markers of the model handled in a specific class.
 
     Methods
     -------
@@ -171,6 +174,7 @@ class GenericBiomechanicalModel(ABC):
         self.segments = segments
         self.joints = joints
         self._markers = markers
+        self._tree = GenericBiomechanicalModelTree(segments, joints)
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # the order of the segment matters
         self._mass_matrix = self._update_mass_matrix()
@@ -314,89 +318,16 @@ class GenericBiomechanicalModel(ABC):
         return self.joints._remove_free_joint(segment_idx)
 
     def children(self, segment: str | int) -> list[int]:
-        """
-        This function returns the children of the given segment
-
-        Parameters
-        ----------
-        segment : str | int
-            The segment for which the children are returned
-
-        Returns
-        -------
-        list[int]
-            The children of the given segment
-        """
-        children = []
-        if isinstance(segment, str):
-            segment = self.segments[segment]
-        elif isinstance(segment, int):
-            segment = self.segment_from_index(segment)
-        for joint in self.joints.values():
-            if joint.parent is not None and joint.parent.name == segment.name:
-                children.append(joint.child.index)
-        return children
+        return self._tree.children(segment)
 
     def parents(self, segment: str | int) -> list[int]:
-        """
-        This function returns the parents of the given segment
-
-        Parameters
-        ----------
-        segment : str | int
-            The segment for which the parents are returned
-
-        Returns
-        -------
-        list[int]
-            The parents of the given segment
-        """
-        parents = []
-        if isinstance(segment, str):
-            segment = self.segments[segment]
-        elif isinstance(segment, int):
-            segment = self.segment_from_index(segment)
-        for joint in self.joints.values():
-            if joint.child == segment:
-                parents.append(joint.parent.index)
-        return parents
+        return self._tree.parents(segment)
 
     def segment_subtrees(self) -> list[list[int]]:
-        """
-        This function returns the subtrees of the segments
-
-        Returns
-        -------
-        list[list[int]]
-            The subtrees of the segments
-        """
-        subtrees = []
-        for segment in self.segments.values():
-            subtrees.append(self.segment_subtree(segment))
-        return subtrees
+        return self._tree.segment_subtrees()
 
     def segment_subtree(self, segment: str | int) -> list[int]:
-        """
-        This function returns the subtree of the given segment
-
-        Parameters
-        ----------
-        segment : str | int
-            The segment for which the subtree is returned
-
-        Returns
-        -------
-        list[int]
-            The subtree of the given segment
-        """
-        if isinstance(segment, str):
-            segment = self.segments[segment]
-        elif isinstance(segment, int):
-            segment = self.segment_from_index(segment)
-        subtree = [segment.index]
-        for child in self.children(segment):
-            subtree += self.segment_subtree(child)
-        return subtree
+        return self._tree.segment_subtree(segment)
 
     @property
     def nb_segments(self) -> int:
@@ -697,35 +628,8 @@ class GenericBiomechanicalModel(ABC):
                 The natural accelerations [12 * nb_segments, 1]
         """
 
-    def _depth_first_search(self, segment_index, visited_segments=None) -> list[bool]:
-        """
-        This function returns the segments in a depth first search order.
-
-        todo: generalize to any number of segments with no parent.
-
-        Parameters
-        ----------
-        segment_index: int
-            The index of the segment to start the search from
-        visited_segments: list[Segment]
-            The segments already visited
-
-        Returns
-        -------
-        list[bool, ...
-            The segments in a depth first search order
-        """
-        if visited_segments is None:
-            visited_segments = [False for _ in range(self.nb_segments)]
-
-        visited_segments[segment_index] = True
-        for child_index in self.children(segment_index):
-            if visited_segments[child_index]:
-                raise RuntimeError("The model contain closed loops, we cannot use this algorithm")
-            if not visited_segments[child_index]:
-                visited_segments = self._depth_first_search(child_index, visited_segments)
-
-        return visited_segments
+    def _depth_first_search(self, segment_index) -> list[bool]:
+        return self._tree.starting_depth_first_search(segment_index)
 
     @abstractmethod
     def external_force_set(self) -> ExternalForceSet:

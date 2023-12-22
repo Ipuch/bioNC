@@ -3,7 +3,7 @@ from casadi import MX
 
 from .biomechanical_model_segments import BiomechanicalModelSegments
 from .natural_coordinates import NaturalCoordinates
-from ..protocols.biomechanical_model_markers import GenericBiomechanicalModelMarkers
+from ..protocols import GenericBiomechanicalModelMarkers
 
 
 class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):

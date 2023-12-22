@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from casadi import MX
 
 from .biomechanical_model_segments import GenericBiomechanicalModelSegments
-from .natural_coordinates import NaturalCoordinates
+from ..natural_coordinates import NaturalCoordinates
 
 
 class GenericBiomechanicalModelMarkers(ABC):

@@ -13,7 +13,7 @@ from .natural_accelerations import NaturalAccelerations
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
 from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
-from ..protocols.biomechanical_model import GenericBiomechanicalModel
+from ..protocols import GenericBiomechanicalModel
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):

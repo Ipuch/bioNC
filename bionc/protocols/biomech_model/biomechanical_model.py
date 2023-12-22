@@ -8,11 +8,11 @@ from .biomechanical_model_joints import GenericBiomechanicalModelJoints
 from .biomechanical_model_markers import GenericBiomechanicalModelMarkers
 from .biomechanical_model_segments import GenericBiomechanicalModelSegments
 from .biomechanical_model_tree import GenericBiomechanicalModelTree
-from .external_force import ExternalForceSet
-from .natural_accelerations import NaturalAccelerations
-from .natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
-from .natural_velocities import NaturalVelocities
-from ..utils.enums import EulerSequence
+from ..external_force import ExternalForceSet
+from ..natural_accelerations import NaturalAccelerations
+from ..natural_coordinates import NaturalCoordinates, SegmentNaturalCoordinates
+from ..natural_velocities import NaturalVelocities
+from ...utils.enums import EulerSequence
 
 
 class GenericBiomechanicalModel(ABC):
@@ -212,8 +212,8 @@ class GenericBiomechanicalModel(ABC):
             self.set_ground_segment(name)
 
         # adding a default joint with the world frame to defined standard transformations.
-        from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+        from ...bionc_numpy.enums import JointType  # prevent circular import
+        from ...bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
 
         self._add_joint(
             dict(

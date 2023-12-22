@@ -1,16 +1,12 @@
+import numpy as np
+from casadi import MX, vertcat
 from typing import Callable
 
-import numpy as np
-from casadi import MX, vertcat, horzcat
-
 from .biomechanical_model import BiomechanicalModel
+from .natural_vector import NaturalVector
 from ..model_creation.protocols import Data
-
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_markers import AbstractNaturalMarker, AbstractSegmentNaturalVector
-from .natural_vector import NaturalVector
-
-# todo: need a list of markers MarkerList
 
 
 class NaturalMarker(AbstractNaturalMarker):

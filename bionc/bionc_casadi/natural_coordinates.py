@@ -1,10 +1,10 @@
 import numpy as np
-from casadi import MX, vertcat, inv, cross, sum1
+from casadi import MX, vertcat, inv, cross
 from typing import Union
 
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .natural_vector import NaturalVector
 from ..utils.enums import NaturalAxis
-from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class SegmentNaturalCoordinates(MX):

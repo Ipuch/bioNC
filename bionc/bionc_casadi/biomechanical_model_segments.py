@@ -3,7 +3,7 @@ from typing import Any
 
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
-from ..protocols.biomechanical_model import GenericBiomechanicalModelSegments
+from ..protocols import GenericBiomechanicalModelSegments
 
 
 class BiomechanicalModelSegments(GenericBiomechanicalModelSegments):

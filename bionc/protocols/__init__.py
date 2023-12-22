@@ -1,0 +1,5 @@
+from .biomech_model.biomechanical_model import GenericBiomechanicalModel
+from .biomech_model.biomechanical_model_joints import GenericBiomechanicalModelJoints
+from .biomech_model.biomechanical_model_markers import GenericBiomechanicalModelMarkers
+from .biomech_model.biomechanical_model_segments import GenericBiomechanicalModelSegments
+from .biomech_model.biomechanical_model_tree import GenericBiomechanicalModelTree

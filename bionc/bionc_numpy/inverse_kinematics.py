@@ -1,16 +1,14 @@
+import numpy as np
+from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
+from pyomeca import Markers
 from typing import Callable
 
-from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
-import numpy as np
-from pyomeca import Markers
-
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
-from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
-
-from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
-from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
+from ..protocols import GenericBiomechanicalModel as BiomechanicalModel
 from ..utils import constants
+from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
+from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
 
 
 class InverseKinematics:

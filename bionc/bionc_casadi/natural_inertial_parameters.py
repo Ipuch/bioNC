@@ -1,13 +1,11 @@
-from typing import Union
-
 import numpy as np
 from casadi import MX
 from casadi import transpose, dot, inv
-
 from numpy.linalg import inv
+from typing import Union
 
+from .utils import to_numeric
 from ..bionc_casadi.natural_vector import NaturalVector
-from .utils import to_numeric_MX, to_numeric
 
 
 class NaturalInertialParameters:

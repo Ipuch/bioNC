@@ -1,10 +1,9 @@
 from casadi import MX
 from typing import Any
 
-from .biomechanical_model_segments import BiomechanicalModelSegments
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
-from ..protocols.biomechanical_model_joints import GenericBiomechanicalModelJoints
+from ..protocols import GenericBiomechanicalModelJoints
 
 
 class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):

@@ -1,11 +1,10 @@
+import numpy as np
 from abc import ABC, abstractmethod
 from typing import Callable
 
-import numpy as np
-
-from .biomechanical_model import GenericBiomechanicalModel
-from ..model_creation.protocols import Data
+from .biomech_model.biomechanical_model import GenericBiomechanicalModel
 from .natural_coordinates import SegmentNaturalCoordinates
+from ..model_creation.protocols import Data
 
 
 class AbstractNaturalMarker(ABC):

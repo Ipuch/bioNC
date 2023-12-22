@@ -3,8 +3,8 @@ from abc import ABC, abstractmethod
 from casadi import MX
 from typing import Any
 
-from bionc.protocols.natural_coordinates import NaturalCoordinates
-from bionc.protocols.natural_velocities import NaturalVelocities
+from ..natural_coordinates import NaturalCoordinates
+from ..natural_velocities import NaturalVelocities
 
 
 class GenericBiomechanicalModelSegments(ABC):
@@ -75,7 +75,7 @@ class GenericBiomechanicalModelSegments(ABC):
         self,
         segments: dict[str:Any, ...] = None,
     ):
-        from .natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
+        from ..natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
 
         self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new

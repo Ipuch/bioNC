@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from .biomechanical_model_segments import GenericBiomechanicalModelSegments
-from .natural_coordinates import NaturalCoordinates
-from .natural_velocities import NaturalVelocities
+from ..natural_coordinates import NaturalCoordinates
+from ..natural_velocities import NaturalVelocities
 
 
 class GenericBiomechanicalModelJoints(ABC):
@@ -59,7 +59,7 @@ class GenericBiomechanicalModelJoints(ABC):
         self,
         joints: dict[str:Any, ...] = None,
     ):
-        from .joint import JointBase  # Imported here to prevent from circular imports
+        from ..joint import JointBase  # Imported here to prevent from circular imports
 
         self.joints: dict[str:JointBase, ...] = {} if joints is None else joints
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
@@ -141,8 +141,8 @@ class GenericBiomechanicalModelJoints(ABC):
         bool
             True if the segment has a free joint with the ground
         """
-        from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+        from ...bionc_numpy.enums import JointType  # prevent circular import
+        from ...bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
 
         joints = self.joints_from_child_index(segment_idx, remove_free_joints=False)
         return any(
@@ -162,8 +162,8 @@ class GenericBiomechanicalModelJoints(ABC):
         segment_idx : int
             The index of the segment
         """
-        from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+        from ...bionc_numpy.enums import JointType  # prevent circular import
+        from ...bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
 
         joints = self.joints_from_child_index(segment_idx, remove_free_joints=False)
 
@@ -347,8 +347,8 @@ class GenericBiomechanicalModelJoints(ABC):
         list[JointBase]
             The joints that have the given child index
         """
-        from ..bionc_numpy.enums import JointType  # prevent circular import
-        from ..bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
+        from ...bionc_numpy.enums import JointType  # prevent circular import
+        from ...bionc_casadi.enums import JointType as CasadiJointType  # prevent circular import
 
         joints = []
         for joint in self.joints.values():

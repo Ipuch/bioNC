@@ -1,17 +1,16 @@
 """
 Example script for animating markers
 """
-from enum import Enum
-import time
-
-from bioviz import VtkModel, VtkWindow, Mesh
 import numpy as np
+import time
+from enum import Enum
 from pyomeca import Markers
 
-from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
-from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..bionc_numpy.joints import Joint
+from bioviz import VtkModel, VtkWindow, Mesh
 from .cylinder import displace_from_start_and_end, generate_cylinder_triangles, generate_cylinder_vertices
+from ..bionc_numpy.joints import Joint
+from ..protocols import GenericBiomechanicalModel as BiomechanicalModel
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 
 
 class NaturalVectorColors(Enum):

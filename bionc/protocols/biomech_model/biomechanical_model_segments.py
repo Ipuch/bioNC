@@ -75,7 +75,7 @@ class GenericBiomechanicalModelSegments(ABC):
         self,
         segments: dict[str:Any, ...] = None,
     ):
-        from ..natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
+        from ..segment.natural_segment import AbstractNaturalSegment  # Imported here to prevent from circular imports
 
         self.segments: dict[str:AbstractNaturalSegment, ...] = {} if segments is None else segments
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new

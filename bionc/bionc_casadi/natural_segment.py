@@ -14,7 +14,7 @@ from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
 from .transformation_matrix import compute_transformation_matrix
 from .utils import to_numeric_MX
-from ..protocols.natural_segment import AbstractNaturalSegment
+from ..protocols import AbstractNaturalSegment
 from ..utils.enums import TransformationMatrixType
 
 

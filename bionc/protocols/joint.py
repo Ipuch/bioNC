@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 
-from .natural_segment import AbstractNaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
+from .segment.natural_segment import AbstractNaturalSegment
 from ..utils.enums import EulerSequence, TransformationMatrixType, CartesianAxis
 
 

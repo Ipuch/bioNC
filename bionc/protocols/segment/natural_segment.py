@@ -3,12 +3,12 @@ from abc import ABC, abstractmethod
 from casadi import MX
 from typing import Union
 
-from .homogenous_transform import HomogeneousTransform
-from .natural_accelerations import SegmentNaturalAccelerations
-from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_markers import AbstractNaturalMarker
-from .natural_velocities import SegmentNaturalVelocities
-from ..utils.enums import TransformationMatrixType
+from ..homogenous_transform import HomogeneousTransform
+from ..natural_accelerations import SegmentNaturalAccelerations
+from ..natural_coordinates import SegmentNaturalCoordinates
+from ..natural_markers import AbstractNaturalMarker
+from ..natural_velocities import SegmentNaturalVelocities
+from ...utils.enums import TransformationMatrixType
 
 
 class AbstractNaturalSegment(ABC):

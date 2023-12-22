@@ -1,4 +1,4 @@
-from ..protocols.natural_segment_vectors import AbstractNaturalSegmentVectors
+from ..protocols import AbstractNaturalSegmentVectors
 
 
 class NaturalSegmentVectors(AbstractNaturalSegmentVectors):

@@ -14,7 +14,7 @@ from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
 from .transformation_matrix import compute_transformation_matrix
 from ..model_creation.protocols import Data
-from ..protocols.natural_segment import AbstractNaturalSegment
+from ..protocols import AbstractNaturalSegment
 from ..utils.enums import TransformationMatrixType
 
 

@@ -1,6 +1,6 @@
 from abc import ABC
 
-from .natural_markers import AbstractSegmentNaturalVector
+from ..natural_markers import AbstractSegmentNaturalVector
 
 
 class AbstractNaturalSegmentVectors(ABC):

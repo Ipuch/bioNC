@@ -1,8 +1,8 @@
 import numpy as np
 from abc import ABC, abstractmethod
 
-from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_markers import AbstractNaturalMarker
+from ..natural_coordinates import SegmentNaturalCoordinates
+from ..natural_markers import AbstractNaturalMarker
 
 
 class AbstractNaturalSegmentMarkers(ABC):

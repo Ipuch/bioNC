@@ -3,3 +3,7 @@ from .biomech_model.biomechanical_model_joints import GenericBiomechanicalModelJ
 from .biomech_model.biomechanical_model_markers import GenericBiomechanicalModelMarkers
 from .biomech_model.biomechanical_model_segments import GenericBiomechanicalModelSegments
 from .biomech_model.biomechanical_model_tree import GenericBiomechanicalModelTree
+
+from .segment.natural_segment import AbstractNaturalSegment
+from .segment.natural_segment_markers import AbstractNaturalSegmentMarkers
+from .segment.natural_segment_vectors import AbstractNaturalSegmentVectors

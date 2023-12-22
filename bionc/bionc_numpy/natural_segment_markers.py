@@ -1,7 +1,7 @@
 import numpy as np
 
 from .natural_coordinates import SegmentNaturalCoordinates
-from ..protocols.natural_segment_markers import AbstractNaturalSegmentMarkers
+from ..protocols import AbstractNaturalSegmentMarkers
 
 
 class NaturalSegmentMarkers(AbstractNaturalSegmentMarkers):

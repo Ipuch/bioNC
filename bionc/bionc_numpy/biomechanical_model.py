@@ -493,7 +493,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             )
 
         # last check to verify that the model doesn't contain any closed loop
-        visited_segment = self._depth_first_search(0, visited_segments=None)
+        visited_segment = self._depth_first_search(0)
         if not all(visited_segment):
             raise ValueError(
                 f"The model contains free segments. The inverse dynamics can't be computed."

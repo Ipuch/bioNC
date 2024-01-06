@@ -606,6 +606,24 @@ class GenericBiomechanicalModel(ABC):
         """
 
     @abstractmethod
+    def augmented_mass_matrix(self, Q: NaturalCoordinates):
+        """
+        This function returns the augmented mass matrix of the system
+        It is defined as follows:
+            M_tilde = [M, K.T]
+                     [K, 0]
+
+        Parameters
+        ----------
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+
+        Returns
+        -------
+            The augmented mass matrix of the system
+        """
+
+    @abstractmethod
     def forward_dynamics(
         self,
         Q: NaturalCoordinates,

@@ -326,6 +326,22 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return weight_vector
 
+    def augmented_mass_matrix(self, Q: NaturalCoordinates) -> MX:
+        """
+        This function returns the augmented mass matrix of the system, that combines the mass matrix
+        and the holonomic constraints jacobian
+
+        Returns
+        -------
+        MX
+            augmented mass matrix of the segment
+        """
+        G = self.mass_matrix
+        K = self.holonomic_constraints_jacobian(Q)
+        upper_augmented_mass_matrix = horzcat(G, K.T)
+        lower_augmented_mass_matrix = horzcat(K, np.zeros((K.shape[0], K.shape[0])))
+        return vertcat(upper_augmented_mass_matrix, lower_augmented_mass_matrix)
+
     def forward_dynamics(
         self,
         Q: NaturalCoordinates,
@@ -352,9 +368,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             lagrange_multipliers : MX
                 The lagrange multipliers [nb_holonomic_constraints, 1]
         """
-        G = self.mass_matrix
-        K = self.holonomic_constraints_jacobian(Q)
-        Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
         external_forces = self.external_force_set() if external_forces is None else external_forces
         fext = external_forces.to_natural_external_forces(Q)
@@ -363,19 +376,19 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         #         "beta"
         #     ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
-        # KKT system
+        # augmented system
         # [G, K.T] [Qddot]  = [forces]
         # [K, 0  ] [lambda] = [biais]
-        upper_KKT_matrix = horzcat(G, K.T)
-        lower_KKT_matrix = horzcat(K, np.zeros((K.shape[0], K.shape[0])))
-        KKT_matrix = vertcat(upper_KKT_matrix, lower_KKT_matrix)
+        augmented_mass_matrix = self.augmented_mass_matrix(Q)
 
         forces = self.gravity_forces() + fext
+
+        Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
         biais = -Kdot @ Qdot
         B = vertcat(forces, biais)
 
         # solve the linear system Ax = B with casadi symbolic qr
-        x = solve(KKT_matrix, B, "symbolicqr")
+        x = solve(augmented_mass_matrix, B, "symbolicqr")
         Qddot = x[0 : self.nb_Qddot]
         lagrange_multipliers = x[self.nb_Qddot :]
         return NaturalAccelerations(Qddot), lagrange_multipliers

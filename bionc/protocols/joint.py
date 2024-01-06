@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
-from .natural_segment import AbstractNaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_segment import AbstractNaturalSegment
 from .natural_velocities import SegmentNaturalVelocities
 from ..utils.enums import EulerSequence, TransformationMatrixType, CartesianAxis
 
@@ -54,24 +54,22 @@ class JointBase(ABC):
         parent: AbstractNaturalSegment,
         child: AbstractNaturalSegment,
         index: int,
-        projection_basis: EulerSequence = EulerSequence.ZXY,  # biomechanics default isb
-        parent_basis: TransformationMatrixType = TransformationMatrixType.Bwu,  # by default as eulersequence starts with Z (~W)
-        child_basis: TransformationMatrixType = TransformationMatrixType.Bvu,  # by default as eulersequence ends with Y (~V)
-        translation_coordinates: tuple[CartesianAxis, CartesianAxis, CartesianAxis] = (
-            CartesianAxis.X,
-            CartesianAxis.Y,
-            CartesianAxis.Z,
-        ),
+        projection_basis: EulerSequence = None,
+        parent_basis: TransformationMatrixType = None,
+        child_basis: TransformationMatrixType = None,
+        translation_coordinates: tuple[CartesianAxis, CartesianAxis, CartesianAxis] = None,
     ):
         self.name = name
         self.parent = parent
         self.child = child
         self.index = index
-        self.projection_basis = projection_basis
-        self.parent_basis = parent_basis
-        self.child_basis = child_basis
+        self.projection_basis = projection_basis or EulerSequence.ZXY  # biomechanics default isb
+        self.parent_basis = (
+            parent_basis or TransformationMatrixType.Bwu
+        )  # by default as eulersequence starts with Z (~W)
+        self.child_basis = child_basis or TransformationMatrixType.Bvu  # by default as eulersequence ends with Y (~V)
         self.nb_constraints = 0
-        self.translation_coordinates = translation_coordinates
+        self.translation_coordinates = translation_coordinates or (CartesianAxis.X, CartesianAxis.Y, CartesianAxis.Z)
 
     @abstractmethod
     def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
@@ -168,3 +166,27 @@ class JointBase(ABC):
 
         """
         return 6 - self.nb_constraints
+
+
+class JointBaseWithTwoSegments(JointBase, ABC):
+    """
+    This class is made to handle the kinematics of a joint with two segments
+    """
+
+    def __init__(
+        self,
+        name: str,
+        parent: AbstractNaturalSegment,
+        child: AbstractNaturalSegment,
+        index: int,
+        projection_basis: EulerSequence = None,
+        parent_basis: TransformationMatrixType = None,
+        child_basis: TransformationMatrixType = None,
+        translation_coordinates: tuple[CartesianAxis, CartesianAxis, CartesianAxis] = None,
+    ):
+        if not isinstance(parent, AbstractNaturalSegment) or parent is None:
+            raise ValueError(f"You must provide a parent segment for the joint {name}.")
+
+        super(JointBaseWithTwoSegments, self).__init__(
+            name, parent, child, index, projection_basis, parent_basis, child_basis, translation_coordinates
+        )

@@ -1,12 +1,12 @@
 import numpy as np
 
-from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
-from .natural_velocities import SegmentNaturalVelocities
 from .natural_marker import NaturalMarker
-from ..protocols.joint import JointBase
-from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
+from .natural_segment import NaturalSegment
 from .natural_vector import NaturalVector
+from .natural_velocities import SegmentNaturalVelocities
+from ..protocols.joint import JointBaseWithTwoSegments as JointBase
+from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 
 
 class Joint:

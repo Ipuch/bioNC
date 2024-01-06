@@ -1,100 +1,23 @@
 import numpy as np
 
-from bionc import (
+from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType, EulerSequence
+from bionc.bionc_numpy import (
     BiomechanicalModel,
-    SegmentNaturalCoordinates,
-    SegmentNaturalVelocities,
-    NaturalCoordinates,
-    NaturalVelocities,
     NaturalSegment,
     JointType,
-    EulerSequence,
-    TransformationMatrixType,
-    RK4,
+    SegmentNaturalCoordinates,
+    NaturalCoordinates,
+    SegmentNaturalVelocities,
+    NaturalVelocities,
 )
-
-
-def build_3d_pendulum():
-    # Let's create a model
-    model = BiomechanicalModel()
-    # fill the biomechanical model with the segment
-    model["pendulum"] = NaturalSegment.with_cartesian_inertial_parameters(
-        name="pendulum",
-        alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
-        beta=np.pi / 2,
-        gamma=np.pi / 2,
-        length=1,
-        mass=1,
-        center_of_mass=np.array([0, -1, -0.5]),  # in segment coordinates system
-        inertia=np.array([[0.01, 0, 0], [0, 0.001, 0], [0, 0, 0.01]]),  # in segment coordinates system
-    )
-    # add a spherical joint (still experimental)
-
-    model._add_joint(
-        dict(
-            name="spherical",
-            joint_type=JointType.GROUND_SPHERICAL,
-            parent="GROUND",
-            child="pendulum",
-            projection_basis=EulerSequence.XYZ,
-            child_basis=TransformationMatrixType.Buv,
-        )
-    )
-
-    model.save("pendulum_3d.nmod")
-
-    return model
-
-
-def apply_force_and_drop_pendulum(t_final: float = 10, joint_generalized_forces=None):
-    """
-    This function is used to test the external force
-
-    Parameters
-    ----------
-    t_final: float
-        The final time of the simulation
-    joint_generalized_forces:
-
-    Returns
-    -------
-    tuple[BiomechanicalModel, np.ndarray, np.ndarray, Callable]:
-        model : BiomechanicalModel
-            The model to be simulated
-        time_steps : np.ndarray
-            The time steps of the simulation
-        all_states : np.ndarray
-            The states of the system at each time step X = [Q, Qdot]
-        dynamics : Callable
-            The dynamics of the system, f(t, X) = [Xdot, lambdas]
-
-    """
-    model = build_3d_pendulum()
-
-    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
-    Q = NaturalCoordinates(Qi)
-    Qdoti = SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
-    Qdot = NaturalVelocities(Qdoti)
-
-    time_steps, all_states, dynamics = drop_the_pendulum(
-        model=model,
-        Q_init=Q,
-        Qdot_init=Qdot,
-        joint_generalized_forces=joint_generalized_forces,
-        t_final=t_final,
-        steps_per_second=200,
-    )
-
-    return model, time_steps, all_states, dynamics
 
 
 def drop_the_pendulum(
     model: BiomechanicalModel,
     Q_init: NaturalCoordinates,
     Qdot_init: NaturalVelocities,
-    joint_generalized_forces=None,
     t_final: float = 2,
-    steps_per_second: int = 50,
+    steps_per_second: int = 200,
 ):
     """
     This function simulates the dynamics of a natural segment falling from 0m during 2s
@@ -107,8 +30,6 @@ def drop_the_pendulum(
         The initial natural coordinates of the segment
     Qdot_init : SegmentNaturalVelocities
         The initial natural velocities of the segment
-    joint_generalized_forces : np.ndarray, optional
-        The joint generalized forces, by default None
     t_final : float, optional
         The final time of the simulation, by default 2
     steps_per_second : int, optional
@@ -151,19 +72,11 @@ def drop_the_pendulum(
         qddot, lambdas = model.forward_dynamics(
             NaturalCoordinates(states[idx_coordinates]),
             NaturalVelocities(states[idx_velocities]),
-            joint_generalized_forces=joint_generalized_forces,
-            stabilization=dict(alpha=50, beta=20),
         )
         return np.concatenate((states[idx_velocities], qddot.to_array()), axis=0), lambdas
 
     # Solve the Initial Value Problem (IVP) for each time step
-    # normalize_idx = model.normalized_coordinates
-    all_states = RK4(
-        t=time_steps,
-        f=lambda t, states: dynamics(t, states)[0],
-        y0=states_0,
-        # normalize_idx=normalize_idx
-    )
+    all_states = RK4(t=time_steps, f=lambda t, states: dynamics(t, states)[0], y0=states_0)
 
     return time_steps, all_states, dynamics
 
@@ -228,11 +141,87 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
 
 
 def main(show_results: bool = True):
-    # as euler sequence is XYZ, we actuate along X axis first
-    joint_generalized_forces = np.array([0.000, 0.0, 0.0])
+    # Let's create a model
+    model = BiomechanicalModel()
+    # fill the biomechanical model with the segment
+    model["pendulum0"] = NaturalSegment.with_cartesian_inertial_parameters(
+        name="pendulum0",
+        alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([00, 0.1, 00]),  # in segment coordinates system
+        inertia=np.array([[0.01, 0, 0], [0, 0.01, 0], [0, 0, 0.01]]),  # in segment coordinates system
+    )
 
-    model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(
-        t_final=5, joint_generalized_forces=joint_generalized_forces
+    model._add_joint(
+        dict(
+            name="universal0",
+            joint_type=JointType.GROUND_UNIVERSAL,
+            parent="GROUND",
+            child="pendulum0",
+            # meaning we pivot around the cartesian x-axis
+            parent_axis=CartesianAxis.X,
+            child_axis=NaturalAxis.V,
+            theta=np.pi / 2,
+        )
+    )
+
+    model["pendulum1"] = NaturalSegment.with_cartesian_inertial_parameters(
+        name="pendulum1",
+        alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([00, 0.1, 00]),  # in segment coordinates system
+        inertia=np.array([[0.01, 0, 0], [0, 0.01, 0], [0, 0, 0.01]]),  # in segment coordinates system
+    )
+
+    model._add_joint(
+        dict(
+            name="universal1",
+            joint_type=JointType.UNIVERSAL,
+            parent="pendulum0",
+            child="pendulum1",
+            # meaning we pivot around the cartesian x-axis
+            parent_axis=NaturalAxis.W,
+            child_axis=NaturalAxis.V,
+            theta=np.pi / 2,
+        )
+    )
+
+    model.save("double_universal_pendulum.nmod")
+
+    print(model.joints)
+    print(model.nb_joints)
+    print(model.nb_joint_constraints)
+
+    tuple_of_Q = [
+        SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i - 1, 0], w=[0, 0, 1])
+        for i in range(0, model.nb_segments)
+    ]
+    Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
+
+    tuple_of_Qdot = [
+        SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
+        for i in range(0, model.nb_segments)
+    ]
+    Qdot = NaturalVelocities.from_qdoti(tuple(tuple_of_Qdot))
+
+    print(model.joint_constraints(Q))
+    print(model.joint_constraints_jacobian(Q))
+    print(model.holonomic_constraints(Q))
+    print(model.holonomic_constraints_jacobian(Q))
+
+    # The actual simulation
+    t_final = 2
+    time_steps, all_states, dynamics = drop_the_pendulum(
+        model=model,
+        Q_init=Q,
+        Qdot_init=Qdot,
+        t_final=t_final,
     )
 
     if show_results:
@@ -245,7 +234,7 @@ def main(show_results: bool = True):
 
         from viz import plot_series
 
-        plot_series(time_steps, all_states[:12, :], legend="all_states")
+        plot_series(time_steps, all_states[: model.nb_Q, :], legend="all_states")
         # Plot the results
         # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
         plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
@@ -260,11 +249,30 @@ def main(show_results: bool = True):
 if __name__ == "__main__":
     model, all_states = main(show_results=False)
 
+    # still experimental
+    model.segments.segments["pendulum0"].transformation_matrix_type = TransformationMatrixType.Buv
+    model.segments.segments["pendulum1"].transformation_matrix_type = TransformationMatrixType.Buv
+    model.joints.joints["universal0"].projection_basis = EulerSequence.XYZ
+    model.joints.joints["universal1"].projection_basis = EulerSequence.XYZ
+
+    minimal_coordinate_time_series = np.zeros((6, all_states.shape[1]))
+    for i in range(all_states.shape[1]):
+        minimal_coordinate_time_series[:, i] = (
+            model.natural_coordinates_to_joint_angles(NaturalCoordinates(all_states[: model.nb_Q, i]))
+            .reshape(-1, 1)
+            .squeeze()
+        )
+
+    from viz import plot_series
+
+    plot_series(np.linspace(0, 2, 401), minimal_coordinate_time_series, legend="minimal_coordinates")
+
     # animate the motion
     from bionc import Viz
 
-    viz = Viz(model)
-    viz.animate(all_states[:12, :200], None, frame_rate=200)
-    # This example stil have an unexpected behaviour, should at least fall in the direction of the gravity force during
-    # the first frames, but it does not.
-    # the pendulum should not rotate around the Z axis
+    viz = Viz(model, show_natural_mesh=True)
+    viz.animate(
+        all_states[: model.nb_Q, :],
+        None,
+        frame_rate=50,
+    )

@@ -724,6 +724,65 @@ def test_joints(bionc_type, joint_type: JointType):
         assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
 
 
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_missing_parent(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import (
+            BiomechanicalModel,
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+            Joint,
+            GroundJoint,
+        )
+    else:
+        from bionc.bionc_numpy import (
+            BiomechanicalModel,
+            NaturalSegment,
+            SegmentNaturalCoordinates,
+            Joint,
+            GroundJoint,
+        )
+
+    box = NaturalSegment.with_cartesian_inertial_parameters(
+        name="box",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([0, 0, 0]),  # scs
+        inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+
+    bbox = NaturalSegment.with_cartesian_inertial_parameters(
+        name="bbox",
+        alpha=np.pi / 1.9,
+        beta=np.pi / 2.3,
+        gamma=np.pi / 2.1,
+        length=1.5,
+        mass=1.1,
+        center_of_mass=np.array([0.1, 0.11, 0.111]),  # scs
+        inertia=np.array([[1.1, 0, 0], [0, 1.2, 0], [0, 0, 1.3]]),  # scs
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+
+    model = BiomechanicalModel()
+    model["box"] = box
+    model["bbox"] = bbox
+    parent_axis = NaturalAxis.U, NaturalAxis.V
+    child_axis = NaturalAxis.V, NaturalAxis.W
+    theta = np.pi / 3, 3 * np.pi / 4
+
+    with pytest.raises(ValueError, match="You must provide a parent segment for the joint hinge"):
+        Joint.Hinge(
+            name="hinge", parent=None, child=bbox, index=0, parent_axis=parent_axis, child_axis=child_axis, theta=theta
+        )
+
+
 # def test_numpy_jacobian_from_casadi_derivatives()
 # todo:
 # # numpy version

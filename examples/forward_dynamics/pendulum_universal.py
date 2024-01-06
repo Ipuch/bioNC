@@ -1,5 +1,6 @@
 import numpy as np
 
+from bionc import NaturalAxis, CartesianAxis, RK4
 from bionc.bionc_numpy import (
     BiomechanicalModel,
     NaturalSegment,
@@ -9,7 +10,6 @@ from bionc.bionc_numpy import (
     SegmentNaturalVelocities,
     NaturalVelocities,
 )
-from bionc import NaturalAxis, CartesianAxis, RK4
 
 
 def drop_the_pendulum(
@@ -144,7 +144,7 @@ def main(mode: str = "x_revolute", show_results: bool = True):
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
-    model["pendulum"] = NaturalSegment(
+    model["pendulum"] = NaturalSegment.with_cartesian_inertial_parameters(
         name="pendulum",
         alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
         beta=np.pi / 2,

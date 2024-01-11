@@ -68,7 +68,7 @@ class InverseKinematics:
 
     def __init__(
         self,
-        model: BiomechanicalModel,        
+        model: BiomechanicalModel,
         initial_guess_mode: Enum,
         Q_init: np.ndarray | NaturalCoordinates = None,
         initialize_markers: np.ndarray = None,
@@ -209,18 +209,18 @@ class InverseKinematics:
                     self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym
                 )
             ]
-              
-        if initial_guess_mode == InitialGuessModeType.USER_PROVIDED :
+
+        if initial_guess_mode == InitialGuessModeType.USER_PROVIDED:
             if Q_init is None:
                 raise ValueError("Please provide Q_init if you want to use USER_PROVIDED mode")
-            if Q_init.shape[1] != self.nb_frames: 
+            if Q_init.shape[1] != self.nb_frames:
                 raise ValueError("Please make sure Q_init contains all the frames")
             self.Q_init = Q_init
 
         elif initial_guess_mode == InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY:
             if Q_init is None:
                 raise ValueError("Please provide Q_init if you want to use USER_PROVIDED_FIRST_FRAME_ONLY mode")
-            if len(Q_init.shape) > 1: 
+            if len(Q_init.shape) > 1:
                 raise ValueError("Please provide only the first frame for Q_init")
             if self._frame_per_frame == False:
                 raise ValueError("Please set frame_per_frame to True")
@@ -232,7 +232,9 @@ class InverseKinematics:
             if initialize_markers.shape[2] != self.nb_frames:
                 raise ValueError("Please make sure initalize_markers contains all the frames")
             if experimental_heatmaps is not None:
-                raise ValueError("Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode")
+                raise ValueError(
+                    "Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode"
+                )
             self.initialize_markers = initialize_markers
 
         elif initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS:
@@ -241,7 +243,9 @@ class InverseKinematics:
             if len(initialize_markers.shape) > 2:
                 raise ValueError("Please provide only the first frame for markers")
             if experimental_heatmaps is not None:
-                raise ValueError("Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode")
+                raise ValueError(
+                    "Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode"
+                )
             if self._frame_per_frame == False:
                 raise ValueError("Please set frame_per_frame to True")
             self.initialize_markers = initialize_markers
@@ -308,7 +312,9 @@ class InverseKinematics:
         self.objective_sym.append(symbolic_objective)
         self._update_objective_function()
 
-    def solve(self, method: str = "ipopt", options: dict = None) -> np.ndarray: # initial_guess_mode: InitialGuessModeType.USER_PROVIDED,
+    def solve(
+        self, method: str = "ipopt", options: dict = None
+    ) -> np.ndarray:  # initial_guess_mode: InitialGuessModeType.USER_PROVIDED,
         """
         Solves the inverse kinematics
 
@@ -356,7 +362,7 @@ class InverseKinematics:
 
                 nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
 
-                if self.initial_guess_mode == InitialGuessModeType.USER_PROVIDED: 
+                if self.initial_guess_mode == InitialGuessModeType.USER_PROVIDED:
                     Q_init = self.Q_init[:, f : f + 1]
                 if self.initial_guess_mode == InitialGuessModeType.FROM_CURRENT_MARKERS:
                     Q_init = self.model.Q_from_markers(self.initialize_markers[:, :, f : f + 1])

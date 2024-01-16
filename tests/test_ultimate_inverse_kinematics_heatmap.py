@@ -3,7 +3,7 @@ import pytest
 from casadi import DM
 
 from bionc import InverseKinematics, NaturalCoordinates
-from bionc.bionc_numpy.initial_guess_mode_type_enum import InitialGuessModeType
+from bionc.bionc_numpy.enums import InitialGuessModeType
 from bionc.utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, _projection
 from .utils import TestUtils
 

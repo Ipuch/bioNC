@@ -3,8 +3,8 @@ from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
 from pyomeca import Markers
 from typing import Callable
 
+from .enums import InitialGuessModeType
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
-from ..bionc_numpy.initial_guess_mode_type_enum import InitialGuessModeType
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..utils import constants

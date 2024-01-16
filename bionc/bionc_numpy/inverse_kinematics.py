@@ -352,30 +352,7 @@ class InverseKinematics:
         if self._frame_per_frame:
             Qopt = self._solve_frame_per_frame(Q_init, initial_guess_mode, method, options)
         else:
-            constraints = self._constraints(self._Q_sym)
-            if self._active_direct_frame_constraints:
-                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
-            if self.experimental_markers is not None:
-                objective = self._objective_minimize_marker_distance(self._Q_sym, self.experimental_markers)
-            else:
-                NotImplementedError(
-                    "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
-                )
-            nlp = dict(
-                x=self._vert_Q_sym,
-                f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,
-                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
-            )
-            vertical_Q_init = Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
-
-            lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
-            ubg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
-            if self._active_direct_frame_constraints:
-                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
-                ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
-            r, success = _solve_nlp(method, nlp, vertical_Q_init, lbg, ubg, options)
-            self.success_optim = [success] * self.nb_frames
-            Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
+            Qopt = self._solve_all_frame_together(Q_init, method, options)
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
 
@@ -429,7 +406,40 @@ class InverseKinematics:
             ):
                 Q_init[:, f + 1 : f + 2] = Qopt[:, f : f + 1]
 
-            return Qopt
+        return Qopt
+
+    def _solve_all_frame_together(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        method: str,
+        options: dict,
+    ):
+        constraints = self._constraints(self._Q_sym)
+        if self._active_direct_frame_constraints:
+            constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
+        if self.experimental_markers is not None:
+            objective = self._objective_minimize_marker_distance(self._Q_sym, self.experimental_markers)
+        else:
+            NotImplementedError(
+                "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
+            )
+        nlp = dict(
+            x=self._vert_Q_sym,
+            f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,
+            g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
+        )
+        vertical_Q_init = Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
+
+        lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
+        ubg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
+        if self._active_direct_frame_constraints:
+            lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
+            ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
+        r, success = _solve_nlp(method, nlp, vertical_Q_init, lbg, ubg, options)
+        self.success_optim = [success] * self.nb_frames
+        Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
+
+        return Qopt
 
     def _declare_sym_Q(self) -> tuple[MX, MX]:
         """Declares the symbolic variables for the natural coordinates and handle single frame or multi frames"""

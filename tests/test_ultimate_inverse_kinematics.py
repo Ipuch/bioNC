@@ -1,6 +1,6 @@
-from casadi import Function, sumsqr
 import numpy as np
 import pytest
+from casadi import Function, sumsqr
 
 from tests.utils import TestUtils
 
@@ -9910,7 +9910,6 @@ def test_inverse_kinematics_class():
 
     # Create inverse kinematics object
     ik = InverseKinematics(natural_model, markers)
-    ik = natural_model.inverse_kinematics(markers)
 
     with pytest.raises(AttributeError):
         ik = InverseKinematics(natural_model, 1)

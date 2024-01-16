@@ -350,43 +350,7 @@ class InverseKinematics:
         )
 
         if self._frame_per_frame:
-            Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
-            lbg = np.zeros(self.model.nb_holonomic_constraints)
-            ubg = np.zeros(self.model.nb_holonomic_constraints)
-            constraints = self._constraints(self._Q_sym)
-            if self._active_direct_frame_constraints:
-                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
-                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments)))
-                # upper bounds infinity
-                ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
-            nlp = dict(
-                x=self._vert_Q_sym,
-                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
-            )
-
-            for f in range(self.nb_frames):
-                objective = self._objective_function(
-                    self._Q_sym,
-                    [] if self.experimental_markers is None else self.experimental_markers[:, :, f],
-                    [] if self.experimental_heatmaps is None else self.camera_parameters,
-                    [] if self.experimental_heatmaps is None else self.gaussian_parameters[:, f, :],
-                )
-
-                nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
-
-                r, success = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
-                self.success_optim.append(success)
-                Qopt[:, f : f + 1] = r["x"].toarray()
-
-                if (
-                    initial_guess_mode
-                    in (
-                        InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY,
-                        InitialGuessModeType.FROM_FIRST_FRAME_MARKERS,
-                    )
-                    and f < self.nb_frames - 1
-                ):
-                    Q_init[:, f + 1 : f + 2] = Qopt[:, f : f + 1]
+            Qopt = self._solve_frame_per_frame(Q_init, initial_guess_mode, method, options)
         else:
             constraints = self._constraints(self._Q_sym)
             if self._active_direct_frame_constraints:
@@ -418,6 +382,54 @@ class InverseKinematics:
         self.check_segment_determinants()
 
         return Qopt
+
+    def _solve_frame_per_frame(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        initial_guess_mode: InitialGuessModeType,
+        method: str,
+        options: dict,
+    ):
+        Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
+        lbg = np.zeros(self.model.nb_holonomic_constraints)
+        ubg = np.zeros(self.model.nb_holonomic_constraints)
+        constraints = self._constraints(self._Q_sym)
+        if self._active_direct_frame_constraints:
+            constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
+            lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments)))
+            # upper bounds infinity
+            ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
+
+        nlp = dict(
+            x=self._vert_Q_sym,
+            g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
+        )
+
+        for f in range(self.nb_frames):
+            objective = self._objective_function(
+                self._Q_sym,
+                [] if self.experimental_markers is None else self.experimental_markers[:, :, f],
+                [] if self.experimental_heatmaps is None else self.camera_parameters,
+                [] if self.experimental_heatmaps is None else self.gaussian_parameters[:, f, :],
+            )
+
+            nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
+
+            r, success = _solve_nlp(method, nlp, Q_init[:, f], lbg, ubg, options)
+            self.success_optim.append(success)
+            Qopt[:, f : f + 1] = r["x"].toarray()
+
+            if (
+                initial_guess_mode
+                in (
+                    InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY,
+                    InitialGuessModeType.FROM_FIRST_FRAME_MARKERS,
+                )
+                and f < self.nb_frames - 1
+            ):
+                Q_init[:, f + 1 : f + 2] = Qopt[:, f : f + 1]
+
+            return Qopt
 
     def _declare_sym_Q(self) -> tuple[MX, MX]:
         """Declares the symbolic variables for the natural coordinates and handle single frame or multi frames"""

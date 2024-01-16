@@ -1,11 +1,12 @@
 """
 This example shows how to use the InverseKinematics class to solve an inverse kinematics problem.
 """
-from bionc import InverseKinematics, Viz, NaturalCoordinates
 import numpy as np
-from pyomeca import Markers
-from tests.utils import TestUtils
 import time
+from pyomeca import Markers
+
+from bionc import InverseKinematics, Viz, NaturalCoordinates
+from tests.utils import TestUtils
 
 
 def main():
@@ -26,8 +27,6 @@ def main():
 
     # you can import the class from bionc
     ik_solver = InverseKinematics(model, markers, solve_frame_per_frame=True)
-    # or you can use the model method
-    ik_solver = model.inverse_kinematics(markers, solve_frame_per_frame=True)
 
     tic0 = time.time()
     Qopt_sqp = ik_solver.solve(method="sqpmethod")  # tend to be faster (with limited-memory hessian approximation)

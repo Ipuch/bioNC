@@ -9,7 +9,7 @@ from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoord
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..utils import constants
 from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
-from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
+from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, check_format_experimental_heatmaps
 
 
 class InverseKinematics:
@@ -146,35 +146,7 @@ class InverseKinematics:
             self.objective_sym = [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
 
         if experimental_heatmaps is not None:
-            if not isinstance(experimental_heatmaps, dict):
-                raise ValueError("Please feed experimental heatmaps as a dictionnary")
-
-            if not len(experimental_heatmaps["camera_parameters"].shape) == 3:
-                raise ValueError(
-                    'The number of dimensions of the NumPy array stored in experimental_heatmaps["camera_parameters"] must be 3 and the expected shape is 3 x 4 x nb_cameras'
-                )
-            if not experimental_heatmaps["camera_parameters"].shape[0] == 3:
-                raise ValueError("First dimension of camera parameters must be 3")
-            if not experimental_heatmaps["camera_parameters"].shape[1] == 4:
-                raise ValueError("Second dimension of camera parameters must be 4")
-
-            if not len(experimental_heatmaps["gaussian_parameters"].shape) == 4:
-                raise ValueError(
-                    'The number of dimensions of the NumPy array stored in experimental_heatmaps["gaussian_parameters"] must be 4 and the expected shape is 5 x nb_markers x nb_frames x nb_cameras'
-                )
-            if not experimental_heatmaps["gaussian_parameters"].shape[0] == 5:
-                raise ValueError("First dimension of gaussian parameters must be 5")
-
-            if (
-                not experimental_heatmaps["camera_parameters"].shape[2]
-                == experimental_heatmaps["gaussian_parameters"].shape[3]
-            ):
-                raise ValueError(
-                    'Third dimension of experimental_heatmaps["camera_parameters"] and fourth dimension of experimental_heatmaps["gaussian_parameters"] should be equal. Currently we have '
-                    + str(experimental_heatmaps["camera_parameters"].shape[2])
-                    + " and "
-                    + str(experimental_heatmaps["gaussian_parameters"].shape[3])
-                )
+            check_format_experimental_heatmaps(experimental_heatmaps)
             self.experimental_heatmaps = experimental_heatmaps
 
             self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
@@ -258,31 +230,38 @@ class InverseKinematics:
         self.objective_sym.append(symbolic_objective)
         self._update_objective_function()
 
-    def get_Q_init_from_initial_guess_mode(self, initial_guess_mode, Q_init, experimental_markers):
+    def get_Q_init_from_initial_guess_mode(
+        self,
+        initial_guess_mode: InitialGuessModeType,
+        Q_init: np.ndarray | NaturalCoordinates,
+        experimental_markers: np.ndarray,
+    ):
         """Returns the initial guess for the inverse kinematics computed from the experimental markers"""
 
-        if initial_guess_mode == InitialGuessModeType.FROM_CURRENT_MARKERS:
+        if initial_guess_mode in (
+            InitialGuessModeType.FROM_CURRENT_MARKERS,
+            InitialGuessModeType.FROM_FIRST_FRAME_MARKERS,
+        ):
             if experimental_markers is None:
                 raise ValueError("Please provide experimental_markers in order to initialize the optimization")
-            if experimental_markers.shape[2] != self.nb_frames:
+            if self.experimental_heatmaps is not None:
+                raise ValueError(
+                    "Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode"
+                )
+            if (
+                initial_guess_mode == InitialGuessModeType.FROM_CURRENT_MARKERS
+                and experimental_markers.shape[2] != self.nb_frames
+            ):
                 raise ValueError("Please make sure initalize_markers contains all the frames")
-            if self.experimental_heatmaps is not None:
-                raise ValueError(
-                    "Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode"
-                )
-            return self.model.Q_from_markers(self.experimental_markers[:, :, :])
 
-        if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS:
-            if experimental_markers is None:
-                raise ValueError("Please provide experimental_markers in order to initialize the optimization")
-            if self.experimental_heatmaps is not None:
-                raise ValueError(
-                    "Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode"
-                )
-            if self._frame_per_frame == False:
+            if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS and self._frame_per_frame == False:
                 raise ValueError("Please set frame_per_frame to True")
 
-            return self.model.Q_from_markers(self.experimental_markers[:, :, 0:1])
+            frame_slice = (
+                slice(0, 1) if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS else slice(None)
+            )
+
+            return self.model.Q_from_markers(experimental_markers[:, :, frame_slice])
 
         if Q_init is None and self.experimental_heatmaps:
             raise NotImplementedError("Not available yet, please provide Q_init")  # todo: enhance the error message.
@@ -396,17 +375,29 @@ class InverseKinematics:
             self.success_optim.append(success)
             Qopt[:, f : f + 1] = r["x"].toarray()
 
-            if (
-                initial_guess_mode
-                in (
-                    InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY,
-                    InitialGuessModeType.FROM_FIRST_FRAME_MARKERS,
-                )
-                and f < self.nb_frames - 1
-            ):
-                Q_init[:, f + 1 : f + 2] = Qopt[:, f : f + 1]
+            Q_init = self.update_initial_guess(Q_init, Qopt, initial_guess_mode, frame=f)
 
         return Qopt
+
+    def update_initial_guess(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        Qopt: np.ndarray | NaturalCoordinates,
+        initial_guess_mode: InitialGuessModeType,
+        frame: int,
+    ):
+        """Updates the initial guess for the next frame when solving frame per frame"""
+        if (
+            initial_guess_mode
+            in (
+                InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY,
+                InitialGuessModeType.FROM_FIRST_FRAME_MARKERS,
+            )
+            and frame < self.nb_frames - 1
+        ):
+            Q_init[:, frame + 1 : frame + 2] = Qopt[:, frame : frame + 1]
+
+        return Q_init
 
     def _solve_all_frame_together(
         self,

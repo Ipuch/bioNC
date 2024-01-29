@@ -74,16 +74,6 @@ def test_joint_angles(bionc_type):
         inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
-    # model._add_joint(
-    #     dict(
-    #         name="free_joint_PELVIS",
-    #         joint_type=JointType.GROUND_FREE,
-    #         parent="GROUND",
-    #         child="PELVIS",
-    #         projection_basis=EulerSequence.XYZ,
-    #     )
-    # )
-
     model._add_joint(
         dict(
             name="rhip",

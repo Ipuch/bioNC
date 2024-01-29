@@ -77,10 +77,10 @@ def rotation_matrix_from_angle_and_axis(angle: MX, axis: str | CartesianAxis) ->
 
 
 def euler_axes_from_rotation_matrices(
-        R_0_parent: MX,
-        R_0_child: MX,
-        sequence: EulerSequence,
-        axes_source_frame: str = "mixed",
+    R_0_parent: MX,
+    R_0_child: MX,
+    sequence: EulerSequence,
+    axes_source_frame: str = "mixed",
 ) -> tuple[MX, MX, MX]:
     """
     This function returns the euler axes from the rotation matrices in the global frame

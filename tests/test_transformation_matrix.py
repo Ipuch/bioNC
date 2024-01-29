@@ -1,16 +1,19 @@
-from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
-from bionc.utils.enums import TransformationMatrixType
-from bionc import NaturalAxis
-from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
 import numpy as np
 import pytest
+
+from bionc import NaturalAxis
+from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
+from bionc.bionc_numpy.transformation_matrix_inverse import compute_transformation_matrix_inverse
+from bionc.utils.enums import TransformationMatrixType
+from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
 from .utils import TestUtils
 
 
 def test_check_plane():
     plane = (NaturalAxis.U, NaturalAxis.U)
     with pytest.raises(
-        ValueError, match=f"Plane must be a tuple of different axis, got \(<NaturalAxis.U: 'U'>, <NaturalAxis.U: 'U'>\)"
+            ValueError,
+            match=f"Plane must be a tuple of different axis, got \(<NaturalAxis.U: 'U'>, <NaturalAxis.U: 'U'>\)"
     ):
         check_plane(plane)
     plane = (NaturalAxis.U, NaturalAxis.U, NaturalAxis.U)
@@ -21,20 +24,20 @@ def test_check_plane():
         check_plane(plane)
     plane = (NaturalAxis.V, NaturalAxis.U)
     with pytest.raises(
-        ValueError,
-        match=f"Invert Axis in plane, because it would lead to an indirect frame, got \(<NaturalAxis.V: 'V'>, <NaturalAxis.U: 'U'>\)",
+            ValueError,
+            match=f"Invert Axis in plane, because it would lead to an indirect frame, got \(<NaturalAxis.V: 'V'>, <NaturalAxis.U: 'U'>\)",
     ):
         check_plane(plane)
     plane = (NaturalAxis.U, NaturalAxis.W)
     with pytest.raises(
-        ValueError,
-        match=f"Invert Axis in plane, because it would lead to an indirect frame, got \(<NaturalAxis.U: 'U'>, <NaturalAxis.W: 'W'>\)",
+            ValueError,
+            match=f"Invert Axis in plane, because it would lead to an indirect frame, got \(<NaturalAxis.U: 'U'>, <NaturalAxis.W: 'W'>\)",
     ):
         check_plane(plane)
     plane = (NaturalAxis.W, NaturalAxis.V)
     with pytest.raises(
-        ValueError,
-        match=f"Invert Axis in plane, because it would lead to an indirect frame, got \(<NaturalAxis.W: 'W'>, <NaturalAxis.V: 'V'>\)",
+            ValueError,
+            match=f"Invert Axis in plane, because it would lead to an indirect frame, got \(<NaturalAxis.W: 'W'>, <NaturalAxis.V: 'V'>\)",
     ):
         check_plane(plane)
 
@@ -44,6 +47,11 @@ alpha = 0.5
 beta = 0.6
 gamma = 0.7
 
+length_i = 0.5
+alpha_i = np.pi / 2 + 0.1
+beta_i = np.pi / 2 + 0.1
+gamma_i = np.pi / 2 - 0.1
+
 
 def test_transformation_matrix_Buv():
     result = compute_transformation_matrix(TransformationMatrixType.Buv, length, alpha, beta, gamma)
@@ -52,6 +60,41 @@ def test_transformation_matrix_Buv():
     np.testing.assert_almost_equal(
         result, np.array([[1.0, 1.5296844, 0.8253356], [0.0, 1.2884354, 0.3823724], [0.0, 0.0, 0.4154666]])
     )
+
+
+def test_transformation_matrix_Buv_inverse():
+    result = compute_transformation_matrix(TransformationMatrixType.Buv, length_i, alpha_i, beta_i, gamma_i)
+    result_inverse = compute_transformation_matrix_inverse(TransformationMatrixType.Buv, length_i, alpha_i, beta_i,
+                                                           gamma_i)
+
+    np.finfo('float64')
+
+    assert isinstance(result_inverse, np.ndarray)
+    assert result_inverse.shape == (3, 3)
+    np.testing.assert_almost_equal(
+        result_inverse,
+        np.linalg.inv(result)
+    )
+
+    for i in range(100):
+        print(i)
+        inv_num = np.linalg.inv(result)
+        inv_inv_num = np.linalg.inv(np.linalg.inv(inv_num))
+        np.testing.assert_almost_equal(
+            inv_inv_num,
+            inv_num
+        )
+        result = np.linalg.inv(inv_num)
+
+    for i in range(100):
+        print(i)
+        inv_num = result_inverse
+        inv_inv_num = np.linalg.inv(np.linalg.inv(inv_num))
+        np.testing.assert_almost_equal(
+            inv_inv_num,
+            inv_num
+        )
+        result = np.linalg.inv(inv_num)
 
 
 def test_transformation_matrix_Bvu():

@@ -1,7 +1,8 @@
+from typing import Union, Tuple, Callable
+
 import numpy as np
 from numpy import cos, zeros, sum, dot, transpose
 from numpy.linalg import inv
-from typing import Union, Tuple, Callable
 
 from .homogenous_transform import HomogeneousTransform
 from .natural_accelerations import SegmentNaturalAccelerations

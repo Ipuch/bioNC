@@ -199,6 +199,6 @@ def euler_angles_from_rotation_matrix(parent_matrix: MX, child_matrix: MX, joint
     """
 
     rot = parent_matrix.T @ child_matrix
-    euler_angles = rotation_matrix_to_euler_angles(rot, joint_sequence)
+    euler_angles = rotation_matrix_to_euler_angles(rot, joint_sequence.value)
 
     return euler_angles

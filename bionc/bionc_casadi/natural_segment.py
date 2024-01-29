@@ -1,7 +1,8 @@
+from typing import Union, Tuple
+
 import numpy as np
 from casadi import MX
 from casadi import cos, transpose, vertcat, inv, dot, sum1, horzcat, solve
-from typing import Union, Tuple
 
 from .homogenous_transform import HomogeneousTransform
 from .natural_accelerations import SegmentNaturalAccelerations
@@ -71,18 +72,18 @@ class NaturalSegment(AbstractNaturalSegment):
     """
 
     def __init__(
-        self,
-        name: str = None,
-        index: int = None,
-        alpha: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-        beta: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-        gamma: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-        length: Union[MX, float, np.float64, np.ndarray] = None,
-        mass: Union[MX, float, np.float64, np.ndarray] = None,
-        natural_center_of_mass: Union[MX, np.ndarray] = None,
-        natural_pseudo_inertia: Union[MX, np.ndarray] = None,
-        inertial_transformation_matrix_type: TransformationMatrixType = None,
-        is_ground: bool = False,
+            self,
+            name: str = None,
+            index: int = None,
+            alpha: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+            beta: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+            gamma: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+            length: Union[MX, float, np.float64, np.ndarray] = None,
+            mass: Union[MX, float, np.float64, np.ndarray] = None,
+            natural_center_of_mass: Union[MX, np.ndarray] = None,
+            natural_pseudo_inertia: Union[MX, np.ndarray] = None,
+            inertial_transformation_matrix_type: TransformationMatrixType = None,
+            is_ground: bool = False,
     ):
         if not isinstance(alpha, MX) and not isinstance(beta, MX) and not isinstance(gamma, MX):
             self._angle_sanity_check(alpha, beta, gamma)
@@ -110,7 +111,7 @@ class NaturalSegment(AbstractNaturalSegment):
         self._vectors = NaturalSegmentVectors()
 
     def set_natural_inertial_parameters(
-        self, mass: float, natural_center_of_mass: np.ndarray, natural_pseudo_inertia: np.ndarray
+            self, mass: float, natural_center_of_mass: np.ndarray, natural_pseudo_inertia: np.ndarray
     ):
         self._mass = mass
         self._natural_center_of_mass = natural_center_of_mass
@@ -123,11 +124,11 @@ class NaturalSegment(AbstractNaturalSegment):
         self._mass_matrix = self._natural_inertial_parameters.mass_matrix
 
     def set_inertial_parameters(
-        self,
-        mass: float,
-        center_of_mass: np.ndarray,
-        inertia_matrix: np.ndarray,
-        transformation_matrix: TransformationMatrixType,
+            self,
+            mass: float,
+            center_of_mass: np.ndarray,
+            inertia_matrix: np.ndarray,
+            transformation_matrix: TransformationMatrixType,
     ):
         self._natural_inertial_parameters = NaturalInertialParameters.from_cartesian_inertial_parameters(
             mass=mass,
@@ -145,18 +146,18 @@ class NaturalSegment(AbstractNaturalSegment):
 
     @classmethod
     def with_cartesian_inertial_parameters(
-        cls,
-        name: str = None,
-        alpha: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-        beta: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-        gamma: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
-        length: Union[MX, float, np.float64, np.ndarray] = None,
-        mass: Union[MX, float, np.float64, np.ndarray] = None,
-        center_of_mass: Union[MX, np.ndarray] = None,
-        inertia: Union[MX, np.ndarray] = None,
-        inertial_transformation_matrix: TransformationMatrixType = TransformationMatrixType.Buv,
-        index: int = None,
-        is_ground: bool = False,
+            cls,
+            name: str = None,
+            alpha: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+            beta: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+            gamma: Union[MX, float, np.float64, np.ndarray] = np.pi / 2,
+            length: Union[MX, float, np.float64, np.ndarray] = None,
+            mass: Union[MX, float, np.float64, np.ndarray] = None,
+            center_of_mass: Union[MX, np.ndarray] = None,
+            inertia: Union[MX, np.ndarray] = None,
+            inertial_transformation_matrix: TransformationMatrixType = TransformationMatrixType.Buv,
+            index: int = None,
+            is_ground: bool = False,
     ):
         cls._angle_sanity_check(alpha, beta, gamma)
 
@@ -188,8 +189,8 @@ class NaturalSegment(AbstractNaturalSegment):
 
     @classmethod
     def from_experimental_Q(
-        cls,
-        Qi: SegmentNaturalCoordinates,
+            cls,
+            Qi: SegmentNaturalCoordinates,
     ) -> "NaturalSegment":
         """
         Parameters
@@ -267,9 +268,9 @@ class NaturalSegment(AbstractNaturalSegment):
         ).T
 
     def segment_coordinates_system(
-        self,
-        Q: SegmentNaturalCoordinates,
-        transformation_matrix_type: TransformationMatrixType | str = None,
+            self,
+            Q: SegmentNaturalCoordinates,
+            transformation_matrix_type: TransformationMatrixType | str = None,
     ) -> HomogeneousTransform:
         """
         This function computes the segment coordinates from the natural coordinates
@@ -332,12 +333,12 @@ class NaturalSegment(AbstractNaturalSegment):
         phir = MX.zeros(6)
         u, v, w = Qi.to_uvw()
 
-        phir[0] = sum1(u**2) - 1
+        phir[0] = sum1(u ** 2) - 1
         phir[1] = dot(u, v) - self.length * cos(self.gamma)
         phir[2] = dot(u, w) - cos(self.beta)
-        phir[3] = sum1(v**2) - self.length**2
+        phir[3] = sum1(v ** 2) - self.length ** 2
         phir[4] = dot(v, w) - self.length * cos(self.alpha)
-        phir[5] = sum1(w**2) - 1
+        phir[5] = sum1(w ** 2) - 1
 
         return phir
 
@@ -377,9 +378,9 @@ class NaturalSegment(AbstractNaturalSegment):
         return Kr
 
     def rigid_body_constraint_derivative(
-        self,
-        Qi: SegmentNaturalCoordinates,
-        Qdoti: SegmentNaturalVelocities,
+            self,
+            Qi: SegmentNaturalCoordinates,
+            Qdoti: SegmentNaturalVelocities,
     ) -> MX:
         """
         This function returns the derivative of the rigid body constraints denoted Phi_r_dot
@@ -456,10 +457,10 @@ class NaturalSegment(AbstractNaturalSegment):
         return (self.natural_center_of_mass.interpolate().T * self.mass) @ MX([0, 0, -9.81])
 
     def differential_algebraic_equation(
-        self,
-        Qi: Union[SegmentNaturalCoordinates, np.ndarray],
-        Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
-        stabilization: dict = None,
+            self,
+            Qi: Union[SegmentNaturalCoordinates, np.ndarray],
+            Qdoti: Union[SegmentNaturalVelocities, np.ndarray],
+            stabilization: dict = None,
     ) -> Tuple[SegmentNaturalAccelerations, np.ndarray]:
         """
         This function returns the differential algebraic equation of the segment
@@ -534,11 +535,11 @@ class NaturalSegment(AbstractNaturalSegment):
         self._vectors.add(vector)
 
     def add_natural_vector_from_segment_coordinates(
-        self,
-        name: str,
-        direction: np.ndarray,
-        normalize: bool = True,
-        transformation_matrix_type: TransformationMatrixType = None,
+            self,
+            name: str,
+            direction: np.ndarray,
+            normalize: bool = True,
+            transformation_matrix_type: TransformationMatrixType = None,
     ):
         """
         Add a new marker to the segment
@@ -602,13 +603,13 @@ class NaturalSegment(AbstractNaturalSegment):
         self._markers.add(marker)
 
     def add_natural_marker_from_segment_coordinates(
-        self,
-        name: str,
-        location: np.ndarray,
-        is_distal_location: bool = False,
-        is_technical: bool = True,
-        is_anatomical: bool = False,
-        transformation_matrix_type: TransformationMatrixType = None,
+            self,
+            name: str,
+            location: np.ndarray,
+            is_distal_location: bool = False,
+            is_technical: bool = True,
+            is_anatomical: bool = False,
+            transformation_matrix_type: TransformationMatrixType = None,
     ):
         """
         Add a new marker to the segment
@@ -646,7 +647,7 @@ class NaturalSegment(AbstractNaturalSegment):
         return self._markers.positions(Qi)
 
     def marker_constraints(
-        self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
+            self, marker_locations: np.ndarray, Qi: SegmentNaturalCoordinates, only_technical: bool = True
     ) -> MX:
         return self._markers.constraints(marker_locations, Qi, only_technical)
 
@@ -686,11 +687,11 @@ class NaturalSegment(AbstractNaturalSegment):
         return 0.5 * transpose(Qdoti.to_array()) @ (self.mass_matrix @ Qdoti.to_array())
 
     def inverse_dynamics(
-        self,
-        Qi: SegmentNaturalCoordinates,
-        Qddoti: SegmentNaturalAccelerations,
-        subtree_intersegmental_generalized_forces: MX,
-        segment_external_forces: MX,
+            self,
+            Qi: SegmentNaturalCoordinates,
+            Qddoti: SegmentNaturalAccelerations,
+            subtree_intersegmental_generalized_forces: MX,
+            segment_external_forces: MX,
     ) -> tuple[MX, MX, MX]:
         proximal_interpolation_matrix = NaturalVector.proximal().interpolate()
         pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
@@ -702,10 +703,10 @@ class NaturalSegment(AbstractNaturalSegment):
         )
 
         b = (
-            (self.mass_matrix @ Qddoti)
-            - self.gravity_force()
-            - segment_external_forces
-            - subtree_intersegmental_generalized_forces
+                (self.mass_matrix @ Qddoti)
+                - self.gravity_force()
+                - segment_external_forces
+                - subtree_intersegmental_generalized_forces
         )
         # compute the generalized forces
         # x = A^-1 * b

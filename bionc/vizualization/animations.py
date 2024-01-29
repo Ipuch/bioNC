@@ -1,6 +1,7 @@
 """
 Example script for animating markers
 """
+
 from enum import Enum
 import time
 

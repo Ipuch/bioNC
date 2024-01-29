@@ -1,7 +1,8 @@
+from typing import Union, Tuple
+
 import numpy as np
 from casadi import MX
 from casadi import cos, transpose, vertcat, inv, dot, sum1, horzcat, solve
-from typing import Union, Tuple
 
 from .homogenous_transform import HomogeneousTransform
 from .natural_accelerations import SegmentNaturalAccelerations
@@ -289,8 +290,14 @@ class NaturalSegment(AbstractNaturalSegment):
         if not isinstance(Q, SegmentNaturalCoordinates):
             Q = SegmentNaturalCoordinates(Q)
 
+        transformation_matrix_inverse = transpose(self.compute_transformation_matrix(transformation_matrix_type))
+        transformation_matrix_inverse = inv(transformation_matrix_inverse)
+        transformation_matrix_inverse = to_numeric_MX(transformation_matrix_inverse)
+
         return HomogeneousTransform.from_rt(
-            rotation=self.compute_transformation_matrix(transformation_matrix_type) @ horzcat(Q.u, Q.v, Q.w),
+            # rotation=self.compute_transformation_matrix(transformation_matrix_type) @ horzcat(Q.u, Q.v, Q.w),
+            # NOTE: I would like to make numerical inversion disappear and the transpose too, plz implement analytical inversion.
+            rotation=horzcat(Q.u, Q.v, Q.w) @ transformation_matrix_inverse,
             translation=Q.rp,
         )
 

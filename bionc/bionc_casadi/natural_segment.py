@@ -290,13 +290,19 @@ class NaturalSegment(AbstractNaturalSegment):
         if not isinstance(Q, SegmentNaturalCoordinates):
             Q = SegmentNaturalCoordinates(Q)
 
+        transformation_matrix_inverse = transpose(self.compute_transformation_matrix(transformation_matrix_type))
+        transformation_matrix_inverse = inv(transformation_matrix_inverse)
+        transformation_matrix_inverse = to_numeric_MX(transformation_matrix_inverse)
+
         return HomogeneousTransform.from_rt(
-            rotation=self.compute_transformation_matrix(transformation_matrix_type) @ horzcat(Q.u, Q.v, Q.w),
+            # rotation=self.compute_transformation_matrix(transformation_matrix_type) @ horzcat(Q.u, Q.v, Q.w),
+            # NOTE: I would like to make numerical inversion disappear and the transpose too, plz implement analytical inversion.
+            rotation=horzcat(Q.u, Q.v, Q.w) @ transformation_matrix_inverse,
             translation=Q.rp,
         )
 
     def location_from_homogenous_transform(
-        self, T: Union[np.ndarray, HomogeneousTransform]
+            self, T: Union[np.ndarray, HomogeneousTransform]
     ) -> SegmentNaturalCoordinates:
         """
         This function returns the location of the segment in natural coordinate from its homogenous transform

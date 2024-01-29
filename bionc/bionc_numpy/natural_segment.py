@@ -380,8 +380,11 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            rotation=self.compute_transformation_matrix(transformation_matrix_type)
-            @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
+            # rotation=self.compute_transformation_matrix(transformation_matrix_type)
+            # @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
+            rotation=np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1) @
+                    # NOTE: I would like to make numerical inversion disappear and the transpose too x)
+            np.linalg.inv(self.compute_transformation_matrix(transformation_matrix_type).T),
             translation=Q.rp[:, np.newaxis],
         )
 

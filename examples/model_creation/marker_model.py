@@ -3,16 +3,12 @@ from pathlib import Path
 
 import ezc3d
 import numpy as np
+
 from pyomeca import Markers
-from bionc import InverseKinematics, Viz
-from bionc.bionc_numpy.enums import InitialGuessModeType
 
-from bionc.utils.export_c3d_from_bionc_model import (
-    add_natural_coordinate_to_c3d,
-    add_technical_markers_to_c3d,
-    get_points_ezc3d,
-)
-
+"""
+Test the inverse kinematics
+"""
 
 from bionc import (
     Axis,
@@ -30,9 +26,8 @@ from bionc import (
     TransformationMatrixUtil,
     TransformationMatrixType,
     NaturalAxis,
-    NaturalCoordinates,
-    NaturalSegment,
 )
+
 
 def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSIS: np.ndarray) -> tuple:
     """
@@ -119,7 +114,8 @@ def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSI
 
     return rhjc_global, lhjc_global, mid_hjc_global
 
-def model_creation(c3d_filename: str) -> BiomechanicalModel:
+
+def model_creation_markers(c3d_filename: str) -> BiomechanicalModel:
     model = BiomechanicalModelTemplate()
 
     right_hip_joint = lambda m, bio: harrington2007(m["RIAS"], m["LIAS"], m["RIPS"], m["LIPS"])[0]
@@ -130,14 +126,6 @@ def model_creation(c3d_filename: str) -> BiomechanicalModel:
     left_knee_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "LFME", "LFLE")
     left_ankle_joint = lambda m, bio: MarkerTemplate.middle_of(m, bio, "LFAL", "LTAM")
 
-    
-    
-    # vpelvis = lambda m, bio: Axis(
-    #     start=Marker(name="midHip", position=mid_hip_joint(m, bio)), end=Marker(name="TV12", position=m["TV12"])
-    # ).axis()
-
-
-    # modèle basé sur la table de Raphaël et ce qu'on ferait classiquement avec des marqueurs
     model["PELVIS"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisTemplate(
@@ -150,29 +138,6 @@ def model_creation(c3d_filename: str) -> BiomechanicalModel:
         )
     )
 
-    # modèle basé sur le markerless
-    # midSAT = lambda m, bio: MarkerTemplate.middle_of(m, bio, "RSAT", "LSAT") # milieu des acromions
-    # vpelvis = lambda m, bio: Axis(
-    #     start=Marker(name="midHip", position=mid_hip_joint(m, bio)),  end=Marker(name="midSAT", position=midSAT(m,bio))
-    # ).axis()
-    # wpelvis = lambda m, bio: Axis(
-    #     start=Marker(name="leftHip", position=left_hip_joint(m, bio)), end=Marker(name="rightHip", position=right_hip_joint(m,bio))
-    # ).axis()
-    # model["PELVIS"] = SegmentTemplate(
-    #     natural_segment=NaturalSegmentTemplate(
-    #         u_axis=AxisFunctionTemplate(
-    #             function=lambda m, bio: AxisTemplate.normalized_cross_product(m, bio, vpelvis(m, bio), wpelvis(m, bio))
-    #         ),
-    #         proximal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RIPS", "LIPS"),
-    #         distal_point=lambda m, bio: mid_hip_joint(m, bio),
-
-    #         w_axis=AxisTemplate(start=left_hip_joint, end=right_hip_joint),
-    #     )
-    # )
-
-
-    model["PELVIS"].add_marker(MarkerTemplate(name="RSAT", parent_name="PELVIS", is_technical=True))
-    model["PELVIS"].add_marker(MarkerTemplate(name="LSAT", parent_name="PELVIS", is_technical=True))
     model["PELVIS"].add_marker(MarkerTemplate(name="RIAS", parent_name="PELVIS", is_technical=True))
     model["PELVIS"].add_marker(MarkerTemplate(name="LIAS", parent_name="PELVIS", is_technical=True))
     model["PELVIS"].add_marker(MarkerTemplate(name="RIPS", parent_name="PELVIS", is_technical=True))
@@ -198,7 +163,6 @@ def model_creation(c3d_filename: str) -> BiomechanicalModel:
                 function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_hip_joint(m, bio), "RFLE", "RFME")
             ),
             proximal_point=right_hip_joint,
-            # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RFLE", "RFME"),
             w_axis=AxisTemplate(start="RFME", end="RFLE"),
         )
@@ -227,7 +191,6 @@ def model_creation(c3d_filename: str) -> BiomechanicalModel:
                 function=lambda m, bio: MarkerTemplate.normal_to(m, bio, left_hip_joint(m, bio), "LFME", "LFLE")
             ),
             proximal_point=left_hip_joint,
-            # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "LFLE", "LFME"),
             w_axis=AxisTemplate(start="LFLE", end="LFME"),
         )
@@ -256,7 +219,6 @@ def model_creation(c3d_filename: str) -> BiomechanicalModel:
                 function=lambda m, bio: MarkerTemplate.normal_to(m, bio, right_knee_joint(m, bio), "RFAL", "RTAM")
             ),
             proximal_point=right_knee_joint,
-            # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
             distal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "RFAL", "RTAM"),
             w_axis=AxisTemplate(start="RTAM", end="RFAL"),
         )
@@ -352,7 +314,7 @@ def model_creation(c3d_filename: str) -> BiomechanicalModel:
         parent="PELVIS",
         child="RTHIGH",
         parent_point="RIGHT_HIP_JOINT",
-        child_point = "RIGHT_HIP_CENTER",
+        child_point="RIGHT_HIP_CENTER",
         projection_basis=EulerSequence.ZXY,
         parent_basis=TransformationMatrixType.Bwu,
         child_basis=TransformationMatrixType.Buv,
@@ -364,7 +326,7 @@ def model_creation(c3d_filename: str) -> BiomechanicalModel:
         parent="PELVIS",
         child="LTHIGH",
         parent_point="LEFT_HIP_JOINT",
-        child_point = "LEFT_HIP_CENTER",
+        child_point="LEFT_HIP_CENTER",
         projection_basis=EulerSequence.ZXY,
         parent_basis=TransformationMatrixType.Bwu,
         child_basis=TransformationMatrixType.Buv,
@@ -429,65 +391,133 @@ def model_creation(c3d_filename: str) -> BiomechanicalModel:
 
     return natural_model
 
-def generate_c3d_angles(angles, name_file_export):
+
+def generate_c3d_file():
+    """
+    This function generates a c3d file with full body open pose markerset
+    This is made to not  overload the repository with a c3d file
+
+    Returns
+    -------
+    c3d: ezc3d.c3d
+        The c3d file
+    """
+    # Load an empty c3d structure
     c3d = ezc3d.c3d()
-    angles_name = [
-        "pelvis",
-        # "torso",
-        "r_hip",
-        "l_hip",
-        "r_knee",
-        "l_knee",
-        "r_ankle",
-        "l_ankle",
-        # "r_shoulder",
-        # "l_shoulder",
-        # "r_elbow",
-        # "l_elbow",
-    ]
-    size = angles.shape[2]
-    nb_joints = angles.shape[1]
 
-    anglesc3d = np.ones([4, len(angles_name), size])
-    for i in range(3):
-        for j in range(len(angles_name)):
-            anglesc3d[i, j, :] = angles[i, j, :]
+    marker_tuple = (
+        "RIAS",
+        "LIAS",
+        "RIPS",
+        "LIPS",
+        "RFLE",
+        "RFME",
+        "LFLE",
+        "LFME",
+        "RFAL",
+        "RTAM",
+        "LFAL",
+        "LTAM",
+        "RFCC",
+        "RFM1",
+        "RFM5",
+        "LFCC",
+        "LFM1",
+        "LFM5",
+    )
 
-    c3d["data"]["points"] = anglesc3d
-    c3d["parameters"]["POINT"]["RATE"]["value"] = [60]
-    c3d["parameters"]["POINT"]["LABELS"]["value"] = angles_name
-    c3d.write(name_file_export)
+    # Fill it with random data
+    c3d["parameters"]["POINT"]["RATE"]["value"] = [300]
+    c3d["parameters"]["POINT"]["LABELS"]["value"] = marker_tuple
+    c3d["parameters"]["POINT"]["UNITS"]["value"] = ["m"]
+
+    c3d["data"]["points"] = np.ones((4, len(marker_tuple), 2))
+    c3d["data"]["points"][:3, :, :] = np.array(
+        [
+            [
+                [-0.99512893, -0.99511677],
+                [-1.02508819, -1.0245254],
+                [-1.1552875, -1.15531087],
+                [-1.16930199, -1.169083],
+                [-1.07241082, -1.0696162],
+                [-1.08410621, -1.08112752],
+                [-0.94997555, -0.95119309],
+                [-0.96873051, -0.96978855],
+                [-1.35851967, -1.35799468],
+                [-1.3114084, -1.3112303],
+                [-0.97949064, -0.98210907],
+                [-0.92955995, -0.93213236],
+                [-1.39764822, -1.39714336],
+                [-1.23721457, -1.23893678],
+                [-1.28200543, -1.28266609],
+                [-1.01061773, -1.01343119],
+                [-0.8215977, -0.82410777],
+                [-0.86654609, -0.86893791],
+            ],
+            [
+                [-0.08428027, -0.08365151],
+                [0.16915414, 0.16987239],
+                [-0.04029829, -0.03917728],
+                [0.0741705, 0.07526213],
+                [-0.10409034, -0.10354505],
+                [0.00659003, 0.00701484],
+                [0.1593492, 0.15984261],
+                [0.05167168, 0.05210308],
+                [-0.13896838, -0.13885656],
+                [-0.07625225, -0.07610498],
+                [0.16105932, 0.16058722],
+                [0.09675215, 0.0964836],
+                [-0.09523564, -0.09531972],
+                [-0.09987623, -0.09949642],
+                [-0.16837367, -0.167971],
+                [0.13030158, 0.12955573],
+                [0.11789952, 0.11763644],
+                [0.18628153, 0.18631244],
+            ],
+            [
+                [0.92126387, 0.92181492],
+                [0.95468545, 0.95495188],
+                [0.98916602, 0.98961705],
+                [1.00039744, 1.00072575],
+                [0.46156183, 0.46162155],
+                [0.43770415, 0.43769968],
+                [0.48856014, 0.48850757],
+                [0.47824231, 0.47793096],
+                [0.12470137, 0.12716728],
+                [0.10742468, 0.10935797],
+                [0.05826186, 0.05896187],
+                [0.07246689, 0.07210413],
+                [0.12971023, 0.13277037],
+                [0.03050142, 0.03068059],
+                [0.03568999, 0.03723054],
+                [0.0399006, 0.04101478],
+                [0.03398312, 0.03370571],
+                [0.02054886, 0.02053879],
+            ],
+        ]
+    )
+
+    # Write the c3d file
+    filename = f"{Path(__file__).parent.resolve()}/statref_markers.c3d"
+    c3d.write(filename)
+
+    return filename
+
 
 def main():
-    num_mouv = 6
-    mouv = ['bend', 'cmjs', 'lufe', 'luyo', 'stai', 'stsk', 'walk']
-    filename =  "D:/Users/chaumeil/these/DATA_ESB/"+ mouv[num_mouv]+ "/subject05_"+mouv[num_mouv]+"_m.c3d"
-    c3d_data = ezc3d.c3d(filename)
-    nb_frames = c3d_data["data"]["points"].shape[2]
-    
-    model = model_creation(filename)
-    markers_xp = Markers.from_c3d(filename, usecols=model.marker_names_technical).to_numpy()
-    Q_initialize = model.Q_from_markers(markers_xp[:, :, :])
+    # create a c3d file with data
+    filename = generate_c3d_file()
+    # Create the model from a c3d file and markers as template
+    model = model_creation_markers(filename)
 
-    ik_solver = InverseKinematics(
-        model,
-        experimental_markers=markers_xp[0:3, :, :],
-        solve_frame_per_frame=True,
-        active_direct_frame_constraints=True,
-    )
-    Q_sol = ik_solver.solve(Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt")
-    angles = np.zeros((3, 7, nb_frames))
-    for i in range(nb_frames):
-        angles[:, :, i] = (
-            model.natural_coordinates_to_joint_angles(NaturalCoordinates(Q_sol[:, i])) * 180 / (np.pi)
-        )
+    # load experimental markers
+    markers_xp = Markers.from_c3d(filename).to_numpy()
 
-    generate_c3d_angles(angles, "D:/Users/chaumeil/these/DATA_ESB/"+ mouv[num_mouv]+ "/angles_markers.c3d")
+    # remove the c3d file
+    os.remove(filename)
 
-    acq = ezc3d.c3d(filename)
-    add_natural_coordinate_to_c3d(acq, model, Q_sol)
-    acq.write("D:/Users/chaumeil/these/DATA_ESB/"+ mouv[num_mouv]+ "/Q_markers.c3d")
-
+    # dump the model in a pickle format
+    model.save("../models/lower_limb.nc")
 
 
 if __name__ == "__main__":

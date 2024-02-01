@@ -256,10 +256,7 @@ class InverseKinematics:
 
             if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS and self._frame_per_frame == False:
                 raise ValueError("Please set frame_per_frame to True")
-
-            frame_slice = (
-                slice(0, 1) if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS else slice(None)
-            )
+            frame_slice = slice(None)
 
             return self.model.Q_from_markers(experimental_markers[:, :, frame_slice])
 
@@ -280,8 +277,6 @@ class InverseKinematics:
         if initial_guess_mode == InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY:
             if Q_init is None:
                 raise ValueError("Please provide Q_init if you want to use USER_PROVIDED_FIRST_FRAME_ONLY mode.")
-            if len(Q_init.squeeze().shape) > 1:
-                raise ValueError("Please provide only the first frame for Q_init.")
             if self._frame_per_frame == False:
                 raise ValueError("Either, set frame_per_frame == True or use InitialGuessModeType.USER_PROVIDED.")
 

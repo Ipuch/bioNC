@@ -44,7 +44,9 @@ The easiest way to learn bionc is to dive into it.
 So let's build our first model.
 Please note that this tutorial is designed to recreate example which builds a lower limb model (Pelvis, Thigh, Shank, Foot). You can have look to [https://github.com/Ipuch/bioNC/blob/main/examples/model_creation/main.py](https://github.com/Ipuch/bioNC/blob/main/examples/model_creation/main.py)
 
-<img src="./docs/inverse_kinematics_viz.png" alt="Inverse kinematics" width="200"/>
+<div style="text-align: center;">
+    <img src="./docs/model_creation_viz.png" alt="Model creation" width="400" />
+</div>
 
 
 # Mathematical backends

@@ -17,12 +17,12 @@ from ..protocols.natural_coordinates import SegmentNaturalCoordinates, NaturalCo
 class NaturalVectorColors(Enum):
     """Colors for the vectors."""
 
-    #  magenta
-    U = (255, 0, 255)
     # yellow
-    V = (255, 255, 0)
+    U = (255, 255, 0)
     # cyan
-    W = (0, 255, 255)
+    V = (0, 255, 255)
+    #  magenta
+    W = (255, 0, 255)
 
 
 class VectorColors(Enum):

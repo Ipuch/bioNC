@@ -38,8 +38,8 @@ class VectorColors(Enum):
 
 class LocalFrame:
     def __init__(
-            self,
-            normalized: bool = False,
+        self,
+        normalized: bool = False,
     ):
         self.three_vectors = [self.vtk_vector_model(color) for color in NaturalVectorColors]
         self.normalized = normalized
@@ -91,17 +91,17 @@ def update_natural_mesh(Q: NaturalCoordinates):
 
 class RerunViz:
     def __init__(
-            self,
-            model: BiomechanicalModel,
-            show_ground_frame: bool = True,
-            show_frames: bool = True,
-            show_model_markers: bool = True,
-            show_xp_markers: bool = True,
-            show_center_of_mass: bool = True,
-            show_joints: bool = True,
-            size_model_marker: bool = 0.01,
-            size_xp_marker: bool = 0.01,
-            show_natural_mesh: bool = False,
+        self,
+        model: BiomechanicalModel,
+        show_ground_frame: bool = True,
+        show_frames: bool = True,
+        show_model_markers: bool = True,
+        show_xp_markers: bool = True,
+        show_center_of_mass: bool = True,
+        show_joints: bool = True,
+        size_model_marker: bool = 0.01,
+        size_xp_marker: bool = 0.01,
+        show_natural_mesh: bool = False,
     ):
         """
         This class is used to visualize the biomechanical model.
@@ -161,8 +161,9 @@ class RerunViz:
                     )
 
         if self.show_natural_mesh:
-            self.mesh_options = dict(patch_color=[(0, 0.5, 0.8) for _ in range(self.model.nb_segments)],
-                                     mesh_opacity=0.5)
+            self.mesh_options = dict(
+                patch_color=[(0, 0.5, 0.8) for _ in range(self.model.nb_segments)], mesh_opacity=0.5
+            )
 
     def animate(self, Q: NaturalCoordinates | np.ndarray, markers_xp=None, frame_rate=None):
         """
@@ -244,23 +245,26 @@ class RerunViz:
 
             if self.show_frames:
                 for s in range(Q.nb_qi()):
-                    qi = Q.vector(s)[:, i: i + 1]
+                    qi = Q.vector(s)[:, i : i + 1]
                     display_frame(
                         animation_id=self.animation_name + f"/local_frame_{self.model.segment_names[s]}",
                         scale=[0.3, 1, 0.3],
                         timeless=False,
                         homogenous_transform=np.concatenate(
                             (qi.u[:, np.newaxis], qi.v[:, np.newaxis], qi.w[:, np.newaxis], qi.rp[:, np.newaxis]),
-                            axis=1),
+                            axis=1,
+                        ),
                         colors=[NaturalVectorColors.U.value, NaturalVectorColors.V.value, NaturalVectorColors.W.value],
                         axes=["U", "V", "W"],
                     )
-                    rr.log(self.animation_name + f"/strip_{self.model.segment_names[s]}",
-                           rr.LineStrips3D(
-                               [(qi.rp, qi.rd)],
-                               colors=[[(0, 0, 0)]],
-                               radii=[0.005],
-                           ))
+                    rr.log(
+                        self.animation_name + f"/strip_{self.model.segment_names[s]}",
+                        rr.LineStrips3D(
+                            [(qi.rp, qi.rd)],
+                            colors=[[(0, 0, 0)]],
+                            radii=[0.005],
+                        ),
+                    )
 
             if self.show_center_of_mass:
                 print()
@@ -281,12 +285,12 @@ class RerunViz:
                 #     self.vtkJoints.update_ligament(all_ligament)
 
             if self.show_natural_mesh:
-                meshes = update_natural_mesh(Q[:, i: i + 1])
+                meshes = update_natural_mesh(Q[:, i : i + 1])
                 for j, mesh in enumerate(meshes):
                     mesh3d = rr.Mesh3D(
-                        vertex_positions=mesh['vertex'][:, :, 0].T,
-                        indices=mesh['triangles'],
-                        vertex_colors=np.tile(self.mesh_options["patch_color"][j], (mesh['vertex'].shape[1], 1)),
+                        vertex_positions=mesh["vertex"][:, :, 0].T,
+                        indices=mesh["triangles"],
+                        vertex_colors=np.tile(self.mesh_options["patch_color"][j], (mesh["vertex"].shape[1], 1)),
                     )
                     rr.log(self.animation_name + f"/natural_mesh_{j}", mesh3d)
 

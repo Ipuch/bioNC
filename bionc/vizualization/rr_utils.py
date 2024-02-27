@@ -3,9 +3,12 @@ import rerun as rr
 
 
 def display_frame(
-        animation_id, scale: list[float] = 1, timeless: str = True, homogenous_transform: np.ndarray = None,
-        colors: list[tuple] = None,
-        axes: list[str] = None,
+    animation_id,
+    scale: list[float] = 1,
+    timeless: str = True,
+    homogenous_transform: np.ndarray = None,
+    colors: list[tuple] = None,
+    axes: list[str] = None,
 ) -> None:
     """Display the world reference frame"""
 

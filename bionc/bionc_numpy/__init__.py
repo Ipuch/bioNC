@@ -17,7 +17,7 @@ from .joints import Joint
 from .joints_with_ground import GroundJoint
 from .natural_vector import NaturalVector
 from .inverse_kinematics import InverseKinematics
-from .external_force import ExternalForceList, ExternalForce
+from .external_force import ExternalForceSet, ExternalForce
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .natural_inertial_parameters import NaturalInertialParameters
 from .transformation_matrix import compute_transformation_matrix

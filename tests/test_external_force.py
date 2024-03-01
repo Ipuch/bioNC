@@ -18,7 +18,7 @@ import numpy as np
 )
 def test_external_force(bionc_type, external_force_tuple):
     from bionc.bionc_numpy import (
-        ExternalForceList,
+        ExternalForceSet,
         ExternalForce,
         SegmentNaturalCoordinates,
         NaturalCoordinates,
@@ -29,7 +29,7 @@ def test_external_force(bionc_type, external_force_tuple):
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/forward_dynamics/pendulum_with_force.py")
 
-    fext = ExternalForceList.empty_from_nb_segment(1)
+    fext = ExternalForceSet.empty_from_nb_segment(1)
     force1 = ExternalForce.from_components(
         force=external_force_tuple[0],
         torque=external_force_tuple[1],
@@ -62,7 +62,7 @@ def test_external_force(bionc_type, external_force_tuple):
 def test_external_force(bionc_type):
     if bionc_type == "numpy":
         from bionc.bionc_numpy import (
-            ExternalForceList,
+            ExternalForceSet,
             ExternalForce,
             SegmentNaturalCoordinates,
             NaturalCoordinates,
@@ -71,7 +71,7 @@ def test_external_force(bionc_type):
         )
     else:
         from bionc.bionc_casadi import (
-            ExternalForceList,
+            ExternalForceSet,
             ExternalForce,
             SegmentNaturalCoordinates,
             NaturalCoordinates,
@@ -95,7 +95,7 @@ def test_external_force(bionc_type):
     TestUtils.assert_equal(force2.torque, np.array([0.14, 0.15, 0.16]))
     TestUtils.assert_equal(force2.force, np.array([0.11, 0.12, 0.13]))
 
-    fext = ExternalForceList.empty_from_nb_segment(3)
+    fext = ExternalForceSet.empty_from_nb_segment(3)
     fext.add_external_force(external_force=force1, segment_index=0)
     fext.add_external_force(external_force=force2, segment_index=2)
 

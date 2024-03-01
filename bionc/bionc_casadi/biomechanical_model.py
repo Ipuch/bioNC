@@ -1,19 +1,46 @@
 import numpy as np
 from casadi import MX, transpose, horzcat, vertcat, solve
-import pickle
+from typing import Any
 
+from .biomechanical_model_joints import BiomechanicalModelJoints
+from .biomechanical_model_markers import BiomechanicalModelMarkers
+from .biomechanical_model_segments import BiomechanicalModelSegments
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
+from .external_force import ExternalForceSet, ExternalForce
+from .natural_accelerations import NaturalAccelerations
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
-from .natural_accelerations import NaturalAccelerations
-from ..protocols.biomechanical_model import GenericBiomechanicalModel
-from .external_force import ExternalForceList, ExternalForce
 from .rotations import euler_axes_from_rotation_matrices, euler_angles_from_rotation_matrix
-from .cartesian_vector import vector_projection_in_non_orthogonal_basis
+from ..protocols.biomechanical_model import GenericBiomechanicalModel
 
 
 class BiomechanicalModel(GenericBiomechanicalModel):
-    def __init__(self):
-        super().__init__()
+    """
+
+    Attributes
+    ----------
+    _numpy_model : NumpyBiomechanicalModel
+        The numpy model from which the casadi model is built
+
+    Methods
+    -------
+    set_numpy_model(numpy_model: BiomechanicalModel)
+        Set the numpy model from which the casadi model is built
+    numpy_model
+        Return the numpy model from which the casadi model is built
+    express_joint_torques_in_euler_basis
+        This function returns the joint torques expressed in the euler basis
+    """
+
+    def __init__(
+        self,
+        segments: dict[str, Any] | BiomechanicalModelSegments = None,
+        joints: dict[str, Any] | BiomechanicalModelJoints = None,
+    ):
+        segments = BiomechanicalModelSegments() if segments is None else segments
+        joints = BiomechanicalModelJoints() if joints is None else joints
+        markers = BiomechanicalModelMarkers(segments=segments)
+        super().__init__(segments=segments, joints=joints, markers=markers)
         self._numpy_model = None
 
     def set_numpy_model(self, numpy_model: GenericBiomechanicalModel):
@@ -39,188 +66,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         #     model = pickle.load(file)
         #
         # return model
-
-    def rigid_body_constraints(self, Q: NaturalCoordinates) -> MX:
-        """
-        This function returns the rigid body constraints of all segments, denoted Phi_r
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        MX
-            Rigid body constraints of the segment [6 * nb_segments, 1]
-        """
-
-        Phi_r = MX.zeros(6 * self.nb_segments)
-        for i, segment in enumerate(self.segments_no_ground.values()):
-            idx = slice(6 * i, 6 * (i + 1))
-            Phi_r[idx] = segment.rigid_body_constraint(Q.vector(i))
-
-        return Phi_r
-
-    def rigid_body_constraints_derivative(self, Q: NaturalCoordinates, Qdot: NaturalCoordinates) -> MX:
-        """
-        This function returns the derivative of the rigid body constraints of all segments, denoted Phi_r_dot
-        as a function of the natural coordinates Q and Qdot.
-
-        Returns
-        -------
-        MX
-            Derivative of the rigid body constraints of the segment [6 * nb_segments, 1]
-        """
-
-        Phi_r_dot = MX.zeros(6 * self.nb_segments)
-        for i, segment in enumerate(self.segments_no_ground.values()):
-            idx = slice(6 * i, 6 * (i + 1))
-            Phi_r_dot[idx] = segment.rigid_body_constraint_derivative(Q.vector(i), Qdot.vector(i))
-
-        return Phi_r_dot
-
-    def rigid_body_constraints_jacobian(self, Q: NaturalCoordinates) -> MX:
-        """
-        This function returns the rigid body constraints of all segments, denoted K_r
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        MX
-            Rigid body constraints of the segment [6 * nb_segments, nbQ]
-        """
-
-        K_r = MX.zeros((6 * self.nb_segments, Q.shape[0]))
-        for i, segment in enumerate(self.segments_no_ground.values()):
-            idx_row = slice(6 * i, 6 * (i + 1))
-            idx_col = slice(12 * i, 12 * (i + 1))
-            K_r[idx_row, idx_col] = segment.rigid_body_constraint_jacobian(Q.vector(i))
-
-        return K_r
-
-    def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
-        """
-        This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot
-
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-        MX
-            The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
-        """
-
-        Kr_dot = MX.zeros((6 * self.nb_segments, Qdot.shape[0]))
-        for i, segment in enumerate(self.segments_no_ground.values()):
-            idx_row = slice(6 * i, 6 * (i + 1))
-            idx_col = slice(12 * i, 12 * (i + 1))
-            Kr_dot[idx_row, idx_col] = segment.rigid_body_constraint_jacobian_derivative(Qdot.vector(i))
-
-        return Kr_dot
-
-    def joint_constraints(self, Q: NaturalCoordinates) -> MX:
-        """
-        This function returns the joint constraints of all joints, denoted Phi_k
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        np.ndarray
-            Joint constraints of the segment [nb_joint_constraints, 1]
-        """
-
-        Phi_k = MX.zeros(self.nb_joint_constraints)
-        nb_constraints = 0
-        for joint_name, joint in self.joints_with_constraints.items():
-            idx = slice(nb_constraints, nb_constraints + joint.nb_constraints)
-
-            Q_parent = (
-                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
-            )  # if the joint is a joint with the ground, the parent is None
-            Q_child = Q.vector(self.segments[joint.child.name].index)
-            Phi_k[idx] = joint.constraint(Q_parent, Q_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
-
-        return Phi_k
-
-    def joint_constraints_jacobian(self, Q: NaturalCoordinates) -> np.ndarray:
-        """
-        This function returns the joint constraints of all joints, denoted K_k
-        as a function of the natural coordinates Q.
-
-        Returns
-        -------
-        np.ndarray
-            Joint constraints of the segment [nb_joint_constraints, nbQ]
-        """
-
-        K_k = MX.zeros((self.nb_joint_constraints, Q.shape[0]))
-        nb_constraints = 0
-        for joint_name, joint in self.joints_with_constraints.items():
-            idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
-
-            idx_col_child = slice(
-                12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
-            )
-            idx_col_parent = slice(
-                12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
-            )
-
-            Q_parent = (
-                None if joint.parent is None else Q.vector(self.segments[joint.parent.name].index)
-            )  # if the joint is a joint with the ground, the parent is None
-            Q_child = Q.vector(self.segments[joint.child.name].index)
-
-            if joint.parent is not None:  # If the joint is not a ground joint
-                K_k[idx_row, idx_col_parent] = joint.parent_constraint_jacobian(Q_parent, Q_child)
-
-            K_k[idx_row, idx_col_child] = joint.child_constraint_jacobian(Q_parent, Q_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
-
-        return K_k
-
-    def joint_constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
-        """
-        This function returns the derivative of the Jacobian matrix of the joint constraints denoted K_k_dot
-
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-        MX
-            The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
-        """
-
-        K_k_dot = MX.zeros((self.nb_joint_constraints, Qdot.shape[0]))
-        nb_constraints = 0
-        for joint_name, joint in self.joints_with_constraints.items():
-            idx_row = slice(nb_constraints, nb_constraints + joint.nb_constraints)
-
-            idx_col_parent = slice(
-                12 * self.segments[joint.parent.name].index, 12 * (self.segments[joint.parent.name].index + 1)
-            )
-            idx_col_child = slice(
-                12 * self.segments[joint.child.name].index, 12 * (self.segments[joint.child.name].index + 1)
-            )
-
-            Qdot_parent = (
-                None if joint.parent is None else Qdot.vector(self.segments[joint.parent.name].index)
-            )  # if the joint is a joint with the ground, the parent is None
-            Qdot_child = Qdot.vector(self.segments[joint.child.name].index)
-
-            if joint.parent is not None:  # If the joint is not a ground joint
-                K_k_dot[idx_row, idx_col_parent] = joint.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-            K_k_dot[idx_row, idx_col_child] = joint.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-            nb_constraints += self.joints[joint_name].nb_constraints
-
-        return K_k_dot
 
     def _update_mass_matrix(self):
         """
@@ -298,133 +143,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         """
 
         return self.kinetic_energy(Qdot) - self.potential_energy(Q)
-
-    def markers(self, Q: NaturalCoordinates) -> MX:
-        """
-        This function returns the position of the markers of the system as a function of the natural coordinates Q
-        also referred as forward kinematics
-
-        Parameters
-        ----------
-        Q : NaturalCoordinates
-            The natural coordinates of the segment [12 x n, 1]
-
-        Returns
-        -------
-        MX
-            The position of the markers [3, nbMarkers, nbFrames]
-            in the global coordinate system/ inertial coordinate system
-        """
-        markers = MX.zeros((3, self.nb_markers))
-        nb_markers = 0
-        for segment in self.segments_no_ground.values():
-            idx = slice(nb_markers, nb_markers + segment.nb_markers)
-            markers[:, idx] = segment.markers(Q.vector(segment.index))
-            nb_markers += segment.nb_markers
-
-        return markers
-
-    def center_of_mass_position(self, Q: NaturalCoordinates) -> MX:
-        """
-        This function returns the position of the center of mass of each segment as a function of the natural coordinates Q
-
-        Parameters
-        ----------
-        Q : NaturalCoordinates
-            The natural coordinates of the segment [12 x n, 1]
-
-        Returns
-        -------
-        MX
-            The position of the center of mass [3, nbSegments]
-            in the global coordinate system/ inertial coordinate system
-        """
-        com = MX.zeros((3, self.nb_segments))
-        for i, segment in enumerate(self.segments_no_ground.values()):
-            position = segment.center_of_mass_position(Q.vector(i))
-            com[:, i] = position
-
-        return com
-
-    def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool = True) -> MX:
-        """
-        This function returns the marker constraints of all segments, denoted Phi_r
-        as a function of the natural coordinates Q.
-
-        markers : np.ndarray | MX
-           The markers positions [3,nb_markers]
-        Q : NaturalCoordinates
-           The natural coordinates of the segment [12 x n, 1]
-        only_technical : bool
-           If True, only technical markers are considered, by default True,
-           because we only want to use technical markers for inverse kinematics, this choice can be revised.
-
-        Returns
-        -------
-        MX
-           Rigid body constraints of the segment [nb_markers x 3, 1]
-        """
-        if not isinstance(markers, MX):
-            markers = MX(markers)
-
-        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
-        if markers.shape[1] != nb_markers:
-            raise ValueError(
-                f"markers should have {nb_markers} columns. "
-                f"And should include the following markers: "
-                f"{self.marker_names_technical if only_technical else self.marker_names}"
-            )
-
-        phi_m = MX.zeros((nb_markers * 3, 1))
-        marker_count = 0
-
-        for i_segment, segment in enumerate(self.segments_no_ground.values()):
-            nb_segment_markers = segment.nb_markers_technical if only_technical else self.segments[name].nb_markers
-            if nb_segment_markers == 0:
-                continue
-            constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
-            marker_idx = slice(marker_count, marker_count + nb_segment_markers)
-
-            markers_temp = markers[:, marker_idx]
-            phi_m[constraint_idx] = segment.marker_constraints(
-                markers_temp, Q.vector(i_segment), only_technical=only_technical
-            )[
-                :
-            ]  # [:] to flatten the array
-
-            marker_count += nb_segment_markers
-
-        return phi_m
-
-    def markers_constraints_jacobian(self, only_technical: bool = True) -> MX:
-        """
-        This function returns the Jacobian matrix the markers constraints, denoted K_m.
-
-        Parameters
-        ----------
-        only_technical : bool
-            If True, only technical markers are considered, by default True,
-            because we only want to use technical markers for inverse kinematics, this choice can be revised.
-
-        Returns
-        -------
-        MX
-            Joint constraints of the marker [nb_markers x 3, nb_Q]
-        """
-        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
-
-        km = MX.zeros((3 * nb_markers, 12 * self.nb_segments))
-        marker_count = 0
-        for i_segment, segment in enumerate(self.segments_no_ground.values()):
-            nb_segment_markers = segment.nb_markers_technical if only_technical else segment.nb_markers
-            if nb_segment_markers == 0:
-                continue
-            constraint_idx = slice(marker_count * 3, (marker_count + nb_segment_markers) * 3)
-            segment_idx = slice(12 * i_segment, 12 * (i_segment + 1))
-            km[constraint_idx, segment_idx] = segment.markers_jacobian()
-            marker_count += nb_segment_markers
-
-        return km
 
     def holonomic_constraints(self, Q: NaturalCoordinates) -> MX:
         """
@@ -608,11 +326,27 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return weight_vector
 
+    def augmented_mass_matrix(self, Q: NaturalCoordinates) -> MX:
+        """
+        This function returns the augmented mass matrix of the system, that combines the mass matrix
+        and the holonomic constraints jacobian
+
+        Returns
+        -------
+        MX
+            augmented mass matrix of the segment
+        """
+        G = self.mass_matrix
+        K = self.holonomic_constraints_jacobian(Q)
+        upper_augmented_mass_matrix = horzcat(G, K.T)
+        lower_augmented_mass_matrix = horzcat(K, np.zeros((K.shape[0], K.shape[0])))
+        return vertcat(upper_augmented_mass_matrix, lower_augmented_mass_matrix)
+
     def forward_dynamics(
         self,
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
-        external_forces: ExternalForceList = None,
+        external_forces: ExternalForceSet = None,
         # external_forces: ExternalForces
     ):
         """
@@ -624,7 +358,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
-        external_forces : ExternalForceList
+        external_forces : ExternalForceSet
             The list of external forces applied on the system
 
         Returns
@@ -634,44 +368,42 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             lagrange_multipliers : MX
                 The lagrange multipliers [nb_holonomic_constraints, 1]
         """
-        G = self.mass_matrix
-        K = self.holonomic_constraints_jacobian(Q)
-        Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
 
-        external_forces = (
-            ExternalForceList.empty_from_nb_segment(self.nb_segments) if external_forces is None else external_forces
-        )
+        external_forces = self.external_force_set() if external_forces is None else external_forces
         fext = external_forces.to_natural_external_forces(Q)
         # if stabilization is not None:
         #     biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
         #         "beta"
         #     ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
-        # KKT system
+        # augmented system
         # [G, K.T] [Qddot]  = [forces]
         # [K, 0  ] [lambda] = [biais]
-        upper_KKT_matrix = horzcat(G, K.T)
-        lower_KKT_matrix = horzcat(K, np.zeros((K.shape[0], K.shape[0])))
-        KKT_matrix = vertcat(upper_KKT_matrix, lower_KKT_matrix)
+        augmented_mass_matrix = self.augmented_mass_matrix(Q)
 
         forces = self.gravity_forces() + fext
+
+        Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
         biais = -Kdot @ Qdot
         B = vertcat(forces, biais)
 
         # solve the linear system Ax = B with casadi symbolic qr
-        x = solve(KKT_matrix, B, "symbolicqr")
+        x = solve(augmented_mass_matrix, B, "symbolicqr")
         Qddot = x[0 : self.nb_Qddot]
         lagrange_multipliers = x[self.nb_Qddot :]
         return NaturalAccelerations(Qddot), lagrange_multipliers
+
+    def external_force_set(self) -> ExternalForceSet:
+        return ExternalForceSet.empty_from_nb_segment(self.nb_segments)
 
     def inverse_dynamics(
         self,
         Q: NaturalCoordinates,
         Qddot: NaturalAccelerations,
-        external_forces: ExternalForceList = None,
+        external_forces: ExternalForceSet = None,
     ) -> tuple[MX, MX, MX]:
         if external_forces is None:
-            external_forces = ExternalForceList.empty_from_nb_segment(self.nb_segments)
+            external_forces = self.external_force_set()
         else:
             if external_forces.nb_segments != self.nb_segments:
                 raise ValueError(
@@ -698,7 +430,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             )
 
         # last check to verify that the model doesn't contain any closed loop
-        visited_segment = self._depth_first_search(0, visited_segments=None)
+        visited_segment = self._depth_first_search(0)
         if not all(visited_segment):
             raise ValueError(
                 f"The model contains free segments. The inverse dynamics can't be computed."
@@ -728,7 +460,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qddot: NaturalAccelerations,
-        external_forces: ExternalForceList,
+        external_forces: ExternalForceSet,
         segment_index: int = 0,
         visited_segments: list[bool, ...] = None,
         torques: MX = None,
@@ -744,7 +476,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The generalized coordinates of the model
         Qddot: NaturalAccelerations
             The generalized accelerations of the model
-        external_forces: ExternalForceList
+        external_forces: ExternalForceSet
             The external forces applied to the model
         segment_index: int
             The index of the segment to start the search from

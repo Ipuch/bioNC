@@ -1,12 +1,12 @@
-from typing import Callable
 import numpy as np
+from typing import Callable
 
+from bionc import RK4
 from bionc.bionc_numpy import (
     NaturalSegment,
     SegmentNaturalCoordinates,
     SegmentNaturalVelocities,
 )
-from bionc import RK4
 
 
 def drop_the_box(
@@ -125,7 +125,7 @@ def post_computations(segment: NaturalSegment, time_steps: np.ndarray, all_state
 
 if __name__ == "__main__":
     # Let's create a segment
-    my_segment = NaturalSegment(
+    my_segment = NaturalSegment.with_cartesian_inertial_parameters(
         name="box",
         alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
         beta=np.pi / 2,

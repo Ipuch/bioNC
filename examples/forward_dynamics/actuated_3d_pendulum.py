@@ -1,3 +1,5 @@
+import numpy as np
+
 from bionc import (
     BiomechanicalModel,
     SegmentNaturalCoordinates,
@@ -8,21 +10,15 @@ from bionc import (
     JointType,
     EulerSequence,
     TransformationMatrixType,
-    CartesianAxis,
-    NaturalAxis,
-    NaturalMarker,
-    Viz,
     RK4,
-    forward_integration,
 )
-import numpy as np
 
 
 def build_3d_pendulum():
     # Let's create a model
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
-    model["pendulum"] = NaturalSegment(
+    model["pendulum"] = NaturalSegment.with_cartesian_inertial_parameters(
         name="pendulum",
         alpha=np.pi / 2,  # setting alpha, beta, gamma to pi/2 creates a orthogonal coordinate system
         beta=np.pi / 2,

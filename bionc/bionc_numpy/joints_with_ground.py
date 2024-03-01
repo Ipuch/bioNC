@@ -1,12 +1,12 @@
 import numpy as np
 
-from .natural_segment import NaturalSegment
+from .cartesian_vector import CartesianVector
 from .natural_coordinates import SegmentNaturalCoordinates
+from .natural_segment import NaturalSegment
+from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
 from ..protocols.joint import JointBase
 from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
-from .natural_vector import NaturalVector
-from .cartesian_vector import CartesianVector
 
 
 class GroundJoint:
@@ -385,7 +385,7 @@ class GroundJoint:
             JointBase
                 The joint as a mx joint
             """
-            from ..bionc_casadi.joints import Joint as CasadiJoint
+            from ..bionc_casadi.joints_with_ground import GroundJoint as CasadiJoint
 
             return CasadiJoint.Universal(
                 name=self.name,

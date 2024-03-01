@@ -93,7 +93,7 @@ class ExternalForce(ABC):
         """
 
 
-class ExternalForceList(ABC):
+class ExternalForceSet(ABC):
     """
     This class is made to handle all the external forces of each segment, if none are provided, it will be an empty list.
     All segment forces are expressed in natural coordinates to be added to the equation of motion as:
@@ -105,7 +105,7 @@ class ExternalForceList(ABC):
     add_external_force(segment_index, external_force)
         This function adds an external force to the list of external forces.
     empty_from_nb_segment(nb_segment)
-        This function creates an empty ExternalForceList from the number of segments.
+        This function creates an empty ExternalForceSet from the number of segments.
     to_natural_external_forces(Q)
         This function returns the external forces in the natural coordinate format.
     segment_external_forces(segment_index)
@@ -121,7 +121,7 @@ class ExternalForceList(ABC):
     @abstractmethod
     def empty_from_nb_segment(cls, nb_segment: int):
         """
-        Create an empty NaturalExternalForceList from the model size
+        Create an empty NaturalExternalForceSet from the model size
         """
 
     @abstractmethod

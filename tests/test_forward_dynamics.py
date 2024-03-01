@@ -1,10 +1,18 @@
 from sys import platform
+
 import numpy as np
 import pytest
 
 from bionc import TransformationMatrixType
-
 from .utils import TestUtils
+from .utils_constant_forward_dynamics import (
+    G as G_EXPECTED,
+    K as K_EXPECTED,
+    PHIR_DOT as PHIR_DOT_EXPECTED,
+    PHIJ_DOT as PHIJ_DOT_EXPECTED,
+    KDOT as KDOT_EXPECTED,
+    AUGMENTED_MASS_MATRIX as AUGMENTED_MASS_MATRIX_EXPECTED,
+)
 
 
 @pytest.mark.parametrize(
@@ -261,7 +269,21 @@ def test_forward_dynamics_n_pendulum(bionc_type):
 
     Q_init = NaturalCoordinates(np.linspace(0, 0.24, nb_segments * 12))
     Qdot_init = NaturalVelocities(np.linspace(0, 0.02, nb_segments * 12))
+    # inspect each element of the forward dynamics
+    G = model.mass_matrix
+    K = model.holonomic_constraints_jacobian(Q_init)
+    Phirdot = model.rigid_body_constraint_jacobian_derivative(Qdot_init)
+    Phijdot = model.joint_constraints_jacobian_derivative(Qdot_init)
+    Kdot = model.holonomic_constraints_jacobian_derivative(Qdot_init)
+    augmented_mass_matrix = model.augmented_mass_matrix(Q_init)
+    TestUtils.assert_equal(G, G_EXPECTED)
+    TestUtils.assert_equal(K, K_EXPECTED)
+    TestUtils.assert_equal(Phirdot, PHIR_DOT_EXPECTED)
+    TestUtils.assert_equal(Phijdot, PHIJ_DOT_EXPECTED)
+    TestUtils.assert_equal(Kdot, KDOT_EXPECTED)
+    TestUtils.assert_equal(-Kdot @ Qdot_init, -KDOT_EXPECTED @ Qdot_init)
 
+    TestUtils.assert_equal(augmented_mass_matrix, AUGMENTED_MASS_MATRIX_EXPECTED)
     Qddot, lagrange_multipliers = model.forward_dynamics(Q_init, Qdot_init)
 
     if bionc_type == "numpy":

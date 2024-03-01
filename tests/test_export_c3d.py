@@ -1,14 +1,16 @@
 import os
+
+import ezc3d
 import numpy as np
 import pytest
-from bionc.utils.export_c3d_from_bionc_model import (
+from pyomeca import Markers
+
+from bionc.utils.c3d_export_utils import (
     add_natural_coordinate_to_c3d,
     add_technical_markers_to_c3d,
     get_points_ezc3d,
 )
-import ezc3d
 from .utils import TestUtils
-from pyomeca import Markers
 
 
 @pytest.mark.parametrize(

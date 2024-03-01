@@ -11,6 +11,7 @@ from ..bionc_casadi import (
 
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
+from ..utils.c3d_ik_exporter import C3DInverseKinematicsExporter
 
 
 def _mx_to_sx(mx: MX, symbolics: list[MX]) -> SX:
@@ -536,3 +537,9 @@ class InverseKinematics:
             success=success,
         )
         return self.output
+
+    def export_in_c3d(self, filename):
+        c3d_export = C3DInverseKinematicsExporter(model=self.model, filename=filename)
+        c3d_export.add_natural_coordinate(self.Qopt)
+        c3d_export.add_technical_markers(self.Qopt)
+        c3d_export.export(None)

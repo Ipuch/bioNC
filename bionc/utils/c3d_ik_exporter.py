@@ -106,4 +106,4 @@ class C3DInverseKinematicsExporter:
         if newfilename is None:
             newfilename = self.filename[:-4] + "_ik.c3d"
 
-        ezc3d.write(newfilename, self.c3d_file)
+        self.c3d_file.write(newfilename)

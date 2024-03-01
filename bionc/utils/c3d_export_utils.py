@@ -64,13 +64,11 @@ def add_point_from_dictionary(c3d_file, point_to_add: dict):
 
     # Some parameters need to be modified for the c3d to be working
     temp_residuals = np.zeros((1, new_array.shape[1], new_array.shape[2]))
-    temp_residuals[0, : nb_markers, :] = c3d_file["data"]["meta_points"][
-        "residuals"
-    ]
+    temp_residuals[0, :nb_markers, :] = c3d_file["data"]["meta_points"]["residuals"]
     old_camera_mask = c3d_file["data"]["meta_points"]["camera_masks"]
     temp_camera_mask = np.zeros((old_camera_mask.shape[0], new_array.shape[1], old_camera_mask.shape[2]))
     temp_camera_mask[:, :, :] = False
-    temp_camera_mask[:, : nb_markers, :] = old_camera_mask
+    temp_camera_mask[:, :nb_markers, :] = old_camera_mask
     c3d_file["data"]["meta_points"]["residuals"] = temp_residuals
     c3d_file["data"]["meta_points"]["camera_masks"] = temp_camera_mask.astype(dtype=bool)
     c3d_file["data"]["points"] = new_array

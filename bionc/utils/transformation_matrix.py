@@ -38,39 +38,54 @@ class TransformationMatrixUtil:
         """
 
     def to_enum(self) -> TransformationMatrixType:
-        if NaturalAxis.U in self.plane and NaturalAxis.V in self.plane:
-            if self.axis_to_keep == NaturalAxis.U:
-                return TransformationMatrixType.Buv
-            elif self.axis_to_keep == NaturalAxis.V:
-                return TransformationMatrixType.Bvu
+        transformation_matrix_map = {
+            (NaturalAxis.U, NaturalAxis.V, NaturalAxis.U): TransformationMatrixType.Buv,
+            (NaturalAxis.U, NaturalAxis.V, NaturalAxis.V): TransformationMatrixType.Bvu,
+            (NaturalAxis.W, NaturalAxis.U, NaturalAxis.U): TransformationMatrixType.Buw,
+            (NaturalAxis.W, NaturalAxis.U, NaturalAxis.W): TransformationMatrixType.Bwu,
+            (NaturalAxis.V, NaturalAxis.W, NaturalAxis.V): TransformationMatrixType.Bvw,
+            (NaturalAxis.V, NaturalAxis.W, NaturalAxis.W): TransformationMatrixType.Bwv,
+        }
 
-        elif NaturalAxis.U in self.plane and NaturalAxis.W in self.plane:
-            if self.axis_to_keep == NaturalAxis.U:
-                return TransformationMatrixType.Buw
-            elif self.axis_to_keep == NaturalAxis.W:
-                return TransformationMatrixType.Bwu
+        key = (self.plane[0], self.plane[1], self.axis_to_keep)
+        return transformation_matrix_map.get(key)
 
-        elif NaturalAxis.V in self.plane and NaturalAxis.W in self.plane:
-            if self.axis_to_keep == NaturalAxis.V:
-                return TransformationMatrixType.Bvw
-            elif self.axis_to_keep == NaturalAxis.W:
-                return TransformationMatrixType.Bwv
+
+def check_length(plane: tuple[NaturalAxis, NaturalAxis]):
+    if len(plane) != 2:
+        raise ValueError(f"Plane must be a tuple[NaturalAxis] of length 2, got {len(plane)}")
+
+
+def check_type(plane: tuple[NaturalAxis, NaturalAxis]):
+    if not all(isinstance(axis, NaturalAxis) for axis in plane):
+        raise ValueError(f"Plane must be a tuple of NaturalAxis, got {plane}")
+
+
+def check_different_axis(plane: tuple[NaturalAxis, NaturalAxis]):
+    if plane[0] == plane[1]:
+        raise ValueError(f"Plane must be a tuple of different axis, got {plane}")
+
+
+def check_indirect_frame(plane: tuple[NaturalAxis, NaturalAxis]):
+    error_map = {
+        (NaturalAxis.V, NaturalAxis.U): True,
+        (NaturalAxis.U, NaturalAxis.W): True,
+        (NaturalAxis.W, NaturalAxis.V): True,
+        (NaturalAxis.U, NaturalAxis.V): False,
+        (NaturalAxis.W, NaturalAxis.U): False,
+        (NaturalAxis.V, NaturalAxis.W): False,
+    }
+
+    if error_map.get(plane):
+        raise ValueError(f"Invert Axis in plane, because it would lead to an indirect frame, got {plane}")
 
 
 def check_plane(plane: tuple[NaturalAxis, NaturalAxis]):
     """Check if the plane is valid"""
-    if len(plane) != 2:
-        raise ValueError(f"Plane must be a tuple of length 2, got {len(plane)}")
-    if not all(isinstance(axis, NaturalAxis) for axis in plane):
-        raise ValueError(f"Plane must be a tuple of NaturalAxis, got {plane}")
-    if plane[0] == plane[1]:
-        raise ValueError(f"Plane must be a tuple of different axis, got {plane}")
-    if (
-        (plane[0] == NaturalAxis.V and plane[1] == NaturalAxis.U)
-        or (plane[0] == NaturalAxis.U and plane[1] == NaturalAxis.W)
-        or (plane[0] == NaturalAxis.W and plane[1] == NaturalAxis.V)
-    ):
-        raise ValueError(f"Invert Axis in plane, because it would lead to an indirect frame, got {plane}")
+    check_length(plane)
+    check_type(plane)
+    check_different_axis(plane)
+    check_indirect_frame(plane)
 
 
 def check_axis_to_keep(axis_to_keep: NaturalAxis):

@@ -1,10 +1,11 @@
-import numpy as np
-from casadi import MX, vertcat, inv, cross, sum1
 from typing import Union
 
+import numpy as np
+from casadi import MX, vertcat, inv, cross
+
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .natural_vector import NaturalVector
 from ..utils.enums import NaturalAxis
-from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class SegmentNaturalCoordinates(MX):
@@ -53,32 +54,7 @@ class SegmentNaturalCoordinates(MX):
         Constructor of the class from the components of the natural coordinates
         """
 
-        if u is None:
-            raise ValueError("u must be a numpy array (3x1) or a list of 3 elements")
-        if rp is None:
-            raise ValueError("rp must be a numpy array (3x1) or a list of 3 elements")
-        if rd is None:
-            raise ValueError("rd must be a numpy array (3x1) or a list of 3 elements")
-        if w is None:
-            raise ValueError("w must be a numpy array (3x1) or a list of 3 elements")
-
-        if not isinstance(u, MX):
-            u = MX(u)
-        if not isinstance(rp, MX):
-            rp = MX(rp)
-        if not isinstance(rd, MX):
-            rd = MX(rd)
-        if not isinstance(w, MX):
-            w = MX(w)
-
-        if u.shape[0] != 3:
-            raise ValueError("u must be a 3x1 numpy array")
-        if rp.shape[0] != 3:
-            raise ValueError("rp must be a 3x1 numpy array")
-        if rd.shape[0] != 3:
-            raise ValueError("rd must be a 3x1 numpy array")
-        if w.shape[0] != 3:
-            raise ValueError("v must be a 3x1 numpy array")
+        u, rp, rd, w = (validate_and_convert(var, name) for var, name in zip((u, rp, rd, w), ("u", "rp", "rd", "w")))
 
         input_array = vertcat(u, rp, rd, w)
 
@@ -185,6 +161,36 @@ class SegmentNaturalCoordinates(MX):
         lever_arm_force_matrix[:, 2] = cross(-self.v, self.w)
 
         return (left_interpolation_matrix @ inv(lever_arm_force_matrix)).T  # NOTE: inv may induce symbolic error.
+
+
+def validate_and_convert(input_value: Union[np.ndarray, MX, list], name: str) -> MX:
+    """
+    This function validates and converts the input value to an MX object.
+
+    Parameters
+    ----------
+    input_value : Union[np.ndarray, MX, list]
+        The input value to be validated and converted. It can be a numpy array, an MX object, or a list.
+    name : str
+        The name of the input value. Used in error messages.
+
+    Returns
+    -------
+    MX
+        The validated and converted input value as an MX object.
+
+    Raises
+    ------
+    ValueError
+        If the input value is None, not an MX object, or its shape does not match the expected shape.
+    """
+    if input_value is None:
+        raise ValueError(f"{name} must be a numpy array (3x1) or a list of 3 elements")
+    if not isinstance(input_value, MX):
+        input_value = MX(input_value)
+    if input_value.shape[0] != 3:
+        raise ValueError(f"{name} must be a 3x1 numpy array")
+    return input_value
 
 
 class NaturalCoordinates(MX):

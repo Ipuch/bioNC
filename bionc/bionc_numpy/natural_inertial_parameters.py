@@ -7,6 +7,36 @@ from numpy.linalg import inv
 from ..bionc_numpy.natural_vector import NaturalVector
 
 
+def check_mass(mass: Union[np.ndarray, float, np.float64]):
+    if mass is None:
+        raise ValueError("mass must be provided")
+    if isinstance(mass, np.ndarray):
+        mass = mass.item()
+    return mass
+
+
+def check_natural_center_of_mass(natural_center_of_mass: np.ndarray):
+    if natural_center_of_mass is None:
+        raise ValueError("natural_center_of_mass must be provided")
+    if natural_center_of_mass.shape[0] != 3:
+        raise ValueError("Center of mass must be 3x1")
+    return natural_center_of_mass
+
+
+def check_natural_pseudo_inertia(natural_pseudo_inertia: np.ndarray):
+    if natural_pseudo_inertia is None:
+        raise ValueError("natural_pseudo_inertia must be provided")
+    if natural_pseudo_inertia.shape != (3, 3):
+        raise ValueError("Pseudo inertia matrix must be 3x3")
+    return natural_pseudo_inertia
+
+
+def check_initial_transformation_matrix(initial_transformation_matrix: np.ndarray) -> np.ndarray:
+    if initial_transformation_matrix is not None and initial_transformation_matrix.shape != (3, 3):
+        raise ValueError("Transformation matrix must be 3x3")
+    return initial_transformation_matrix
+
+
 class NaturalInertialParameters:
     """
     This class represents the inertial parameters of a segment in the natural coordinate system.
@@ -60,34 +90,11 @@ class NaturalInertialParameters:
         natural_pseudo_inertia: np.ndarray = None,
         initial_transformation_matrix: np.ndarray = None,
     ):
-        if mass is None:
-            raise ValueError("mass must be provided")
-        if natural_center_of_mass is None:
-            raise ValueError("natural_center_of_mass must be provided")
-        if natural_pseudo_inertia is None:
-            raise ValueError("natural_pseudo_inertia must be provided")
-
-        if isinstance(mass, np.ndarray):
-            mass = mass.item()
-
-        self._mass = mass
-
-        if natural_center_of_mass.shape[0] != 3:
-            raise ValueError("Center of mass must be 3x1")
-
-        self._natural_center_of_mass = natural_center_of_mass
-
-        if natural_pseudo_inertia.shape != (3, 3):
-            raise ValueError("Pseudo inertia matrix must be 3x3")
-
-        self._natural_pseudo_inertia = natural_pseudo_inertia
+        self._mass = check_mass(mass)
+        self._natural_center_of_mass = check_natural_center_of_mass(natural_center_of_mass)
+        self._natural_pseudo_inertia = check_natural_pseudo_inertia(natural_pseudo_inertia)
         self._mass_matrix = self._update_mass_matrix()
-
-        if initial_transformation_matrix is not None:
-            if initial_transformation_matrix.shape != (3, 3):
-                raise ValueError("Transformation matrix must be 3x3")
-
-        self._initial_transformation_matrix = initial_transformation_matrix
+        self._initial_transformation_matrix = check_initial_transformation_matrix(initial_transformation_matrix)
 
     @property
     def mass(self) -> float:

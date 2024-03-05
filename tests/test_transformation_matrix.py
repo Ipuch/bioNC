@@ -1,9 +1,12 @@
-from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
-from bionc.utils.enums import TransformationMatrixType
-from bionc import NaturalAxis
-from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
+import re
+
 import numpy as np
 import pytest
+
+from bionc import NaturalAxis
+from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
+from bionc.utils.enums import TransformationMatrixType
+from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
 from .utils import TestUtils
 
 
@@ -14,7 +17,7 @@ def test_check_plane():
     ):
         check_plane(plane)
     plane = (NaturalAxis.U, NaturalAxis.U, NaturalAxis.U)
-    with pytest.raises(ValueError, match="Plane must be a tuple of length 2, got 3"):
+    with pytest.raises(ValueError, match=re.escape("Plane must be a tuple[NaturalAxis] of length 2, got 3")):
         check_plane(plane)
     plane = (NaturalAxis.U, 1)
     with pytest.raises(ValueError, match=f"Plane must be a tuple of NaturalAxis, got \(<NaturalAxis.U: 'U'>, 1\)"):

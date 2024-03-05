@@ -1,8 +1,10 @@
-import numpy as np
 from typing import Union
+
+import numpy as np
+
+from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .natural_vector import NaturalVector
 from ..utils.enums import NaturalAxis
-from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 
 
 class SegmentNaturalCoordinates(np.ndarray):
@@ -33,33 +35,7 @@ class SegmentNaturalCoordinates(np.ndarray):
         """
         Constructor of the class from the components of the natural coordinates
         """
-
-        if u is None:
-            raise ValueError("u must be a numpy array (3x1) or a list of 3 elements")
-        if rp is None:
-            raise ValueError("rp must be a numpy array (3x1) or a list of 3 elements")
-        if rd is None:
-            raise ValueError("rd must be a numpy array (3x1) or a list of 3 elements")
-        if w is None:
-            raise ValueError("w must be a numpy array (3x1) or a list of 3 elements")
-
-        if not isinstance(u, np.ndarray):
-            u = np.array(u)
-        if not isinstance(rp, np.ndarray):
-            rp = np.array(rp)
-        if not isinstance(rd, np.ndarray):
-            rd = np.array(rd)
-        if not isinstance(w, np.ndarray):
-            w = np.array(w)
-
-        if u.shape[0] != 3:
-            raise ValueError("u must be a 3x1 numpy array")
-        if rp.shape[0] != 3:
-            raise ValueError("rp must be a 3x1 numpy array")
-        if rd.shape[0] != 3:
-            raise ValueError("rd must be a 3x1 numpy array")
-        if w.shape[0] != 3:
-            raise ValueError("v must be a 3x1 numpy array")
+        u, rp, rd, w = (validate_and_convert(var, name) for var, name in zip((u, rp, rd, w), ("u", "rp", "rd", "w")))
 
         input_array = np.concatenate((u, rp, rd, w), axis=0)
 
@@ -174,6 +150,36 @@ class SegmentNaturalCoordinates(np.ndarray):
         lever_arm_force_matrix[:, 2] = np.cross(-self.v, self.w)
 
         return (left_interpolation_matrix @ np.linalg.inv(lever_arm_force_matrix)).T
+
+
+def validate_and_convert(input_value: Union[np.ndarray, list], name: str) -> np.ndarray:
+    """
+    This function validates and converts the input value to a numpy array.
+
+    Parameters
+    ----------
+    input_value : Union[np.ndarray, list]
+        The input value to be validated and converted. It can be a numpy array or a list.
+    name : str
+        The name of the input value. Used in error messages.
+
+    Returns
+    -------
+    np.ndarray
+        The validated and converted input value as a numpy array.
+
+    Raises
+    ------
+    ValueError
+        If the input value is None, not a numpy array, or its shape does not match the expected shape.
+    """
+    if input_value is None:
+        raise ValueError(f"{name} must be a numpy array (3x1) or a list of 3 elements")
+    if not isinstance(input_value, np.ndarray):
+        input_value = np.array(input_value)
+    if input_value.shape[0] != 3:
+        raise ValueError(f"{name} must be a 3x1 numpy array")
+    return input_value
 
 
 class NaturalCoordinates(np.ndarray):

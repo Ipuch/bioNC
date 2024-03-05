@@ -67,11 +67,16 @@ def check_different_axis(plane: tuple[NaturalAxis, NaturalAxis]):
 
 
 def check_indirect_frame(plane: tuple[NaturalAxis, NaturalAxis]):
-    if (
-        (plane[0] == NaturalAxis.V and plane[1] == NaturalAxis.U)
-        or (plane[0] == NaturalAxis.U and plane[1] == NaturalAxis.W)
-        or (plane[0] == NaturalAxis.W and plane[1] == NaturalAxis.V)
-    ):
+    error_map = {
+        (NaturalAxis.V, NaturalAxis.U): True,
+        (NaturalAxis.U, NaturalAxis.W): True,
+        (NaturalAxis.W, NaturalAxis.V): True,
+        (NaturalAxis.U, NaturalAxis.V): False,
+        (NaturalAxis.W, NaturalAxis.U): False,
+        (NaturalAxis.V, NaturalAxis.W): False,
+    }
+
+    if error_map.get(plane):
         raise ValueError(f"Invert Axis in plane, because it would lead to an indirect frame, got {plane}")
 
 

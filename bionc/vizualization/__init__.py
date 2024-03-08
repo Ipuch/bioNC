@@ -1,1 +1,2 @@
-from .animations import Viz
+# from .animations import Viz
+from .rerun import RerunViz

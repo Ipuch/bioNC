@@ -2,11 +2,12 @@
 This example shows how to use the InverseKinematics class to solve an inverse kinematics problem.
 """
 
-from bionc import InverseKinematics, Viz, NaturalCoordinates
 import numpy as np
-from pyomeca import Markers
-from tests.utils import TestUtils
 import time
+from pyomeca import Markers
+
+from bionc import InverseKinematics, NaturalCoordinates, RerunViz
+from tests.utils import TestUtils
 
 
 def main():
@@ -57,16 +58,16 @@ if __name__ == "__main__":
     idx = model.marker_names.index("RKNI")
     for f in range(ik_solver.nb_markers):
         marker_residuals = stats["marker_residuals_xyz"][:, idx, :].squeeze()
-        print(f"X,\tY,\tZ\t:\t{marker_residuals[0,f]}\t{marker_residuals[1,f]}\t{marker_residuals[2,f]}")
+        print(f"X,\tY,\tZ\t:\t{marker_residuals[0, f]}\t{marker_residuals[1, f]}\t{marker_residuals[2, f]}")
 
     # convert the natural coordinates to joint angles (still experimental)
     print(model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0])))
 
-    viz = Viz(
+    viz = RerunViz(
         model,
-        show_center_of_mass=False,  # no center of mass in this example
         show_xp_markers=True,
         show_model_markers=True,
-        show_natural_mesh=True,
+        show_natural_mesh=False,
+        show_center_of_mass=False,  # no center of mass in this example
     )
     viz.animate(Qopt, markers_xp=markers)

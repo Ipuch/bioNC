@@ -256,8 +256,10 @@ class InverseKinematics:
 
             if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS and self._frame_per_frame == False:
                 raise ValueError("Please set frame_per_frame to True")
-            frame_slice = slice(None)
 
+            frame_slice = (
+                slice(0, 1) if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS else slice(None)
+            )
             return self.model.Q_from_markers(experimental_markers[:, :, frame_slice])
 
         if Q_init is None and self.experimental_heatmaps:
@@ -390,8 +392,7 @@ class InverseKinematics:
             )
             and frame < self.nb_frames - 1
         ):
-            Q_init[:, frame + 1 : frame + 2] = Qopt[:, frame : frame + 1]
-
+            Q_init = np.append(Q_init, Qopt[:, frame : frame + 1], axis=1)
         return Q_init
 
     def _solve_all_frame_together(

@@ -281,6 +281,11 @@ class InverseKinematics:
                 raise ValueError("Please provide Q_init if you want to use USER_PROVIDED_FIRST_FRAME_ONLY mode.")
             if self._frame_per_frame == False:
                 raise ValueError("Either, set frame_per_frame == True or use InitialGuessModeType.USER_PROVIDED.")
+            if Q_init.shape[1] != 1:
+                raise ValueError(
+                    f"Please provide only the first frame of Q_init."
+                    f"Currently, Q_init.shape[1] = {Q_init.shape[1]}."
+                )
 
             return Q_init
 

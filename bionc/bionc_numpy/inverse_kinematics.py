@@ -1,7 +1,8 @@
+from typing import Callable
+
 import numpy as np
 from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
 from pyomeca import Markers
-from typing import Callable
 
 from .enums import InitialGuessModeType
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates

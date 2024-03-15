@@ -151,7 +151,7 @@ def test_from_first_frame_markers_and_frame_per_frame_is_false():
     module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     c3d_filename = module.generate_c3d_file()
-    model = module.model_creation_from_measured_data()
+    model = module.model_creation_from_measured_data(c3d_filename)
     markers = Markers.from_c3d(c3d_filename, usecols=model.marker_names_technical).to_numpy()
     ik = InverseKinematics(
         model=model,
@@ -170,7 +170,7 @@ def test_user_provided_first_frame_only_and_frame_per_frame_is_false():
     module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     c3d_filename = module.generate_c3d_file()
-    model = module.model_creation_from_measured_data()
+    model = module.model_creation_from_measured_data(c3d_filename)
     markers = Markers.from_c3d(c3d_filename, usecols=model.marker_names_technical).to_numpy()
     Q_initialize = model.Q_from_markers(markers[:, :, 0:1])
     ik = InverseKinematics(
@@ -192,7 +192,7 @@ def test_user_provided_first_frame_only_Q_init_too_many_frames():
     module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     c3d_filename = module.generate_c3d_file()
-    model = module.model_creation_from_measured_data()
+    model = module.model_creation_from_measured_data(c3d_filename)
     markers = Markers.from_c3d(c3d_filename, usecols=model.marker_names_technical).to_numpy()
     Q_initialize = model.Q_from_markers(markers[:, :, :])
     ik = InverseKinematics(

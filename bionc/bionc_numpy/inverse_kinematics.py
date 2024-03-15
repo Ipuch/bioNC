@@ -236,7 +236,13 @@ class InverseKinematics:
         Q_init: np.ndarray | NaturalCoordinates,
         experimental_markers: np.ndarray,
     ):
-        """Returns the initial guess for the inverse kinematics computed from the experimental markers"""
+        """
+        -------
+        Returns
+        The initial guess for the inverse kinematics computed from the experimental markers
+            - Q_init is size (12 * nb_segments, nb_frames) if USER_PROVIDED or FROM_CURRENT_MARKERS
+            - Q_init is size (12 * nb_segments, 1) if USER_PROVIDED_FIRST_FRAME_ONLY or FROM_FIRST_FRAME_MARKERS
+        """
 
         if initial_guess_mode in (
             InitialGuessModeType.FROM_CURRENT_MARKERS,

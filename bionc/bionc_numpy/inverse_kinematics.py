@@ -8,6 +8,10 @@ from .enums import InitialGuessModeType
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
+from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
+from ..utils.c3d_ik_exporter import C3DInverseKinematicsExporter
+
+from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
 from ..utils import constants
 from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
 from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, check_format_experimental_heatmaps
@@ -650,3 +654,9 @@ class InverseKinematics:
             success=success,
         )
         return self.output
+
+    def export_in_c3d(self, filename):
+        c3d_export = C3DInverseKinematicsExporter(model=self.model, filename=filename)
+        c3d_export.add_natural_coordinate(self.Qopt)
+        c3d_export.add_technical_markers(self.Qopt)
+        c3d_export.export(None)

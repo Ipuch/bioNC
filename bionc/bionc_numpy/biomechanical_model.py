@@ -1,6 +1,7 @@
+from typing import Any
+
 import numpy as np
 from numpy import transpose
-from typing import Any
 
 from .biomechanical_model_joints import BiomechanicalModelJoints
 from .biomechanical_model_markers import BiomechanicalModelMarkers

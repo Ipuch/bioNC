@@ -218,9 +218,9 @@ class GenericBiomechanicalModel(ABC):
         self._add_joint(
             dict(
                 name=f"free_joint_{name}",
-                joint_type=CasadiJointType.GROUND_FREE
-                if hasattr(self, "numpy_model")
-                else JointType.GROUND_FREE,  # not satisfying
+                joint_type=(
+                    CasadiJointType.GROUND_FREE if hasattr(self, "numpy_model") else JointType.GROUND_FREE
+                ),  # not satisfying
                 parent="GROUND",  # to be popped out
                 child=name,
                 parent_point=None,

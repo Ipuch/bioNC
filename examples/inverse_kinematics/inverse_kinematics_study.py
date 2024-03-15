@@ -1,6 +1,7 @@
 """
 This example shows how to use the InverseKinematics class to solve an inverse kinematics problem.
 """
+
 from bionc import InverseKinematics, Viz
 import numpy as np
 from pyomeca import Markers

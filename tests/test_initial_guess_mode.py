@@ -1,11 +1,10 @@
 import numpy as np
 import pytest
-from casadi import DM
+from pyomeca import Markers
 
-from bionc import InverseKinematics, NaturalCoordinates
+from bionc import InverseKinematics
 from bionc.bionc_numpy.enums import InitialGuessModeType
 from .utils import TestUtils
-from pyomeca import Markers
 
 
 def test_user_provided():
@@ -94,7 +93,9 @@ def test_user_provided_first_frame_only():
         solve_frame_per_frame=True,
     )
     ik.solve(
-        Q_init=Q_initialize[:, 0:1], initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt"
+        Q_init=Q_initialize[:, 0:1],
+        initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY,
+        method="ipopt",
     )
 
     TestUtils.assert_equal(
@@ -297,6 +298,7 @@ def test_from_first_frame_markers():
         ),
     )
 
+
 def test_Q_init_None_User_Provided():
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
@@ -316,6 +318,7 @@ def test_Q_init_None_User_Provided():
         match="Please provide Q_init if you want to use InitialGuessModeType.USER_PROVIDED.",
     ):
         ik.solve(initial_guess_mode=InitialGuessModeType.USER_PROVIDED, method="ipopt")
+
 
 def test_Q_init_None_User_Provided_First_Frame_Only():
     bionc = TestUtils.bionc_folder()
@@ -338,7 +341,6 @@ def test_Q_init_None_User_Provided_First_Frame_Only():
         ik.solve(initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt")
 
 
-
 def test_Q_init_Incorrect_Shape_User_Provided():
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
@@ -355,9 +357,10 @@ def test_Q_init_Incorrect_Shape_User_Provided():
     with pytest.raises(
         ValueError,
         match=f"Please make sure Q_init, shape\\[1\\] is equal to the number of frames 2."
-            f"Currently, Q_init.shape\\[1\\] = 1.",
+        f"Currently, Q_init.shape\\[1\\] = 1.",
     ):
-        ik.solve(Q_init = Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED, method="ipopt")
+        ik.solve(Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED, method="ipopt")
+
 
 camera_parameters = np.array(
     [
@@ -461,6 +464,8 @@ experimental_heatmap_parameters = {
     "camera_parameters": camera_parameters,
     "gaussian_parameters": gaussian_parameters,
 }
+
+
 def test_exp_markers_none_from_current_markers():
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
@@ -496,6 +501,7 @@ def test_exp_markers_none_from_first_frame_markers():
     ):
         ik.solve(initial_guess_mode=InitialGuessModeType.FROM_FIRST_FRAME_MARKERS, method="ipopt")
 
+
 def test_from_first_frame_markers_and_frame_per_frame_is_false():
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
@@ -514,6 +520,7 @@ def test_from_first_frame_markers_and_frame_per_frame_is_false():
     ):
         ik.solve(initial_guess_mode=InitialGuessModeType.FROM_FIRST_FRAME_MARKERS, method="ipopt")
 
+
 def test_user_provided_first_frame_only_and_frame_per_frame_is_false():
     bionc = TestUtils.bionc_folder()
     module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
@@ -531,7 +538,10 @@ def test_user_provided_first_frame_only_and_frame_per_frame_is_false():
         ValueError,
         match=f"Either, set frame_per_frame == True or use InitialGuessModeType.USER_PROVIDED.",
     ):
-        ik.solve(Q_init = Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt")
+        ik.solve(
+            Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt"
+        )
+
 
 def test_user_provided_first_frame_only_Q_init_too_many_frames():
     bionc = TestUtils.bionc_folder()
@@ -549,8 +559,8 @@ def test_user_provided_first_frame_only_Q_init_too_many_frames():
 
     with pytest.raises(
         ValueError,
-        match=f"Please provide only the first frame of Q_init."
-            f"Currently, Q_init.shape\\[1\\] = 2.",
+        match=f"Please provide only the first frame of Q_init." f"Currently, Q_init.shape\\[1\\] = 2.",
     ):
-        ik.solve(Q_init = Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt")
-
+        ik.solve(
+            Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt"
+        )

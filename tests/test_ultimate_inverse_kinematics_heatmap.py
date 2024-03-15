@@ -1,12 +1,11 @@
-from casadi import DM
 import numpy as np
 import pytest
-
-from .utils import TestUtils
+from casadi import DM
 
 from bionc import InverseKinematics, NaturalCoordinates
-
+from bionc.bionc_numpy.enums import InitialGuessModeType
 from bionc.utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, _projection
+from .utils import TestUtils
 
 
 def test_compute_confidence():
@@ -193,10 +192,9 @@ def test_global_heatmap_ik():
         model=module.model_creation_markerless(c3d_filename, False),
         experimental_heatmaps=experimental_heatmap_parameters,
         solve_frame_per_frame=True,
-        Q_init=Q_initialize,
     )
 
-    ik.solve(method="ipopt")
+    ik.solve(method="ipopt", Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED)
 
     TestUtils.assert_equal(
         ik.Qopt,
@@ -244,7 +242,6 @@ def test_error_solve_frame_per_frame():
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=False,
         )
 
@@ -254,14 +251,13 @@ def test_error_Qinit_is_none():
     module = TestUtils.load_module(bionc + "/examples/model_creation/markerless_model.py")
 
     c3d_filename = module.generate_c3d_file()
-
+    ik = InverseKinematics(
+        model=module.model_creation_markerless(c3d_filename, False),
+        experimental_heatmaps=experimental_heatmap_parameters,
+        solve_frame_per_frame=True,
+    )
     with pytest.raises(NotImplementedError, match=f"Not available yet, please provide Q_init"):
-        InverseKinematics(
-            model=module.model_creation_markerless(c3d_filename, False),
-            experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=None,
-            solve_frame_per_frame=True,
-        )
+        ik.solve(method="ipopt", Q_init=None, initial_guess_mode=InitialGuessModeType.USER_PROVIDED)
 
 
 def test_error_markers_and_heatmaps():
@@ -277,7 +273,6 @@ def test_error_markers_and_heatmaps():
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_markers=experimental_markers,
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
 
@@ -293,7 +288,6 @@ def test_error_no_markers_and_no_heatmaps():
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_markers=None,
             experimental_heatmaps=None,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
 
@@ -383,7 +377,6 @@ def test_error_experimental_heatmaps_is_not_a_dictionnary():
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
 
@@ -419,7 +412,6 @@ def test_error_first_dim_cam_param_is_not_3():
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
 
@@ -451,7 +443,6 @@ def test_error_len_cam_param_is_not_3():
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
 
@@ -490,7 +481,6 @@ def test_error_second_dim_cam_param_is_not_4():
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
 
@@ -535,7 +525,6 @@ def test_error_len_gaussian_param_is_not_4():
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
 
@@ -616,7 +605,6 @@ def test_error_first_dim_gaussian_param_is_not_5():
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )
 
@@ -740,6 +728,5 @@ def test_error_same_nb_cam_for_gaussian_and_cam_param():
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_heatmaps=experimental_heatmap_parameters,
-            Q_init=Q_initialize,
             solve_frame_per_frame=True,
         )

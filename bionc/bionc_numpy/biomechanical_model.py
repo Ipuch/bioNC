@@ -9,7 +9,6 @@ from .biomechanical_model_segments import BiomechanicalModelSegments
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .external_force import ExternalForceSet, ExternalForce
 from .generalized_force import JointGeneralizedForcesList
-from .inverse_kinematics import InverseKinematics
 from .natural_accelerations import NaturalAccelerations
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
@@ -441,33 +440,6 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Qddoti = x[0 : self.nb_Qddot]
         lagrange_multipliers = x[self.nb_Qddot :]
         return NaturalAccelerations(Qddoti), lagrange_multipliers
-
-    def inverse_kinematics(
-        self,
-        experimental_markers: np.ndarray | str,
-        Q_init: NaturalCoordinates = None,
-        solve_frame_per_frame: bool = True,
-    ) -> InverseKinematics:
-        """
-        This is an interface to the inverse kinematics class. It allows to build an inverse kinematics object with the current model.
-
-        Parameters
-        ----------
-        experimental_markers : np.ndarray | str
-            The experimental markers positions. If it is a string, it is the path to the file containing the markers positions
-        Q_init : NaturalCoordinates
-            The initial guess for the inverse kinematics. If None, the initial guess is the zero vector
-        solve_frame_per_frame : bool
-            If True, the inverse kinematics is solved frame per frame. If False, the inverse kinematics is solved for the whole sequence at once
-
-        Returns
-        -------
-        InverseKinematics
-            The inverse kinematics object
-        """
-        return InverseKinematics(
-            self, experimental_markers=experimental_markers, Q_init=Q_init, solve_frame_per_frame=solve_frame_per_frame
-        )
 
     def external_force_set(self) -> ExternalForceSet:
         return ExternalForceSet.empty_from_nb_segment(self.nb_segments)

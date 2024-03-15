@@ -65,3 +65,47 @@ def gaussian_exponent(value, expected_value, standard_deviation):
         [1 x 1] symbolic expression. Represents the standard deviation of the variable of the gaussian function.
     """
     return ((value - expected_value) ** 2) / (2 * standard_deviation**2)
+
+
+def check_format_experimental_heatmaps(experimental_heatmaps: dict):
+    """
+    Checks that the experimental heatmaps are correctly formatted
+
+    Parameters
+    ----------
+    experimental_heatmaps: dict[str, np.ndarray]
+        The experimental heatmaps, composed of two arrays and one float :
+        camera_parameters (3 x 4 x nb_cameras numpy array),
+        gaussian_parameters (5 x M x N x nb_cameras numpy array)
+    """
+    if not isinstance(experimental_heatmaps, dict):
+        raise ValueError("Please feed experimental heatmaps as a dictionnary")
+
+    if not len(experimental_heatmaps["camera_parameters"].shape) == 3:
+        raise ValueError(
+            'The number of dimensions of the NumPy array stored in experimental_heatmaps["camera_parameters"] '
+            "must be 3 and the expected shape is 3 x 4 x nb_cameras"
+        )
+    if not experimental_heatmaps["camera_parameters"].shape[0] == 3:
+        raise ValueError("First dimension of camera parameters must be 3")
+    if not experimental_heatmaps["camera_parameters"].shape[1] == 4:
+        raise ValueError("Second dimension of camera parameters must be 4")
+
+    if not len(experimental_heatmaps["gaussian_parameters"].shape) == 4:
+        raise ValueError(
+            'The number of dimensions of the NumPy array stored in experimental_heatmaps["gaussian_parameters"] '
+            "must be 4 "
+            "and the expected shape is 5 x nb_markers x nb_frames x nb_cameras"
+        )
+    if not experimental_heatmaps["gaussian_parameters"].shape[0] == 5:
+        raise ValueError("First dimension of gaussian parameters must be 5")
+
+    if not experimental_heatmaps["camera_parameters"].shape[2] == experimental_heatmaps["gaussian_parameters"].shape[3]:
+        raise ValueError(
+            'Third dimension of experimental_heatmaps["camera_parameters"] and '
+            'fourth dimension of experimental_heatmaps["gaussian_parameters"] should be equal. '
+            "Currently we have "
+            + str(experimental_heatmaps["camera_parameters"].shape[2])
+            + " and "
+            + str(experimental_heatmaps["gaussian_parameters"].shape[3])
+        )

@@ -1,17 +1,20 @@
 from typing import Callable
 
-from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
 import numpy as np
+from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
 from pyomeca import Markers
 
+from .enums import InitialGuessModeType
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
+from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 from ..utils.c3d_ik_exporter import C3DInverseKinematicsExporter
 
 from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
-from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
 from ..utils import constants
+from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
+from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, check_format_experimental_heatmaps
 
 
 class InverseKinematics:
@@ -70,7 +73,6 @@ class InverseKinematics:
         model: BiomechanicalModel,
         experimental_markers: np.ndarray = None,
         experimental_heatmaps: dict[str, np.ndarray] = None,
-        Q_init: np.ndarray | NaturalCoordinates = None,
         solve_frame_per_frame: bool = True,
         active_direct_frame_constraints: bool = False,
         use_sx: bool = True,
@@ -84,8 +86,6 @@ class InverseKinematics:
             The experimental markers (3xNxM numpy array), or a path to a c3d file
         experimental_heatmaps : dict[str, np.ndarray]
             The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array)
-        Q_init : np.ndarray | NaturalCoordinates
-            The initial guess for the inverse kinematics computed from the experimental markers
         solve_frame_per_frame : bool
             If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
         active_direct_frame_constraints : bool
@@ -126,14 +126,6 @@ class InverseKinematics:
                     raise ValueError("experimental_markers must be a 3xNxM numpy array")
                 self.experimental_markers = experimental_markers
 
-        if Q_init is None:
-            if experimental_heatmaps is not None:
-                raise NotImplementedError("Not available yet, please provide Q_init")
-            else:
-                self.Q_init = self.model.Q_from_markers(self.experimental_markers[:, :, :])
-        else:
-            self.Q_init = Q_init
-
         self.Qopt = None
         self.segment_determinants = None
 
@@ -159,35 +151,7 @@ class InverseKinematics:
             self.objective_sym = [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
 
         if experimental_heatmaps is not None:
-            if not isinstance(experimental_heatmaps, dict):
-                raise ValueError("Please feed experimental heatmaps as a dictionnary")
-
-            if not len(experimental_heatmaps["camera_parameters"].shape) == 3:
-                raise ValueError(
-                    'The number of dimensions of the NumPy array stored in experimental_heatmaps["camera_parameters"] must be 3 and the expected shape is 3 x 4 x nb_cameras'
-                )
-            if not experimental_heatmaps["camera_parameters"].shape[0] == 3:
-                raise ValueError("First dimension of camera parameters must be 3")
-            if not experimental_heatmaps["camera_parameters"].shape[1] == 4:
-                raise ValueError("Second dimension of camera parameters must be 4")
-
-            if not len(experimental_heatmaps["gaussian_parameters"].shape) == 4:
-                raise ValueError(
-                    'The number of dimensions of the NumPy array stored in experimental_heatmaps["gaussian_parameters"] must be 4 and the expected shape is 5 x nb_markers x nb_frames x nb_cameras'
-                )
-            if not experimental_heatmaps["gaussian_parameters"].shape[0] == 5:
-                raise ValueError("First dimension of gaussian parameters must be 5")
-
-            if (
-                not experimental_heatmaps["camera_parameters"].shape[2]
-                == experimental_heatmaps["gaussian_parameters"].shape[3]
-            ):
-                raise ValueError(
-                    'Third dimension of experimental_heatmaps["camera_parameters"] and fourth dimension of experimental_heatmaps["gaussian_parameters"] should be equal. Currently we have '
-                    + str(experimental_heatmaps["camera_parameters"].shape[2])
-                    + " and "
-                    + str(experimental_heatmaps["gaussian_parameters"].shape[3])
-                )
+            check_format_experimental_heatmaps(experimental_heatmaps)
             self.experimental_heatmaps = experimental_heatmaps
 
             self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
@@ -271,12 +235,84 @@ class InverseKinematics:
         self.objective_sym.append(symbolic_objective)
         self._update_objective_function()
 
-    def solve(self, method: str = "ipopt", options: dict = None) -> np.ndarray:
+    def get_Q_init_from_initial_guess_mode(
+        self,
+        initial_guess_mode: InitialGuessModeType,
+        Q_init: np.ndarray | NaturalCoordinates,
+        experimental_markers: np.ndarray,
+    ):
+        """
+        -------
+        Returns
+        The initial guess for the inverse kinematics computed from the experimental markers
+            - Q_init is size (12 * nb_segments, nb_frames) if USER_PROVIDED or FROM_CURRENT_MARKERS
+            - Q_init is size (12 * nb_segments, 1) if USER_PROVIDED_FIRST_FRAME_ONLY or FROM_FIRST_FRAME_MARKERS
+        """
+
+        if initial_guess_mode in (
+            InitialGuessModeType.FROM_CURRENT_MARKERS,
+            InitialGuessModeType.FROM_FIRST_FRAME_MARKERS,
+        ):
+            if experimental_markers is None:
+                raise ValueError("Please provide experimental_markers in order to initialize the optimization")
+            if self.experimental_heatmaps is not None:
+                raise ValueError(
+                    "Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode"
+                )
+            # NOTE: These three previous if tests are not raised if the user use ik.solve()
+
+            if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS and self._frame_per_frame == False:
+                raise ValueError("Please set frame_per_frame to True")
+
+            frame_slice = (
+                slice(0, 1) if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS else slice(None)
+            )
+            return self.model.Q_from_markers(experimental_markers[:, :, frame_slice])
+
+        if Q_init is None and self.experimental_heatmaps:
+            raise NotImplementedError("Not available yet, please provide Q_init")  # todo: enhance the error message.
+
+        if initial_guess_mode == InitialGuessModeType.USER_PROVIDED:
+            if Q_init is None:
+                raise ValueError("Please provide Q_init if you want to use InitialGuessModeType.USER_PROVIDED.")
+            if Q_init.shape[1] != self.nb_frames:
+                raise ValueError(
+                    f"Please make sure Q_init, shape[1] is equal to the number of frames {self.nb_frames}."
+                    f"Currently, Q_init.shape[1] = {Q_init.shape[1]}."
+                )
+
+            return Q_init
+
+        if initial_guess_mode == InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY:
+            if Q_init is None:
+                raise ValueError("Please provide Q_init if you want to use USER_PROVIDED_FIRST_FRAME_ONLY mode.")
+            if self._frame_per_frame == False:
+                raise ValueError("Either, set frame_per_frame == True or use InitialGuessModeType.USER_PROVIDED.")
+            if Q_init.shape[1] != 1:
+                raise ValueError(
+                    f"Please provide only the first frame of Q_init." f"Currently, Q_init.shape[1] = {Q_init.shape[1]}."
+                )
+
+            return Q_init
+
+    def solve(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates = None,
+        initial_guess_mode: InitialGuessModeType = InitialGuessModeType.FROM_CURRENT_MARKERS,
+        method: str = "ipopt",
+        options: dict = None,
+    ) -> np.ndarray:
         """
         Solves the inverse kinematics
 
         Parameters
         ----------
+        Q_init  : np.ndarray | NaturalCoordinates (optionnal)
+            The initial guess for the inverse kinematics computed from the experimental markers.
+            Expected when initial_guess_mode_type is USER_PROVIDED (for all frames)
+            or USER_PROVIDED_FIRST_FRAME_ONLY (one frame only then)
+        initial_guess_mode : InitialGuessModeType
+            The type of initialization, by default InitialGuessModeType.FROM_CURRENT_MARKERS
         method : str
             The method to use to solve the NLP (ipopt, sqpmethod, ...)
         options : dict
@@ -294,62 +330,112 @@ class InverseKinematics:
         if options is None:
             raise ValueError("method must be one of the following str: 'sqpmethod' or 'ipopt'")
 
+        Q_init = self.get_Q_init_from_initial_guess_mode(
+            initial_guess_mode,
+            Q_init,
+            self.experimental_markers,
+        )
+
         if self._frame_per_frame:
-            Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
-            lbg = np.zeros(self.model.nb_holonomic_constraints)
-            ubg = np.zeros(self.model.nb_holonomic_constraints)
-            constraints = self._constraints(self._Q_sym)
-            if self._active_direct_frame_constraints:
-                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
-                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments)))
-                # upper bounds infinity
-                ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
-            nlp = dict(
-                x=self._vert_Q_sym,
-                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
-            )
-
-            for f in range(self.nb_frames):
-                objective = self._objective_function(
-                    self._Q_sym,
-                    [] if self.experimental_markers is None else self.experimental_markers[:, :, f],
-                    [] if self.experimental_heatmaps is None else self.camera_parameters,
-                    [] if self.experimental_heatmaps is None else self.gaussian_parameters[:, f, :],
-                )
-
-                nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
-                Q_init = self.Q_init[:, f : f + 1]
-                r, success = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
-                self.success_optim.append(success)
-                Qopt[:, f : f + 1] = r["x"].toarray()
+            Qopt = self._solve_frame_per_frame(Q_init, initial_guess_mode, method, options)
         else:
-            constraints = self._constraints(self._Q_sym)
-            if self._active_direct_frame_constraints:
-                constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
-            if self.experimental_markers is not None:
-                objective = self._objective_minimize_marker_distance(self._Q_sym, self.experimental_markers)
-            else:
-                NotImplementedError(
-                    "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
-                )
-            nlp = dict(
-                x=self._vert_Q_sym,
-                f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,
-                g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
-            )
-            Q_init = self.Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
-            lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
-            ubg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
-            if self._active_direct_frame_constraints:
-                lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
-                ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
-            r, success = _solve_nlp(method, nlp, Q_init, lbg, ubg, options)
-            self.success_optim = [success] * self.nb_frames
-            Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
+            Qopt = self._solve_all_frame_together(Q_init, method, options)
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
 
         self.check_segment_determinants()
+
+        return Qopt
+
+    def _solve_frame_per_frame(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        initial_guess_mode: InitialGuessModeType,
+        method: str,
+        options: dict,
+    ):
+        Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
+        lbg = np.zeros(self.model.nb_holonomic_constraints)
+        ubg = np.zeros(self.model.nb_holonomic_constraints)
+        constraints = self._constraints(self._Q_sym)
+        if self._active_direct_frame_constraints:
+            constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
+            lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments)))
+            # upper bounds infinity
+            ubg = np.concatenate((ubg, np.full(self.model.nb_segments, np.inf)))
+
+        nlp = dict(
+            x=self._vert_Q_sym,
+            g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
+        )
+
+        for f in range(self.nb_frames):
+            objective = self._objective_function(
+                self._Q_sym,
+                [] if self.experimental_markers is None else self.experimental_markers[:, :, f],
+                [] if self.experimental_heatmaps is None else self.camera_parameters,
+                [] if self.experimental_heatmaps is None else self.gaussian_parameters[:, f, :],
+            )
+
+            nlp["f"] = _mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective
+
+            r, success = _solve_nlp(method, nlp, Q_init[:, f], lbg, ubg, options)
+            self.success_optim.append(success)
+            Qopt[:, f : f + 1] = r["x"].toarray()
+
+            Q_init = self.update_initial_guess(Q_init, Qopt, initial_guess_mode, frame=f)
+
+        return Qopt
+
+    def update_initial_guess(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        Qopt: np.ndarray | NaturalCoordinates,
+        initial_guess_mode: InitialGuessModeType,
+        frame: int,
+    ):
+        """Updates the initial guess for the next frame when solving frame per frame"""
+        if (
+            initial_guess_mode
+            in (
+                InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY,
+                InitialGuessModeType.FROM_FIRST_FRAME_MARKERS,
+            )
+            and frame < self.nb_frames - 1
+        ):
+            Q_init = np.append(Q_init, Qopt[:, frame : frame + 1], axis=1)
+        return Q_init
+
+    def _solve_all_frame_together(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        method: str,
+        options: dict,
+    ):
+        constraints = self._constraints(self._Q_sym)
+        if self._active_direct_frame_constraints:
+            constraints = vertcat(constraints, self._direct_frame_constraints(self._Q_sym))
+        if self.experimental_markers is not None:
+            objective = self._objective_minimize_marker_distance(self._Q_sym, self.experimental_markers)
+        else:
+            NotImplementedError(
+                "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
+            )
+        nlp = dict(
+            x=self._vert_Q_sym,
+            f=_mx_to_sx(objective, [self._vert_Q_sym]) if self.use_sx else objective,
+            g=_mx_to_sx(constraints, [self._vert_Q_sym]) if self.use_sx else constraints,
+        )
+        vertical_Q_init = Q_init.reshape((12 * self.model.nb_segments * self.nb_frames, 1))
+
+        lbg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
+        ubg = np.zeros(self.model.nb_holonomic_constraints * self.nb_frames)
+        if self._active_direct_frame_constraints:
+            lbg = np.concatenate((lbg, np.zeros(self.model.nb_segments * self.nb_frames)))
+            ubg = np.concatenate((ubg, np.full(self.model.nb_segments * self.nb_frames, np.inf)))
+        r, success = _solve_nlp(method, nlp, vertical_Q_init, lbg, ubg, options)
+        self.success_optim = [success] * self.nb_frames
+        Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
 
         return Qopt
 

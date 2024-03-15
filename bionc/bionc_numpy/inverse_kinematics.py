@@ -255,11 +255,7 @@ class InverseKinematics:
                 raise ValueError(
                     "Q_init cannot be computed from markers using heatmap data, please either provide marker data or change initialization mode"
                 )
-            if (
-                initial_guess_mode == InitialGuessModeType.FROM_CURRENT_MARKERS
-                and experimental_markers.shape[2] != self.nb_frames
-            ):
-                raise ValueError("Please make sure initalize_markers contains all the frames")
+            # NOTE: These three previous if tests are not raised if the user use ik.solve()
 
             if initial_guess_mode == InitialGuessModeType.FROM_FIRST_FRAME_MARKERS and self._frame_per_frame == False:
                 raise ValueError("Please set frame_per_frame to True")

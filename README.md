@@ -86,13 +86,13 @@ To rigidify the body segments and to articulate them, two types of holonomic con
 
 # How to cite
 
-Pierre Puchaud, Alexandre Naaim, & aaiaueil. (2024). Ipuch/bioNC: CarpentersTogether (0.9.0). Zenodo. https://doi.org/10.5281/zenodo.10822669
+Pierre Puchaud, Alexandre Naaim, & Anais Chaumeil. (2024). Ipuch/bioNC: CarpentersTogether (0.9.0). Zenodo. https://doi.org/10.5281/zenodo.10822669
 
 ```
 @software{pierre_puchaud_2024_10822669,
   author       = {Pierre Puchaud and
                   Alexandre Naaim and
-                  aaiaueil},
+                  Anais Chaumeil},
   title        = {Ipuch/bioNC: CarpentersTogether},
   month        = mar,
   year         = 2024,
@@ -102,4 +102,6 @@ Pierre Puchaud, Alexandre Naaim, & aaiaueil. (2024). Ipuch/bioNC: CarpentersToge
   url          = {https://doi.org/10.5281/zenodo.10822669}
 }
 ```
+# Reference
 
+This work is an implementation mostly inspired by the work of Dr. Raphael Dumas (Senior Researcher at IFSTTAR – University of Lyon) on three-dimensional multi-body modeling of the human musculoskeletal system.

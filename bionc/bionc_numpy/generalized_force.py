@@ -2,9 +2,9 @@ import numpy as np
 
 from .external_force import ExternalForce
 from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
-from ..utils.enums import CartesianAxis, EulerSequence
 from .rotations import euler_axes_from_rotation_matrices
 from ..protocols.joint import JointBase as Joint
+from ..utils.enums import CartesianAxis, EulerSequence
 
 
 class JointGeneralizedForces(ExternalForce):
@@ -66,23 +66,8 @@ class JointGeneralizedForces(ExternalForce):
         Q_child: SegmentNaturalCoordinates
             The natural coordinates of the distal segment
         """
-        if translation_dof is None and forces is not None:
-            raise ValueError("The translation degrees of freedom must be specified")
-        if rotation_dof is None and torques is not None:
-            raise ValueError("The rotation degrees of freedom must be specified")
-        if translation_dof is not None and forces is not None:
-            if forces.shape[0] != len(translation_dof):
-                raise ValueError("The number of forces must be equal to the number of translation degrees of freedom")
-            if len(translation_dof) != len(set(translation_dof)):
-                raise ValueError(f"The translation degrees of freedom must be unique. Got {translation_dof}")
-
-        if rotation_dof is not None and torques is None:
-            raise ValueError("The torques must be specified")
-        if rotation_dof is None and torques is not None:
-            raise ValueError("The rotation degrees of freedom must be specified")
-        if rotation_dof is not None and torques is not None:
-            if torques.shape[0] != len(rotation_dof.value):
-                raise ValueError("The number of torques must be equal to the number of rotation degrees of freedom")
+        check_translation_dof_format(translation_dof, forces)
+        check_rotation_dof_format(rotation_dof, torques)
 
         parent_segment = joint.parent
         child_segment = joint.child
@@ -95,28 +80,8 @@ class JointGeneralizedForces(ExternalForce):
         )
         R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
 
-        filled_forces = np.zeros((3, 1))
-        for rot_dof in rotation_dof.value:
-            if rot_dof == CartesianAxis.X:
-                filled_forces[0, 0] = forces[0]
-            elif rot_dof == CartesianAxis.Y:
-                filled_forces[1, 0] = forces[1]
-            elif rot_dof == CartesianAxis.Z:
-                filled_forces[2, 0] = forces[2]
-
-        # force automatically in proximal segment coordinates system
-        force_in_global = project_vector_into_frame(
-            filled_forces, (R_parent[:, 0:1], R_parent[:, 1:2], R_parent[:, 2:3])
-        )
-
-        filled_torques = np.zeros((3, 1))
-        for rot_dof in rotation_dof.value:
-            if rot_dof == "x":
-                filled_torques[0, 0] = torques[0]
-            elif rot_dof == "y":
-                filled_torques[1, 0] = torques[1]
-            elif rot_dof == "z":
-                filled_torques[2, 0] = torques[2]
+        force_in_global = fill_forces_and_project(forces, rotation_dof, R_parent)
+        filled_torques = fill_torques(torques, rotation_dof)
 
         euler_axes_in_global = euler_axes_from_rotation_matrices(R_parent, R_child, sequence=joint.projection_basis)
 
@@ -339,3 +304,63 @@ class JointGeneralizedForcesList:
             natural_joint_forces[child_slice_index, 0:1] = child_natural_joint_force
 
         return natural_joint_forces
+
+
+def check_translation_dof_format(translation_dof, forces):
+    if translation_dof is None and forces is not None:
+        raise ValueError("The translation degrees of freedom must be specified")
+
+    if translation_dof is not None and forces is not None:
+
+        shape_is_not_consistent = forces.shape[0] != len(translation_dof)
+        if shape_is_not_consistent:
+            raise ValueError("The number of forces must be equal to the number of translation degrees of freedom")
+
+        dof_are_not_unique = len(translation_dof) != len(set(translation_dof))
+        if dof_are_not_unique:
+            raise ValueError(f"The translation degrees of freedom must be unique. Got {translation_dof}")
+
+
+def check_rotation_dof_format(rotation_dof, torques):
+    if rotation_dof is None and torques is not None:
+        raise ValueError("The rotation degrees of freedom must be specified")
+    if rotation_dof is not None and torques is None:
+        raise ValueError("The torques must be specified")
+    if rotation_dof is not None and torques is not None:
+
+        shape_is_not_consistent = torques.shape[0] != len(rotation_dof.value)
+        if shape_is_not_consistent:
+            raise ValueError("The number of torques must be equal to the number of rotation degrees of freedom")
+
+
+def fill_forces_and_project(forces: np.ndarray, rotation_dof: EulerSequence, R_parent: np.ndarray) -> np.ndarray:
+    """Fill the forces and project them in the global frame"""
+    filled_forces = np.zeros((3, 1))
+
+    rot_dof_map = {
+        CartesianAxis.X: 0,
+        CartesianAxis.Y: 1,
+        CartesianAxis.Z: 2,
+    }
+
+    for rot_dof in rotation_dof.value:
+        index = rot_dof_map[rot_dof]
+        filled_forces[index, 0] = forces[index]
+
+    # force automatically in proximal segment coordinates system
+    force_in_global = project_vector_into_frame(filled_forces, (R_parent[:, 0:1], R_parent[:, 1:2], R_parent[:, 2:3]))
+
+    return force_in_global
+
+
+def fill_torques(torques: np.ndarray, rotation_dof: EulerSequence) -> np.ndarray:
+    filled_torques = np.zeros((3, 1))
+    for rot_dof in rotation_dof.value:
+        if rot_dof == "x":
+            filled_torques[0, 0] = torques[0]
+        elif rot_dof == "y":
+            filled_torques[1, 0] = torques[1]
+        elif rot_dof == "z":
+            filled_torques[2, 0] = torques[2]
+
+    return filled_torques

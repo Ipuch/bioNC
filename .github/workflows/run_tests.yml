@@ -33,8 +33,7 @@ jobs:
           environment-file: environment.yml
         
       - name: Print mamba info
-        run: | 
-          mamba config --show
+        run: |
           mamba info
           mamba list
           

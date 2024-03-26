@@ -10150,7 +10150,7 @@ def test_ik_all_frames():
     np.testing.assert_almost_equal(output_optim["total_joint_residuals"], total_joint_residuals, decimal=1e-5)
     assert output_optim["max_joint_violation"] == max_joint_violation
     np.testing.assert_almost_equal(output_optim["rigidity_residuals"], rigidity_residuals, decimal=1e-5)
-    np.testing.assert_almost_equal(output_optim["total_rigity_residuals"], total_rigity_residuals, decimal=1e-5)
+    np.testing.assert_almost_equal(output_optim["total_rigidity_residuals"], total_rigity_residuals, decimal=1e-5)
     assert output_optim["max_rigidbody_violation"] == max_rigidbody_violation
     assert output_optim["success"] == success
 

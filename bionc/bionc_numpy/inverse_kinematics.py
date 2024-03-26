@@ -567,7 +567,7 @@ class InverseKinematics:
                 A list of the joint with the highest residual for each frame
             - 'rigidity_residuals' : np.ndarray
                 Residuals of the rigidity constraint for each segment and each frame
-            - 'total_rigity_residuals' : np.ndarray
+            - 'total_rigidity_residuals' : np.ndarray
                 Global rigidity constraint residual for each frame
             - 'max_rigidbody_violation' : list[str]
                 A list of the segment with the highest rigidity residual for each frame
@@ -587,10 +587,10 @@ class InverseKinematics:
         joint_residuals = np.zeros((nb_joints_constraints, nb_frames))
         rigidity_residuals = np.zeros((nb_segments, nb_frames))
 
-        # Global will correspond to the squared sum of all the specifi residuals
+        # Global will correspond to the squared sum of all the specific residuals
         total_marker_residuals = np.zeros((nb_frames))
         total_joint_residuals = np.zeros((nb_frames))
-        total_rigity_residuals = np.zeros((nb_frames))
+        total_rigidity_residuals = np.zeros((nb_frames))
 
         for i in range(self.nb_frames):
             # Extraction of the residuals for each frame
@@ -603,7 +603,7 @@ class InverseKinematics:
                 self.experimental_markers[:, :, i], NaturalCoordinatesNumpy(self.Qopt[:, i]), only_technical=True
             )
             # Total residual by frame
-            total_rigity_residuals[i] = np.sqrt(np.dot(phir_post_optim, phir_post_optim))
+            total_rigidity_residuals[i] = np.sqrt(np.dot(phir_post_optim, phir_post_optim))
             total_joint_residuals[i] = np.sqrt(np.dot(phik_post_optim, phik_post_optim))
             total_marker_residuals[i] = np.sqrt(np.dot(phim_post_optim, phim_post_optim))
 
@@ -649,7 +649,7 @@ class InverseKinematics:
             total_joint_residuals=total_joint_residuals,
             max_joint_violation=max_joint_violation,
             rigidity_residuals=rigidity_residuals,
-            total_rigity_residuals=total_rigity_residuals,
+            total_rigidity_residuals=total_rigidity_residuals,
             max_rigidbody_violation=max_rigidbody_violation,
             success=success,
         )

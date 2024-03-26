@@ -80,6 +80,7 @@ class JointGeneralizedForces(ExternalForce):
         )
         R_child = child_segment.segment_coordinates_system(Q_child, joint.child_basis).rot
 
+        # I feel there is a bug here, translation_dof is not used at all !! Delete this comment when fixed plz
         force_in_global = fill_forces_and_project(forces, rotation_dof, R_parent)
         filled_torques = fill_torques(torques, rotation_dof)
 

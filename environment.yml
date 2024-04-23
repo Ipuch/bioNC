@@ -15,4 +15,4 @@ dependencies:
 - dill
 - bioviz
 - biorbd
-
+- numba

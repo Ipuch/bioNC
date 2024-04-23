@@ -1,7 +1,6 @@
-from biorbd import Rotation
-
 # from scipy.spatial.transform import Rotation
 import numpy as np
+from biorbd import Rotation
 
 
 def rotation_matrix_from_numpy_to_biorbd(R: np.ndarray) -> Rotation:
@@ -45,7 +44,7 @@ def rotation_matrix_to_euler_angles(rotation_matrix: np.ndarray, seq: str = "xyz
     Returns
     ---------
     Rotation.toEulerAngles(rotation_matrix_biorbd, seq).to_array()
-        The Euler vector in radiant as an array
+        The Euler vector in radian as an array
     """
 
     rotation_matrix_biorbd = rotation_matrix_from_numpy_to_biorbd(rotation_matrix)

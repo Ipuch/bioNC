@@ -1,24 +1,34 @@
 import numpy as np
+from numba import float64
+from numba import njit
+from numpy import ndarray
 
 from .interface_biorbd import rotation_matrix_to_euler_angles
 from ..utils.enums import CartesianAxis, EulerSequence
 
-# todo: test the whole file
+
+@njit(float64[:, :](float64), cache=True)
+def rotation_x(angle: float) -> ndarray:
+    """This function returns the rotation matrix around the x-axis for a given angle in radians."""
+    cos_angle = np.cos(angle)
+    sin_angle = np.sin(angle)
+    return np.array([[1.0, 0.0, 0.0], [0.0, cos_angle, -sin_angle], [0.0, sin_angle, cos_angle]])
 
 
-def rotation_x(angle) -> np.ndarray:
-    """This function returns the rotation matrix around the x axis by the angle given in argument"""
-    return np.array([[1, 0, 0], [0, np.cos(angle), -np.sin(angle)], [0, np.sin(angle), np.cos(angle)]])
+@njit(float64[:, :](float64), cache=True)
+def rotation_y(angle: float) -> ndarray:
+    """This function returns the rotation matrix around the y-axis for a given angle in radians."""
+    cos_angle = np.cos(angle)
+    sin_angle = np.sin(angle)
+    return np.array([[cos_angle, 0.0, sin_angle], [0.0, 1.0, 0.0], [-sin_angle, 0.0, cos_angle]])
 
 
-def rotation_y(angle) -> np.ndarray:
-    """This function returns the rotation matrix around the y axis by the angle given in argument"""
-    return np.array([[np.cos(angle), 0, np.sin(angle)], [0, 1, 0], [-np.sin(angle), 0, np.cos(angle)]])
-
-
-def rotation_z(angle) -> np.ndarray:
-    """This function returns the rotation matrix around the z axis by the angle given in argument"""
-    return np.array([[np.cos(angle), -np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
+@njit(float64[:, :](float64), cache=True)
+def rotation_z(angle: float) -> ndarray:
+    """This function returns the rotation matrix around the z-axis for a given angle in radians."""
+    cos_angle = np.cos(angle)
+    sin_angle = np.sin(angle)
+    return np.array([[cos_angle, -sin_angle, 0.0], [sin_angle, cos_angle, 0.0], [0.0, 0.0, 1.0]])
 
 
 def rotation_matrices_from_rotation_matrix(rotation_matrix, sequence: str) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -63,15 +73,19 @@ def rotation_matrix_from_angle_and_axis(angle: float, axis: str | CartesianAxis)
     np.ndarray
         Rotation matrix
     """
+    axis_map = {
+        "x": rotation_x(angle),
+        CartesianAxis.X: rotation_x(angle),
+        "y": rotation_y(angle),
+        CartesianAxis.Y: rotation_y(angle),
+        "z": rotation_z(angle),
+        CartesianAxis.Z: rotation_z(angle),
+    }
 
-    if axis == "x" or axis == CartesianAxis.X:
-        return rotation_x(angle)
-    elif axis == "y" or axis == CartesianAxis.Y:
-        return rotation_y(angle)
-    elif axis == "z" or axis == CartesianAxis.Z:
-        return rotation_z(angle)
-    else:
+    output = axis_map.get(axis)
+    if output is None:
         raise ValueError("The axis must be 'x', 'y' or 'z'.")
+    return output
 
 
 def euler_axes_from_rotation_matrices(
@@ -166,15 +180,20 @@ def vector_from_axis(axis: str | CartesianAxis) -> np.ndarray:
     np.ndarray
         Vector associated with the axis
     """
+    axis_map = {
+        "x": np.array([1, 0, 0]),
+        CartesianAxis.X: np.array([1, 0, 0]),
+        "y": np.array([0, 1, 0]),
+        CartesianAxis.Y: np.array([0, 1, 0]),
+        "z": np.array([0, 0, 1]),
+        CartesianAxis.Z: np.array([0, 0, 1]),
+    }
 
-    if axis == "x" or axis == CartesianAxis.X:
-        return np.array([1, 0, 0])
-    elif axis == "y" or axis == CartesianAxis.Y:
-        return np.array([0, 1, 0])
-    elif axis == "z" or axis == CartesianAxis.Z:
-        return np.array([0, 0, 1])
-    else:
+    output = axis_map.get(axis)
+    if output is None:
         raise ValueError("The axis must be 'x', 'y' or 'z'.")
+    else:
+        return output
 
 
 def euler_angles_from_rotation_matrix(

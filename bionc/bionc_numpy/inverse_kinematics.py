@@ -5,6 +5,14 @@ from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
 from pyomeca import Markers
 
 from .enums import InitialGuessModeType
+from .time_series_utils import (
+    total_rigid_body_constraints,
+    total_marker_constraints,
+    total_joint_constraints,
+    joint_constraints,
+    rigid_body_constraints,
+    marker_constraints_xyz,
+)
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
@@ -566,7 +574,6 @@ class InverseKinematics:
                 if self.segment_determinants[s, i] < 0:
                     print(f"Warning: frame {i} segment {s} has a negative determinant")
 
-    # todo: def sol() -> dict that returns the details of the inverse kinematics such as all the metrics, etc...
     def sol(self):
         """
         Create and return a dict that contains the output of each optimization.
@@ -597,69 +604,30 @@ class InverseKinematics:
                 A list of boolean indicating for each frame of the sucess of the optimization.
 
         """
-
-        nb_frames = self.nb_frames
-        nb_markers = self.nb_markers
-        nb_joints_constraints = self.model.nb_joint_constraints
-        nb_segments = self.model.nb_segments
-
-        # Initialisation of all the different residuals that can be calculated
-        marker_residuals_norm = np.zeros((1, nb_markers, nb_frames))
-        marker_residuals_xyz = np.zeros((3, nb_markers, nb_frames))
-        joint_residuals = np.zeros((nb_joints_constraints, nb_frames))
-        rigidity_residuals = np.zeros((nb_segments, nb_frames))
+        marker_residuals_xyz = marker_constraints_xyz(self.model, self.Qopt, self.experimental_markers)
+        marker_residuals_norm = np.sqrt(np.sum(marker_residuals_xyz**2, axis=0))
+        joint_residuals = joint_constraints(self.model, self.Qopt)
+        rigidity_residuals = rigid_body_constraints(self.model, self.Qopt)
+        segment_rigidity_residuals = np.reshape(
+            rigidity_residuals, (6, self.model.nb_segments, self.nb_frames), order="F"
+        )
+        segment_rigidity_residual_norm = np.sqrt(np.sum(segment_rigidity_residuals**2, axis=0))
 
         # Global will correspond to the squared sum of all the specific residuals
-        total_marker_residuals = np.zeros((nb_frames))
-        total_joint_residuals = np.zeros((nb_frames))
-        total_rigidity_residuals = np.zeros((nb_frames))
+        total_marker_residuals = total_marker_constraints(self.model, self.Qopt, self.experimental_markers)
+        total_joint_residuals = total_joint_constraints(self.model, self.Qopt)
+        total_rigidity_residuals = total_rigid_body_constraints(self.model, self.Qopt)
 
-        for i in range(self.nb_frames):
-            # Extraction of the residuals for each frame
-            # Rigidity constraint
-            phir_post_optim = self.model.rigid_body_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
-            # Kinematics constraints (associated with the joint of the model)
-            phik_post_optim = self.model.joint_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
-            # Marker constraints
-            phim_post_optim = self.model.markers_constraints(
-                self.experimental_markers[:, :, i], NaturalCoordinatesNumpy(self.Qopt[:, i]), only_technical=True
-            )
-            # Total residual by frame
-            total_rigidity_residuals[i] = np.sqrt(np.dot(phir_post_optim, phir_post_optim))
-            total_joint_residuals[i] = np.sqrt(np.dot(phik_post_optim, phik_post_optim))
-            total_marker_residuals[i] = np.sqrt(np.dot(phim_post_optim, phim_post_optim))
-
-            # Extraction of the residuals for each marker, joint and segment individually
-            # As the numbers of constraint is not the same for each joint, we need to create a list of constraint to find which joint is affected
-            for ind in range(self.model.nb_joints):
-                joint_constraints_slice = self.model.joint_constraints_index(ind)
-                joint_residuals[joint_constraints_slice, i] = phik_post_optim[joint_constraints_slice]
-
-            for ind, key in enumerate(self.model.marker_names_technical):
-                marker_residuals_norm[:, ind, i] = np.sqrt(
-                    np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3])
-                )
-                marker_residuals_xyz[:, ind, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
-
-        # Extract optimisation details
-        success = self.success_optim
-
-        ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=1)
-        ind_max_rigidy_error = np.argmax(rigidity_residuals, axis=0)
+        ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=0)
+        ind_max_rigidy_error = np.argmax(segment_rigidity_residual_norm, axis=0)
         ind_max_joint_constraint_error = np.argmax(joint_residuals, axis=0)
 
         # Create a list of marker, segment and joint from the indices
-        max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance[0, :]]
+        max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance]
         max_rigidbody_violation = [self.model.segment_names[ind_max] for ind_max in ind_max_rigidy_error]
-
-        # Each line is an equation of the constraint but we need to find the joint associated with the constraint
-        list_constraint_to_joint = np.zeros((self.model.nb_joint_constraints), dtype=np.int64)
-        for ind in range(self.model.nb_joints):
-            joint_constraints_slice = self.model.joint_constraints_index(ind)
-            list_constraint_to_joint[joint_constraints_slice] = ind
-
         max_joint_violation = [
-            self.model.joint_names[list_constraint_to_joint[ind_max]] for ind_max in ind_max_joint_constraint_error
+            self.model.joint_names[self.model.joint_constraints_indices[ind_max]]
+            for ind_max in ind_max_joint_constraint_error
         ]
 
         self.output = dict(
@@ -674,9 +642,11 @@ class InverseKinematics:
             total_joint_residuals=total_joint_residuals,
             max_joint_violation=max_joint_violation,
             rigidity_residuals=rigidity_residuals,
+            segment_rigidity_residuals=segment_rigidity_residuals,
+            segment_rigidity_residual_norm=segment_rigidity_residual_norm,
             total_rigidity_residuals=total_rigidity_residuals,
             max_rigidbody_violation=max_rigidbody_violation,
-            success=success,
+            success=self.success_optim,
         )
         return self.output
 

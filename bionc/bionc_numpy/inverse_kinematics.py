@@ -33,7 +33,12 @@ class InverseKinematics:
     experimental_markers : np.ndarray | str
         The experimental markers (3xNxM numpy array), or a path to a c3d file
     experimental_heatmaps : dict[str, np.ndarray]
-        The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array). gaussian_parameters[0:2, :, :, :] is an array of the position (x, y) of the center of the gaussian. gaussian_parameters[2:4, :, :, :] is an array of the standard deviation (x, y) of the gaussian. gaussian_parameters[4,:,:,:] is an array of the magnitude of the gaussian.
+        The experimental heatmaps, composed of two arrays and one float :
+            * camera_parameters (3 x 4 x nb_cameras numpy array),
+            * gaussian_parameters (5 x M x N x nb_cameras numpy array):
+                - gaussian_parameters[0:2, :, :, :] is an array of the position (x, y) of the center of the gaussian.
+                - gaussian_parameters[2:4, :, :, :] is an array of the standard deviation (x, y) of the gaussian.
+                - gaussian_parameters[4,:,:,:] is an array of the magnitude of the gaussian.
     Q_init : np.ndarray
         The initial guess for the inverse kinematics computed from the experimental markers
     Qopt : np.ndarray
@@ -88,9 +93,14 @@ class InverseKinematics:
         model : BiomechanicalModel
             The model considered (bionc.numpy)
         experimental_markers : np.ndarray | str
-            The experimental markers (3xNxM numpy array), or a path to a c3d file
+            The experimental markers (3 x nb_markers x nb_frames numpy array), or a path to a c3d file
         experimental_heatmaps : dict[str, np.ndarray]
-            The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array)
+            The experimental heatmaps, composed of two arrays and one float :
+                * camera_parameters (3 x 4 x nb_cameras numpy array),
+                * gaussian_parameters (5 x nb_markers x nb_frames x nb_cameras numpy array):
+                    - gaussian_parameters[0:2, :, :, :] is an array of the position (x, y) of the center of the gaussian.
+                    - gaussian_parameters[2:4, :, :, :] is an array of the standard deviation (x, y) of the gaussian.
+                    - gaussian_parameters[4,:,:,:] is an array of the magnitude of the gaussian.
         solve_frame_per_frame : bool
             If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
         active_direct_frame_constraints : bool

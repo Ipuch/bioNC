@@ -8,11 +8,8 @@ from .enums import InitialGuessModeType
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
-from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
-from ..utils.c3d_ik_exporter import C3DInverseKinematicsExporter
-
-from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
 from ..utils import constants
+from ..utils.c3d_ik_exporter import C3DInverseKinematicsExporter
 from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
 from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, check_format_experimental_heatmaps
 
@@ -71,7 +68,7 @@ class InverseKinematics:
     def __init__(
         self,
         model: BiomechanicalModel,
-        experimental_markers: np.ndarray = None,
+        experimental_markers: np.ndarray | str = None,
         experimental_heatmaps: dict[str, np.ndarray] = None,
         solve_frame_per_frame: bool = True,
         active_direct_frame_constraints: bool = False,
@@ -115,16 +112,7 @@ class InverseKinematics:
         self._model_mx = model.to_mx()
 
         if experimental_markers is not None:
-            if isinstance(experimental_markers, str):
-                self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
-            if isinstance(experimental_markers, np.ndarray):
-                if (
-                    experimental_markers.shape[0] != 3
-                    or experimental_markers.shape[1] < 1
-                    or len(experimental_markers.shape) < 3
-                ):
-                    raise ValueError("experimental_markers must be a 3xNxM numpy array")
-                self.experimental_markers = experimental_markers
+            self.experimental_markers = self.process_experimental_markers(experimental_markers)
 
         self.Qopt = None
         self.segment_determinants = None
@@ -177,6 +165,35 @@ class InverseKinematics:
 
         self._objective_function = None
         self._update_objective_function()
+
+    @staticmethod
+    def process_experimental_markers(experimental_markers: str | np.ndarray) -> np.ndarray:
+        """
+        Process the experimental markers input.
+
+        Parameters
+        ----------
+        experimental_markers : str or np.ndarray
+            The experimental markers (3xNxM numpy array), or a path to a c3d file.
+
+        Returns
+        -------
+        np.ndarray
+            The checked experimental markers (3xNxM numpy array)
+        """
+        if isinstance(experimental_markers, str):
+            processed_markers = Markers.from_c3d(experimental_markers).to_numpy()
+        elif isinstance(experimental_markers, np.ndarray):
+            if (
+                experimental_markers.shape[0] != 3
+                or experimental_markers.shape[1] < 1
+                or len(experimental_markers.shape) < 3
+            ):
+                raise ValueError("experimental_markers must be a 3xNxM numpy array")
+            processed_markers = experimental_markers
+        else:
+            raise TypeError("experimental_markers must be a string or a numpy array")
+        return processed_markers
 
     def _update_objective_function(self):
         """

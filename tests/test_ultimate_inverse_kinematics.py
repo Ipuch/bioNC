@@ -9911,7 +9911,9 @@ def test_inverse_kinematics_class():
     # Create inverse kinematics object
     ik = InverseKinematics(natural_model, markers)
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(
+        TypeError, match=f"experimental_markers must be a path as a string or a numpy array of size 3xNxM. Got {type(1)} instead."
+    ):
         ik = InverseKinematics(natural_model, 1)
 
     with pytest.raises(ValueError):

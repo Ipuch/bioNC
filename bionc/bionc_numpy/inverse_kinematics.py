@@ -189,10 +189,14 @@ class InverseKinematics:
                 or experimental_markers.shape[1] < 1
                 or len(experimental_markers.shape) < 3
             ):
-                raise ValueError("experimental_markers must be a 3xNxM numpy array")
+                raise ValueError(
+                    f"experimental_markers must be a 3xNxM numpy array. Got {experimental_markers.shape} instead."
+                )
             processed_markers = experimental_markers
         else:
-            raise TypeError("experimental_markers must be a string or a numpy array")
+            raise TypeError(
+                f"experimental_markers must be a path as a string or a numpy array of size 3xNxM. Got {type(experimental_markers)} instead."
+            )
         return processed_markers
 
     def _update_objective_function(self):
@@ -453,6 +457,7 @@ class InverseKinematics:
         r, success = _solve_nlp(method, nlp, vertical_Q_init, lbg, ubg, options)
         self.success_optim = [success] * self.nb_frames
         Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
+        # objective_function = r["f"]
 
         return Qopt
 
@@ -658,6 +663,9 @@ class InverseKinematics:
         ]
 
         self.output = dict(
+            # objective_function=objective_functions,
+            # heatmap_confidences_2d=[Ncamera x Npoints x Nframe, X x y],
+            # heatmap_confidences_3d=[Npoints x Nframe],
             marker_residuals_norm=marker_residuals_norm,
             marker_residuals_xyz=marker_residuals_xyz,
             total_marker_residuals=total_marker_residuals,

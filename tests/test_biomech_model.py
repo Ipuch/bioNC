@@ -6972,10 +6972,10 @@ def test_biomech_model(bionc_type):
 
     assert natural_model.segment_names == segment_names
 
-    assert natural_model.joint_constraints_slice(0) == natural_model.joint_constraints_index("free_joint_PELVIS")
-    assert natural_model.joint_constraints_slice(1) == natural_model.joint_constraints_index("hip")
-    assert natural_model.joint_constraints_slice(2) == natural_model.joint_constraints_index("knee")
-    assert natural_model.joint_constraints_slice(3) == natural_model.joint_constraints_index("ankle")
+    assert natural_model.joint_constraints_slice(0) == natural_model.joint_constraints_slice("free_joint_PELVIS")
+    assert natural_model.joint_constraints_slice(1) == natural_model.joint_constraints_slice("hip")
+    assert natural_model.joint_constraints_slice(2) == natural_model.joint_constraints_slice("knee")
+    assert natural_model.joint_constraints_slice(3) == natural_model.joint_constraints_slice("ankle")
 
     assert natural_model.joint_constraints_slice(0) == slice(0, 0, None)
     assert natural_model.joint_constraints_slice("hip") == slice(0, 3, None)
@@ -6986,19 +6986,19 @@ def test_biomech_model(bionc_type):
 
     with pytest.raises(ValueError) as error_index:
         incorrect_joint_index = 10000
-        natural_model.joint_constraints_index(incorrect_joint_index)
+        natural_model.joint_constraints_slice(incorrect_joint_index)
     assert (
         str(error_index.value)
         == "No joint with index 4. You may have ask for joint id superior to the number of joints 4. Index up to 3."
     )
     with pytest.raises(ValueError) as error_name:
-        natural_model.joint_constraints_index("incorrect_joint_name")
+        natural_model.joint_constraints_slice("incorrect_joint_name")
     assert str(error_name.value) == "The joint name incorrect_joint_name does not exist"
 
     filename = "natural_model.nc"
     if bionc_type == "numpy":
         natural_model.save(filename)
-        natural_model = BiomechanicalModel.load(filename)
+        BiomechanicalModel.load(filename)
         os.remove(filename)
 
     elif bionc_type == "casadi":
@@ -7006,7 +7006,7 @@ def test_biomech_model(bionc_type):
         with pytest.raises(NotImplementedError):
             natural_model.save(filename)
         with pytest.raises(NotImplementedError):
-            natural_model = BiomechanicalModel.load(filename)
+            BiomechanicalModel.load(filename)
 
 
 @pytest.mark.parametrize(

@@ -1,4 +1,5 @@
-from casadi import dot, exp
+import numpy as np
+from casadi import dot, exp, MX, DM, transpose, reshape, horzcat
 
 
 def _projection(model_markers, camera_calibration_matrix, axis):
@@ -65,6 +66,135 @@ def gaussian_exponent(value, expected_value, standard_deviation):
         [1 x 1] symbolic expression. Represents the standard deviation of the variable of the gaussian function.
     """
     return ((value - expected_value) ** 2) / (2 * standard_deviation**2)
+
+
+def compute_total_confidence(
+    marker_positions: MX | np.ndarray, camera_parameters: np.ndarray, gaussian_parameters: np.ndarray
+) -> MX | DM:
+    """
+    This function computes the total confidence value for all 3D points associated with all cameras.
+
+    Parameters
+    ----------
+    marker_positions : np.ndarray
+        A 2D array representing the positions of the 3D points in the global reference frame.
+        Shape: (3, nb_markers)
+
+    camera_parameters : np.ndarray
+        A 2D array representing the calibration matrices of all cameras.
+        Shape: (12, nb_cameras)
+
+    gaussian_parameters : np.ndarray
+        A 2D array representing the parameters of the gaussians associated with all cameras.
+        Shape: (5*nb_markers, nb_cameras)
+
+    Returns
+    -------
+    total_confidence : MX | np.ndarray
+        The total confidence value computed for all 3D points and all cameras.
+
+    """
+    nb_markers = marker_positions.shape[1]
+    nb_cameras = camera_parameters.shape[1]
+
+    total_confidence: float = 0
+
+    camera_gaussian = []
+    for c in range(nb_cameras):
+        camera_gaussian.append(transpose(reshape(gaussian_parameters[:, c], (nb_markers, 5)))[:])
+    rearranged_gaussian_parameters = horzcat(
+        *camera_gaussian
+    )  # [5 x nb_markers, nb_cameras] first five rows are for the first marker, the next five rows are for the second marker, etc.
+
+    for m in range(nb_markers):
+        m_offset = 5 * m
+        marker_gaussian_parameters = rearranged_gaussian_parameters[m_offset : m_offset + 5, :]
+
+        total_confidence += compute_confidence_for_one_marker(
+            marker_positions[:, m],
+            camera_parameters,
+            marker_gaussian_parameters,
+        )
+
+    return total_confidence
+
+
+def compute_confidence_for_one_marker(
+    marker_position: MX | np.ndarray, camera_parameters: np.ndarray, gaussian_parameters: np.ndarray
+) -> MX | DM:
+    """
+    This function computes the total confidence value for one 3D point associated with all cameras.
+
+    Parameters
+    ----------
+    marker_position : np.ndarray
+        A 1D array representing the position of the 3D point in the global reference frame.
+        Shape: (3,)
+
+    camera_parameters : np.ndarray
+        A 2D array representing the calibration matrices of all cameras.
+        Shape: (12, nb_cameras)
+
+    gaussian_parameters : np.ndarray
+        A 2D array representing the parameters of the gaussians associated with all cameras.
+        Shape: (5, nb_cameras)
+
+    Returns
+    -------
+    total_confidence : MX | np.ndarray
+        The total confidence value computed for the 3D point and all cameras.
+
+    """
+    nb_cameras = camera_parameters.shape[1]
+
+    total_confidence: float = 0
+    for c in range(nb_cameras):
+        total_confidence += compute_confidence_for_one_marker_one_camera(
+            marker_position, camera_parameters[:, c], gaussian_parameters[:, c]
+        )
+    return total_confidence
+
+
+def compute_confidence_for_one_marker_one_camera(
+    marker_position: MX | np.ndarray, camera_parameters: np.ndarray, gaussian_parameters: np.ndarray
+) -> MX | DM:
+    """
+    This function computes the confidence value for one 3D point associated with one camera.
+
+    Parameters
+    ----------
+    marker_position : MX | np.ndarray
+        A 1D array representing the position of the 3D point in the global reference frame.
+        Shape: (3,)
+
+    camera_parameters : np.ndarray
+        A 1D array representing the calibration matrix of the camera.
+        Shape: (12,)
+
+    gaussian_parameters : np.ndarray
+        A 1D array representing the parameters of the gaussian associated with the camera.
+        Shape: (5,)
+
+    Returns
+    -------
+    confidence : MX | DM
+        The confidence value computed for the 3D point and the camera.
+
+    """
+    camera_calibration_matrix = transpose(reshape(camera_parameters, (4, 3)))
+
+    gaussian_center = gaussian_parameters[0:2]
+    gaussian_standard_deviation = gaussian_parameters[2:4]
+    gaussian_magnitude = gaussian_parameters[4]
+
+    confidence = _compute_confidence_value_for_one_heatmap(
+        marker_position,
+        camera_calibration_matrix,
+        gaussian_magnitude,
+        gaussian_center,
+        gaussian_standard_deviation,
+    )
+    return confidence
 
 
 def check_format_experimental_heatmaps(experimental_heatmaps: dict):

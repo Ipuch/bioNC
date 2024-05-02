@@ -1,7 +1,7 @@
 from typing import Callable
 
 import numpy as np
-from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
+from casadi import vertcat, horzcat, MX, Function, sum1
 from pyomeca import Markers
 
 from .enums import InitialGuessModeType
@@ -19,7 +19,10 @@ from ..protocols.biomechanical_model import GenericBiomechanicalModel as Biomech
 from ..utils import constants
 from ..utils.c3d_ik_exporter import C3DInverseKinematicsExporter
 from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
-from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, check_format_experimental_heatmaps
+from ..utils.heatmap_helpers import (
+    check_format_experimental_heatmaps,
+    compute_total_confidence,
+)
 
 
 class InverseKinematics:
@@ -524,7 +527,6 @@ class InverseKinematics:
         MX
             The objective function that maximizes the confidence value of the model keypoints
         """
-        total_confidence = 0
         Q_f = NaturalCoordinates(Q)
         marker_position = self._model_mx.markers(Q_f)
 
@@ -534,22 +536,8 @@ class InverseKinematics:
         technical_index = [marker_names.index(m) for m in marker_names_technical]
         marker_position = marker_position[:, technical_index]
 
-        for m in range(self.model.nb_markers):
-            for c in range(self.nb_cameras):
-                camera_calibration_matrix = transpose(reshape(camera_parameters[:, c], (4, 3)))
-                gaussian = transpose(reshape(gaussian_parameters[:, c], (self.nb_markers, 5)))
+        total_confidence = compute_total_confidence(marker_position, camera_parameters, gaussian_parameters)
 
-                gaussian_magnitude = gaussian[4, m]
-                gaussian_center = gaussian[0:2, m]
-                gaussian_standard_deviation = gaussian[2:4, m]
-
-                total_confidence += _compute_confidence_value_for_one_heatmap(
-                    marker_position[:, m],
-                    camera_calibration_matrix,
-                    gaussian_magnitude,
-                    gaussian_center,
-                    gaussian_standard_deviation,
-                )
         return 1 / total_confidence
 
     def _constraints(self, Q) -> MX:
@@ -616,8 +604,7 @@ class InverseKinematics:
                 A list of boolean indicating for each frame of the sucess of the optimization.
 
         """
-        marker_residuals_xyz = marker_constraints_xyz(self.model, self.Qopt, self.experimental_markers)
-        marker_residuals_norm = np.sqrt(np.sum(marker_residuals_xyz**2, axis=0))
+
         joint_residuals = joint_constraints(self.model, self.Qopt)
         rigidity_residuals = rigid_body_constraints(self.model, self.Qopt)
         segment_rigidity_residuals = np.reshape(
@@ -626,22 +613,34 @@ class InverseKinematics:
         segment_rigidity_residual_norm = np.sqrt(np.sum(segment_rigidity_residuals**2, axis=0))
 
         # Global will correspond to the squared sum of all the specific residuals
-        total_marker_residuals = total_marker_constraints(self.model, self.Qopt, self.experimental_markers)
         total_joint_residuals = total_joint_constraints(self.model, self.Qopt)
         total_rigidity_residuals = total_rigid_body_constraints(self.model, self.Qopt)
 
-        ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=0)
         ind_max_rigidy_error = np.argmax(segment_rigidity_residual_norm, axis=0)
         ind_max_joint_constraint_error = np.argmax(joint_residuals, axis=0)
 
         # Create a list of marker, segment and joint from the indices
-        max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance]
         max_rigidbody_violation = [self.model.segment_names[ind_max] for ind_max in ind_max_rigidy_error]
         max_joint_violation = [
             self.model.joint_names[self.model.joint_constraints_indices[ind_max]]
             for ind_max in ind_max_joint_constraint_error
         ]
 
+        marker_residuals_xyz, marker_residuals_norm, total_marker_residuals, max_marker_distance = (
+            None,
+            None,
+            None,
+            None,
+        )
+        if self.experimental_markers is not None:
+            marker_residuals_xyz = marker_constraints_xyz(self.model, self.Qopt, self.experimental_markers)
+            marker_residuals_norm = np.sqrt(np.sum(marker_residuals_xyz**2, axis=0))
+            total_marker_residuals = total_marker_constraints(self.model, self.Qopt, self.experimental_markers)
+            ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=0)
+            max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance]
+
+        if self.experimental_heatmaps is not None:
+            print("Not implemented yet")
         self.output = dict(
             objective_function=self.objective_function,
             # heatmap_confidences_2d=[Ncamera x Npoints x Nframe, X x y],

@@ -228,6 +228,8 @@ def test_global_heatmap_ik():
         ),
     )
 
+    solutions = ik.sol()
+
 
 def test_error_solve_frame_per_frame():
     bionc = TestUtils.bionc_folder()

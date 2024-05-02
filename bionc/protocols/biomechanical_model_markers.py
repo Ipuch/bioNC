@@ -1,5 +1,6 @@
-import numpy as np
 from abc import ABC, abstractmethod
+
+import numpy as np
 from casadi import MX
 
 from .biomechanical_model_segments import GenericBiomechanicalModelSegments
@@ -183,6 +184,24 @@ class GenericBiomechanicalModelMarkers(ABC):
         Returns
         -------
             Defects of the marker constraints [nb_markers x 3, 1]
+        """
+
+    @abstractmethod
+    def constraints_xyz(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool):
+        """
+        This function returns the marker constraints of all segments, denoted Phi_r
+        as a function of the natural coordinates Q, in pyomeca format [3, nb_markers].
+
+        markers : np.ndarray | MX
+            The markers positions [3, nb_markers]
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 * nb_segments, 1]
+        only_technical : bool
+            If True, only the technical markers are considered
+
+        Returns
+        -------
+            Defects of the marker constraints [3, nb_markers]
         """
 
     @abstractmethod

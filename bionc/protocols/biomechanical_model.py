@@ -555,6 +555,9 @@ class GenericBiomechanicalModel(ABC):
     def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool = True):
         return self._markers.constraints(markers, Q, only_technical)
 
+    def markers_constraints_xyz(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool = True):
+        return self._markers.constraints_xyz(markers, Q, only_technical)
+
     def markers_constraints_jacobian(self, only_technical: bool = True):
         return self._markers.constraints_jacobian(only_technical)
 

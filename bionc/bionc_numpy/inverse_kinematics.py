@@ -393,6 +393,7 @@ class InverseKinematics:
         method: str,
         options: dict,
     ):
+        self.objective_function = np.zeros(self.nb_frames)
         Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
         lbg = np.zeros(self.model.nb_holonomic_constraints)
         ubg = np.zeros(self.model.nb_holonomic_constraints)
@@ -421,6 +422,7 @@ class InverseKinematics:
             r, success = _solve_nlp(method, nlp, Q_init[:, f], lbg, ubg, options)
             self.success_optim.append(success)
             Qopt[:, f : f + 1] = r["x"].toarray()
+            self.objective_function[f] = r["f"]
 
             Q_init = self.update_initial_guess(Q_init, Qopt, initial_guess_mode, frame=f)
 
@@ -475,7 +477,7 @@ class InverseKinematics:
         r, success = _solve_nlp(method, nlp, vertical_Q_init, lbg, ubg, options)
         self.success_optim = [success] * self.nb_frames
         Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
-        # objective_function = r["f"]
+        self.objective_function = r["f"]
 
         return Qopt
 
@@ -641,7 +643,7 @@ class InverseKinematics:
         ]
 
         self.output = dict(
-            # objective_function=objective_functions,
+            objective_function=self.objective_function,
             # heatmap_confidences_2d=[Ncamera x Npoints x Nframe, X x y],
             # heatmap_confidences_3d=[Npoints x Nframe],
             marker_residuals_norm=marker_residuals_norm,

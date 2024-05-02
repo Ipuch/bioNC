@@ -331,6 +331,17 @@ class GenericBiomechanicalModelJoints(ABC):
 
         return slice(begin_slice, end_slice)
 
+    @property
+    def joint_constraint_index(self) -> list[int]:
+        """This function returns the joint index of the individual constraint is associated with"""
+        list_constraint_to_joint = []
+        for ind in range(self.nb_joints):
+            joint_constraints_slice = self.constraints_index(ind)
+            if joint_constraints_slice != slice(0, 0, None):
+                list_constraint_to_joint.extend([ind] * (joint_constraints_slice.stop - joint_constraints_slice.start))
+
+        return list_constraint_to_joint
+
     def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
         """
         This function returns the joints that have the given child index

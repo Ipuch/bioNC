@@ -1,5 +1,6 @@
-import numpy as np
 import os
+
+import numpy as np
 import pytest
 
 from bionc import TransformationMatrixType
@@ -6971,15 +6972,17 @@ def test_biomech_model(bionc_type):
 
     assert natural_model.segment_names == segment_names
 
-    assert natural_model.joint_constraints_index(0) == natural_model.joint_constraints_index("free_joint_PELVIS")
-    assert natural_model.joint_constraints_index(1) == natural_model.joint_constraints_index("hip")
-    assert natural_model.joint_constraints_index(2) == natural_model.joint_constraints_index("knee")
-    assert natural_model.joint_constraints_index(3) == natural_model.joint_constraints_index("ankle")
+    assert natural_model.joint_constraints_slice(0) == natural_model.joint_constraints_index("free_joint_PELVIS")
+    assert natural_model.joint_constraints_slice(1) == natural_model.joint_constraints_index("hip")
+    assert natural_model.joint_constraints_slice(2) == natural_model.joint_constraints_index("knee")
+    assert natural_model.joint_constraints_slice(3) == natural_model.joint_constraints_index("ankle")
 
-    assert natural_model.joint_constraints_index(0) == slice(0, 0, None)
-    assert natural_model.joint_constraints_index("hip") == slice(0, 3, None)
-    assert natural_model.joint_constraints_index(2) == slice(3, 6, None)
-    assert natural_model.joint_constraints_index("ankle") == slice(6, 9, None)
+    assert natural_model.joint_constraints_slice(0) == slice(0, 0, None)
+    assert natural_model.joint_constraints_slice("hip") == slice(0, 3, None)
+    assert natural_model.joint_constraints_slice(2) == slice(3, 6, None)
+    assert natural_model.joint_constraints_slice("ankle") == slice(6, 9, None)
+
+    assert natural_model.joint_constraints_indices == [1, 1, 1, 2, 2, 2, 3, 3, 3]
 
     with pytest.raises(ValueError) as error_index:
         incorrect_joint_index = 10000

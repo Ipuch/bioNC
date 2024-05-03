@@ -1,6 +1,3 @@
-WARNING: No ICDs were found. Either,
-- Install a conda package providing a OpenCL implementation (pocl, oclgrind, intel-compute-runtime, beignet) or 
-- Make your system-wide implementation visible by installing ocl-icd-system conda package. 
 from sys import platform
 
 import numpy as np

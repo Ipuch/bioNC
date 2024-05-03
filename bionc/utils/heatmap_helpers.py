@@ -54,7 +54,11 @@ def _compute_confidence_value_for_one_heatmap(
 
 def gaussian_exponent(value, expected_value, standard_deviation):
     """
-    Computes the exponent of a gaussian function
+    Computes the exponent of a gaussian function.
+
+    (value - expected_value)^2
+    -------------------------
+    2 * standard_deviation^2
 
     Parameters
     ----------
@@ -66,6 +70,35 @@ def gaussian_exponent(value, expected_value, standard_deviation):
         [1 x 1] symbolic expression. Represents the standard deviation of the variable of the gaussian function.
     """
     return ((value - expected_value) ** 2) / (2 * standard_deviation**2)
+
+
+def rearrange_gaussian_parameters(gaussian_parameters, nb_cameras, nb_markers):
+    """
+    Rearranges the Gaussian parameters for each camera.
+    This function should disappear in the future when the initial format of the Gaussian parameters is changed.
+
+    Parameters
+    ----------
+    gaussian_parameters : np.ndarray
+        The Gaussian parameters of size [5*nb_markers, nb_frame, nb_cameras].
+    nb_cameras : int
+        The number of cameras.
+    nb_markers : int
+        The number of markers.
+
+    Returns
+    -------
+    rearranged_gaussian_parameters : np.ndarray
+        The rearranged Gaussian parameters of size [5 x nb_markers, nb_cameras].
+        The first five rows are for the first marker, the next five rows are for the second marker, etc.
+    """
+
+    camera_gaussian = []
+    for c in range(nb_cameras):
+        camera_gaussian.append(transpose(reshape(gaussian_parameters[:, c], (nb_markers, 5)))[:])
+    rearranged_gaussian_parameters = horzcat(*camera_gaussian)
+
+    return rearranged_gaussian_parameters
 
 
 def compute_total_confidence(
@@ -99,16 +132,14 @@ def compute_total_confidence(
 
     total_confidence: float = 0
 
-    camera_gaussian = []
-    for c in range(nb_cameras):
-        camera_gaussian.append(transpose(reshape(gaussian_parameters[:, c], (nb_markers, 5)))[:])
-    rearranged_gaussian_parameters = horzcat(
-        *camera_gaussian
-    )  # [5 x nb_markers, nb_cameras] first five rows are for the first marker, the next five rows are for the second marker, etc.
+    # reshape into [5 x nb_markers, nb_cameras]
+    # first five rows are for the first marker,
+    # the next five rows are for the second marker, etc.
+    reshaped_gaussian_parameters = rearrange_gaussian_parameters(gaussian_parameters, nb_cameras, nb_markers)
 
     for m in range(nb_markers):
         m_offset = 5 * m
-        marker_gaussian_parameters = rearranged_gaussian_parameters[m_offset : m_offset + 5, :]
+        marker_gaussian_parameters = reshaped_gaussian_parameters[m_offset : m_offset + 5, :]
 
         total_confidence += compute_confidence_for_one_marker(
             marker_positions[:, m],

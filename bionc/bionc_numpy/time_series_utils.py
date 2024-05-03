@@ -59,3 +59,19 @@ def marker_constraints_xyz(model, Q: np.ndarray, markers: np.ndarray):
             markers[:, :, i], NaturalCoordinates(Q_frame), only_technical=True
         )
     return marker_residuals_xyz
+
+
+class TimeSeriesUtils:
+    """
+    This class contains utility functions to compute the constraints of a biomechanical model for
+    a given time series of natural coordinates and markers.
+    - Q [12 x n, nb_frame] : The natural coordinates of the model.
+    - markers [3, nb_markers x nb_frame] : The position of the markers in the global coordinate system.
+    """
+
+    total_rigid_body_constraints = total_rigid_body_constraints
+    rigid_body_constraints = rigid_body_constraints
+    total_joint_constraints = total_joint_constraints
+    joint_constraints = joint_constraints
+    total_marker_constraints = total_marker_constraints
+    marker_constraints_xyz = marker_constraints_xyz

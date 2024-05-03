@@ -1,18 +1,11 @@
 from typing import Callable
 
 import numpy as np
-from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
+from casadi import vertcat, horzcat, MX, Function, sum1
 from pyomeca import Markers
 
 from .enums import InitialGuessModeType
-from .time_series_utils import (
-    total_rigid_body_constraints,
-    total_marker_constraints,
-    total_joint_constraints,
-    joint_constraints,
-    rigid_body_constraints,
-    marker_constraints_xyz,
-)
+from .time_series_utils import TimeSeriesUtils
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
@@ -22,9 +15,8 @@ from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
 from ..utils.heatmap_helpers import (
     check_format_experimental_heatmaps,
     compute_total_confidence,
-    compute_confidence_for_one_marker,
-    compute_confidence_for_one_marker_one_camera,
 )
+from ..utils.heatmap_timeseries_helpers import HeatmapTimeseriesHelpers
 
 
 class InverseKinematics:
@@ -607,16 +599,16 @@ class InverseKinematics:
 
         """
 
-        joint_residuals = joint_constraints(self.model, self.Qopt)
-        rigidity_residuals = rigid_body_constraints(self.model, self.Qopt)
+        joint_residuals = TimeSeriesUtils.joint_constraints(self.model, self.Qopt)
+        rigidity_residuals = TimeSeriesUtils.rigid_body_constraints(self.model, self.Qopt)
         segment_rigidity_residuals = np.reshape(
             rigidity_residuals, (6, self.model.nb_segments, self.nb_frames), order="F"
         )
         segment_rigidity_residual_norm = np.sqrt(np.sum(segment_rigidity_residuals**2, axis=0))
 
         # Global will correspond to the squared sum of all the specific residuals
-        total_joint_residuals = total_joint_constraints(self.model, self.Qopt)
-        total_rigidity_residuals = total_rigid_body_constraints(self.model, self.Qopt)
+        total_joint_residuals = TimeSeriesUtils.total_joint_constraints(self.model, self.Qopt)
+        total_rigidity_residuals = TimeSeriesUtils.total_rigid_body_constraints(self.model, self.Qopt)
 
         ind_max_rigidy_error = np.argmax(segment_rigidity_residual_norm, axis=0)
         ind_max_joint_constraint_error = np.argmax(joint_residuals, axis=0)
@@ -628,34 +620,9 @@ class InverseKinematics:
             for ind_max in ind_max_joint_constraint_error
         ]
 
-        marker_residuals_xyz, marker_residuals_norm, total_marker_residuals, max_marker_distance = (
-            None,
-            None,
-            None,
-            None,
-        )
-        if self.experimental_markers is not None:
-            marker_residuals_xyz = marker_constraints_xyz(self.model, self.Qopt, self.experimental_markers)
-            marker_residuals_norm = np.sqrt(np.sum(marker_residuals_xyz**2, axis=0))
-            total_marker_residuals = total_marker_constraints(self.model, self.Qopt, self.experimental_markers)
-            ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=0)
-            max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance]
-
-        heatmap_confidences_2d, heatmap_confidences_3d, frame_total_confidence = None, None, None
-        if self.experimental_heatmaps is not None:
-            frame_total_confidence, heatmap_confidences_3d, heatmap_confidences_2d = (
-                self.recompute_confidence_for_each_frame()
-            )
-
         self.output = dict(
             objective_function=self.objective_function,
-            total_heatmap_confidence=frame_total_confidence,
-            heatmap_confidence=heatmap_confidences_3d,  # 3d [Nb_markers, N_frame],
-            heatmap_confidences_2d=heatmap_confidences_2d,  # [Nb_markers, Nb_camera, N_frame],
-            marker_residuals_norm=marker_residuals_norm,
-            marker_residuals_xyz=marker_residuals_xyz,
-            total_marker_residuals=total_marker_residuals,
-            max_marker_distance=max_marker_distance,
+            success=self.success_optim,
             joint_residuals=joint_residuals,
             total_joint_residuals=total_joint_residuals,
             max_joint_violation=max_joint_violation,
@@ -664,8 +631,40 @@ class InverseKinematics:
             segment_rigidity_residual_norm=segment_rigidity_residual_norm,
             total_rigidity_residuals=total_rigidity_residuals,
             max_rigidbody_violation=max_rigidbody_violation,
-            success=self.success_optim,
         )
+
+        if self.experimental_markers is not None:
+            marker_residuals_xyz = TimeSeriesUtils.marker_constraints_xyz(
+                self.model, self.Qopt, self.experimental_markers
+            )
+            marker_residuals_norm = np.sqrt(np.sum(marker_residuals_xyz**2, axis=0))
+
+            total_marker_residuals = TimeSeriesUtils.total_marker_constraints(
+                self.model, self.Qopt, self.experimental_markers
+            )
+            ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=0)
+            max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance]
+
+            self.output["marker_residuals_xyz"] = marker_residuals_xyz
+            self.output["marker_residuals_norm"] = marker_residuals_norm
+            self.output["total_marker_residuals"] = total_marker_residuals
+            self.output["max_marker_distance"] = max_marker_distance
+
+        if self.experimental_heatmaps is not None:
+            frame_total_confidence = HeatmapTimeseriesHelpers.total_confidence(
+                self.model, self.Qopt, self.camera_parameters, self.gaussian_parameters
+            )
+            heatmap_confidence_3d = HeatmapTimeseriesHelpers.total_confidence_for_all_markers(
+                self.model, self.Qopt, self.camera_parameters, self.gaussian_parameters
+            )
+            heatmap_confidence_2d = HeatmapTimeseriesHelpers.total_confidence_for_all_markers_on_each_camera(
+                self.model, self.Qopt, self.camera_parameters, self.gaussian_parameters
+            )
+
+            self.output["total_heatmap_confidence"] = frame_total_confidence
+            self.output["heatmap_confidence_3d"] = heatmap_confidence_3d  # 3d [Nb_markers, N_frame],
+            self.output["heatmap_confidence_2d"] = heatmap_confidence_2d  # [Nb_markers, Nb_camera, N_frame],
+
         return self.output
 
     def export_in_c3d(self, filename):
@@ -673,62 +672,3 @@ class InverseKinematics:
         c3d_export.add_natural_coordinate(self.Qopt)
         c3d_export.add_technical_markers(self.Qopt)
         c3d_export.export(None)
-
-    def recompute_confidence_for_each_frame(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """
-        Recomputes the confidence for each frame
-
-        Returns
-        -------
-        tuple[np.ndarray, np.ndarray, np.ndarray]
-            - frame_total_confidence : np.ndarray
-                The total confidence for each frame
-            - heatmap_confidences_3d : np.ndarray
-                The confidence for each marker in 3D for each frame [Nb_markers, N_frame]
-            - heatmap_confidences_2d : np.ndarray
-                The confidence for each marker in 2D for each camera for each frame [Nb_markers, Nb_camera, N_frame]
-
-        TODO: This method is unmaintained and should be refactored, any time soon.
-            I feel like I need a class HeatMap for this.
-        """
-        frame_total_confidence = np.zeros(self.nb_frames)
-        heatmap_confidences_3d = np.zeros((self.nb_markers, self.nb_frames))
-        heatmap_confidences_2d = np.zeros((self.nb_markers, self.nb_cameras, self.nb_frames))
-        for frame in range(self.nb_frames):
-            Q_f = NaturalCoordinatesNumpy(self.Qopt[:, frame])
-            marker_position = self.model.markers(Q_f)
-
-            # todo: we only want technical markers, implement a model.markers(Q_f, only_technical=True)
-            marker_names_technical = self.model.marker_names_technical
-            marker_names = self.model.marker_names
-            technical_index = [marker_names.index(m) for m in marker_names_technical]
-            marker_position = marker_position[:, technical_index]
-
-            frame_total_confidence[frame] = (
-                compute_total_confidence(marker_position, self.camera_parameters, self.gaussian_parameters[:, frame, :])
-                .toarray()
-                .squeeze()
-            )
-
-            camera_gaussian = []
-            for c in range(self.nb_cameras):
-                camera_gaussian.append(
-                    transpose(reshape(self.gaussian_parameters[:, frame, c], (self.nb_markers, 5)))[:]
-                )
-            rearranged_gaussian_parameters = horzcat(*camera_gaussian)
-
-            for m in range(self.nb_markers):
-                m_offset = 5 * m
-                marker_gaussian_parameters = rearranged_gaussian_parameters[m_offset : m_offset + 5, :]
-                the_marker_position = marker_position[:, m]
-
-                heatmap_confidences_3d[m, frame] = compute_confidence_for_one_marker(
-                    the_marker_position, self.camera_parameters, marker_gaussian_parameters
-                )
-
-                for c in range(self.nb_cameras):
-                    heatmap_confidences_2d[m, c, frame] = compute_confidence_for_one_marker_one_camera(
-                        the_marker_position, self.camera_parameters[:, c], marker_gaussian_parameters[:, c]
-                    )
-
-        return frame_total_confidence, heatmap_confidences_3d, heatmap_confidences_2d

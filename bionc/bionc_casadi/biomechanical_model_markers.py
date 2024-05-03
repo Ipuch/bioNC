@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import MX
+from casadi import MX, reshape
 
 from .biomechanical_model_segments import BiomechanicalModelSegments
 from .natural_coordinates import NaturalCoordinates
@@ -118,6 +118,28 @@ class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):
             ]  # [:] to flatten the array
 
         return phi_m
+
+    def constraints_xyz(self, markers: np.ndarray, Q: NaturalCoordinates, only_technical: bool = True) -> np.ndarray:
+        """
+        This function returns the marker constraints of all segments, denoted Phi_r
+        as a function of the natural coordinates Q in pyomeca format [3, nb_markers].
+
+        markers : np.ndarray
+            The markers positions [3, nb_markers]
+        Q : NaturalCoordinates
+            The natural coordinates of the segment [12 x n, 1]
+        only_technical : bool
+            If True, only technical markers are considered, by default True,
+            because we only want to use technical markers for inverse kinematics, this choice can be revised.
+
+        Returns
+        -------
+        np.ndarray
+            Defects of the marker constraints [3, nb_markers]
+        """
+        phi_m = self.constraints(markers, Q, only_technical)
+        nb_markers = self.nb_markers_technical if only_technical else self.nb_markers
+        return reshape(phi_m, 3, nb_markers)
 
     def constraints_jacobian(self, only_technical: bool = True) -> MX:
         """

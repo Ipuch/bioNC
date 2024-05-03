@@ -228,6 +228,47 @@ def test_global_heatmap_ik():
         ),
     )
 
+    solutions = ik.sol()
+
+    assert list(solutions.keys()) == [
+        "objective_function",
+        "success",
+        "joint_residuals",
+        "total_joint_residuals",
+        "max_joint_violation",
+        "rigidity_residuals",
+        "segment_rigidity_residuals",
+        "segment_rigidity_residual_norm",
+        "total_rigidity_residuals",
+        "max_rigidbody_violation",
+        "total_heatmap_confidence",
+        "heatmap_confidence_3d",
+        "heatmap_confidence_2d",
+    ]
+    assert solutions["success"] == [True, True]
+
+    expected_objective_function = np.array([0.11947767, 0.12127033])
+    np.testing.assert_almost_equal(solutions["objective_function"], expected_objective_function, decimal=1e-6)
+
+    expected_total_heatmap_confidence = np.array([8.3697648, 8.24603995])
+    np.testing.assert_almost_equal(
+        solutions["total_heatmap_confidence"], expected_total_heatmap_confidence, decimal=1e-6
+    )
+
+    expected_heatmap_confidence_3d = np.array(
+        [[2.86155095, 2.7971815], [2.84074481, 2.81157343], [2.66746904, 2.63728502]]
+    )
+    np.testing.assert_almost_equal(solutions["heatmap_confidence_3d"], expected_heatmap_confidence_3d, decimal=1e-6)
+
+    expected_heatmap_confidence_2d = np.array(
+        [
+            [[0.71451798, 0.6740445], [0.80189803, 0.79904377], [0.59341748, 0.61441813], [0.75171745, 0.70967509]],
+            [[0.62472929, 0.57112889], [0.82042523, 0.8294766], [0.69210176, 0.72469769], [0.70348853, 0.68627025]],
+            [[0.67572273, 0.59153595], [0.71009526, 0.75225819], [0.58584948, 0.5307378], [0.69580157, 0.76275308]],
+        ]
+    )
+    np.testing.assert_almost_equal(solutions["heatmap_confidence_2d"], expected_heatmap_confidence_2d, decimal=1e-6)
+
 
 def test_error_solve_frame_per_frame():
     bionc = TestUtils.bionc_folder()

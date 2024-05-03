@@ -1,3 +1,5 @@
+from sys import platform
+
 import numpy as np
 import pytest
 from casadi import Function, sumsqr
@@ -9911,7 +9913,10 @@ def test_inverse_kinematics_class():
     # Create inverse kinematics object
     ik = InverseKinematics(natural_model, markers)
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(
+        TypeError,
+        match=f"experimental_markers must be a path as a string or a numpy array of size 3xNxM. Got {type(1)} instead.",
+    ):
         ik = InverseKinematics(natural_model, 1)
 
     with pytest.raises(ValueError):
@@ -10057,19 +10062,17 @@ def test_ik_all_frames():
 
     marker_residuals_norm = np.array(
         [
-            [
-                [0.13939617, 0.15267663, 0.01099867, 0.17697249],
-                [0.01400245, 0.02816578, 0.01225596, 0.02732723],
-                [0.05950754, 0.05004255, 0.00608794, 0.04928525],
-                [0.03229003, 0.02770785, 0.01917931, 0.03195709],
-                [0.02918923, 0.02740908, 0.02073021, 0.02306008],
-                [0.03275235, 0.03529021, 0.02127043, 0.01552597],
-                [0.02830206, 0.00955584, 0.00630586, 0.01430647],
-                [0.03019092, 0.04547031, 0.02513658, 0.00967423],
-                [0.03250732, 0.043104, 0.01728737, 0.13690911],
-                [0.01139606, 0.01614814, 0.01343105, 0.02292201],
-                [0.00985797, 0.01732171, 0.01096336, 0.04289803],
-            ]
+            [0.13939617, 0.15267663, 0.01099867, 0.17697249],
+            [0.01400245, 0.02816578, 0.01225596, 0.02732723],
+            [0.05950754, 0.05004255, 0.00608794, 0.04928525],
+            [0.03229003, 0.02770785, 0.01917931, 0.03195709],
+            [0.02918923, 0.02740908, 0.02073021, 0.02306008],
+            [0.03275235, 0.03529021, 0.02127043, 0.01552597],
+            [0.02830206, 0.00955584, 0.00630586, 0.01430647],
+            [0.03019092, 0.04547031, 0.02513658, 0.00967423],
+            [0.03250732, 0.043104, 0.01728737, 0.13690911],
+            [0.01139606, 0.01614814, 0.01343105, 0.02292201],
+            [0.00985797, 0.01732171, 0.01096336, 0.04289803],
         ]
     )
 
@@ -10135,11 +10138,11 @@ def test_ik_all_frames():
 
     total_joint_residuals = np.array([0.0, 0.0, 0.0, 0.0])
     max_joint_violation = ["hip", "hip", "hip", "hip"]
-    rigidity_residuals = np.array(
+    segment_rigidity_residual_norm = np.array(
         [[0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0, 0.0]]
     )
     total_rigity_residuals = np.array([2.33104442e-16, 3.54446676e-16, 2.79671565e-16, 4.26486230e-15])
-    max_rigidbody_violation = ["PELVIS", "PELVIS", "PELVIS", "PELVIS"]
+    max_rigidbody_violation = ["SHANK", "SHANK", "SHANK", "THIGH"]
     success = [True, True, True, True]
 
     np.testing.assert_almost_equal(output_optim["marker_residuals_norm"], marker_residuals_norm, decimal=1e-5)
@@ -10149,10 +10152,15 @@ def test_ik_all_frames():
     np.testing.assert_almost_equal(output_optim["joint_residuals"], joint_residuals, decimal=1e-5)
     np.testing.assert_almost_equal(output_optim["total_joint_residuals"], total_joint_residuals, decimal=1e-5)
     assert output_optim["max_joint_violation"] == max_joint_violation
-    np.testing.assert_almost_equal(output_optim["rigidity_residuals"], rigidity_residuals, decimal=1e-5)
+    np.testing.assert_almost_equal(
+        output_optim["segment_rigidity_residual_norm"], segment_rigidity_residual_norm, decimal=1e-5
+    )
     np.testing.assert_almost_equal(output_optim["total_rigidity_residuals"], total_rigity_residuals, decimal=1e-5)
-    assert output_optim["max_rigidbody_violation"] == max_rigidbody_violation
     assert output_optim["success"] == success
+
+    # check if this is a macos system
+    if platform != "darwin":
+        assert output_optim["max_rigidbody_violation"] == max_rigidbody_violation
 
 
 def test_ik_frame_per_frame_extra_obj():

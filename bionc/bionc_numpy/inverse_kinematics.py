@@ -1,20 +1,22 @@
 from typing import Callable
 
 import numpy as np
-from casadi import vertcat, horzcat, MX, Function, sum1, reshape, transpose
-from pyomeca import Markers
+from casadi import vertcat, horzcat, MX, Function, sum1
 
 from .enums import InitialGuessModeType
+from .time_series_utils import TimeSeriesUtils
 from ..bionc_casadi import NaturalCoordinates, SegmentNaturalCoordinates
 from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 from ..protocols.biomechanical_model import GenericBiomechanicalModel as BiomechanicalModel
-from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
-from ..utils.c3d_ik_exporter import C3DInverseKinematicsExporter
-
-from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap
 from ..utils import constants
+from ..utils.c3d_ik_exporter import C3DInverseKinematicsExporter
 from ..utils.casadi_utils import _mx_to_sx, _solve_nlp, sarrus
-from ..utils.heatmap_helpers import _compute_confidence_value_for_one_heatmap, check_format_experimental_heatmaps
+from ..utils.heatmap_helpers import (
+    check_format_experimental_heatmaps,
+    compute_total_confidence,
+)
+from ..utils.heatmap_timeseries_helpers import HeatmapTimeseriesHelpers, subset_of_technical_markers
+from ..utils.markers_check_import import load_and_validate_markers
 
 
 class InverseKinematics:
@@ -28,7 +30,12 @@ class InverseKinematics:
     experimental_markers : np.ndarray | str
         The experimental markers (3xNxM numpy array), or a path to a c3d file
     experimental_heatmaps : dict[str, np.ndarray]
-        The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array). gaussian_parameters[0:2, :, :, :] is an array of the position (x, y) of the center of the gaussian. gaussian_parameters[2:4, :, :, :] is an array of the standard deviation (x, y) of the gaussian. gaussian_parameters[4,:,:,:] is an array of the magnitude of the gaussian.
+        The experimental heatmaps, composed of two arrays and one float :
+            * camera_parameters (3 x 4 x nb_cameras numpy array),
+            * gaussian_parameters (5 x M x N x nb_cameras numpy array):
+                - gaussian_parameters[0:2, :, :, :] is an array of the position (x, y) of the center of the gaussian.
+                - gaussian_parameters[2:4, :, :, :] is an array of the standard deviation (x, y) of the gaussian.
+                - gaussian_parameters[4,:,:,:] is an array of the magnitude of the gaussian.
     Q_init : np.ndarray
         The initial guess for the inverse kinematics computed from the experimental markers
     Qopt : np.ndarray
@@ -71,7 +78,7 @@ class InverseKinematics:
     def __init__(
         self,
         model: BiomechanicalModel,
-        experimental_markers: np.ndarray = None,
+        experimental_markers: np.ndarray | str = None,
         experimental_heatmaps: dict[str, np.ndarray] = None,
         solve_frame_per_frame: bool = True,
         active_direct_frame_constraints: bool = False,
@@ -83,9 +90,14 @@ class InverseKinematics:
         model : BiomechanicalModel
             The model considered (bionc.numpy)
         experimental_markers : np.ndarray | str
-            The experimental markers (3xNxM numpy array), or a path to a c3d file
+            The experimental markers (3 x nb_markers x nb_frames numpy array), or a path to a c3d file
         experimental_heatmaps : dict[str, np.ndarray]
-            The experimental heatmaps, composed of two arrays and one float : camera_parameters (3 x 4 x nb_cameras numpy array), gaussian_parameters (5 x M x N x nb_cameras numpy array)
+            The experimental heatmaps, composed of two arrays and one float :
+                * camera_parameters (3 x 4 x nb_cameras numpy array),
+                * gaussian_parameters (5 x nb_markers x nb_frames x nb_cameras numpy array):
+                    - gaussian_parameters[0:2, :, :, :] is an array of the position (x, y) of the center of the gaussian.
+                    - gaussian_parameters[2:4, :, :, :] is an array of the standard deviation (x, y) of the gaussian.
+                    - gaussian_parameters[4,:,:,:] is an array of the magnitude of the gaussian.
         solve_frame_per_frame : bool
             If True, the inverse kinematics is solved frame per frame, otherwise it is solved for the whole motion
         active_direct_frame_constraints : bool
@@ -115,16 +127,7 @@ class InverseKinematics:
         self._model_mx = model.to_mx()
 
         if experimental_markers is not None:
-            if isinstance(experimental_markers, str):
-                self.experimental_markers = Markers.from_c3d(experimental_markers).to_numpy()
-            if isinstance(experimental_markers, np.ndarray):
-                if (
-                    experimental_markers.shape[0] != 3
-                    or experimental_markers.shape[1] < 1
-                    or len(experimental_markers.shape) < 3
-                ):
-                    raise ValueError("experimental_markers must be a 3xNxM numpy array")
-                self.experimental_markers = experimental_markers
+            self.experimental_markers = load_and_validate_markers(experimental_markers)
 
         self.Qopt = None
         self.segment_determinants = None
@@ -354,6 +357,7 @@ class InverseKinematics:
         method: str,
         options: dict,
     ):
+        self.objective_function = np.zeros(self.nb_frames)
         Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
         lbg = np.zeros(self.model.nb_holonomic_constraints)
         ubg = np.zeros(self.model.nb_holonomic_constraints)
@@ -382,6 +386,7 @@ class InverseKinematics:
             r, success = _solve_nlp(method, nlp, Q_init[:, f], lbg, ubg, options)
             self.success_optim.append(success)
             Qopt[:, f : f + 1] = r["x"].toarray()
+            self.objective_function[f] = r["f"]
 
             Q_init = self.update_initial_guess(Q_init, Qopt, initial_guess_mode, frame=f)
 
@@ -436,6 +441,7 @@ class InverseKinematics:
         r, success = _solve_nlp(method, nlp, vertical_Q_init, lbg, ubg, options)
         self.success_optim = [success] * self.nb_frames
         Qopt = r["x"].reshape((12 * self.model.nb_segments, self.nb_frames)).toarray()
+        self.objective_function = r["f"]
 
         return Qopt
 
@@ -482,32 +488,11 @@ class InverseKinematics:
         MX
             The objective function that maximizes the confidence value of the model keypoints
         """
-        total_confidence = 0
         Q_f = NaturalCoordinates(Q)
-        marker_position = self._model_mx.markers(Q_f)
+        all_marker_position = self._model_mx.markers(Q_f)
+        marker_positions = subset_of_technical_markers(self._model_mx, all_marker_position)
+        total_confidence = compute_total_confidence(marker_positions, camera_parameters, gaussian_parameters)
 
-        # todo: we only want technical markers, implement a model.markers(Q_f, only_technical=True)
-        marker_names_technical = self._model_mx.marker_names_technical
-        marker_names = self._model_mx.marker_names
-        technical_index = [marker_names.index(m) for m in marker_names_technical]
-        marker_position = marker_position[:, technical_index]
-
-        for m in range(self.model.nb_markers):
-            for c in range(self.nb_cameras):
-                camera_calibration_matrix = transpose(reshape(camera_parameters[:, c], (4, 3)))
-                gaussian = transpose(reshape(gaussian_parameters[:, c], (self.nb_markers, 5)))
-
-                gaussian_magnitude = gaussian[4, m]
-                gaussian_center = gaussian[0:2, m]
-                gaussian_standard_deviation = gaussian[2:4, m]
-
-                total_confidence += _compute_confidence_value_for_one_heatmap(
-                    marker_position[:, m],
-                    camera_calibration_matrix,
-                    gaussian_magnitude,
-                    gaussian_center,
-                    gaussian_standard_deviation,
-                )
         return 1 / total_confidence
 
     def _constraints(self, Q) -> MX:
@@ -544,7 +529,6 @@ class InverseKinematics:
                 if self.segment_determinants[s, i] < 0:
                     print(f"Warning: frame {i} segment {s} has a negative determinant")
 
-    # todo: def sol() -> dict that returns the details of the inverse kinematics such as all the metrics, etc...
     def sol(self):
         """
         Create and return a dict that contains the output of each optimization.
@@ -576,83 +560,72 @@ class InverseKinematics:
 
         """
 
-        nb_frames = self.nb_frames
-        nb_markers = self.nb_markers
-        nb_joints_constraints = self.model.nb_joint_constraints
-        nb_segments = self.model.nb_segments
-
-        # Initialisation of all the different residuals that can be calculated
-        marker_residuals_norm = np.zeros((1, nb_markers, nb_frames))
-        marker_residuals_xyz = np.zeros((3, nb_markers, nb_frames))
-        joint_residuals = np.zeros((nb_joints_constraints, nb_frames))
-        rigidity_residuals = np.zeros((nb_segments, nb_frames))
+        joint_residuals = TimeSeriesUtils.joint_constraints(self.model, self.Qopt)
+        rigidity_residuals = TimeSeriesUtils.rigid_body_constraints(self.model, self.Qopt)
+        segment_rigidity_residuals = np.reshape(
+            rigidity_residuals, (6, self.model.nb_segments, self.nb_frames), order="F"
+        )
+        segment_rigidity_residual_norm = np.sqrt(np.sum(segment_rigidity_residuals**2, axis=0))
 
         # Global will correspond to the squared sum of all the specific residuals
-        total_marker_residuals = np.zeros((nb_frames))
-        total_joint_residuals = np.zeros((nb_frames))
-        total_rigidity_residuals = np.zeros((nb_frames))
+        total_joint_residuals = TimeSeriesUtils.total_joint_constraints(self.model, self.Qopt)
+        total_rigidity_residuals = TimeSeriesUtils.total_rigid_body_constraints(self.model, self.Qopt)
 
-        for i in range(self.nb_frames):
-            # Extraction of the residuals for each frame
-            # Rigidity constraint
-            phir_post_optim = self.model.rigid_body_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
-            # Kinematics constraints (associated with the joint of the model)
-            phik_post_optim = self.model.joint_constraints(NaturalCoordinatesNumpy(self.Qopt[:, i]))
-            # Marker constraints
-            phim_post_optim = self.model.markers_constraints(
-                self.experimental_markers[:, :, i], NaturalCoordinatesNumpy(self.Qopt[:, i]), only_technical=True
-            )
-            # Total residual by frame
-            total_rigidity_residuals[i] = np.sqrt(np.dot(phir_post_optim, phir_post_optim))
-            total_joint_residuals[i] = np.sqrt(np.dot(phik_post_optim, phik_post_optim))
-            total_marker_residuals[i] = np.sqrt(np.dot(phim_post_optim, phim_post_optim))
-
-            # Extraction of the residuals for each marker, joint and segment individually
-            # As the numbers of constraint is not the same for each joint, we need to create a list of constraint to find which joint is affected
-            for ind in range(self.model.nb_joints):
-                joint_constraints_slice = self.model.joint_constraints_index(ind)
-                joint_residuals[joint_constraints_slice, i] = phik_post_optim[joint_constraints_slice]
-
-            for ind, key in enumerate(self.model.marker_names_technical):
-                marker_residuals_norm[:, ind, i] = np.sqrt(
-                    np.dot(phim_post_optim[ind * 3 : (ind + 1) * 3], phim_post_optim[ind * 3 : (ind + 1) * 3])
-                )
-                marker_residuals_xyz[:, ind, i] = phim_post_optim[ind * 3 : (ind + 1) * 3]
-
-        # Extract optimisation details
-        success = self.success_optim
-
-        ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=1)
-        ind_max_rigidy_error = np.argmax(rigidity_residuals, axis=0)
+        ind_max_rigidy_error = np.argmax(segment_rigidity_residual_norm, axis=0)
         ind_max_joint_constraint_error = np.argmax(joint_residuals, axis=0)
 
         # Create a list of marker, segment and joint from the indices
-        max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance[0, :]]
         max_rigidbody_violation = [self.model.segment_names[ind_max] for ind_max in ind_max_rigidy_error]
-
-        # Each line is an equation of the constraint but we need to find the joint associated with the constraint
-        list_constraint_to_joint = np.zeros((self.model.nb_joint_constraints), dtype=np.int64)
-        for ind in range(self.model.nb_joints):
-            joint_constraints_slice = self.model.joint_constraints_index(ind)
-            list_constraint_to_joint[joint_constraints_slice] = ind
-
         max_joint_violation = [
-            self.model.joint_names[list_constraint_to_joint[ind_max]] for ind_max in ind_max_joint_constraint_error
+            self.model.joint_names[self.model.joint_constraints_indices[ind_max]]
+            for ind_max in ind_max_joint_constraint_error
         ]
 
         self.output = dict(
-            marker_residuals_norm=marker_residuals_norm,
-            marker_residuals_xyz=marker_residuals_xyz,
-            total_marker_residuals=total_marker_residuals,
-            max_marker_distance=max_marker_distance,
+            objective_function=self.objective_function,
+            success=self.success_optim,
             joint_residuals=joint_residuals,
             total_joint_residuals=total_joint_residuals,
             max_joint_violation=max_joint_violation,
             rigidity_residuals=rigidity_residuals,
+            segment_rigidity_residuals=segment_rigidity_residuals,
+            segment_rigidity_residual_norm=segment_rigidity_residual_norm,
             total_rigidity_residuals=total_rigidity_residuals,
             max_rigidbody_violation=max_rigidbody_violation,
-            success=success,
         )
+
+        if self.experimental_markers is not None:
+            marker_residuals_xyz = TimeSeriesUtils.marker_constraints_xyz(
+                self.model, self.Qopt, self.experimental_markers
+            )
+            marker_residuals_norm = np.sqrt(np.sum(marker_residuals_xyz**2, axis=0))
+
+            total_marker_residuals = TimeSeriesUtils.total_marker_constraints(
+                self.model, self.Qopt, self.experimental_markers
+            )
+            ind_max_marker_distance = np.argmax(marker_residuals_norm, axis=0)
+            max_marker_distance = [self.model.marker_names_technical[ind_max] for ind_max in ind_max_marker_distance]
+
+            self.output["marker_residuals_xyz"] = marker_residuals_xyz
+            self.output["marker_residuals_norm"] = marker_residuals_norm
+            self.output["total_marker_residuals"] = total_marker_residuals
+            self.output["max_marker_distance"] = max_marker_distance
+
+        if self.experimental_heatmaps is not None:
+            frame_total_confidence = HeatmapTimeseriesHelpers.total_confidence(
+                self.model, self.Qopt, self.camera_parameters, self.gaussian_parameters
+            )
+            heatmap_confidence_3d = HeatmapTimeseriesHelpers.total_confidence_for_all_markers(
+                self.model, self.Qopt, self.camera_parameters, self.gaussian_parameters
+            )
+            heatmap_confidence_2d = HeatmapTimeseriesHelpers.total_confidence_for_all_markers_on_each_camera(
+                self.model, self.Qopt, self.camera_parameters, self.gaussian_parameters
+            )
+
+            self.output["total_heatmap_confidence"] = frame_total_confidence
+            self.output["heatmap_confidence_3d"] = heatmap_confidence_3d  # 3d [Nb_markers, N_frame],
+            self.output["heatmap_confidence_2d"] = heatmap_confidence_2d  # [Nb_markers, Nb_camera, N_frame],
+
         return self.output
 
     def export_in_c3d(self, filename):

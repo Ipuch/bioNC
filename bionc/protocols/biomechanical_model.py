@@ -1,8 +1,9 @@
+from abc import ABC, abstractmethod
+from typing import Union, Any
+
 import dill as pickle
 import numpy as np
-from abc import ABC, abstractmethod
 from casadi import MX
-from typing import Union, Any
 
 from .biomechanical_model_joints import GenericBiomechanicalModelJoints
 from .biomechanical_model_markers import GenericBiomechanicalModelMarkers
@@ -420,8 +421,12 @@ class GenericBiomechanicalModel(ABC):
     def joint_dof_indexes(self, joint_id: int) -> tuple[int, ...]:
         return self.joints.dof_indexes(joint_id)
 
-    def joint_constraints_index(self, joint_id: int | str) -> slice:
+    def joint_constraints_slice(self, joint_id: int | str) -> slice:
         return self.joints.constraints_index(joint_id)
+
+    @property
+    def joint_constraints_indices(self) -> list[int]:
+        return self.joints.joint_constraint_index
 
     def joints_from_child_index(self, child_index: int, remove_free_joints: bool = False) -> list:
         return self.joints.joints_from_child_index(child_index, remove_free_joints)
@@ -554,6 +559,9 @@ class GenericBiomechanicalModel(ABC):
 
     def markers_constraints(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool = True):
         return self._markers.constraints(markers, Q, only_technical)
+
+    def markers_constraints_xyz(self, markers: np.ndarray | MX, Q: NaturalCoordinates, only_technical: bool = True):
+        return self._markers.constraints_xyz(markers, Q, only_technical)
 
     def markers_constraints_jacobian(self, only_technical: bool = True):
         return self._markers.constraints_jacobian(only_technical)

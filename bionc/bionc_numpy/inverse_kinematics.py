@@ -15,7 +15,7 @@ from ..utils.heatmap_helpers import (
     check_format_experimental_heatmaps,
     compute_total_confidence,
 )
-from ..utils.heatmap_timeseries_helpers import HeatmapTimeseriesHelpers
+from ..utils.heatmap_timeseries_helpers import HeatmapTimeseriesHelpers, subset_of_technical_markers
 from ..utils.markers_check_import import load_and_validate_markers
 
 
@@ -489,15 +489,9 @@ class InverseKinematics:
             The objective function that maximizes the confidence value of the model keypoints
         """
         Q_f = NaturalCoordinates(Q)
-        marker_position = self._model_mx.markers(Q_f)
-
-        # todo: we only want technical markers, implement a model.markers(Q_f, only_technical=True)
-        marker_names_technical = self._model_mx.marker_names_technical
-        marker_names = self._model_mx.marker_names
-        technical_index = [marker_names.index(m) for m in marker_names_technical]
-        marker_position = marker_position[:, technical_index]
-
-        total_confidence = compute_total_confidence(marker_position, camera_parameters, gaussian_parameters)
+        all_marker_position = self._model_mx.markers(Q_f)
+        marker_positions = subset_of_technical_markers(self._model_mx, all_marker_position)
+        total_confidence = compute_total_confidence(marker_positions, camera_parameters, gaussian_parameters)
 
         return 1 / total_confidence
 

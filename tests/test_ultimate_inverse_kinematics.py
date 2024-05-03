@@ -10159,7 +10159,7 @@ def test_ik_all_frames():
     assert output_optim["success"] == success
 
     # check if this is a macos system
-    if platform != "Darwin":
+    if platform != "darwin":
         assert output_optim["max_rigidbody_violation"] == max_rigidbody_violation
 
 

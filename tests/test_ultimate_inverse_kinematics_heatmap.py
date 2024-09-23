@@ -324,7 +324,7 @@ def test_error_no_markers_and_no_heatmaps():
 
     c3d_filename = module.generate_c3d_file()
 
-    with pytest.raises(ValueError, match=f"Please feed experimental data, either marker or heatmap data"):
+    with pytest.raises(ValueError, match=f"Please provide experimental data, either marker or heatmap data"):
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_markers=None,

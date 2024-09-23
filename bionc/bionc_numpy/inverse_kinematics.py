@@ -1,7 +1,6 @@
-from typing import Callable
-
 import numpy as np
 from casadi import vertcat, horzcat, MX, Function, sum1
+from typing import Callable
 
 from .enums import InitialGuessModeType
 from .time_series_utils import TimeSeriesUtils
@@ -107,79 +106,97 @@ class InverseKinematics:
             If True, the symbolic variables are SX, otherwise they are MX (SX are faster but take more memory)
         """
 
+        self._validate_input(experimental_markers, experimental_heatmaps, solve_frame_per_frame)
+        self._initialize_attributes(
+            model,
+            experimental_markers,
+            experimental_heatmaps,
+            solve_frame_per_frame,
+            active_direct_frame_constraints,
+            use_sx
+        )
+        self._setup_optimization_problem()
+
+    def _validate_input(self, experimental_markers, experimental_heatmaps, solve_frame_per_frame):
+        if experimental_markers is None and experimental_heatmaps is None:
+            raise ValueError("Please provide experimental data, either marker or heatmap data")
+        if experimental_markers is not None and experimental_heatmaps is not None:
+            raise ValueError("Please choose between marker data and heatmap data")
+        if experimental_heatmaps is not None and not solve_frame_per_frame:
+            raise NotImplementedError(
+                "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True")
+        if experimental_heatmaps is not None:
+            check_format_experimental_heatmaps(experimental_heatmaps)
+
+    def _initialize_attributes(self, model, experimental_markers, experimental_heatmaps, solve_frame_per_frame,
+                               active_direct_frame_constraints, use_sx):
+        if not isinstance(model, BiomechanicalModel):
+            raise ValueError("model must be a BiomechanicalModel")
+
+        self.model = model
+        self._model_mx = model.to_mx()
         self._frame_per_frame = solve_frame_per_frame
         self._active_direct_frame_constraints = active_direct_frame_constraints
         self.use_sx = use_sx
 
-        if experimental_heatmaps is not None and solve_frame_per_frame is False:
-            raise NotImplementedError(
-                "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
-            )
+        self.experimental_markers = load_and_validate_markers(
+            experimental_markers) if experimental_markers is not None else None
+        self.experimental_heatmaps = experimental_heatmaps
 
-        if experimental_markers is None and experimental_heatmaps is None:
-            raise ValueError("Please feed experimental data, either marker or heatmap data")
-        if experimental_markers is not None and experimental_heatmaps is not None:
-            raise ValueError("Please choose between marker data and heatmap data")
-
-        if not isinstance(model, BiomechanicalModel):
-            raise ValueError("model must be a BiomechanicalModel")
-        self.model = model
-        self._model_mx = model.to_mx()
-
-        if experimental_markers is not None:
-            self.experimental_markers = load_and_validate_markers(experimental_markers)
+        self._initialize_dimensions()
+        self._initialize_heatmap_attributes()
 
         self.Qopt = None
         self.segment_determinants = None
-
-        # has to be declared before to handle multiple_frame_optimisation when declaring_sym_Q
-        if solve_frame_per_frame is False:
-            self.nb_frames = self.experimental_markers.shape[2]
-
-        self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
-
         self.success_optim = []
-        if experimental_markers is not None:
-            self.nb_markers = self.experimental_markers.shape[1]
-            self.nb_frames = self.experimental_markers.shape[2]
 
-            self.nb_cameras = 0
-            self.experimental_heatmaps = None
+
+
+    def _initialize_heatmap_attributes(self):
+        if self.experimental_heatmaps:
+            self.gaussian_parameters = np.reshape(
+                self.experimental_heatmaps["gaussian_parameters"],
+                (5 * self.nb_markers, self.nb_frames, self.nb_cameras),
+            )
+            self.camera_parameters = np.reshape(self.experimental_heatmaps["camera_parameters"],
+                                                (3 * 4, self.nb_cameras))
+        else:
             self.gaussian_parameters = None
             self.camera_parameters = None
 
+    def _initialize_dimensions(self):
+        if self.experimental_markers is not None:
+            self.nb_markers = self.experimental_markers.shape[1]
+            self.nb_frames = self.experimental_markers.shape[2]
+            self.nb_cameras = 0
+        elif self.experimental_heatmaps is not None:
+            self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
+            self.nb_frames = self.experimental_heatmaps["gaussian_parameters"].shape[2]
+            self.nb_cameras = self.experimental_heatmaps["gaussian_parameters"].shape[3]
+
+    def _setup_optimization_problem(self):
+        self._Q_sym, self._vert_Q_sym = self._declare_sym_Q()
+        self._setup_symbolic_variables()
+        self.objective_sym = self._create_objective_function()
+        self._objective_function = None
+        self._update_objective_function()
+
+    def _setup_symbolic_variables(self):
+        if self.experimental_markers is not None:
             self._markers_sym = MX.sym("markers", (3, self.nb_markers))
             self._camera_parameters_sym = MX.sym("camera_param", (0, 0))
             self._gaussian_parameters_sym = MX.sym("gaussian_param", (0, 0))
-            self.objective_sym = [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
-
-        if experimental_heatmaps is not None:
-            check_format_experimental_heatmaps(experimental_heatmaps)
-            self.experimental_heatmaps = experimental_heatmaps
-
-            self.nb_markers = self.experimental_heatmaps["gaussian_parameters"].shape[1]
-            self.nb_frames = experimental_heatmaps["gaussian_parameters"].shape[2]
-            self.nb_cameras = self.experimental_heatmaps["gaussian_parameters"].shape[3]
-
-            self.gaussian_parameters = np.reshape(
-                experimental_heatmaps["gaussian_parameters"],
-                (5 * self.nb_markers, self.nb_frames, self.nb_cameras),
-            )
-            self.camera_parameters = np.reshape(experimental_heatmaps["camera_parameters"], (3 * 4, self.nb_cameras))
-
-            self.experimental_markers = None
+        else:
             self._markers_sym = MX.sym("markers", (0, 0))
-
             self._camera_parameters_sym = MX.sym("cam_param", (3 * 4, self.nb_cameras))
             self._gaussian_parameters_sym = MX.sym("gaussian_param", (5 * self.nb_markers, self.nb_cameras))
-            self.objective_sym = [
-                self._objective_maximize_confidence(
-                    self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym
-                )
-            ]
 
-        self._objective_function = None
-        self._update_objective_function()
+    def _create_objective_function(self):
+        if self.experimental_markers is not None:
+            return [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
+        else:
+            return [self._objective_maximize_confidence(self._Q_sym, self._camera_parameters_sym,
+                                                        self._gaussian_parameters_sym)]
 
     def _update_objective_function(self):
         """

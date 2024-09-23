@@ -113,7 +113,7 @@ class InverseKinematics:
             experimental_heatmaps,
             solve_frame_per_frame,
             active_direct_frame_constraints,
-            use_sx
+            use_sx,
         )
         self._setup_optimization_problem()
 
@@ -124,12 +124,20 @@ class InverseKinematics:
             raise ValueError("Please choose between marker data and heatmap data")
         if experimental_heatmaps is not None and not solve_frame_per_frame:
             raise NotImplementedError(
-                "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True")
+                "Not possible to solve for all frames with heatmap parameters. Please set solve_frame_per_frame=True"
+            )
         if experimental_heatmaps is not None:
             check_format_experimental_heatmaps(experimental_heatmaps)
 
-    def _initialize_attributes(self, model, experimental_markers, experimental_heatmaps, solve_frame_per_frame,
-                               active_direct_frame_constraints, use_sx):
+    def _initialize_attributes(
+        self,
+        model,
+        experimental_markers,
+        experimental_heatmaps,
+        solve_frame_per_frame,
+        active_direct_frame_constraints,
+        use_sx,
+    ):
         if not isinstance(model, BiomechanicalModel):
             raise ValueError("model must be a BiomechanicalModel")
 
@@ -139,8 +147,9 @@ class InverseKinematics:
         self._active_direct_frame_constraints = active_direct_frame_constraints
         self.use_sx = use_sx
 
-        self.experimental_markers = load_and_validate_markers(
-            experimental_markers) if experimental_markers is not None else None
+        self.experimental_markers = (
+            load_and_validate_markers(experimental_markers) if experimental_markers is not None else None
+        )
         self.experimental_heatmaps = experimental_heatmaps
 
         self._initialize_dimensions()
@@ -150,16 +159,15 @@ class InverseKinematics:
         self.segment_determinants = None
         self.success_optim = []
 
-
-
     def _initialize_heatmap_attributes(self):
         if self.experimental_heatmaps:
             self.gaussian_parameters = np.reshape(
                 self.experimental_heatmaps["gaussian_parameters"],
                 (5 * self.nb_markers, self.nb_frames, self.nb_cameras),
             )
-            self.camera_parameters = np.reshape(self.experimental_heatmaps["camera_parameters"],
-                                                (3 * 4, self.nb_cameras))
+            self.camera_parameters = np.reshape(
+                self.experimental_heatmaps["camera_parameters"], (3 * 4, self.nb_cameras)
+            )
         else:
             self.gaussian_parameters = None
             self.camera_parameters = None
@@ -195,8 +203,11 @@ class InverseKinematics:
         if self.experimental_markers is not None:
             return [self._objective_minimize_marker_distance(self._Q_sym, self._markers_sym)]
         else:
-            return [self._objective_maximize_confidence(self._Q_sym, self._camera_parameters_sym,
-                                                        self._gaussian_parameters_sym)]
+            return [
+                self._objective_maximize_confidence(
+                    self._Q_sym, self._camera_parameters_sym, self._gaussian_parameters_sym
+                )
+            ]
 
     def _update_objective_function(self):
         """

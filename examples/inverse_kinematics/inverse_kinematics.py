@@ -2,7 +2,6 @@
 This example shows how to use the InverseKinematics class to solve an inverse kinematics problem.
 """
 
-from bionc import InverseKinematics, Viz, NaturalCoordinates
 import numpy as np
 import time
 from pyomeca import Markers
@@ -28,7 +27,7 @@ def main():
     markers = markers + np.random.normal(0, 0.01, markers.shape)  # add noise
 
     # you can import the class from bionc
-    ik_solver = InverseKinematics(model, markers, solve_frame_per_frame=True)
+    ik_solver = InverseKinematics(model, markers)
 
     tic0 = time.time()
     Qopt_sqp = ik_solver.solve(method="sqpmethod")  # tend to be faster (with limited-memory hessian approximation)

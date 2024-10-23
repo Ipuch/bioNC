@@ -19,7 +19,6 @@ def test_user_provided():
     ik = InverseKinematics(
         model=model,
         experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=True,
     )
     Qsolve = ik.solve(Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED, method="ipopt")
 
@@ -91,7 +90,6 @@ def test_user_provided_first_frame_only():
     ik = InverseKinematics(
         model=model,
         experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=True,
     )
     ik.solve(
         Q_init=Q_initialize[:, 0:1],
@@ -167,7 +165,6 @@ def test_from_current_markers():
     ik = InverseKinematics(
         model=model,
         experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=True,
     )
     ik.solve(initial_guess_mode=InitialGuessModeType.FROM_CURRENT_MARKERS, method="ipopt")
 
@@ -239,7 +236,6 @@ def test_from_first_frame_markers():
     ik = InverseKinematics(
         model=model,
         experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=True,
     )
     ik.solve(initial_guess_mode=InitialGuessModeType.FROM_FIRST_FRAME_MARKERS, method="ipopt")
 
@@ -311,7 +307,6 @@ def test_Q_init_None_User_Provided():
     ik = InverseKinematics(
         model=model,
         experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=True,
     )
 
     with pytest.raises(
@@ -332,7 +327,6 @@ def test_Q_init_None_User_Provided_First_Frame_Only():
     ik = InverseKinematics(
         model=model,
         experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=True,
     )
 
     with pytest.raises(
@@ -353,7 +347,6 @@ def test_Q_init_Incorrect_Shape_User_Provided():
     ik = InverseKinematics(
         model=model,
         experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=True,
     )
     with pytest.raises(
         ValueError,

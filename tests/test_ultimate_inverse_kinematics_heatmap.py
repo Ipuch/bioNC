@@ -297,7 +297,9 @@ def test_error_Qinit_is_none():
         experimental_heatmaps=experimental_heatmap_parameters,
         solve_frame_per_frame=True,
     )
-    with pytest.raises(NotImplementedError, match=f"Not available yet, please provide Q_init"):
+    with pytest.raises(
+        ValueError, match=f"Please provide Q_init if you want to use InitialGuessModeType.USER_PROVIDED."
+    ):
         ik.solve(method="ipopt", Q_init=None, initial_guess_mode=InitialGuessModeType.USER_PROVIDED)
 
 

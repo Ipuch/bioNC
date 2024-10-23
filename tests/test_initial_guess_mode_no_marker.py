@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from pyomeca import Markers
+import re
 
 from bionc import InverseKinematics
 from bionc.bionc_numpy.enums import InitialGuessModeType
@@ -180,7 +181,7 @@ def test_user_provided_first_frame_only_and_frame_per_frame_is_false():
     )
     with pytest.raises(
         ValueError,
-        match=f"Either, set frame_per_frame == True or use InitialGuessModeType.USER_PROVIDED.",
+        match=f"Set frame_per_frame to True or use InitialGuessModeType.USER_PROVIDED.",
     ):
         ik.solve(
             Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt"
@@ -203,7 +204,7 @@ def test_user_provided_first_frame_only_Q_init_too_many_frames():
 
     with pytest.raises(
         ValueError,
-        match=f"Please provide only the first frame of Q_init." f"Currently, Q_init.shape\\[1\\] = 2.",
+        match=re.escape(f"Provide only the first frame of Q_init. Currently, Q_init.shape\\[1\\] = 2"),
     ):
         ik.solve(
             Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt"

@@ -297,7 +297,9 @@ def test_error_Qinit_is_none():
         experimental_heatmaps=experimental_heatmap_parameters,
         solve_frame_per_frame=True,
     )
-    with pytest.raises(NotImplementedError, match=f"Not available yet, please provide Q_init"):
+    with pytest.raises(
+        ValueError, match=f"Please provide Q_init if you want to use InitialGuessModeType.USER_PROVIDED."
+    ):
         ik.solve(method="ipopt", Q_init=None, initial_guess_mode=InitialGuessModeType.USER_PROVIDED)
 
 
@@ -324,7 +326,7 @@ def test_error_no_markers_and_no_heatmaps():
 
     c3d_filename = module.generate_c3d_file()
 
-    with pytest.raises(ValueError, match=f"Please feed experimental data, either marker or heatmap data"):
+    with pytest.raises(ValueError, match=f"Please provide experimental data, either marker or heatmap data"):
         InverseKinematics(
             model=module.model_creation_markerless(c3d_filename, False),
             experimental_markers=None,

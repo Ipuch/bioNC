@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import re
 from pyomeca import Markers
 
 from bionc import InverseKinematics
@@ -336,7 +337,7 @@ def test_Q_init_None_User_Provided_First_Frame_Only():
 
     with pytest.raises(
         ValueError,
-        match="Please provide Q_init if you want to use USER_PROVIDED_FIRST_FRAME_ONLY mode.",
+        match="Please provide Q_init if you want to use InitialGuessModeType.USER_PROVIDED.",
     ):
         ik.solve(initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt")
 
@@ -356,7 +357,7 @@ def test_Q_init_Incorrect_Shape_User_Provided():
     )
     with pytest.raises(
         ValueError,
-        match=f"Please make sure Q_init, shape\\[1\\] is equal to the number of frames 2."
-        f"Currently, Q_init.shape\\[1\\] = 1.",
+        # match=f"Please make sure Q_init, shape\\[1\\] is equal to the number of frames 2." f"",
+        match=re.escape("Q_init.shape\\[1\\] must equal the number of frames (2). Currently, Q_init.shape\\[1\\] = 1."),
     ):
         ik.solve(Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED, method="ipopt")

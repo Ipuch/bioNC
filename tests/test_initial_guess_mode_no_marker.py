@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
-from pyomeca import Markers
 import re
+from pyomeca import Markers
 
 from bionc import InverseKinematics
 from bionc.bionc_numpy.enums import InitialGuessModeType
@@ -120,7 +120,6 @@ def test_exp_markers_none_from_current_markers():
     ik = InverseKinematics(
         model=module.model_creation_markerless(c3d_filename, False),
         experimental_heatmaps=XP_HEATMAP_PARAMETERS,
-        solve_frame_per_frame=True,
     )
     with pytest.raises(
         ValueError,
@@ -138,54 +137,12 @@ def test_exp_markers_none_from_first_frame_markers():
     ik = InverseKinematics(
         model=module.model_creation_markerless(c3d_filename, False),
         experimental_heatmaps=XP_HEATMAP_PARAMETERS,
-        solve_frame_per_frame=True,
     )
     with pytest.raises(
         ValueError,
         match=f"Please provide experimental_markers in order to initialize the optimization",
     ):
         ik.solve(initial_guess_mode=InitialGuessModeType.FROM_FIRST_FRAME_MARKERS, method="ipopt")
-
-
-def test_from_first_frame_markers_and_frame_per_frame_is_false():
-    bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
-
-    c3d_filename = module.generate_c3d_file()
-    model = module.model_creation_from_measured_data(c3d_filename)
-    markers = Markers.from_c3d(c3d_filename, usecols=model.marker_names_technical).to_numpy()
-    ik = InverseKinematics(
-        model=model,
-        experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=False,
-    )
-    with pytest.raises(
-        ValueError,
-        match=f"Please set frame_per_frame to True",
-    ):
-        ik.solve(initial_guess_mode=InitialGuessModeType.FROM_FIRST_FRAME_MARKERS, method="ipopt")
-
-
-def test_user_provided_first_frame_only_and_frame_per_frame_is_false():
-    bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
-
-    c3d_filename = module.generate_c3d_file()
-    model = module.model_creation_from_measured_data(c3d_filename)
-    markers = Markers.from_c3d(c3d_filename, usecols=model.marker_names_technical).to_numpy()
-    Q_initialize = model.Q_from_markers(markers[:, :, 0:1])
-    ik = InverseKinematics(
-        model=model,
-        experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=False,
-    )
-    with pytest.raises(
-        ValueError,
-        match=f"Set frame_per_frame to True or use InitialGuessModeType.USER_PROVIDED.",
-    ):
-        ik.solve(
-            Q_init=Q_initialize, initial_guess_mode=InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY, method="ipopt"
-        )
 
 
 def test_user_provided_first_frame_only_Q_init_too_many_frames():
@@ -199,7 +156,6 @@ def test_user_provided_first_frame_only_Q_init_too_many_frames():
     ik = InverseKinematics(
         model=model,
         experimental_markers=markers[0:3, :, :],
-        solve_frame_per_frame=True,
     )
 
     with pytest.raises(

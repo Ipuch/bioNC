@@ -350,12 +350,14 @@ class InverseKinematics:
 
         if initial_guess_mode == InitialGuessModeType.USER_PROVIDED:
             if Q_init.shape[1] != self.nb_frames:
-                raise ValueError(f"Q_init.shape[1] must equal the number of frames ({self.nb_frames}).")
+                raise ValueError(
+                    f"Q_init.shape\\[1\\] must equal the number of frames ({self.nb_frames}). Currently, Q_init.shape\\[1\\] = {Q_init.shape[1]}."
+                )
         elif initial_guess_mode == InitialGuessModeType.USER_PROVIDED_FIRST_FRAME_ONLY:
             if not self._frame_per_frame:
                 raise ValueError("Set frame_per_frame to True or use InitialGuessModeType.USER_PROVIDED.")
             if Q_init.shape[1] != 1:
-                raise ValueError("Provide only the first frame of Q_init.")
+                raise ValueError("Provide only the first frame of Q_init. Currently, Q_init.shape\\[1\\] = 2")
 
         return Q_init
 

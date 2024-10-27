@@ -39,3 +39,5 @@ from .utils.ode_solver import RK4, forward_integration
 
 from .vizualization import Viz
 from .bionc_numpy import InverseKinematics
+
+__version__ = "0.5.0"

@@ -1,7 +1,16 @@
 import numpy as np
 from numpy import cos, sin
 
-from ..utils.enums import NaturalAxis, TransformationMatrixType
+from ..utils.enums import TransformationMatrixType
+
+TRANSFORMATION_MAP = {
+    TransformationMatrixType.Buv: _transformation_matrix_Buv,
+    TransformationMatrixType.Bvu: _transformation_matrix_Bvu,
+    TransformationMatrixType.Bwu: _transformation_matrix_Bwu,
+    TransformationMatrixType.Buw: _transformation_matrix_Buw,
+    TransformationMatrixType.Bvw: _transformation_matrix_Bvw,
+    TransformationMatrixType.Bwv: _transformation_matrix_Bwv,
+}
 
 
 def compute_transformation_matrix(
@@ -28,20 +37,11 @@ def compute_transformation_matrix(
     numpy.ndarray
         The transformation matrix
     """
-    if matrix_type == TransformationMatrixType.Buv:
-        return _transformation_matrix_Buv(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bvu:
-        return _transformation_matrix_Bvu(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bwu:
-        return _transformation_matrix_Bwu(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Buw:
-        return _transformation_matrix_Buw(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bvw:
-        return _transformation_matrix_Bvw(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bwv:
-        return _transformation_matrix_Bwv(length, alpha, beta, gamma)
-    else:
+
+    if matrix_type not in TRANSFORMATION_MAP:
         raise ValueError(f"Unknown TransformationMatrixType: {matrix_type}")
+
+    return TRANSFORMATION_MAP[matrix_type](length, alpha, beta, gamma)
 
 
 def _transformation_matrix_Buv(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:

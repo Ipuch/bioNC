@@ -126,12 +126,13 @@ class SegmentNaturalCoordinates(np.ndarray):
 
     def compute_pseudo_interpolation_matrix(self) -> np.ndarray:
         """
-        Return the force moment transformation matrix
+        Return the force moment transformation matrix that allows to transform cartesian moments into generalized natural forces,
+        also denoted Nstar^T.
 
         Returns
         -------
         np.ndarray
-            The force moment transformation matrix
+            The force moment transformation matrix, also Nstar^T [12 x 3]
         """
         # default we apply force at the proximal point
 

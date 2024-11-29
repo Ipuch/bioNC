@@ -1,7 +1,7 @@
 import numpy as np
 
+from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_vector import NaturalVector
-from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 
 
 class ExternalForceInGlobalOnProximal:
@@ -59,7 +59,7 @@ class ExternalForceInGlobalOnProximal:
         """
         point_interpolation_matrix = NaturalVector.proximal().interpolate()
 
-        return point_interpolation_matrix.T @ self.force
+        return np.array(point_interpolation_matrix.T @ self.force)
 
     def natural_moments(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
@@ -79,7 +79,7 @@ class ExternalForceInGlobalOnProximal:
 
         return pseudo_interpolation_matrix.T @ self.torque
 
-    def to_generalized_natural_force(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+    def to_generalized_natural_forces(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
         Format external moments and forces to the generalized external force in the natural coordinate format.
 

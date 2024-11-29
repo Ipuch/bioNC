@@ -84,12 +84,12 @@ class ExternalForceSet:
         point_in_global: np.ndarray
             The point in global coordinates [3 x 1]
         """
-        if point_in_global is None:
-            self.external_forces[segment_index].append(
-                ExternalForceInGlobal(application_point_in_global=point_in_global, external_forces=external_force)
+        self.external_forces[segment_index].append(
+            ExternalForceInGlobal(
+                application_point_in_global=point_in_global if point_in_global is not None else np.zeros((3, 1)),
+                external_forces=external_force,
             )
-        else:
-            self.external_forces[segment_index].append(ExternalForceInGlobalOnProximal(external_force))
+        )
 
     def add_in_global_local_point(
         self, segment_index: int, external_force: np.ndarray, point_in_local: np.ndarray = None
@@ -107,10 +107,19 @@ class ExternalForceSet:
             The point in global coordinates [3 x 1]
         """
         self.external_forces[segment_index].append(
-            ExternalForceGlobalLocalPoint(application_point_in_local=point_in_local, external_forces=external_force)
+            ExternalForceGlobalLocalPoint(
+                application_point_in_local=point_in_local if point_in_local is not None else np.zeros((3, 1)),
+                external_forces=external_force,
+            )
         )
 
-    def add_in_local(self, segment_index: int, external_force: np.ndarray, point_in_local: np.ndarray = None):
+    def add_in_local(
+        self,
+        segment_index: int,
+        external_force: np.ndarray,
+        point_in_local: np.ndarray = None,
+        transformation_matrix=None,
+    ):
         """
         Add an external force to the segment
 
@@ -123,7 +132,13 @@ class ExternalForceSet:
         point_in_local: np.ndarray
             The point in global coordinates [3 x 1]
         """
-        self.external_forces[segment_index].append(ExternalForceInLocal(point_in_local, external_force))
+        self.external_forces[segment_index].append(
+            ExternalForceInLocal(
+                application_point_in_local=point_in_local if point_in_local is not None else np.zeros((3, 1)),
+                external_forces=external_force,
+                transformation_matrix=transformation_matrix,
+            )
+        )
 
     def to_natural_external_forces(self, Q: NaturalCoordinates) -> np.ndarray:
         """

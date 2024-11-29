@@ -3,46 +3,6 @@ from numpy import cos, sin
 
 from ..utils.enums import TransformationMatrixType
 
-TRANSFORMATION_MAP = {
-    TransformationMatrixType.Buv: _transformation_matrix_Buv,
-    TransformationMatrixType.Bvu: _transformation_matrix_Bvu,
-    TransformationMatrixType.Bwu: _transformation_matrix_Bwu,
-    TransformationMatrixType.Buw: _transformation_matrix_Buw,
-    TransformationMatrixType.Bvw: _transformation_matrix_Bvw,
-    TransformationMatrixType.Bwv: _transformation_matrix_Bwv,
-}
-
-
-def compute_transformation_matrix(
-    matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float
-):
-    """
-    Create a transformation matrix from a TransformationMatrixType
-
-    Parameters
-    ----------
-    matrix_type: TransformationMatrixType
-        The type of transformation matrix to create, such as TransformationMatrixType.Buv, TransformationMatrixType.Bvw, etc.
-    length: float
-        The length of the segment
-    alpha: float
-        The alpha angle
-    beta: float
-        The beta angle
-    gamma: float
-        The gamma angle
-
-    Returns
-    -------
-    numpy.ndarray
-        The transformation matrix
-    """
-
-    if matrix_type not in TRANSFORMATION_MAP:
-        raise ValueError(f"Unknown TransformationMatrixType: {matrix_type}")
-
-    return TRANSFORMATION_MAP[matrix_type](length, alpha, beta, gamma)
-
 
 def _transformation_matrix_Buv(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
     """
@@ -166,3 +126,44 @@ def _transformation_matrix_Bvw(length: float, alpha: float, beta: float, gamma: 
 
 def _transformation_matrix_Bwv(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:
     raise NotImplementedError("The transformation matrix Bwv is not implemented yet.")
+
+
+TRANSFORMATION_MAP = {
+    TransformationMatrixType.Buv: _transformation_matrix_Buv,
+    TransformationMatrixType.Bvu: _transformation_matrix_Bvu,
+    TransformationMatrixType.Bwu: _transformation_matrix_Bwu,
+    TransformationMatrixType.Buw: _transformation_matrix_Buw,
+    TransformationMatrixType.Bvw: _transformation_matrix_Bvw,
+    TransformationMatrixType.Bwv: _transformation_matrix_Bwv,
+}
+
+
+def compute_transformation_matrix(
+    matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float
+):
+    """
+    Create a transformation matrix from a TransformationMatrixType
+
+    Parameters
+    ----------
+    matrix_type: TransformationMatrixType
+        The type of transformation matrix to create, such as TransformationMatrixType.Buv, TransformationMatrixType.Bvw, etc.
+    length: float
+        The length of the segment
+    alpha: float
+        The alpha angle
+    beta: float
+        The beta angle
+    gamma: float
+        The gamma angle
+
+    Returns
+    -------
+    numpy.ndarray
+        The transformation matrix
+    """
+
+    if matrix_type not in TRANSFORMATION_MAP:
+        raise ValueError(f"Unknown TransformationMatrixType: {matrix_type}")
+
+    return TRANSFORMATION_MAP[matrix_type](length, alpha, beta, gamma)

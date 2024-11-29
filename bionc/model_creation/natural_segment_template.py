@@ -1,12 +1,9 @@
 from typing import Callable
 
-from .natural_axis_template import AxisTemplate
-from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
-
-from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 from .marker_template import MarkerTemplate
+from .natural_axis_template import AxisTemplate
 from .protocols import Data
-from ..bionc_numpy.natural_segment import NaturalSegment
+from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 
 
 class NaturalSegmentTemplate:
@@ -41,7 +38,7 @@ class NaturalSegmentTemplate:
         self.distal_point = MarkerTemplate(function=distal_point, marker_type="Marker")
         self.w_axis = w_axis
 
-    def experimental_Q(self, data: Data, kinematic_chain: BiomechanicalModel) -> SegmentNaturalCoordinates:
+    def experimental_Q(self, data: Data, kinematic_chain: "BiomechanicalModel") -> SegmentNaturalCoordinates:
         """
         Collapse the generic SegmentCoordinateSystem to an actual SegmentCoordinateSystemReal with value
         based on the model and the data
@@ -69,7 +66,7 @@ class NaturalSegmentTemplate:
         )
         return self.Q
 
-    def update(self) -> NaturalSegment:
+    def update(self) -> "NaturalSegment":
         """
         Collapse the generic SegmentCoordinateSystem to an actual SegmentCoordinateSystemReal with value
         based on the model and the data
@@ -84,5 +81,6 @@ class NaturalSegmentTemplate:
         NaturalSegment
         The collapsed SegmentCoordinateSystemReal
         """
+        from ..bionc_numpy.natural_segment import NaturalSegment
 
         return NaturalSegment.from_experimental_Q(self.Q)

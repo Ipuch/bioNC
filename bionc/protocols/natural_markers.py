@@ -4,8 +4,8 @@ from typing import Callable
 import numpy as np
 
 from .biomechanical_model import GenericBiomechanicalModel
-from ..model_creation.protocols import Data
 from .natural_coordinates import SegmentNaturalCoordinates
+from ..model_creation.protocols import Data
 
 
 class AbstractNaturalMarker(ABC):

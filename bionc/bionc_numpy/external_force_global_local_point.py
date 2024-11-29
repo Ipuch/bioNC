@@ -5,7 +5,7 @@ from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_vector import NaturalVector
 
 
-class ExternalForceGlobalLocalPoint:
+class ExternalForceInGlobalLocalPoint:
     """
     This class represents an external force applied to a segment.
 

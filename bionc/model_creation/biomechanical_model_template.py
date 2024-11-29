@@ -1,8 +1,7 @@
 from .protocols import Data
 
 from .segment_template import SegmentTemplate
-from ..bionc_numpy.biomechanical_model import BiomechanicalModel
-from ..bionc_numpy.enums import JointType
+
 from ..utils.enums import NaturalAxis, EulerSequence, TransformationMatrixType
 
 
@@ -25,7 +24,7 @@ class BiomechanicalModelTemplate:
     def add_joint(
         self,
         name: str,
-        joint_type: JointType,
+        joint_type: "JointType",
         parent: str,
         child: str,
         parent_axis: NaturalAxis | tuple[NaturalAxis] | list[NaturalAxis] = None,
@@ -97,7 +96,7 @@ class BiomechanicalModelTemplate:
             child_basis=child_basis,
         )
 
-    def update(self, data: Data) -> BiomechanicalModel:
+    def update(self, data: Data) -> "BiomechanicalModel":
         """
         Collapse the model to an actual personalized biomechanical model based on the generic model and the data
         file (usually a static trial)
@@ -107,6 +106,8 @@ class BiomechanicalModelTemplate:
         data
             The data to collapse the model from
         """
+        from ..bionc_numpy.biomechanical_model import BiomechanicalModel
+
         model = BiomechanicalModel()
         for name in self.segments:
             s = self.segments[name]

@@ -3,13 +3,13 @@ from typing import Union
 import numpy as np
 
 from .external_force_global import ExternalForceInGlobal
-from .external_force_global_local_point import ExternalForceGlobalLocalPoint
+from .external_force_global_local_point import ExternalForceInGlobalLocalPoint
 from .external_force_global_on_proximal import ExternalForceInGlobalOnProximal
 from .external_force_in_local import ExternalForceInLocal
 from .natural_coordinates import NaturalCoordinates
 
 ExternalForce = Union[
-    ExternalForceInGlobal, ExternalForceInGlobalOnProximal, ExternalForceGlobalLocalPoint, ExternalForceInLocal
+    ExternalForceInGlobal, ExternalForceInGlobalOnProximal, ExternalForceInGlobalLocalPoint, ExternalForceInLocal
 ]
 
 
@@ -107,7 +107,7 @@ class ExternalForceSet:
             The point in global coordinates [3 x 1]
         """
         self.external_forces[segment_index].append(
-            ExternalForceGlobalLocalPoint(
+            ExternalForceInGlobalLocalPoint(
                 application_point_in_local=point_in_local if point_in_local is not None else np.zeros((3, 1)),
                 external_forces=external_force,
             )

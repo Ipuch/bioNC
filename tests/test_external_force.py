@@ -173,17 +173,17 @@ def test_external_force(bionc_type):
     natural_force_2_expected = np.array(
         [
             0.0,
-            0.177629,
+            0.17762857,
             0.0,
-            0.142669,
-            0.152669,
-            0.326011,
-            -0.032669,
-            -0.032669,
-            -0.196011,
-            0.130834,
-            0.021806,
-            0.021806,
+            0.14266857,
+            0.15266857,
+            0.32601143,
+            -0.03266857,
+            -0.03266857,
+            -0.19601143,
+            0.13083429,
+            0.02180571,
+            0.02180571,
         ]
     )
     TestUtils.assert_equal(
@@ -261,4 +261,17 @@ def test_external_force(bionc_type):
             ]
         ),
         expand=False,
+    )
+
+    fext.add_in_global_local_point(
+        segment_index=2,
+        external_force=np.concatenate([force2.torque, force2.force]),
+        point_in_local=np.array([0.17, 0.18, 0.19]),
+    )
+    segment_force_2 = fext.to_segment_natural_external_forces(Q=Q, segment_idx=2)
+    TestUtils.assert_equal(
+        np.squeeze(segment_force_2) if bionc_type == "numpy" else segment_force_2,
+        np.squeeze(natural_force_2_expected * 2) if bionc_type == "numpy" else natural_force_2_expected * 2.0,
+        expand=False,
+        squeeze=True,
     )

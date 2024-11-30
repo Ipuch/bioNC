@@ -109,15 +109,18 @@ def test_single_pendulum_dofs(mode):
         raise ValueError("Invalid mode")
 
 
-def test_forward_dynamics_with_force():
+@pytest.mark.parametrize(
+    "mode",
+    ["moment_equilibrium", "force_equilibrium", "no_equilibrium"],
+)
+def test_forward_dynamics_with_force(mode):
     bionc = TestUtils.bionc_folder()
     module_fd = TestUtils.load_module(bionc + "/examples/forward_dynamics/pendulum_with_force.py")
 
-    model, all_states = module_fd.main(mode="moment_equilibrium")
+    model, all_states = module_fd.main(mode=mode)
 
-    np.testing.assert_almost_equal(
-        all_states[:, -1],
-        np.array(
+    mode_to_states_expected = {
+        "moment_equilibrium": np.array(
             [
                 1.0,
                 0.0,
@@ -145,13 +148,7 @@ def test_forward_dynamics_with_force():
                 0.0,
             ]
         ),
-    )
-
-    model, all_states = module_fd.main(mode="force_equilibrium")
-
-    np.testing.assert_almost_equal(
-        all_states[:, -1],
-        np.array(
+        "force_equilibrium": np.array(
             [
                 1.0,
                 0.0,
@@ -179,40 +176,39 @@ def test_forward_dynamics_with_force():
                 0.0,
             ]
         ),
-    )
-
-    model, all_states = module_fd.main(mode="no_equilibrium")
-
-    np.testing.assert_almost_equal(
-        all_states[:, -1],
-        np.array(
+        "no_equilibrium": np.array(
             [
                 1.00000000e00,
-                -1.25752847e-15,
-                -2.58263690e-16,
-                4.26089219e-16,
-                1.62086166e-16,
-                1.14800688e-15,
-                6.25950500e-16,
-                9.99998625e-01,
-                -1.29093221e-03,
-                -1.02667903e-17,
-                -1.29099764e-03,
-                -9.99999167e-01,
-                -5.60086390e-31,
-                -4.23925536e-16,
-                -1.04410614e-16,
-                1.25862608e-16,
-                1.74366566e-17,
-                2.62623414e-16,
-                2.31835366e-16,
-                7.25566569e-05,
-                5.62890649e-02,
-                -1.23324768e-18,
-                5.62889248e-02,
-                -7.25601194e-05,
+                -1.35070921e-14,
+                -5.74195276e-15,
+                4.31085832e-15,
+                6.18406905e-17,
+                2.11272817e-15,
+                6.29819871e-15,
+                -9.42305961e-01,
+                -3.34739950e-01,
+                -7.85747160e-18,
+                -3.34742001e-01,
+                9.42309818e-01,
+                -4.31132552e-30,
+                7.14524221e-15,
+                -1.75584183e-14,
+                7.70496015e-16,
+                -5.53946285e-18,
+                3.70702716e-16,
+                2.21909111e-15,
+                4.28930797e-01,
+                -1.20745434e00,
+                1.24168228e-17,
+                -1.20746022e00,
+                -4.28933759e-01,
             ]
         ),
+    }
+
+    np.testing.assert_almost_equal(
+        all_states[:, -1],
+        mode_to_states_expected[mode],
     )
 
 

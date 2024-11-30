@@ -21,9 +21,6 @@ class AbstractNaturalMarker(ABC):
 
     """
 
-    def __init__(self):
-        self.name = None
-
     @abstractmethod
     def from_data(
         cls,

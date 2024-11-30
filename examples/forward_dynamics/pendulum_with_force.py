@@ -184,7 +184,7 @@ def main(mode: str = "moment_equilibrium"):
         fext.add_in_global_local_point(
             external_force=np.concatenate([torque, force]),
             segment_index=0,
-            point_in_local=np.array([0, -0.5, 0]),
+            point_in_local=np.array([0, 0.5, 0]),
         )
 
     elif mode == "no_equilibrium":
@@ -192,7 +192,7 @@ def main(mode: str = "moment_equilibrium"):
         fext.add_in_global_local_point(
             segment_index=0,
             external_force=np.concatenate([np.array([0, 0, 1.0 * 9.81]), [0, 0, 0]]),
-            point_in_local=np.array([0, -0.25, 0]),
+            point_in_local=np.array([0, 0.25, 0]),
         )
 
     else:

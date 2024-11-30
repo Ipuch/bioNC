@@ -157,12 +157,8 @@ class ExternalForceSet:
 
         natural_external_forces = np.zeros((12 * Q.nb_qi(), 1))
         for segment_index, segment_external_forces in enumerate(self.external_forces):
-            segment_forces_on_proximal = []
-            for external_force in segment_external_forces:
-                segment_forces_on_proximal += [external_force.transport_on_proximal(Q.vector(segment_index))]
-
             segment_natural_external_forces = np.zeros((12, 1))
-            for external_force in segment_forces_on_proximal:
+            for external_force in segment_external_forces:
                 segment_natural_external_forces += external_force.to_generalized_natural_forces(
                     Q.vector(segment_index)
                 )[:, np.newaxis]

@@ -95,3 +95,6 @@ class ExternalForceInGlobal:
 
         return ExternalForceInGlobalOnProximal(external_forces=new_external_forces)
 
+    def to_generalized_natural_forces(self, Qi: SegmentNaturalCoordinates):
+        """This function returns the external force in the generalized natural forces [12x1] format."""
+        return self.transport_on_proximal(Qi).to_generalized_natural_forces(Qi)

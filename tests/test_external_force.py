@@ -58,7 +58,7 @@ def test_external_force(bionc_type, external_force_tuple):
         "casadi",
     ],
 )
-def test_external_force(bionc_type):
+def test_external_force_local_point(bionc_type):
     if bionc_type == "numpy":
         from bionc.bionc_numpy import (
             ExternalForceSet,
@@ -267,6 +267,344 @@ def test_external_force(bionc_type):
         segment_index=2,
         external_force=np.concatenate([force2.torque, force2.force]),
         point_in_local=np.array([0.17, 0.18, 0.19]),
+    )
+    segment_force_2 = fext.to_segment_natural_external_forces(Q=Q, segment_idx=2)
+    TestUtils.assert_equal(
+        np.squeeze(segment_force_2) if bionc_type == "numpy" else segment_force_2,
+        np.squeeze(natural_force_2_expected * 2) if bionc_type == "numpy" else natural_force_2_expected * 2.0,
+        expand=False,
+        squeeze=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    [
+        "numpy",
+        "casadi",
+    ],
+)
+def test_external_force_in_global(bionc_type):
+    if bionc_type == "numpy":
+        from bionc.bionc_numpy import (
+            ExternalForceSet,
+            ExternalForceInGlobal,
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+            SegmentNaturalVelocities,
+            NaturalVelocities,
+        )
+    else:
+        from bionc.bionc_casadi import (
+            ExternalForceSet,
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+            SegmentNaturalVelocities,
+            NaturalVelocities,
+        )
+
+    force1 = ExternalForceInGlobal.from_components(
+        force=np.array([0.01, 0.02, 0.03]),
+        torque=np.array([0.04, 0.05, 0.06]),
+        application_point_in_global=np.array([0.07, 0.08, 0.09]),
+    )
+    force2 = ExternalForceInGlobal.from_components(
+        force=np.array([0.11, 0.12, 0.13]),
+        torque=np.array([0.14, 0.15, 0.16]),
+        application_point_in_global=np.array([0.17, 0.18, 0.19]),
+    )
+
+    TestUtils.assert_equal(force1.torque, np.array([0.04, 0.05, 0.06]))
+    TestUtils.assert_equal(force1.force, np.array([0.01, 0.02, 0.03]))
+    TestUtils.assert_equal(force2.torque, np.array([0.14, 0.15, 0.16]))
+    TestUtils.assert_equal(force2.force, np.array([0.11, 0.12, 0.13]))
+
+    fext = ExternalForceSet.empty_from_nb_segment(3)
+    fext.add_in_global(
+        external_force=np.concatenate([force1.torque, force1.force]),
+        segment_index=0,
+        point_in_global=np.array([0.07, 0.08, 0.09]),
+    )
+    fext.add_in_global(
+        external_force=np.concatenate([force2.torque, force2.force]),
+        segment_index=2,
+        point_in_global=np.array([0.17, 0.18, 0.19]),
+    )
+
+    # check that the pendulum is not moving
+    Q0 = SegmentNaturalCoordinates.from_components(
+        u=[1, 0, 0],
+        rp=[0, 0, 0],
+        rd=[0, -1, 0],
+        w=[0, 0, 1],
+    )
+    Q1 = SegmentNaturalCoordinates(Q0 + 0.1)
+    Q2 = SegmentNaturalCoordinates(Q1 + 0.1)
+    Q = NaturalCoordinates.from_qi((Q0, Q1, Q2))
+
+    natural_force = force2.transport_on_proximal(Q2).to_generalized_natural_forces(Q2)
+    natural_force_2_expected = np.array(
+        [
+            0.0,
+            0.17957143,
+            0.0,
+            0.14305714,
+            0.15305714,
+            0.32834286,
+            -0.03305714,
+            -0.03305714,
+            -0.19834286,
+            0.12617143,
+            0.02102857,
+            0.02102857,
+        ]
+    )
+    TestUtils.assert_equal(
+        natural_force,
+        natural_force_2_expected,
+        expand=False,
+    )
+
+    natural_forces = fext.to_natural_external_forces(Q)
+    complete_natural_force_expected = np.concatenate(
+        (
+            np.array(
+                [
+                    [0.0],
+                    [0.0594],
+                    [0.0],
+                    [0.01],
+                    [0.02],
+                    [0.0694],
+                    [0.0],
+                    [0.0],
+                    [-0.0394],
+                    [0.0512],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                ]
+            ),
+            natural_force_2_expected[:, np.newaxis],
+        )
+    )
+    TestUtils.assert_equal(
+        natural_forces,
+        complete_natural_force_expected,
+        expand=False,
+        squeeze=False,
+    )
+
+    new_natural_force = (
+        force2.transport_on_proximal(Q2)
+        .transport_to_another_segment(
+            Qfrom=Q2,
+            Qto=Q1,
+        )
+        .to_generalized_natural_forces(Q1)
+    )
+
+    TestUtils.assert_equal(
+        new_natural_force,
+        np.array(
+            [
+                0.0,
+                0.17116667,
+                0.0,
+                0.12545,
+                0.13545,
+                0.29995,
+                -0.01545,
+                -0.01545,
+                -0.16995,
+                0.13676667,
+                0.01243333,
+                0.01243333,
+            ]
+        ),
+        expand=False,
+    )
+
+    fext.add_in_global(
+        segment_index=2,
+        external_force=np.concatenate([force2.torque, force2.force]),
+        point_in_global=np.array([0.17, 0.18, 0.19]),
+    )
+    segment_force_2 = fext.to_segment_natural_external_forces(Q=Q, segment_idx=2)
+    TestUtils.assert_equal(
+        np.squeeze(segment_force_2) if bionc_type == "numpy" else segment_force_2,
+        np.squeeze(natural_force_2_expected * 2) if bionc_type == "numpy" else natural_force_2_expected * 2.0,
+        expand=False,
+        squeeze=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    [
+        "numpy",
+        "casadi",
+    ],
+)
+def test_external_force_in_local(bionc_type):
+    if bionc_type == "numpy":
+        from bionc.bionc_numpy import (
+            ExternalForceSet,
+            ExternalForceInLocal,
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+            SegmentNaturalVelocities,
+            NaturalVelocities,
+        )
+    else:
+        from bionc.bionc_casadi import (
+            ExternalForceSet,
+            SegmentNaturalCoordinates,
+            NaturalCoordinates,
+            SegmentNaturalVelocities,
+            NaturalVelocities,
+        )
+    dummy_transformation_matrix = np.eye(3) + np.ones((3, 3)) * 0.001
+    force1 = ExternalForceInLocal.from_components(
+        force=np.array([0.01, 0.02, 0.03]),
+        torque=np.array([0.04, 0.05, 0.06]),
+        application_point_in_local=np.array([0.07, 0.08, 0.09]),
+        transformation_matrix=dummy_transformation_matrix,
+    )
+    force2 = ExternalForceInLocal.from_components(
+        force=np.array([0.11, 0.12, 0.13]),
+        torque=np.array([0.14, 0.15, 0.16]),
+        application_point_in_local=np.array([0.17, 0.18, 0.19]),
+        transformation_matrix=dummy_transformation_matrix,
+    )
+
+    TestUtils.assert_equal(force1.torque, np.array([0.04, 0.05, 0.06]))
+    TestUtils.assert_equal(force1.force, np.array([0.01, 0.02, 0.03]))
+    TestUtils.assert_equal(force2.torque, np.array([0.14, 0.15, 0.16]))
+    TestUtils.assert_equal(force2.force, np.array([0.11, 0.12, 0.13]))
+
+    fext = ExternalForceSet.empty_from_nb_segment(3)
+    fext.add_in_local(
+        external_force=np.concatenate([force1.torque, force1.force]),
+        segment_index=0,
+        point_in_local=np.array([0.07, 0.08, 0.09]),
+        transformation_matrix=dummy_transformation_matrix,
+    )
+    fext.add_in_local(
+        external_force=np.concatenate([force2.torque, force2.force]),
+        segment_index=2,
+        point_in_local=np.array([0.17, 0.18, 0.19]),
+        transformation_matrix=dummy_transformation_matrix,
+    )
+
+    # check that the pendulum is not moving
+    Q0 = SegmentNaturalCoordinates.from_components(
+        u=[1, 0, 0],
+        rp=[0, 0, 0],
+        rd=[0, -1, 0],
+        w=[0, 0, 1],
+    )
+    Q1 = SegmentNaturalCoordinates(Q0 + 0.1)
+    Q2 = SegmentNaturalCoordinates(Q1 + 0.1)
+    Q = NaturalCoordinates.from_qi((Q0, Q1, Q2))
+
+    natural_force = force2.transport_on_proximal(Q2).to_generalized_natural_forces(Q2)
+    natural_force_2_expected = np.array(
+        [
+            0.0,
+            0.24582142,
+            0.0,
+            0.20380465,
+            0.21380465,
+            0.45534036,
+            -0.04630714,
+            -0.04630714,
+            -0.27784285,
+            0.18091023,
+            0.0301517,
+            0.0301517,
+        ]
+    )
+    TestUtils.assert_equal(
+        natural_force,
+        natural_force_2_expected,
+        expand=False,
+    )
+
+    natural_forces = fext.to_natural_external_forces(Q)
+    complete_natural_force_expected = np.concatenate(
+        (
+            np.array(
+                [
+                    [0.0],
+                    [0.05924985],
+                    [0.0],
+                    [0.00994018],
+                    [0.01994018],
+                    [0.06919003],
+                    [0.0],
+                    [0.0],
+                    [-0.03924985],
+                    [0.05105165],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                    [0.0],
+                ]
+            ),
+            natural_force_2_expected[:, np.newaxis],
+        )
+    )
+    TestUtils.assert_equal(
+        natural_forces,
+        complete_natural_force_expected,
+        expand=False,
+        squeeze=False,
+    )
+
+    new_natural_force = (
+        force2.transport_on_proximal(Q2)
+        .transport_to_another_segment(
+            Qfrom=Q2,
+            Qto=Q1,
+        )
+        .to_generalized_natural_forces(Q1)
+    )
+
+    TestUtils.assert_equal(
+        new_natural_force,
+        np.array([ 0.        ,  0.23361535,  0.        ,  0.17919238,  0.18919238,
+        0.41614106, -0.02169487, -0.02169487, -0.23864356,  0.19530677,
+        0.01775516,  0.01775516]),
+        expand=False,
+    )
+
+    fext.add_in_local(
+        segment_index=2,
+        external_force=np.concatenate([force2.torque, force2.force]),
+        point_in_local=np.array([0.17, 0.18, 0.19]),
+        transformation_matrix=dummy_transformation_matrix,
     )
     segment_force_2 = fext.to_segment_natural_external_forces(Q=Q, segment_idx=2)
     TestUtils.assert_equal(

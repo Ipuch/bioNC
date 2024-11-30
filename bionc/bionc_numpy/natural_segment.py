@@ -789,6 +789,14 @@ class NaturalSegment(AbstractNaturalSegment):
         subtree_intersegmental_generalized_forces: np.ndarray,
         segment_external_forces: np.ndarray,
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray, np.ndarray]
+            The generalized forces [3 x 1], torques [3 x 1], and lagrange multipliers [6 x 1]
+        """
+
         proximal_interpolation_matrix = NaturalVector.proximal().interpolate()
         pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
         rigid_body_constraints_jacobian = self.rigid_body_constraint_jacobian(Qi=Qi)

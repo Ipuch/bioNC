@@ -233,26 +233,32 @@ def test_external_force(bionc_type):
         squeeze=False,
     )
 
-    # new_natural_force = force2.transport_to(
-    #     to_segment_index=0,
-    #     new_application_point_in_local=np.array([0.005, 0.01, 0.02]),
-    #     Q=Q,
-    #     from_segment_index=1,
-    # )
-    #
-    # TestUtils.assert_equal(
-    #     new_natural_force,
-    #     np.array(
-    #         [0.0187, 0.17794, 0.0221, 0.1298, 0.1416, 0.29034, -0.0198, -0.0216, -0.16034, 0.17637, 0.0228, 0.0247]
-    #     ),
-    #     expand=False,
-    # )
-    #
-    # fext.add_external_force(external_force=force2, segment_index=2)
-    # segment_force_2 = fext.to_segment_natural_external_forces(Q=Q, segment_index=2)
-    # TestUtils.assert_equal(
-    #     np.squeeze(segment_force_2) if bionc_type == "numpy" else segment_force_2,
-    #     np.squeeze(natural_force * 2) if bionc_type == "numpy" else natural_force * 2.0,
-    #     expand=False,
-    #     squeeze=True,
-    # )
+    new_natural_force = (
+        force2.transport_on_proximal(Q2)
+        .transport_to_another_segment(
+            Qfrom=Q2,
+            Qto=Q1,
+        )
+        .to_generalized_natural_forces(Q1)
+    )
+
+    TestUtils.assert_equal(
+        new_natural_force,
+        np.array(
+            [
+                0.0,
+                0.1689,
+                0.0,
+                0.12522333,
+                0.13522333,
+                0.29745667,
+                -0.01522333,
+                -0.01522333,
+                -0.16745667,
+                0.14175333,
+                0.01288667,
+                0.01288667,
+            ]
+        ),
+        expand=False,
+    )

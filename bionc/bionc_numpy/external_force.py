@@ -142,7 +142,8 @@ class ExternalForceSet:
 
     def to_natural_external_forces(self, Q: NaturalCoordinates) -> np.ndarray:
         """
-        Converts and sums all the segment natural external forces to the full vector of natural external forces
+        Converts and sums all natural external forces
+        to the full vector of natural external forces [nb_segment * 12 x 1]
 
         Parameters
         ----------
@@ -156,17 +157,27 @@ class ExternalForceSet:
             )
 
         natural_external_forces = np.zeros((12 * Q.nb_qi(), 1))
-        for segment_index, segment_external_forces in enumerate(self.external_forces):
-            segment_natural_external_forces = np.zeros((12, 1))
-            for external_force in segment_external_forces:
-                segment_natural_external_forces += external_force.to_generalized_natural_forces(
-                    Q.vector(segment_index)
-                )[:, np.newaxis]
+        for segment_index in range(self.nb_segments):
 
+            segment_natural_external_forces = self.to_segment_natural_external_forces(segment_index, Q)
             slice_index = slice(segment_index * 12, (segment_index + 1) * 12)
             natural_external_forces[slice_index, 0:1] = segment_natural_external_forces
 
         return natural_external_forces
+
+    def to_segment_natural_external_forces(self, segment_idx: int, Q: NaturalCoordinates) -> np.ndarray:
+        """
+        Converts and sums all the segment natural external forces
+        to the full vector of natural external forces [12 x 1]
+        """
+        segment_natural_external_forces = np.zeros((12, 1))
+        segment_external_forces = self.external_forces[segment_idx]
+        for external_force in segment_external_forces:
+            segment_natural_external_forces += external_force.to_generalized_natural_forces(Q.vector(segment_idx))[
+                :, np.newaxis
+            ]
+
+        return segment_natural_external_forces
 
     def __iter__(self):
         return iter(self.external_forces)

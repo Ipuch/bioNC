@@ -1,13 +1,15 @@
 from casadi import MX
 
-from .external_force import ExternalForce
+from .external_force_global_local_point import ExternalForceInGlobalLocalPoint
 from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from ..utils.enums import CartesianAxis, EulerSequence
 from .rotations import euler_axes_from_rotation_matrices
 from ..protocols.joint import JointBase as Joint
 
 
-class JointGeneralizedForces(ExternalForce):
+class JointGeneralizedForces(ExternalForceInGlobalLocalPoint):
+    # todo: this class need to be rethinked, the inheritance is not optimal.
+    #  but preserved for now as refactoring externalforces
     """
     Made to handle joint generalized forces, it inherits from ExternalForce
 
@@ -35,4 +37,4 @@ class JointGeneralizedForces(ExternalForce):
     ):
         super().__init__(external_forces=external_forces, application_point_in_local=application_point_in_local)
 
-        # TODO !
+        # TODO : Not impletemented at all, but only for numpy, need a revision first.

@@ -1,7 +1,7 @@
 from typing import Union
 
 import numpy as np
-from casadi import MX, vertcat, inv, cross
+from casadi import MX, vertcat, inv, cross, horzcat
 
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .natural_vector import NaturalVector
@@ -92,6 +92,10 @@ class SegmentNaturalCoordinates(MX):
 
     def to_uvw(self):
         return self.u, self.v, self.w
+
+    def to_uvw_matrix(self) -> MX:
+        """Return the matrix of the natural basis"""
+        return horzcat(self.u, self.v, self.w)
 
     def to_natural_vector(self, vector: MX | np.ndarray) -> NaturalVector:
         """

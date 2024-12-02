@@ -2,11 +2,8 @@ from typing import Callable
 
 import numpy as np
 
-from ..bionc_numpy.natural_axis import Axis
-from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
 from .marker_template import MarkerTemplate
 from .protocols import Data
-from ..bionc_numpy.natural_segment import NaturalSegment
 
 
 class AxisTemplate:
@@ -24,7 +21,7 @@ class AxisTemplate:
         self.start = MarkerTemplate(function=start, marker_type="Marker")
         self.end = MarkerTemplate(function=end, marker_type="Marker")
 
-    def to_axis(self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None) -> Axis:
+    def to_axis(self, data: Data, kinematic_chain: "BiomechanicalModel", parent_scs: "NaturalSegment" = None) -> "Axis":
         """
         Compute the axis from actual data
 
@@ -38,6 +35,7 @@ class AxisTemplate:
         parent_scs
             The transformation from global to local
         """
+        from ..bionc_numpy.natural_axis import Axis
 
         start = self.start.to_marker(data, kinematic_chain, parent_scs)
         end = self.end.to_marker(data, kinematic_chain, parent_scs)
@@ -85,7 +83,7 @@ class AxisFunctionTemplate:
         """
         self.axis_function = function
 
-    def to_axis(self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None) -> Axis:
+    def to_axis(self, data: Data, kinematic_chain: "BiomechanicalModel", parent_scs: "NaturalSegment" = None) -> "Axis":
         """
         Compute the axis from actual data
 
@@ -99,4 +97,6 @@ class AxisFunctionTemplate:
         parent_scs
             The transformation from global to local
         """
+        from ..bionc_numpy.natural_axis import Axis
+
         return Axis.from_data(data, self.axis_function, kinematic_chain)

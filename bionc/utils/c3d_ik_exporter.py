@@ -4,8 +4,8 @@ import ezc3d
 import numpy as np
 
 from .c3d_export_utils import add_point_from_dictionary
-from ..bionc_numpy import NaturalCoordinates
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
+from ..protocols.natural_coordinates import NaturalCoordinates
 
 
 class C3DInverseKinematicsExporter:
@@ -38,9 +38,10 @@ class C3DInverseKinematicsExporter:
         c3d_file : ezc3d.c3d
             The c3d file with natural coordinate points added
         """
+        from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 
-        if Q is not isinstance(Q, NaturalCoordinates):
-            Q = NaturalCoordinates(Q)
+        if Q is not isinstance(Q, NaturalCoordinatesNumpy):
+            Q = NaturalCoordinatesNumpy(Q)
 
         model_markers = self.model.markers(Q)
 
@@ -65,9 +66,11 @@ class C3DInverseKinematicsExporter:
         c3d_file : ezc3d.c3d
             The c3d file with natural coordinate points added
         """
+        from ..bionc_numpy.natural_coordinates import NaturalCoordinates as NaturalCoordinatesNumpy
 
-        if Q is not isinstance(Q, NaturalCoordinates):
-            Q = NaturalCoordinates(Q)
+        if Q is not isinstance(Q, NaturalCoordinatesNumpy):
+            Q = NaturalCoordinatesNumpy(Q)
+
         # Calulation of a reasonable factor for the u and w
         list_factor = []
         for s in range(Q.nb_qi()):

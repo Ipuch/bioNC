@@ -7,7 +7,8 @@ from .biomechanical_model_joints import BiomechanicalModelJoints
 from .biomechanical_model_markers import BiomechanicalModelMarkers
 from .biomechanical_model_segments import BiomechanicalModelSegments
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
-from .external_force import ExternalForceSet, ExternalForce
+from .external_force import ExternalForceSet
+from .external_force_global_on_proximal import ExternalForceInGlobalOnProximal
 from .generalized_force import JointGeneralizedForcesList
 from .natural_accelerations import NaturalAccelerations
 from .natural_coordinates import NaturalCoordinates
@@ -553,8 +554,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         Qi = Q.vector(segment_index)
         Qddoti = Qddot.vector(segment_index)
-        external_forces_i = external_forces.to_segment_natural_external_forces(segment_index=segment_index, Q=Q)
+        external_forces_i = external_forces.to_segment_natural_external_forces(segment_idx=segment_index, Q=Q)
 
+        # Get subtree intersegmental generalized forces
         subtree_intersegmental_generalized_forces = np.zeros((12, 1))
         for child_index in self.children(segment_index):
             if not visited_segments[child_index]:
@@ -569,21 +571,20 @@ class BiomechanicalModel(GenericBiomechanicalModel):
                     lambdas=lambdas,
                 )
             # sum the generalized forces of each subsegment and transport them to the parent proximal point
-            intersegmental_generalized_forces = ExternalForce.from_components(
-                application_point_in_local=[0, 0, 0], force=forces[:, child_index], torque=torques[:, child_index]
+            intersegmental_generalized_forces = ExternalForceInGlobalOnProximal.from_components(
+                force=forces[:, child_index], torque=torques[:, child_index]
             )
-            subtree_intersegmental_generalized_forces += intersegmental_generalized_forces.transport_to(
-                to_segment_index=segment_index,
-                new_application_point_in_local=[0, 0, 0],  # proximal point
-                from_segment_index=child_index,
-                Q=Q,
-            )[:, np.newaxis]
+            subtree_intersegmental_generalized_forces += intersegmental_generalized_forces.transport_to_another_segment(
+                Qfrom=Q.vector(child_index), Qto=Q.vector(segment_index)
+            ).natural_forces()[:, np.newaxis]
+
         segment_i = self.segment_from_index(segment_index)
 
+        # Now we can compute the inverse dynamics of the segment
         force_i, torque_i, lambda_i = segment_i.inverse_dynamics(
-            Qi=Qi,
-            Qddoti=Qddoti,
-            subtree_intersegmental_generalized_forces=subtree_intersegmental_generalized_forces,
+            Qi,
+            Qddoti,
+            subtree_intersegmental_generalized_forces,
             segment_external_forces=external_forces_i,
         )
         # re-assigned the computed values to the output arrays

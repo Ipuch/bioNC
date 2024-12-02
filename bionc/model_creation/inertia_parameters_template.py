@@ -1,10 +1,6 @@
 from typing import Callable
 
 import numpy as np
-
-from ..bionc_numpy.inertia_parameters import InertiaParameters
-from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
-from ..bionc_numpy.natural_segment import NaturalSegment
 from .protocols import Data
 
 
@@ -34,8 +30,11 @@ class InertiaParametersTemplate:
         self.inertia = inertia
 
     def to_real(
-        self, data: Data, kinematic_chain: BiomechanicalModel, parent_scs: NaturalSegment = None
-    ) -> InertiaParameters:
+        self, data: Data, kinematic_chain: "BiomechanicalModel", parent_scs: "NaturalSegment" = None
+    ) -> "InertiaParameters":
+
+        from ..bionc_numpy.inertia_parameters import InertiaParameters
+
         return InertiaParameters.from_data(
             data,
             self.relative_mass,

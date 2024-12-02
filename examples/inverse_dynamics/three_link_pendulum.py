@@ -1,3 +1,6 @@
+import numpy as np
+
+from bionc import NaturalAxis, CartesianAxis, TransformationMatrixType
 from bionc.bionc_numpy import (
     NaturalCoordinates,
     NaturalAccelerations,
@@ -7,9 +10,6 @@ from bionc.bionc_numpy import (
     NaturalSegment,
     JointType,
 )
-
-from bionc import NaturalAxis, CartesianAxis, TransformationMatrixType
-import numpy as np
 
 
 def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
@@ -63,7 +63,7 @@ def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
     return model
 
 
-def main(mode: str = "horizontal"):
+def main(mode: str = "horizontal", with_fext: bool = False):
     nb_segments = 3
 
     model = build_n_link_pendulum(nb_segments=nb_segments)
@@ -96,7 +96,15 @@ def main(mode: str = "horizontal"):
     ]
     Qddot = NaturalAccelerations.from_qddoti(tuple(tuple_of_Qddot))
 
-    torques, forces, lambdas = model.inverse_dynamics(Q=Q, Qddot=Qddot)
+    if with_fext:
+        fext = model.external_force_set()
+        fext.add_in_global_local_point(1, np.array([0.1, 0.2, 0.3, 0.01, 0.02, 0.03]), np.array([0.01, 0.02, 0.03]))
+        fext.add_in_global(2, np.array([0.1, 0.2, 0.3, 0.01, 0.02, 0.03]) * 0.1, np.array([0.01, 0.02, 0.03]) * 0.1)
+
+    else:
+        fext = None
+
+    torques, forces, lambdas = model.inverse_dynamics(Q=Q, Qddot=Qddot, external_forces=fext)
 
     print(torques)
     print(forces)

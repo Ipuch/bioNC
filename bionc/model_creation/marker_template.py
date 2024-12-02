@@ -1,15 +1,8 @@
-from typing import Callable, Union
+from typing import Callable
 
 import numpy as np
 
-from bionc.bionc_numpy.biomechanical_model import BiomechanicalModel
-from ..bionc_numpy.natural_marker import NaturalMarker, Marker
-
-# from .biomechanical_model_template import BiomechanicalModelTemplate
 from .protocols import Data
-from ..bionc_numpy.natural_segment import NaturalSegment
-
-# from ..utils.natural_coordinates import SegmentNaturalCoordinates
 from ..protocols.natural_coordinates import SegmentNaturalCoordinates
 
 
@@ -49,8 +42,10 @@ class MarkerTemplate:
         self.marker_type = marker_type
 
     def to_marker(
-        self, data: Data, kinematic_chain: BiomechanicalModel, natural_segment: NaturalSegment = None
-    ) -> Union[NaturalMarker, Marker]:
+        self, data: Data, kinematic_chain: "BiomechanicalModel", natural_segment: "NaturalSegment" = None
+    ) -> "Marker":
+        from ..bionc_numpy.natural_marker import Marker
+
         return Marker.from_data(
             data=data,
             name=self.name,
@@ -61,8 +56,10 @@ class MarkerTemplate:
         )
 
     def to_natural_marker(
-        self, data: Data, kinematic_chain: BiomechanicalModel, Q_xp: SegmentNaturalCoordinates = None
-    ) -> Union[NaturalMarker, Marker]:
+        self, data: Data, kinematic_chain: "BiomechanicalModel", Q_xp: SegmentNaturalCoordinates = None
+    ) -> "NaturalMarker":
+        from ..bionc_numpy.natural_marker import NaturalMarker
+
         return NaturalMarker.from_data(
             data,
             self.name,

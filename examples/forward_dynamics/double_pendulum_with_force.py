@@ -1,5 +1,6 @@
 import numpy as np
 
+from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 from bionc.bionc_numpy import (
     BiomechanicalModel,
     NaturalSegment,
@@ -9,9 +10,7 @@ from bionc.bionc_numpy import (
     SegmentNaturalVelocities,
     NaturalVelocities,
     ExternalForceSet,
-    ExternalForce,
 )
-from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 
 
 def build_n_link_pendulum(nb_segments: int = 1) -> BiomechanicalModel:
@@ -203,35 +202,17 @@ def main(mode: str = "force_equilibrium"):
     fext = ExternalForceSet.empty_from_nb_segment(nb_segment=nb_segments)
     # then add a force
     if mode == "force_equilibrium":
-        force1 = ExternalForce.from_components(
-            # this force will prevent the pendulum to fall
-            force=np.array([0, 0, 1 * 9.81]),
-            torque=np.array([0, 0, 0]),
-            application_point_in_local=np.array([0, -0.5, 0]),
-        )
-        force2 = ExternalForce.from_components(
-            # this force will prevent the pendulum to fall
-            force=np.array([0, 0, 1 * 9.81]),
-            torque=np.array([0, 0, 0]),
-            application_point_in_local=np.array([0, -0.5, 0]),
-        )
+        wrench = np.concatenate((np.array([0, 0, 0]), np.array([0, 0, 1 * 9.81])))
+        fext.add_in_global_local_point(segment_index=0, external_force=wrench, point_in_local=np.array([0, 0.5, 0]))
+        wrench2 = np.concatenate((np.array([0, 0, 0]), np.array([0, 0, 1 * 9.81])))
+        fext.add_in_global_local_point(segment_index=1, external_force=wrench2, point_in_local=np.array([0, 0.5, 0]))
+
     elif mode == "no_equilibrium":
-        force1 = ExternalForce.from_components(
-            force=np.array([0, 0, 1 * 9.81]),
-            torque=np.array([0, 0, 0]),
-            application_point_in_local=np.array([0, -0.25, 0]),
-        )
-        force2 = ExternalForce.from_components(
-            force=np.array([0, 0, 1 * 9.81]),
-            torque=np.array([0, 0, 0]),
-            application_point_in_local=np.array([0, -0.25, 0]),
-        )
+        wrench1 = np.concatenate((np.array([0, 0, 0]), np.array([0, 0, 1 * 9.81])))
+        fext.add_in_global_local_point(segment_index=0, external_force=wrench1, point_in_local=np.array([0, 0.25, 0]))
+        fext.add_in_global_local_point(segment_index=1, external_force=wrench1, point_in_local=np.array([0, 0.25, 0]))
     else:
         raise ValueError("mode must be 'force_equilibrium', 'moment_equilibrium' or 'no_equilibrium'")
-
-    # # then add the force to the list on segment 0
-    fext.add_external_force(external_force=force1, segment_index=0)
-    fext.add_external_force(external_force=force2, segment_index=1)
 
     model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(
         t_final=10, external_forces=fext, nb_segments=nb_segments
@@ -241,8 +222,8 @@ def main(mode: str = "force_equilibrium"):
 
 
 if __name__ == "__main__":
-    model, all_states = main(mode="force_equilibrium")
-    # model, all_states = main(mode="no_equilibrium")
+    # model, all_states = main(mode="force_equilibrium")
+    model, all_states = main(mode="no_equilibrium")
 
     # animate the motion
     from bionc import Viz

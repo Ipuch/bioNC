@@ -1,3 +1,7 @@
+import numpy as np
+import pytest
+from casadi import MX
+
 from bionc import (
     BiomechanicalModel,
     NaturalSegment,
@@ -7,11 +11,6 @@ from bionc import (
     EulerSequence,
     TransformationMatrixType,
 )
-from casadi import MX
-
-import numpy as np
-import pytest
-
 from .utils import TestUtils
 
 
@@ -453,6 +452,58 @@ def test_id_example():
                 [0.00000000e00, 0.00000000e00, 0.00000000e00],
                 [0.00000000e00, 0.00000000e00, 0.00000000e00],
             ],
+        ),
+        expand=False,
+    )
+
+    TestUtils.assert_equal(
+        lambdas,
+        np.array(
+            [
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+                [0.00000000e00, 2.45250000e00, 4.90500000e00],
+                [0.00000000e00, -3.00344627e-16, -6.00689255e-16],
+                [0.00000000e00, 0.00000000e00, 0.00000000e00],
+            ]
+        ),
+        expand=False,
+    )
+
+
+def test_id_example_with_fext():
+    bionc = TestUtils.bionc_folder()
+    module_id = TestUtils.load_module(bionc + "/examples/inverse_dynamics/three_link_pendulum.py")
+
+    b = module_id.main("vertical", with_fext=True)
+    assert isinstance(b, tuple)
+    assert len(b) == 3
+
+    torques = b[0]
+    forces = b[1]
+    lambdas = b[2]
+
+    TestUtils.assert_equal(
+        torques,
+        np.array(
+            [
+                [1.1000e-02, -1.0000e-02, -1.0000e-03],
+                [2.2000e-02, -2.0000e-02, -2.0000e-03],
+                [-2.9397e01, 9.7800e00, 1.9617e01],
+            ],
+        ),
+        expand=False,
+    )
+
+    TestUtils.assert_equal(
+        forces,
+        np.array(
+            [
+                [0.0, -0.1013, -0.012],
+                [0.0, -0.2001, -0.019],
+                [0.0, -0.2995, -0.03],
+            ]
         ),
         expand=False,
     )

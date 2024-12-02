@@ -1,8 +1,9 @@
-from typing import Any, Union
-from pathlib import Path
 import importlib.util
-from casadi import MX, Function
+from pathlib import Path
+from typing import Any, Union
+
 import numpy as np
+from casadi import MX, Function
 
 
 class TestUtils:

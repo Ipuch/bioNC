@@ -4,8 +4,8 @@ from typing import Callable
 import numpy as np
 
 from .biomechanical_model import GenericBiomechanicalModel
-from ..model_creation.protocols import Data
 from .natural_coordinates import SegmentNaturalCoordinates
+from ..model_creation.protocols import Data
 
 
 class AbstractNaturalMarker(ABC):
@@ -20,9 +20,6 @@ class AbstractNaturalMarker(ABC):
         Computes the constraint for the marker given the segment natural coordinates and experimental marker location
 
     """
-
-    def __init__(self):
-        self.name = None
 
     @abstractmethod
     def from_data(

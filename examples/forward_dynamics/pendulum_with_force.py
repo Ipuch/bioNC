@@ -1,5 +1,6 @@
 import numpy as np
 
+from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 from bionc.bionc_numpy import (
     BiomechanicalModel,
     NaturalSegment,
@@ -9,9 +10,7 @@ from bionc.bionc_numpy import (
     SegmentNaturalVelocities,
     NaturalVelocities,
     ExternalForceSet,
-    ExternalForce,
 )
-from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 
 
 def build_pendulum():
@@ -174,31 +173,30 @@ def main(mode: str = "moment_equilibrium"):
     fext = ExternalForceSet.empty_from_nb_segment(1)
     # then add a force
     if mode == "moment_equilibrium":
-        force1 = ExternalForce.from_components(
-            # this moment will prevent the pendulum to fall
-            force=np.array([0, 0, 0]),
-            torque=np.array([-1 * 9.81 * 0.50, 0, 0]),
-            application_point_in_local=np.array([0, 0, 0]),
+        force = np.array([0, 0, 0])
+        torque = np.array([-1 * 9.81 * 0.50, 0, 0])
+        fext.add_in_global_local_point(
+            external_force=np.concatenate([torque, force]), segment_index=0, point_in_local=np.array([0, 0, 0])
         )
     elif mode == "force_equilibrium":
-        force1 = ExternalForce.from_components(
-            # this force will prevent the pendulum to fall
-            force=np.array([0, 0, 1 * 9.81]),
-            torque=np.array([0, 0, 0]),
-            application_point_in_local=np.array([0, -0.5, 0]),
+        force = np.array([0, 0, 1 * 9.81])
+        torque = np.array([0, 0, 0])
+        fext.add_in_global_local_point(
+            external_force=np.concatenate([torque, force]),
+            segment_index=0,
+            point_in_local=np.array([0, 0.5, 0]),
         )
+
     elif mode == "no_equilibrium":
-        force1 = ExternalForce.from_components(
-            # this will not prevent the pendulum to fall it will keep drag the pendulum down
-            force=np.array([0, 0, 1.0 * 9.81]),
-            torque=np.array([0, 0, 0]),
-            application_point_in_local=np.array([0, -0.25, 0]),
+        # this will not prevent the pendulum to fall it will keep drag the pendulum down
+        fext.add_in_global_local_point(
+            segment_index=0,
+            external_force=np.concatenate([np.array([0, 0, 1.0 * 9.81]), [0, 0, 0]]),
+            point_in_local=np.array([0, 0.25, 0]),
         )
+
     else:
         raise ValueError("mode should be one of 'moment_equilibrium', 'force_equilibrium', 'no_equilibrium'")
-
-    # then add the force to the list on segment 0
-    fext.add_external_force(external_force=force1, segment_index=0)
 
     model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(t_final=10, external_forces=fext)
 
@@ -206,8 +204,8 @@ def main(mode: str = "moment_equilibrium"):
 
 
 if __name__ == "__main__":
-    model, all_states = main(mode="moment_equilibrium")
-    # model, all_states = main(mode="force_equilibrium")
+    # model, all_states = main(mode="moment_equilibrium")
+    model, all_states = main(mode="force_equilibrium")
     # model, all_states = main(mode="no_equilibrium")
 
     # animate the motion

@@ -238,6 +238,10 @@ def test_external_force_local_point(bionc_type):
         squeeze=False,
     )
 
+    transported_force = force2.transport_on_proximal(Q2)
+    TestUtils.assert_equal(transported_force.force, np.array([0.11, 0.12, 0.13]), squeeze=True)
+    TestUtils.assert_equal(transported_force.torque, np.array([0.13868, 0.15264, 0.15868]), squeeze=True)
+
     new_natural_force = (
         force2.transport_on_proximal(Q2)
         .transport_to_another_segment(
@@ -325,19 +329,27 @@ def test_external_force_in_global(bionc_type):
         application_point_in_global=np.array([0.17, 0.18, 0.19]),
     )
 
-    TestUtils.assert_equal(force1.torque, np.array([0.04, 0.05, 0.06]))
-    TestUtils.assert_equal(force1.force, np.array([0.01, 0.02, 0.03]))
-    TestUtils.assert_equal(force2.torque, np.array([0.14, 0.15, 0.16]))
-    TestUtils.assert_equal(force2.force, np.array([0.11, 0.12, 0.13]))
+    TestUtils.assert_equal(force1.torque, np.array([0.04, 0.05, 0.06]), squeeze=True)
+    TestUtils.assert_equal(force1.force, np.array([0.01, 0.02, 0.03]), squeeze=True)
+    TestUtils.assert_equal(force2.torque, np.array([0.14, 0.15, 0.16]), squeeze=True)
+    TestUtils.assert_equal(force2.force, np.array([0.11, 0.12, 0.13]), squeeze=True)
 
     fext = ExternalForceSet.empty_from_nb_segment(3)
     fext.add_in_global(
-        external_force=np.concatenate([force1.torque, force1.force]),
+        external_force=(
+            np.concatenate([force1.torque, force1.force])
+            if bionc_type == "numpy"
+            else vertcat(force1.torque, force1.force)
+        ),
         segment_index=0,
         point_in_global=np.array([0.07, 0.08, 0.09]),
     )
     fext.add_in_global(
-        external_force=np.concatenate([force2.torque, force2.force]),
+        external_force=(
+            np.concatenate([force2.torque, force2.force])
+            if bionc_type == "numpy"
+            else vertcat(force2.torque, force2.force)
+        ),
         segment_index=2,
         point_in_global=np.array([0.17, 0.18, 0.19]),
     )
@@ -370,11 +382,7 @@ def test_external_force_in_global(bionc_type):
             0.02102857,
         ]
     )
-    TestUtils.assert_equal(
-        natural_force,
-        natural_force_2_expected,
-        expand=False,
-    )
+    TestUtils.assert_equal(natural_force, natural_force_2_expected, expand=False, squeeze=True)
 
     natural_forces = fext.to_natural_external_forces(Q)
     complete_natural_force_expected = np.concatenate(
@@ -445,11 +453,16 @@ def test_external_force_in_global(bionc_type):
             ]
         ),
         expand=False,
+        squeeze=True,
     )
 
     fext.add_in_global(
         segment_index=2,
-        external_force=np.concatenate([force2.torque, force2.force]),
+        external_force=(
+            np.concatenate([force2.torque, force2.force])
+            if bionc_type == "numpy"
+            else vertcat(force2.torque, force2.force)
+        ),
         point_in_global=np.array([0.17, 0.18, 0.19]),
     )
     segment_force_2 = fext.to_segment_natural_external_forces(Q=Q, segment_idx=2)
@@ -502,20 +515,28 @@ def test_external_force_in_local(bionc_type):
         transformation_matrix=dummy_transformation_matrix,
     )
 
-    TestUtils.assert_equal(force1.torque, np.array([0.04, 0.05, 0.06]))
-    TestUtils.assert_equal(force1.force, np.array([0.01, 0.02, 0.03]))
-    TestUtils.assert_equal(force2.torque, np.array([0.14, 0.15, 0.16]))
-    TestUtils.assert_equal(force2.force, np.array([0.11, 0.12, 0.13]))
+    TestUtils.assert_equal(force1.torque, np.array([0.04, 0.05, 0.06]), squeeze=True)
+    TestUtils.assert_equal(force1.force, np.array([0.01, 0.02, 0.03]), squeeze=True)
+    TestUtils.assert_equal(force2.torque, np.array([0.14, 0.15, 0.16]), squeeze=True)
+    TestUtils.assert_equal(force2.force, np.array([0.11, 0.12, 0.13]), squeeze=True)
 
     fext = ExternalForceSet.empty_from_nb_segment(3)
     fext.add_in_local(
-        external_force=np.concatenate([force1.torque, force1.force]),
+        external_force=(
+            np.concatenate([force1.torque, force1.force])
+            if bionc_type == "numpy"
+            else vertcat(force1.torque, force1.force)
+        ),
         segment_index=0,
         point_in_local=np.array([0.07, 0.08, 0.09]),
         transformation_matrix=dummy_transformation_matrix,
     )
     fext.add_in_local(
-        external_force=np.concatenate([force2.torque, force2.force]),
+        external_force=(
+            np.concatenate([force2.torque, force2.force])
+            if bionc_type == "numpy"
+            else vertcat(force2.torque, force2.force)
+        ),
         segment_index=2,
         point_in_local=np.array([0.17, 0.18, 0.19]),
         transformation_matrix=dummy_transformation_matrix,
@@ -553,6 +574,7 @@ def test_external_force_in_local(bionc_type):
         natural_force,
         natural_force_2_expected,
         expand=False,
+        squeeze=True,
     )
 
     natural_forces = fext.to_natural_external_forces(Q)
@@ -624,11 +646,16 @@ def test_external_force_in_local(bionc_type):
             ]
         ),
         expand=False,
+        squeeze=True,
     )
 
     fext.add_in_local(
         segment_index=2,
-        external_force=np.concatenate([force2.torque, force2.force]),
+        external_force=(
+            np.concatenate([force2.torque, force2.force])
+            if bionc_type == "numpy"
+            else vertcat(force2.torque, force2.force)
+        ),
         point_in_local=np.array([0.17, 0.18, 0.19]),
         transformation_matrix=dummy_transformation_matrix,
     )

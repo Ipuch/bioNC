@@ -94,7 +94,6 @@ class ExternalForceInGlobalLocalPoint:
         lever_arm = new_application_point_in_global - old_application_point_in_global
         additional_torque = np.cross(lever_arm, self.force)
 
-        # Some
         new_external_forces = self.external_forces.copy()
         new_external_forces[0:3] += additional_torque
 

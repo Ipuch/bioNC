@@ -90,7 +90,7 @@ class ExternalForceInGlobal:
         additional_torque = cross(lever_arm, self.force)
 
         # Sum the additional torque to the existing torque
-        new_external_forces = self.external_forces.copy()
+        new_external_forces = self.external_forces.__copy__()
         new_external_forces[0:3] += additional_torque
 
         return ExternalForceInGlobalOnProximal(external_forces=new_external_forces)

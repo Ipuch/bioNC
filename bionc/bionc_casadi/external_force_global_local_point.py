@@ -92,10 +92,10 @@ class ExternalForceInGlobalLocalPoint:
 
         # Bour's formula to transport the moment from the application point to the new application point
         lever_arm = new_application_point_in_global - old_application_point_in_global
+
         additional_torque = cross(lever_arm, self.force)
 
-        # Some
-        new_external_forces = self.external_forces
+        new_external_forces = self.external_forces.__copy__()
         new_external_forces[0:3] += additional_torque
 
         return ExternalForceInGlobalOnProximal(external_forces=new_external_forces)

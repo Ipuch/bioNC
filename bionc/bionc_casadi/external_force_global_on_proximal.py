@@ -1,4 +1,4 @@
-from casadi import MX, vertcat, cross
+from casadi import MX, vertcat, cross, transpose
 
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_vector import NaturalVector
@@ -78,7 +78,7 @@ class ExternalForceInGlobalOnProximal:
         """
         point_interpolation_matrix = NaturalVector.proximal().interpolate()
 
-        return point_interpolation_matrix.T @ self.force
+        return transpose(point_interpolation_matrix) @ self.force
 
     def natural_moments(self, Qi: SegmentNaturalCoordinates) -> MX:
         """
@@ -96,7 +96,7 @@ class ExternalForceInGlobalOnProximal:
         """
         pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
 
-        return pseudo_interpolation_matrix.T @ self.torque
+        return transpose(pseudo_interpolation_matrix) @ self.torque
 
     def to_generalized_natural_forces(self, Qi: SegmentNaturalCoordinates) -> MX:
         """

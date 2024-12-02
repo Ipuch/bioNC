@@ -1,13 +1,16 @@
 import numpy as np
 
-from .external_force import ExternalForce
+from .external_force_global_local_point import ExternalForceInGlobalLocalPoint
+from .external_force_global_on_proximal import ExternalForceInGlobalOnProximal
 from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from .rotations import euler_axes_from_rotation_matrices
 from ..protocols.joint import JointBase as Joint
 from ..utils.enums import CartesianAxis, EulerSequence
 
 
-class JointGeneralizedForces(ExternalForce):
+class JointGeneralizedForces(ExternalForceInGlobalLocalPoint):
+    # todo: this class need to be rethinked, the inheritance is not optimal.
+    #  but preserved for now as refactoring externalforces
     """
     Made to handle joint generalized forces, it inherits from ExternalForce
 
@@ -202,7 +205,7 @@ class JointGeneralizedForcesList:
         """
         return cls(joint_generalized_forces=[[] for _ in range(nb_joint)])
 
-    def joint_generalized_force(self, joint_index: int) -> list[ExternalForce]:
+    def joint_generalized_force(self, joint_index: int) -> list[ExternalForceInGlobalOnProximal]:
         """Returns the external forces of the segment"""
         return self.joint_generalized_forces[joint_index]
 

@@ -9,6 +9,7 @@ from .biomechanical_model_segments import BiomechanicalModelSegments
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .external_force import ExternalForceSet
 from .external_force_global_on_proximal import ExternalForceInGlobalOnProximal
+from .generalized_force import JointGeneralizedForcesList
 from .natural_accelerations import NaturalAccelerations
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities

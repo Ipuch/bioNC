@@ -13,7 +13,7 @@ from .utils import TestUtils
 @pytest.mark.parametrize(
     "external_force_tuple",
     [
-        (np.array([0, 0, 1 * 9.81]), np.array([0, 0, 0]), np.array([0, -0.5, 0])),
+        (np.array([0, 0, 1 * 9.81]), np.array([0, 0, 0]), np.array([0, 0.5, 0])),
         (np.array([0, 0, 0]), np.array([-1 * 9.81 * 0.50, 0, 0]), np.array([0, 0, 0])),
     ],
 )
@@ -31,7 +31,7 @@ def test_external_force(bionc_type, external_force_tuple):
     module = TestUtils.load_module(bionc + "/examples/forward_dynamics/pendulum_with_force.py")
 
     fext = ExternalForceSet.empty_from_nb_segment(1)
-    external_force = np.concatenate([external_force_tuple[0], external_force_tuple[1]])
+    external_force = np.concatenate([external_force_tuple[1], external_force_tuple[0]])
     fext.add_in_global_local_point(
         external_force=external_force, segment_index=0, point_in_local=external_force_tuple[2]
     )

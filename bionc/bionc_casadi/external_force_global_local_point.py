@@ -5,7 +5,7 @@ from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_vector import NaturalVector
 
 
-class ExternalForceInLocal:
+class ExternalForceInGlobalLocalPoint:
     """
     This class represents an external force applied to a segment.
 
@@ -14,9 +14,7 @@ class ExternalForceInLocal:
     application_point_in_local : np.ndarray
         The application point of the force in the natural coordinate system of the segment
     external_forces : np.ndarray
-        The external force vector in the global coordinate system (torque, force), in local frame too
-    transformation_matrix : np.ndarray
-         The transformation matrix of the segment
+        The external force vector in the global coordinate system (torque, force)
 
     Methods
     -------
@@ -32,25 +30,12 @@ class ExternalForceInLocal:
         This function returns the external force in the natural coordinate format.
     """
 
-    def __init__(
-        self,
-        application_point_in_local: np.ndarray,
-        external_forces: np.ndarray,
-        transformation_matrix: np.ndarray,
-    ):
+    def __init__(self, application_point_in_local: np.ndarray, external_forces: np.ndarray):
         self.application_point_in_local = application_point_in_local
         self.external_forces = external_forces
-        self.transformation_matrix = transformation_matrix
-        self.transformation_matrix_inv = np.linalg.inv(self.transformation_matrix.T)
 
     @classmethod
-    def from_components(
-        cls,
-        application_point_in_local: np.ndarray,
-        force: np.ndarray,
-        torque: np.ndarray,
-        transformation_matrix: np.ndarray,
-    ):
+    def from_components(cls, application_point_in_local: np.ndarray, force: np.ndarray, torque: np.ndarray):
         """
         This function creates an external force from its components.
 
@@ -62,15 +47,13 @@ class ExternalForceInLocal:
             The force vector in the global coordinate system
         torque
             The torque vector in the global coordinate system
-        transformation_matrix : np.ndarray
-            The transformation matrix of the segment
 
         Returns
         -------
         ExternalForce
         """
 
-        return cls(application_point_in_local, np.concatenate((torque, force)), transformation_matrix)
+        return cls(application_point_in_local, np.concatenate((torque, force)))
 
     @property
     def force(self) -> np.ndarray:
@@ -81,14 +64,6 @@ class ExternalForceInLocal:
     def torque(self) -> np.ndarray:
         """The torque vector in the global coordinate system"""
         return self.external_forces[0:3]
-
-    def forces_in_global(self, Qi: SegmentNaturalCoordinates):
-        rotation_matrix = Qi.to_uvw_matrix() @ self.transformation_matrix_inv
-
-        force_in_global = rotation_matrix @ self.force
-        torque_in_global = rotation_matrix @ self.torque
-
-        return np.concatenate((torque_in_global, force_in_global))
 
     def transport_on_proximal(
         self,
@@ -117,11 +92,10 @@ class ExternalForceInLocal:
 
         # Bour's formula to transport the moment from the application point to the new application point
         lever_arm = new_application_point_in_global - old_application_point_in_global
+        additional_torque = np.cross(lever_arm, self.force)
 
-        new_external_forces = self.forces_in_global(Qi)
-        additional_torque = np.cross(lever_arm, new_external_forces[3:6])
-
-        # Sum the additional torque to the existing torque
+        # Some
+        new_external_forces = self.external_forces.copy()
         new_external_forces[0:3] += additional_torque
 
         return ExternalForceInGlobalOnProximal(external_forces=new_external_forces)

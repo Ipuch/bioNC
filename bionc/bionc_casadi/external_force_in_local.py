@@ -41,7 +41,7 @@ class ExternalForceInLocal:
         self.application_point_in_local = application_point_in_local
         self.external_forces = external_forces
         self.transformation_matrix = transformation_matrix
-        self.transformation_matrix_inv = np.linalg.inv(self.transformation_matrix.T)
+        self.transformation_matrix_inv = np.linalg.inv(self.transformation_matrix)
 
     @classmethod
     def from_components(

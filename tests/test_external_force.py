@@ -20,7 +20,6 @@ from .utils import TestUtils
 def test_external_force(bionc_type, external_force_tuple):
     from bionc.bionc_numpy import (
         ExternalForceSet,
-        # ExternalForceGlobalLocalPoint,
         SegmentNaturalCoordinates,
         NaturalCoordinates,
         SegmentNaturalVelocities,
@@ -476,6 +475,7 @@ def test_external_force_in_local(bionc_type):
             NaturalVelocities,
         )
     dummy_transformation_matrix = np.eye(3) + np.ones((3, 3)) * 0.001
+    dummy_transformation_matrix[2, 1] = 0.2
     force1 = ExternalForceInLocal.from_components(
         force=np.array([0.01, 0.02, 0.03]),
         torque=np.array([0.04, 0.05, 0.06]),
@@ -523,17 +523,17 @@ def test_external_force_in_local(bionc_type):
     natural_force_2_expected = np.array(
         [
             0.0,
-            0.24582142,
+            0.24572225,
             0.0,
-            0.20380465,
-            0.21380465,
-            0.45534036,
-            -0.04630714,
-            -0.04630714,
-            -0.27784285,
-            0.18091023,
-            0.0301517,
-            0.0301517,
+            0.20196297,
+            0.18615927,
+            0.44411017,
+            -0.04442944,
+            -0.04442944,
+            -0.26657665,
+            0.1537273,
+            0.02562122,
+            0.02562122,
         ]
     )
     TestUtils.assert_equal(
@@ -548,15 +548,15 @@ def test_external_force_in_local(bionc_type):
             np.array(
                 [
                     [0.0],
-                    [0.05924985],
+                    [0.05967894],
                     [0.0],
-                    [0.00994018],
-                    [0.01994018],
-                    [0.06919003],
+                    [0.00994612],
+                    [0.01398684],
+                    [0.06867157],
                     [0.0],
                     [0.0],
-                    [-0.03924985],
-                    [0.05105165],
+                    [-0.03872545],
+                    [0.0391508],
                     [0.0],
                     [0.0],
                     [0.0],
@@ -597,17 +597,17 @@ def test_external_force_in_local(bionc_type):
         np.array(
             [
                 0.0,
-                0.23361535,
+                0.2383283,
                 0.0,
-                0.17919238,
-                0.18919238,
-                0.41614106,
-                -0.02169487,
-                -0.02169487,
-                -0.23864356,
-                0.19530677,
-                0.01775516,
-                0.01775516,
+                0.17818587,
+                0.16238218,
+                0.40470934,
+                -0.02065235,
+                -0.02065235,
+                -0.22717582,
+                0.16623615,
+                0.01511238,
+                0.01511238,
             ]
         ),
         expand=False,

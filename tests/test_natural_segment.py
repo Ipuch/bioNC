@@ -255,6 +255,30 @@ def test_natural_segment(bionc_type):
     TestUtils.assert_equal(my_segment.kinetic_energy(Qdoti), np.array(0.970531), expand=False)
     TestUtils.assert_equal(my_segment.potential_energy(Qi), np.array(0.229), expand=False)
 
+    my_segment2 = NaturalSegment.with_cartesian_inertial_parameters(
+        name="box",
+        alpha=np.pi / 2 + 0.1,
+        beta=np.pi / 2 - 0.05,
+        gamma=np.pi / 2 + 0.01,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([0, 0.01, 0]),
+        inertia=np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+    mat = my_segment2.segment_coordinates_system(Qi)
+    TestUtils.assert_equal(
+        mat,
+        np.array(
+            [
+                [0.11, -0.09890496, 0.39714038, 0.21],
+                [0.12, -0.09880496, 0.40670988, 0.22],
+                [0.13, -0.09870496, 0.41627937, 0.23],
+                [0.0, 0.0, 0.0, 1.0],
+            ]
+        ),
+    )
+
 
 @pytest.mark.parametrize(
     "bionc_type",

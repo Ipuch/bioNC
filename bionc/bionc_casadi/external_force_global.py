@@ -1,4 +1,4 @@
-import numpy as np
+from casadi import MX, vertcat, cross
 
 from .external_force_global_on_proximal import ExternalForceInGlobalOnProximal
 from .natural_coordinates import SegmentNaturalCoordinates
@@ -10,9 +10,9 @@ class ExternalForceInGlobal:
 
     Attributes
     ----------
-    application_point_in_local : np.ndarray
+    application_point_in_local : MX
         The application point of the force in the natural coordinate system of the segment
-    external_forces : np.ndarray
+    external_forces : MX
         The external force vector in the global coordinate system (torque, force)
 
     Methods
@@ -29,18 +29,18 @@ class ExternalForceInGlobal:
         This function returns the external force in the natural coordinate format.
     """
 
-    def __init__(self, application_point_in_global: np.ndarray, external_forces: np.ndarray):
-        self.application_point_in_global = application_point_in_global
-        self.external_forces = external_forces
+    def __init__(self, application_point_in_global: MX, external_forces: MX):
+        self.application_point_in_global = MX(application_point_in_global)
+        self.external_forces = MX(external_forces)
 
     @classmethod
-    def from_components(cls, application_point_in_global: np.ndarray, force: np.ndarray, torque: np.ndarray):
+    def from_components(cls, application_point_in_global: MX, force: MX, torque: MX):
         """
         This function creates an external force from its components.
 
         Parameters
         ----------
-        application_point_in_global : np.ndarray
+        application_point_in_global : MX
             The application point of the force in the natural coordinate system of the segment
         force
             The force vector in the global coordinate system
@@ -52,15 +52,15 @@ class ExternalForceInGlobal:
         ExternalForce
         """
 
-        return cls(application_point_in_global, np.concatenate((torque, force)))
+        return cls(application_point_in_global, vertcat(torque, force))
 
     @property
-    def force(self) -> np.ndarray:
+    def force(self) -> MX:
         """The force vector in the global coordinate system"""
         return self.external_forces[3:6]
 
     @property
-    def torque(self) -> np.ndarray:
+    def torque(self) -> MX:
         """The torque vector in the global coordinate system"""
         return self.external_forces[0:3]
 
@@ -87,7 +87,7 @@ class ExternalForceInGlobal:
 
         # Bour's formula to transport the moment from the application point to the new application point
         lever_arm = new_application_point_in_global - old_application_point_in_global
-        additional_torque = np.cross(lever_arm, self.force)
+        additional_torque = cross(lever_arm, self.force)
 
         # Sum the additional torque to the existing torque
         new_external_forces = self.external_forces.copy()

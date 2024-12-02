@@ -1,8 +1,9 @@
-from typing import Any, Union
-from pathlib import Path
 import importlib.util
-from casadi import MX, Function
+from pathlib import Path
+from typing import Any, Union
+
 import numpy as np
+from casadi import MX, Function
 
 
 class TestUtils:
@@ -78,4 +79,4 @@ class TestUtils:
         if isinstance(value, MX):
             TestUtils.mx_assert_equal(value, expected, decimal=decimal, squeeze=squeeze, expand=expand)
         else:
-            np.testing.assert_almost_equal(value, expected, decimal=decimal)
+            np.testing.assert_almost_equal(value.squeeze() if squeeze else value, expected, decimal=decimal)

@@ -297,7 +297,7 @@ class NaturalSegment(AbstractNaturalSegment):
         return HomogeneousTransform.from_rt(
             # rotation=self.compute_transformation_matrix(transformation_matrix_type) @ horzcat(Q.u, Q.v, Q.w),
             # NOTE: I would like to make numerical inversion disappear and the transpose too, plz implement analytical inversion.
-            rotation=horzcat(Q.u, Q.v, Q.w) @ transformation_matrix_inverse,
+            rotation=Q.to_uvw_matrix() @ transformation_matrix_inverse,
             translation=Q.rp,
         )
 

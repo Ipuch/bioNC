@@ -1,4 +1,4 @@
-import numpy as np
+from casadi import MX, vertcat, cross
 
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_vector import NaturalVector
@@ -11,7 +11,7 @@ class ExternalForceInGlobalOnProximal:
 
     Attributes
     ----------
-    external_forces : np.ndarray
+    external_forces : MX
         The external force vector in the global coordinate system (torque, force)
 
     Methods
@@ -30,11 +30,11 @@ class ExternalForceInGlobalOnProximal:
         Format external moments and forces to the generalized external force in the natural coordinate format.
     """
 
-    def __init__(self, external_forces: np.ndarray):
-        self.external_forces = external_forces
+    def __init__(self, external_forces: MX):
+        self.external_forces = MX(external_forces)
 
     @classmethod
-    def from_components(cls, force: np.ndarray, torque: np.ndarray):
+    def from_components(cls, force: MX, torque: MX):
         """
         This function creates an external force from its components.
 
@@ -50,19 +50,19 @@ class ExternalForceInGlobalOnProximal:
         ExternalForce
         """
 
-        return cls(np.concatenate((torque, force)))
+        return cls(vertcat(torque, force))
 
     @property
-    def force(self) -> np.ndarray:
+    def force(self) -> MX:
         """The cartesian force vector in the global coordinate system"""
         return self.external_forces[3:6]
 
     @property
-    def torque(self) -> np.ndarray:
+    def torque(self) -> MX:
         """The cartesian torque vector in the global coordinate system"""
         return self.external_forces[0:3]
 
-    def natural_forces(self) -> np.ndarray:
+    def natural_forces(self) -> MX:
         """
         Apply external forces to the segment
 
@@ -73,14 +73,14 @@ class ExternalForceInGlobalOnProximal:
 
         Returns
         -------
-        np.ndarray
+        MX
             The external forces adequately transformed for the equation of motion in natural coordinates [12 x 1]
         """
         point_interpolation_matrix = NaturalVector.proximal().interpolate()
 
-        return np.array(point_interpolation_matrix.T @ self.force)
+        return point_interpolation_matrix.T @ self.force
 
-    def natural_moments(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+    def natural_moments(self, Qi: SegmentNaturalCoordinates) -> MX:
         """
         Apply external moments to the segment
 
@@ -91,14 +91,14 @@ class ExternalForceInGlobalOnProximal:
 
         Returns
         -------
-        np.ndarray
+        MX
             The external forces adequately transformed for the equation of motion in natural coordinates [12 x 1]
         """
         pseudo_interpolation_matrix = Qi.compute_pseudo_interpolation_matrix()
 
         return pseudo_interpolation_matrix.T @ self.torque
 
-    def to_generalized_natural_forces(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
+    def to_generalized_natural_forces(self, Qi: SegmentNaturalCoordinates) -> MX:
         """
         Format external moments and forces to the generalized external force in the natural coordinate format.
 
@@ -109,14 +109,12 @@ class ExternalForceInGlobalOnProximal:
 
         Returns
         -------
-        np.ndarray
+        MX
             The external forces adequately transformed for the equation of motion in natural coordinates [12 x 1]
         """
         return self.natural_forces() + self.natural_moments(Qi)
 
-    def transport_to_another_segment(
-        self, Qfrom: SegmentNaturalCoordinates, Qto: SegmentNaturalCoordinates
-    ) -> np.ndarray:
+    def transport_to_another_segment(self, Qfrom: SegmentNaturalCoordinates, Qto: SegmentNaturalCoordinates) -> MX:
         """
         Transport the external force to another segment and another application point in cartesian coordinates
 
@@ -132,16 +130,14 @@ class ExternalForceInGlobalOnProximal:
         ExternalForceInGlobalOnProximal
             The external force on the proximal point of the segment
         """
-        qi_array = np.array(Qfrom).squeeze()
-        qj_array = np.array(Qto).squeeze()
+        qi_array = Qfrom
+        qj_array = Qto
 
         proximal_interpolation_matrix = NaturalVector.proximal().interpolate()
 
-        old_application_point_in_global = np.array(proximal_interpolation_matrix @ qi_array).squeeze()
-        new_application_point_in_global = np.array(proximal_interpolation_matrix @ qj_array).squeeze()
+        old_application_point_in_global = proximal_interpolation_matrix @ qi_array
+        new_application_point_in_global = proximal_interpolation_matrix @ qj_array
 
         lever_arm = new_application_point_in_global - old_application_point_in_global
 
-        return ExternalForceInGlobalOnProximal.from_components(
-            self.force, self.torque + np.cross(lever_arm, self.force)
-        )
+        return ExternalForceInGlobalOnProximal.from_components(self.force, self.torque + cross(lever_arm, self.force))

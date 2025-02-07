@@ -45,11 +45,14 @@ class BiomechanicalModelMarkers(GenericBiomechanicalModelMarkers):
             The position of the markers [3, nbMarkers, nbFrames]
             in the global coordinate system/ inertial coordinate system
         """
-        markers = np.zeros((3, self.nb_markers, Q.shape[1]))
+
+        markers = np.zeros((3, self.nb_markers, Q.shape[1] if len(Q.shape) == 2 else 1))
 
         for segment in self.segments.segments_no_ground.values():
             idx = self.indexes(segment.index, only_technical=False)
-            markers[:, idx] = segment.markers(Q.vector(segment.index))
+            markers[:, idx] = segment.markers(
+                Q.vector(segment.index) if len(Q.shape) == 2 else Q[segment.coordinates_slice]
+            )
 
         return markers
 

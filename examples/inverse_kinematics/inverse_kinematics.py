@@ -6,7 +6,7 @@ import numpy as np
 import time
 from pyomeca import Markers
 
-from bionc import InverseKinematics, Viz, NaturalCoordinates
+from bionc import InverseKinematics, NaturalCoordinates
 from tests.utils import TestUtils
 
 
@@ -61,11 +61,21 @@ if __name__ == "__main__":
     # convert the natural coordinates to joint angles (still experimental)
     print(model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0])))
 
-    viz = Viz(
-        model,
-        show_center_of_mass=False,  # no center of mass in this example
-        show_xp_markers=True,
-        show_model_markers=True,
-        show_natural_mesh=True,
-    )
-    viz.animate(Qopt, markers_xp=markers)
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+    from pyorerun import PhaseRerun
+
+    model_interface = BioncModelNoMesh(model)
+    prr = PhaseRerun(t_span=np.linspace(0, 1, 200))
+
+    pyomarkers = Markers(markers, model.marker_names_technical)
+    prr.add_animated_model(model_interface, Qopt, tracked_markers=pyomarkers)
+    prr.rerun()
+
+    # viz = Viz(
+    #     model,
+    #     show_center_of_mass=False,  # no center of mass in this example
+    #     show_xp_markers=True,
+    #     show_model_markers=True,
+    #     show_natural_mesh=True,
+    # )
+    # viz.animate(Qopt, markers_xp=markers)

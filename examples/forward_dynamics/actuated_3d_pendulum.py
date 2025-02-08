@@ -254,17 +254,20 @@ def main(show_results: bool = True):
         # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
         plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
 
-    return model, all_states
+    return model, all_states, time_steps
 
 
 if __name__ == "__main__":
-    model, all_states = main(show_results=False)
+    model, all_states, time_steps = main(show_results=False)
 
     # animate the motion
-    from bionc import Viz
+    from pyorerun import PhaseRerun
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
 
-    viz = Viz(model)
-    viz.animate(all_states[:12, :200], None, frame_rate=200)
+    prr = PhaseRerun(t_span=time_steps[:200])
+    model_interface = BioncModelNoMesh(model)
+    prr.add_animated_model(model_interface, all_states[:12, :200])
+    prr.rerun()
     # This example stil have an unexpected behaviour, should at least fall in the direction of the gravity force during
     # the first frames, but it does not.
     # the pendulum should not rotate around the Z axis

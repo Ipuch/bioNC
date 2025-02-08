@@ -1,5 +1,6 @@
 import numpy as np
 
+from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 from bionc.bionc_numpy import (
     BiomechanicalModel,
     NaturalSegment,
@@ -9,7 +10,6 @@ from bionc.bionc_numpy import (
     SegmentNaturalVelocities,
     NaturalVelocities,
 )
-from bionc import NaturalAxis, CartesianAxis, RK4, TransformationMatrixType
 
 
 def drop_the_pendulum(
@@ -274,7 +274,10 @@ if __name__ == "__main__":
         plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
 
     # animate the motion
-    from bionc import Viz
+    from pyorerun import PhaseRerun
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
 
-    viz = Viz(model, background_color=(1, 1, 1), show_ground_frame=True)
-    viz.animate(NaturalCoordinates(all_states[: (12 * nb_segments), :]), None, frame_rate=steps_per_second)
+    prr = PhaseRerun(t_span=time_steps)
+    model_interface = BioncModelNoMesh(model)
+    prr.add_animated_model(model_interface, all_states[: (nb_segments * 12), :])
+    prr.rerun()

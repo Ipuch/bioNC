@@ -216,14 +216,17 @@ def main(mode: str = "x_revolute", show_results: bool = True):
         # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
         plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
 
-    return model, all_states
+    return model, all_states, time_steps
 
 
 if __name__ == "__main__":
-    model, all_states = main("x_revolute", show_results=False)
+    model, all_states, time_steps = main("x_revolute", show_results=False)
 
     # animate the motion
-    from bionc import Viz
+    from pyorerun import PhaseRerun
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
 
-    viz = Viz(model)
-    viz.animate(all_states[:12, :], None, frame_rate=50)
+    prr = PhaseRerun(t_span=time_steps)
+    model_interface = BioncModelNoMesh(model)
+    prr.add_animated_model(model_interface, all_states[: (1 * 12), :])
+    prr.rerun()

@@ -1,7 +1,6 @@
 import numpy as np
 
 from bionc import JointType
-
 from bionc.bionc_numpy import (
     BiomechanicalModel,
     NaturalSegment,
@@ -22,7 +21,7 @@ def create_knee_model() -> BiomechanicalModel:
     """
     model = BiomechanicalModel()
     # fill the biomechanical model with the segment
-    model["THIGH"] = NaturalSegment(
+    model["THIGH"] = NaturalSegment.with_cartesian_inertial_parameters(
         name="THIGH",
         alpha=89.15807479515183 * np.pi / 180,
         beta=89.99767608318231 * np.pi / 180,
@@ -96,7 +95,7 @@ def create_knee_model() -> BiomechanicalModel:
         is_anatomical=True,
     )
 
-    model["SHANK"] = NaturalSegment(
+    model["SHANK"] = NaturalSegment.with_cartesian_inertial_parameters(
         name="SHANK",
         alpha=103.42850151901055 * np.pi / 180,
         beta=101.68512120130346 * np.pi / 180,

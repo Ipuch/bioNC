@@ -1,7 +1,9 @@
 import numpy as np
-from bionc import NaturalCoordinates, SegmentNaturalCoordinates, Viz, SegmentNaturalVelocities, NaturalVelocities
 
+from bionc import NaturalCoordinates, SegmentNaturalCoordinates, SegmentNaturalVelocities, NaturalVelocities
+from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
 from knee_feikes import create_knee_model
+from pyorerun import PhaseRerun
 from utils import forward_integration, post_computations
 
 model = create_knee_model()
@@ -13,8 +15,13 @@ Q = NaturalCoordinates.from_qi((Q0, Q1))
 print(model.rigid_body_constraints(NaturalCoordinates(Q)))
 print(model.joint_constraints(NaturalCoordinates(Q)))
 
-viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=True, size_xp_marker=0.005)
-viz.animate(Q)
+# viz = Viz(model, size_model_marker=0.004, show_frames=True, show_ground_frame=True, size_xp_marker=0.005)
+# viz.animate(Q)
+
+vizmodel = BioncModelNoMesh(model)
+rerun = PhaseRerun(t_span=np.linspace(0, 1, 1))
+rerun.add_animated_model(vizmodel, Q, tracked_markers=None)
+rerun.rerun()
 
 # simulation in forward dynamics
 tuple_of_Qdot = [
@@ -57,5 +64,7 @@ plt.legend()
 plt.show()
 
 # animation
-viz = Viz(model)
-viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
+prr = PhaseRerun(t_span=time_steps)
+vizmodel = BioncModelNoMesh(model)
+prr.add_animated_model(vizmodel, NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
+prr.rerun()

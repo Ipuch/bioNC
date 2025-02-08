@@ -1,3 +1,5 @@
+import numpy as np
+
 from bionc import (
     BiomechanicalModel,
     SegmentNaturalCoordinates,
@@ -9,12 +11,9 @@ from bionc import (
     CartesianAxis,
     NaturalAxis,
     NaturalMarker,
-    Viz,
     forward_integration,
     TransformationMatrixType,
 )
-
-import numpy as np
 
 
 def build_two_link_segment():
@@ -182,8 +181,13 @@ def main(initial_pose: str = "hanged", show_results: bool = True):
         plt.show()
 
         # animation
-        viz = Viz(model)
-        viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
+        from pyorerun import PhaseRerun
+        from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+
+        prr = PhaseRerun(t_span=time_steps)
+        model_interface = BioncModelNoMesh(model)
+        prr.add_animated_model(model_interface, NaturalCoordinates(all_states[: (12 * model.nb_segments), :]))
+        prr.rerun()
 
 
 if __name__ == "__main__":

@@ -1,10 +1,4 @@
-import numpy as np
 import plotly.graph_objects as go
-from enum import Enum
-
-from bioviz import VtkWindow, VtkModel
-from pyomeca import Markers
-from bionc import BiomechanicalModel, SegmentNaturalCoordinates, NaturalCoordinates
 
 
 def plot_series(time_steps, defects, legend=None):

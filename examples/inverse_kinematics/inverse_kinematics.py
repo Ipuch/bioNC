@@ -2,8 +2,9 @@
 This example shows how to use the InverseKinematics class to solve an inverse kinematics problem.
 """
 
-import numpy as np
 import time
+
+import numpy as np
 from pyomeca import Markers
 
 from bionc import InverseKinematics, NaturalCoordinates
@@ -70,12 +71,3 @@ if __name__ == "__main__":
     pyomarkers = Markers(markers, model.marker_names_technical)
     prr.add_animated_model(model_interface, Qopt, tracked_markers=pyomarkers)
     prr.rerun()
-
-    # viz = Viz(
-    #     model,
-    #     show_center_of_mass=False,  # no center of mass in this example
-    #     show_xp_markers=True,
-    #     show_model_markers=True,
-    #     show_natural_mesh=True,
-    # )
-    # viz.animate(Qopt, markers_xp=markers)

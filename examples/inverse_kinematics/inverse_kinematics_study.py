@@ -2,11 +2,12 @@
 This example shows how to use the InverseKinematics class to solve an inverse kinematics problem.
 """
 
-from bionc import InverseKinematics, Viz
 import numpy as np
-from pyomeca import Markers
-from tests.utils import TestUtils
 import time
+from pyomeca import Markers
+
+from bionc import InverseKinematics
+from tests.utils import TestUtils
 
 
 def main():
@@ -26,9 +27,7 @@ def main():
     markers = markers + np.random.normal(0, 0.05, markers.shape)  # add noise
 
     # you can import the class from bionc
-    ik_solver = InverseKinematics(
-        model, markers, solve_frame_per_frame=True, active_direct_frame_constraints=False, use_sx=True
-    )
+    ik_solver = InverseKinematics(model, markers, active_direct_frame_constraints=False, use_sx=True)
 
     tic1 = time.time()
     Qopt_ipopt = ik_solver.solve(method="sqpmethod")  # tend to find lower cost functions but may flip axis.
@@ -66,10 +65,19 @@ if __name__ == "__main__":
     plt.legend()
     plt.show()
 
-    viz = Viz(
-        model,
-        show_center_of_mass=False,  # no center of mass in this example
-        show_xp_markers=True,
-        show_model_markers=True,
-    )
-    viz.animate(Qopt[:, 197:198], markers_xp=markers[:, :, 197:198])
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+    from pyorerun import PhaseRerun
+
+    model_interface = BioncModelNoMesh(model)
+
+    slice_chunk = slice(197, 198)
+    prr = PhaseRerun(t_span=np.linspace(0, 1, slice_chunk.stop - slice_chunk.start))
+    pyomarkers = Markers(markers[:, :, slice_chunk], model.marker_names_technical)
+    prr.add_animated_model(model_interface, Qopt[:, slice_chunk], tracked_markers=pyomarkers)
+    prr.rerun()
+
+    slice_chunk = slice(0, 198)
+    prr = PhaseRerun(t_span=np.linspace(0, 1, slice_chunk.stop - slice_chunk.start))
+    pyomarkers = Markers(markers[:, :, slice_chunk], model.marker_names_technical)
+    prr.add_animated_model(model_interface, Qopt[:, slice_chunk], tracked_markers=pyomarkers)
+    prr.rerun()

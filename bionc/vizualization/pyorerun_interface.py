@@ -1,38 +1,9 @@
 import numpy as np
 
 from pyorerun.biorbd_components.model_display_options import DisplayModelOptions
+from ..bionc_numpy import NaturalVector
 from ..bionc_numpy.joints import Joint
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
-
-
-class BioncSegment:
-    """
-    An interface to simplify the access to a segment of a biorbd model
-    """
-
-    def __init__(self, segment, index):
-        self.segment = segment
-        self._index: int = index
-
-    @property
-    def name(self) -> str:
-        return self.segment.name
-
-    @property
-    def id(self) -> int:
-        return self._index
-
-    @property
-    def has_mesh(self) -> bool:
-        return False
-
-    @property
-    def has_meshlines(self) -> bool:
-        return False
-
-    @property
-    def mesh_path(self) -> str:
-        raise NotImplemented("This segment does not have a mesh")
 
 
 class BioncModelNoMesh:
@@ -77,7 +48,7 @@ class BioncModelNoMesh:
         return self.model.nb_segments
 
     @property
-    def segments(self) -> tuple[BioncSegment, ...]:
+    def segments(self) -> tuple["BioncSegment", ...]:
         return tuple(BioncSegment(s, i) for i, s in enumerate(self.model.segments.values()))
 
     def segment_homogeneous_matrices_in_global(self, q: np.ndarray, segment_index: int) -> np.ndarray:
@@ -174,7 +145,7 @@ class BioncModelNoMesh:
 
     @property
     def has_meshlines(self) -> bool:
-        return False
+        return True
 
     @property
     def has_soft_contacts(self) -> bool:
@@ -199,3 +170,46 @@ class BioncModelNoMesh:
         Returns the radii of the soft contacts
         """
         pass
+
+    @property
+    def meshlines(self) -> list[np.ndarray]:
+        # not working yet I need to know the location of the proximal and distal point in the
+        # cartesian local frame
+        meshes = []
+        for s in self.segments:
+            p = s.segment.compute_transformation_matrix().T @ NaturalVector.proximal()
+            d = s.segment.compute_transformation_matrix().T @ NaturalVector.distal()
+
+            meshes += [np.array([p, d])]
+
+        return meshes
+
+
+class BioncSegment:
+    """
+    An interface to simplify the access to a segment of a biorbd model
+    """
+
+    def __init__(self, segment, index):
+        self.segment = segment
+        self._index: int = index
+
+    @property
+    def name(self) -> str:
+        return self.segment.name
+
+    @property
+    def id(self) -> int:
+        return self._index
+
+    @property
+    def has_mesh(self) -> bool:
+        return False
+
+    @property
+    def has_meshlines(self) -> bool:
+        return True
+
+    @property
+    def mesh_path(self) -> str:
+        raise NotImplemented("This segment does not have a mesh")

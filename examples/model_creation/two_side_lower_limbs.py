@@ -1,3 +1,4 @@
+import numpy as np
 import os
 from pyomeca import Markers
 
@@ -290,13 +291,16 @@ def main():
     # compute the natural coordinates
     Qxp = model.Q_from_markers(markers_xp[:, :, 0:2])
 
-    from bionc import Viz
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+    from pyorerun import PhaseRerun
 
-    # display the experimental markers in red and the model markers in green
+    # display the experimental markers in blue and the model in white
     # almost superimposed because the model is well defined on the experimental data
-    bionc_viz = Viz(model, show_center_of_mass=False, show_model_markers=True, show_frames=True)
-    # bionc_viz.animate(Qxp, markers_xp=markers_xp)
-    bionc_viz.animate(Qxp, markers_xp=markers_xp)
+    prr = PhaseRerun(t_span=np.linspace(0, 1, markers_xp.shape[2]))
+    model_interface = BioncModelNoMesh(model)
+    markers = Markers(markers_xp, model.marker_names_technical)
+    prr.add_animated_model(model_interface, Qxp, markers)
+    prr.rerun()
 
     # remove the c3d file
     os.remove(filename)

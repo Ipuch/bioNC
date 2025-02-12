@@ -34,4 +34,5 @@ from .protocols import natural_coordinates
 from .utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 from .utils.ode_solver import RK4, forward_integration
 from .utils.transformation_matrix import TransformationMatrixUtil
-from .vizualization import Viz
+
+# from .vizualization import Viz

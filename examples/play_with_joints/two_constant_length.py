@@ -1,3 +1,5 @@
+import numpy as np
+
 from bionc import (
     BiomechanicalModel,
     SegmentNaturalCoordinates,
@@ -10,11 +12,8 @@ from bionc import (
     NaturalAxis,
     TransformationMatrixType,
     NaturalMarker,
-    Viz,
     forward_integration,
 )
-
-import numpy as np
 
 
 def build_two_link_segment():
@@ -149,10 +148,6 @@ def main(initial_pose: str = "hanged", show_results: bool = True):
     print(model.joint_constraints(Q))
     print("--------------------")
 
-    # uncomment to see the initial position
-    # viz = Viz(model)
-    # viz.animate(Q)
-
     tuple_of_Qdot = [
         SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
         for i in range(0, model.nb_segments)
@@ -202,8 +197,13 @@ def main(initial_pose: str = "hanged", show_results: bool = True):
         plt.show()
 
         # animation
-        viz = Viz(model)
-        viz.animate(NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
+        from pyorerun import PhaseRerun
+        from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+
+        prr = PhaseRerun(t_span=time_steps)
+        model_interface = BioncModelNoMesh(model)
+        prr.add_animated_model(model_interface, NaturalCoordinates(all_states[: (12 * model.nb_segments), :]))
+        prr.rerun()
 
 
 if __name__ == "__main__":

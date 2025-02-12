@@ -200,16 +200,19 @@ def main(mode: str = "moment_equilibrium"):
 
     model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(t_final=10, external_forces=fext)
 
-    return model, all_states
+    return model, all_states, time_steps
 
 
 if __name__ == "__main__":
-    # model, all_states = main(mode="moment_equilibrium")
-    model, all_states = main(mode="force_equilibrium")
-    # model, all_states = main(mode="no_equilibrium")
+    # model, all_states, time_steps = main(mode="moment_equilibrium")
+    model, all_states, time_steps = main(mode="force_equilibrium")
+    # model, all_states, time_steps = main(mode="no_equilibrium")
 
     # animate the motion
-    from bionc import Viz
+    from pyorerun import PhaseRerun
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
 
-    viz = Viz(model)
-    viz.animate(all_states[:12, :], None)
+    prr = PhaseRerun(t_span=time_steps)
+    model_interface = BioncModelNoMesh(model)
+    prr.add_animated_model(model_interface, all_states[: (1 * 12), :])
+    prr.rerun()

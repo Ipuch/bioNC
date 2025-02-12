@@ -1,8 +1,7 @@
-import os
-from pathlib import Path
-
 import ezc3d
 import numpy as np
+import os
+from pathlib import Path
 from pyomeca import Markers
 
 from bionc import (
@@ -20,12 +19,6 @@ from bionc import (
     TransformationMatrixType,
     NaturalAxis,
 )
-
-
-# from .de_leva import DeLevaTable todo: add this to the example
-#
-# This examples shows how to
-#     1. Create a model from scratch using a template with marker names (model_creation_from_data)
 
 
 def harrington2007(RASIS: np.ndarray, LASIS: np.ndarray, RPSIS: np.ndarray, LPSIS: np.ndarray) -> tuple:
@@ -390,12 +383,16 @@ def main():
     # compute the natural coordinates
     Qxp = model.Q_from_markers(markers_xp[:, :, 0:2])
 
-    from bionc import Viz
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+    from pyorerun import PhaseRerun
 
-    # display the experimental markers in red and the model markers in green
+    # display the experimental markers in white and the model markers in blue
     # almost superimposed because the model is well defined on the experimental data
-    bionc_viz = Viz(model, show_center_of_mass=False)
-    bionc_viz.animate(Qxp, markers_xp=markers_xp)
+    prr = PhaseRerun(t_span=np.linspace(0, 1, markers_xp.shape[2]))
+    model_interface = BioncModelNoMesh(model)
+    markers = Markers(markers_xp, model.marker_names_technical)
+    prr.add_animated_model(model_interface, Qxp, markers)
+    prr.rerun()
 
     # remove the c3d file
     os.remove(filename)

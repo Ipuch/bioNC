@@ -42,7 +42,7 @@ def test_single_pendulum_dofs(mode):
     bionc = TestUtils.bionc_folder()
     module_fd = TestUtils.load_module(bionc + "/examples/forward_dynamics/pendulum.py")
 
-    model, all_states = module_fd.main(mode=mode, show_results=False)
+    model, all_states, _ = module_fd.main(mode=mode, show_results=False)
 
     Qf = all_states[:12, -1]
     if mode == "x_revolute":
@@ -117,7 +117,7 @@ def test_forward_dynamics_with_force(mode):
     bionc = TestUtils.bionc_folder()
     module_fd = TestUtils.load_module(bionc + "/examples/forward_dynamics/pendulum_with_force.py")
 
-    model, all_states = module_fd.main(mode=mode)
+    model, all_states, _ = module_fd.main(mode=mode)
 
     mode_to_states_expected = {
         "moment_equilibrium": np.array(
@@ -216,7 +216,7 @@ def test_forward_dynamics_with_force_double_pendulum():
     bionc = TestUtils.bionc_folder()
     module_fd = TestUtils.load_module(bionc + "/examples/forward_dynamics/double_pendulum_with_force.py")
 
-    model, all_states = module_fd.main(mode="force_equilibrium")
+    model, all_states, _ = module_fd.main(mode="force_equilibrium")
 
     np.testing.assert_almost_equal(
         all_states[:, -1],
@@ -274,7 +274,7 @@ def test_forward_dynamics_with_force_double_pendulum():
         ),
     )
 
-    model, all_states = module_fd.main(mode="no_equilibrium")
+    model, all_states, _ = module_fd.main(mode="no_equilibrium")
 
     np.testing.assert_almost_equal(
         all_states[:, -1],

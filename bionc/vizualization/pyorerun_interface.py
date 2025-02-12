@@ -173,8 +173,6 @@ class BioncModelNoMesh:
 
     @property
     def meshlines(self) -> list[np.ndarray]:
-        # not working yet I need to know the location of the proximal and distal point in the
-        # cartesian local frame
         meshes = []
         for s in self.segments:
             p = s.segment.compute_transformation_matrix().T @ NaturalVector.proximal()

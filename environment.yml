@@ -13,6 +13,6 @@ dependencies:
 - pyomeca
 - plotly
 - dill
-- bioviz
+- pyorerun
 - biorbd
 - numba

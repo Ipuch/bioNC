@@ -1,6 +1,7 @@
 import numpy as np
 
 from pyorerun.biorbd_components.model_display_options import DisplayModelOptions
+from ..bionc_numpy.joints import Joint
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 
 
@@ -102,19 +103,34 @@ class BioncModelNoMesh:
         """
         Returns the number of ligaments
         """
-        return 0
+        count = 0
+        for j, joint in enumerate(self.model.joints.values()):
+            if isinstance(joint, Joint.ConstantLength):
+                count += 1
+
+        return count
 
     @property
     def ligament_names(self) -> tuple[str, ...]:
         """
         Returns the names of the ligaments
         """
-        return tuple()
+        return tuple([joint.name for joint in self.model.joints.values() if isinstance(joint, Joint.ConstantLength)])
 
     def ligament_strips(self, q: np.ndarray) -> list[list[np.ndarray]]:
         """
         Returns the position of the ligaments in the global reference frame
         """
+        strips = []
+        for joint in self.model.joints.values():
+            if isinstance(joint, Joint.ConstantLength):
+                q_p = q[joint.parent.coordinates_slice]
+                q_c = q[joint.child.coordinates_slice]
+                origin = joint.parent_point.position_in_global(q_p)
+                insert = joint.child_point.position_in_global(q_c)
+                strips.append([origin, insert])
+
+        return strips
 
     @property
     def nb_muscles(self) -> int:

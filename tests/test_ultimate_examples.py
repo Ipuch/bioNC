@@ -274,7 +274,7 @@ def test_forward_dynamics_with_force_double_pendulum():
         ),
     )
 
-    model, all_states = module_fd.main(mode="no_equilibrium")
+    model, all_states, _ = module_fd.main(mode="no_equilibrium")
 
     np.testing.assert_almost_equal(
         all_states[:, -1],

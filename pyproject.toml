@@ -1,0 +1,39 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["bionc"]
+
+[project]
+name = "bionc"
+version = "0.10.0"
+authors = [{name = "Pierre Puchaud", email = "puchaud.pierre@gmail.com"}]
+maintainers = [{name = "Pierre Puchaud", email = "puchaud.pierre@gmail.com"}]
+description = "Natural Coordinates with python for biomechanics"
+license = {file = "LICENSE.md"}
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+         "Programming Language :: Python :: 3",
+         "License :: OSI Approved :: MIT License",
+         "Operating System :: OS Independent",
+     ]
+dependencies = [
+    - numpy
+    - packaging
+    # "ezc3d", # Not yet available on pypi, use `conda install -c conda-forge ezc3d`
+    - plotly
+    - pyorerun
+    - python >=3.9
+    - casadi
+    - dill
+    - mesa-libgl-devel-cos7-x86_64
+    - pyomeca
+    - numba
+    # "biorbd" # Not yet available on pypi, use `conda install -c conda-forge biorbd`
+    ]
+keywords = ["inverse-kinematics", "biomechanics", "multibody-dynamics", "mechanics motion-analysis", "kinesiology", "inverse-dynamics, "cartesian-coordinates", "forward-dynamics", "holonomic-constraints", "natural-coordinates"]
+
+[project.urls]
+homepage = "http://github.com/Ipuch/bionc"

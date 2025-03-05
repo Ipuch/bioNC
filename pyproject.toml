@@ -20,20 +20,31 @@ classifiers = [
          "Operating System :: OS Independent",
      ]
 dependencies = [
-    - numpy
-    - packaging
+    "numpy",
+    "packaging",
     # "ezc3d", # Not yet available on pypi, use `conda install -c conda-forge ezc3d`
-    - plotly
-    - pyorerun
-    - python >=3.9
-    - casadi
-    - dill
-    - mesa-libgl-devel-cos7-x86_64
-    - pyomeca
-    - numba
+    "plotly",
+    "pyorerun",
+    "python >=3.9",
+    "casadi",
+    "dill",
+    "mesa-libgl-devel-cos7-x86_64",
+    "pyomeca",
+    "numba",
     # "biorbd" # Not yet available on pypi, use `conda install -c conda-forge biorbd`
-    ]
-keywords = ["inverse-kinematics", "biomechanics", "multibody-dynamics", "mechanics motion-analysis", "kinesiology", "inverse-dynamics, "cartesian-coordinates", "forward-dynamics", "holonomic-constraints", "natural-coordinates"]
-
+]
+keywords = [
+    "inverse-kinematics",
+    "biomechanics",
+    "multibody-dynamics",
+    "mechanics",
+    "motion-analysis",
+    "kinesiology",
+    "inverse-dynamics",
+    "cartesian-coordinates",
+    "forward-dynamics",
+    "holonomic-constraints",
+    "natural-coordinates"
+]
 [project.urls]
 homepage = "http://github.com/Ipuch/bionc"

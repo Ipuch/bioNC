@@ -33,7 +33,18 @@ dependencies = [
     "numba",
     # "biorbd" # Not yet available on pypi, use `conda install -c conda-forge biorbd`
 ]
-keywords = ["inverse-kinematics", "biomechanics", "multibody-dynamics", "mechanics motion-analysis", "kinesiology", "inverse-dynamics, "cartesian-coordinates", "forward-dynamics", "holonomic-constraints", "natural-coordinates"]
-
+keywords = [
+    "inverse-kinematics",
+    "biomechanics",
+    "multibody-dynamics",
+    "mechanics",
+    "motion-analysis",
+    "kinesiology",
+    "inverse-dynamics",
+    "cartesian-coordinates",
+    "forward-dynamics",
+    "holonomic-constraints",
+    "natural-coordinates"
+]
 [project.urls]
 homepage = "http://github.com/Ipuch/bionc"

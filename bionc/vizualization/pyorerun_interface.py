@@ -51,6 +51,10 @@ class BioncModelNoMesh:
     def segments(self) -> tuple["BioncSegment", ...]:
         return tuple(BioncSegment(s, i) for i, s in enumerate(self.model.segments.values()))
 
+    @property
+    def segment_names_with_mass(self) -> tuple[str, ...]:
+        return tuple([segment.name for segment in self.model.segments.values() if segment.mass > 0])
+
     def segment_homogeneous_matrices_in_global(self, q: np.ndarray, segment_index: int) -> np.ndarray:
         """
         Returns a biorbd object containing the roto-translation matrix of the segment in the global reference frame.
@@ -63,11 +67,11 @@ class BioncModelNoMesh:
 
         return transform
 
-    def center_of_mass(self, q: np.ndarray) -> np.ndarray:
+    def centers_of_mass(self, q: np.ndarray) -> np.ndarray:
         """
         Returns the position of the center of mass in the global reference frame
         """
-        pass
+        return self.model.center_of_mass_position(q[:, None]).squeeze().T
 
     @property
     def nb_ligaments(self) -> int:

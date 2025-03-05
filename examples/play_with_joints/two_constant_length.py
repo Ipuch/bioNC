@@ -173,6 +173,16 @@ def main(initial_pose: str = "hanged", show_results: bool = True):
             all_states=all_states,
             dynamics=dynamics,
         )
+
+        # animation
+        from pyorerun import PhaseRerun
+        from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+
+        prr = PhaseRerun(t_span=time_steps)
+        model_interface = BioncModelNoMesh(model)
+        prr.add_animated_model(model_interface, NaturalCoordinates(all_states[: (12 * model.nb_segments), :]))
+        prr.rerun()
+
         # plot results
 
         import matplotlib.pyplot as plt
@@ -195,15 +205,6 @@ def main(initial_pose: str = "hanged", show_results: bool = True):
         plt.title("Lagrange multipliers")
         plt.legend()
         plt.show()
-
-        # animation
-        from pyorerun import PhaseRerun
-        from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
-
-        prr = PhaseRerun(t_span=time_steps)
-        model_interface = BioncModelNoMesh(model)
-        prr.add_animated_model(model_interface, NaturalCoordinates(all_states[: (12 * model.nb_segments), :]))
-        prr.rerun()
 
 
 if __name__ == "__main__":

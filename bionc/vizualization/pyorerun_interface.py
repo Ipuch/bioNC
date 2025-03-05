@@ -1,7 +1,7 @@
 import numpy as np
 
 from pyorerun.biorbd_components.model_display_options import DisplayModelOptions
-from ..bionc_numpy import NaturalVector
+from ..bionc_numpy import NaturalVector, NaturalCoordinates
 from ..bionc_numpy.joints import Joint
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
 
@@ -71,7 +71,8 @@ class BioncModelNoMesh:
         """
         Returns the position of the center of mass in the global reference frame
         """
-        return self.model.center_of_mass_position(q[:, None]).squeeze().T
+        Q = NaturalCoordinates(q[:, None])
+        return self.model.center_of_mass_position(Q).squeeze().T
 
     @property
     def nb_ligaments(self) -> int:

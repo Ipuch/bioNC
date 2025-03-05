@@ -61,6 +61,19 @@ def marker_constraints_xyz(model, Q: np.ndarray, markers: np.ndarray):
     return marker_residuals_xyz
 
 
+def total_euler_angles(model, Q: np.ndarray):
+    """Compute Euler angle for all joint"""
+    Qi_temp = NaturalCoordinates(Q[:, 0])
+    euler_temp = model.natural_coordinates_to_joint_angles(Qi_temp)
+    total_euler_angles = np.zeros((euler_temp.shape[0], euler_temp.shape[1], Q.shape[1]))
+
+    for ind_frame in range(Q.shape[1]):
+        Qi = NaturalCoordinates(Q[:, ind_frame])
+        total_euler_angles[:, :, ind_frame] = model.natural_coordinates_to_joint_angles(Qi)
+
+    return total_euler_angles
+
+
 class TimeSeriesUtils:
     """
     This class contains utility functions to compute the constraints of a biomechanical model for
@@ -75,3 +88,4 @@ class TimeSeriesUtils:
     joint_constraints = joint_constraints
     total_marker_constraints = total_marker_constraints
     marker_constraints_xyz = marker_constraints_xyz
+    total_euler_angles = total_euler_angles

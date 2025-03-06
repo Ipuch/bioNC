@@ -62,7 +62,7 @@ def marker_constraints_xyz(model, Q: np.ndarray, markers: np.ndarray):
 
 
 def total_euler_angles(model, Q: np.ndarray):
-
+    """Compute Euler angle for all joint"""
     Qi_temp = NaturalCoordinates(Q[:, 0])
     euler_temp = model.natural_coordinates_to_joint_angles(Qi_temp)
     total_euler_angles = np.zeros((euler_temp.shape[0], euler_temp.shape[1], Q.shape[1]))

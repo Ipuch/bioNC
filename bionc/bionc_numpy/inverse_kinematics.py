@@ -560,7 +560,7 @@ class InverseKinematics:
             segment_rigidity_residual_norm=segment_rigidity_residual_norm,
             total_rigidity_residuals=total_rigidity_residuals,
             max_rigidbody_violation=max_rigidbody_violation,
-            total_euler_angles = total_euler_angles
+            total_euler_angles=total_euler_angles,
         )
 
         if self.experimental_markers is not None:

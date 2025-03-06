@@ -60,17 +60,19 @@ def marker_constraints_xyz(model, Q: np.ndarray, markers: np.ndarray):
         )
     return marker_residuals_xyz
 
+
 def total_euler_angles(model, Q: np.ndarray):
 
     Qi_temp = NaturalCoordinates(Q[:, 0])
     euler_temp = model.natural_coordinates_to_joint_angles(Qi_temp)
-    total_euler_angles = np.zeros((euler_temp.shape[0],euler_temp.shape[1],Q.shape[1]))
+    total_euler_angles = np.zeros((euler_temp.shape[0], euler_temp.shape[1], Q.shape[1]))
 
     for ind_frame in range(Q.shape[1]):
-        Qi = NaturalCoordinates(Q[:,ind_frame])
-        total_euler_angles[:,:,ind_frame] = model.natural_coordinates_to_joint_angles(Qi)
+        Qi = NaturalCoordinates(Q[:, ind_frame])
+        total_euler_angles[:, :, ind_frame] = model.natural_coordinates_to_joint_angles(Qi)
 
     return total_euler_angles
+
 
 class TimeSeriesUtils:
     """

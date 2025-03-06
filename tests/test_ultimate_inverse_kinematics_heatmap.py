@@ -269,13 +269,13 @@ def test_global_heatmap_ik():
     )
     np.testing.assert_almost_equal(solutions["heatmap_confidence_2d"], expected_heatmap_confidence_2d, decimal=1e-6)
 
-    expected_total_euler_angles = [[[ 1.25975366e+00,  1.24523863e+00],
-        [ 1.49707656e+00,  1.47663685e+00]],
-       [[-1.71958799e-01, -1.48109177e-01],
-        [ 2.25847119e-13,  2.99721359e-12]],
-       [[-6.95863809e-01, -7.44889927e-01],
-        [-1.42358347e-12,  8.85611862e-11]]]
+    expected_total_euler_angles = [
+        [[1.25975366e00, 1.24523863e00], [1.49707656e00, 1.47663685e00]],
+        [[-1.71958799e-01, -1.48109177e-01], [2.25847119e-13, 2.99721359e-12]],
+        [[-6.95863809e-01, -7.44889927e-01], [-1.42358347e-12, 8.85611862e-11]],
+    ]
     np.testing.assert_almost_equal(solutions["total_euler_angles"], expected_total_euler_angles, decimal=1e-6)
+
 
 def test_error_Qinit_is_none():
     bionc = TestUtils.bionc_folder()

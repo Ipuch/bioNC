@@ -53,7 +53,9 @@ class BioncModelNoMesh:
 
     @property
     def segment_names_with_mass(self) -> tuple[str, ...]:
-        return tuple([segment.name for segment in self.model.segments.values() if segment.mass > 0])
+        return tuple(
+            [segment.name for segment in self.model.segments.values() if segment.mass is not None and segment.mass > 0]
+        )
 
     def segment_homogeneous_matrices_in_global(self, q: np.ndarray, segment_index: int) -> np.ndarray:
         """

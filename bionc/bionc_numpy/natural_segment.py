@@ -538,6 +538,43 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return Kr_dot
 
+    @staticmethod
+    def rigid_body_constraint_acceleration_biais(Qidot: SegmentNaturalVelocities) -> np.ndarray:
+        """
+        Computes the acceleration bias vector (gamma or b) for the rigid body constraints.
+        This vector contains the quadratic velocity terms for the acceleration-level constraints.
+
+        Parameters
+        ----------
+        Qidot : SegmentNaturalVelocities
+            The current generalized velocities (12x1 array) of the segment.
+
+        Returns
+        -------
+        np.ndarray
+            The 6x1 acceleration bias vector.
+        """
+        # Get the Hessian for each constraint
+        H1 = first_rigid_body_constraint_hessian()
+        H2 = second_rigid_body_constraint_hessian()
+        H3 = third_rigid_body_constraint_hessian()
+        H4 = fourth_rigid_body_constraint_hessian()
+        H5 = fifth_rigid_body_constraint_hessian()
+        H6 = sixth_rigid_body_constraint_hessian()
+
+        # Compute the quadratic form (q_dot.T * H * q_dot) for each constraint
+        # This forms the components of the bias vector
+        bias_vector = np.array([
+            Qidot.T @ H1 @ Qidot,
+            Qidot.T @ H2 @ Qidot,
+            Qidot.T @ H3 @ Qidot,
+            Qidot.T @ H4 @ Qidot,
+            Qidot.T @ H5 @ Qidot,
+            Qidot.T @ H6 @ Qidot
+        ]).reshape(6, 1)
+
+        return bias_vector
+
     def center_of_mass_position(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
         This function returns the position of the center of mass of the segment in the global coordinate system.
@@ -834,3 +871,111 @@ class NaturalSegment(AbstractNaturalSegment):
         generalized_forces = np.linalg.inv(front_matrix) @ b
 
         return (generalized_forces[:3, 0], generalized_forces[3:6, 0], generalized_forces[6:, 0])
+
+
+def first_rigid_body_constraint_hessian() -> np.ndarray:
+    """
+    Computes the 12x12 Hessian matrix for the first rigid body constraint:
+    phi_1 = u^T * u - 1 = 0
+    """
+    I = np.identity(3)
+    Z = np.zeros((3, 3))
+
+    # Derived from H_1 = 2 * J_u^T * J_u
+    H1 = np.block([
+        [2 * I, Z, Z, Z],
+        [Z, Z, Z, Z],
+        [Z, Z, Z, Z],
+        [Z, Z, Z, Z]
+    ])
+    return H1
+
+
+def second_rigid_body_constraint_hessian() -> np.ndarray:
+    """
+    Computes the 12x12 Hessian matrix for the second rigid body constraint:
+    phi_2 = u^T * v - C = 0
+    """
+    I = np.identity(3)
+    Z = np.zeros((3, 3))
+
+    # Derived from H_2 = J_u^T * J_v + J_v^T * J_u
+    H2 = np.block([
+        [Z, I, -I, Z],
+        [I, Z, Z, Z],
+        [-I, Z, Z, Z],
+        [Z, Z, Z, Z]
+    ])
+    return H2
+
+
+def third_rigid_body_constraint_hessian() -> np.ndarray:
+    """
+    Computes the 12x12 Hessian matrix for the third rigid body constraint:
+    phi_3 = u^T * w - C = 0
+    """
+    I = np.identity(3)
+    Z = np.zeros((3, 3))
+
+    # Derived from H_3 = J_u^T * J_w + J_w^T * J_u
+    H3 = np.block([
+        [Z, Z, Z, I],
+        [Z, Z, Z, Z],
+        [Z, Z, Z, Z],
+        [I, Z, Z, Z]
+    ])
+    return H3
+
+
+def fourth_rigid_body_constraint_hessian() -> np.ndarray:
+    """
+    Computes the 12x12 Hessian matrix for the fourth rigid body constraint:
+    phi_4 = v^T * v - L^2 = 0
+    """
+    I = np.identity(3)
+    Z = np.zeros((3, 3))
+
+    # Derived from H_4 = 2 * J_v^T * J_v
+    H4 = np.block([
+        [Z, Z, Z, Z],
+        [Z, 2 * I, -2 * I, Z],
+        [Z, -2 * I, 2 * I, Z],
+        [Z, Z, Z, Z]
+    ])
+    return H4
+
+
+def fifth_rigid_body_constraint_hessian() -> np.ndarray:
+    """
+    Computes the 12x12 Hessian matrix for the fifth rigid body constraint:
+    phi_5 = v^T * w - C = 0
+    """
+    I = np.identity(3)
+    Z = np.zeros((3, 3))
+
+    # Derived from H_5 = J_v^T * J_w + J_w^T * J_v
+    H5 = np.block([
+        [Z, Z, Z, Z],
+        [Z, Z, Z, I],
+        [Z, Z, Z, -I],
+        [Z, I, -I, Z]
+    ])
+    return H5
+
+
+def sixth_rigid_body_constraint_hessian() -> np.ndarray:
+    """
+    Computes the 12x12 Hessian matrix for the sixth rigid body constraint:
+    phi_6 = w^T * w - 1 = 0
+    """
+    I = np.identity(3)
+    Z = np.zeros((3, 3))
+
+    # Derived from H_6 = 2 * J_w^T * J_w
+    H6 = np.block([
+        [Z, Z, Z, Z],
+        [Z, Z, Z, Z],
+        [Z, Z, Z, Z],
+        [Z, Z, Z, 2 * I]
+    ])
+    return H6

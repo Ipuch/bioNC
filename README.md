@@ -86,7 +86,7 @@ To rigidify the body segments and to articulate them, two types of holonomic con
 
 # How to cite
 
-Pierre Puchaud, Alexandre Naaim, & Anais Chaumeil. (2024). Ipuch/bioNC: . Zenodo. ![zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.14976752.svg)
+Pierre Puchaud, Alexandre Naaim, & Anais Chaumeil. (2024). Ipuch/bioNC: Zenodo. ![zenodo](https://zenodo.org/badge/DOI/10.5281/zenodo.14976752.svg)
 
 ```
 @software{pierre_puchaud_2024_10822669,

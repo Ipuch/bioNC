@@ -24,10 +24,10 @@ jobs:
       - uses: actions/checkout@master
       
       - name: Setup environment
-        uses: conda-incubator/setup-miniconda@v2
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniforge-version: latest
-          use-mamba: true
+          mamba-version: "*"
           activate-environment: bionc
           environment-file: environment.yml
         

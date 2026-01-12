@@ -1,6 +1,7 @@
 """
 Tests for __repr__ and __str__ methods of core bionc classes.
 """
+
 import numpy as np
 import pytest
 
@@ -59,9 +60,7 @@ def test_segment_natural_coordinates_repr(bionc_type):
     else:
         from bionc.bionc_numpy import SegmentNaturalCoordinates
 
-    Q = SegmentNaturalCoordinates.from_components(
-        u=[1, 0, 0], rp=[0, 0, 1], rd=[0, 0, 0], w=[0, 1, 0]
-    )
+    Q = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 1], rd=[0, 0, 0], w=[0, 1, 0])
     result = repr(Q)
     assert "SegmentNaturalCoordinates" in result
 
@@ -76,9 +75,7 @@ def test_segment_natural_coordinates_str(bionc_type):
     else:
         from bionc.bionc_numpy import SegmentNaturalCoordinates
 
-    Q = SegmentNaturalCoordinates.from_components(
-        u=[1, 0, 0], rp=[0, 0, 1], rd=[0, 0, 0], w=[0, 1, 0]
-    )
+    Q = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 1], rd=[0, 0, 0], w=[0, 1, 0])
     result = str(Q)
     assert "SegmentNaturalCoordinates:" in result
     assert "u  =" in result
@@ -97,9 +94,7 @@ def test_natural_coordinates_repr(bionc_type):
     else:
         from bionc.bionc_numpy import SegmentNaturalCoordinates, NaturalCoordinates
 
-    Q = SegmentNaturalCoordinates.from_components(
-        u=[1, 0, 0], rp=[0, 0, 1], rd=[0, 0, 0], w=[0, 1, 0]
-    )
+    Q = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 1], rd=[0, 0, 0], w=[0, 1, 0])
     Q_full = NaturalCoordinates.from_qi((Q,))
     result = repr(Q_full)
     assert "NaturalCoordinates" in result
@@ -116,9 +111,7 @@ def test_natural_coordinates_str(bionc_type):
     else:
         from bionc.bionc_numpy import SegmentNaturalCoordinates, NaturalCoordinates
 
-    Q = SegmentNaturalCoordinates.from_components(
-        u=[1, 0, 0], rp=[0, 0, 1], rd=[0, 0, 0], w=[0, 1, 0]
-    )
+    Q = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 1], rd=[0, 0, 0], w=[0, 1, 0])
     Q_full = NaturalCoordinates.from_qi((Q,))
     result = str(Q_full)
     assert "NaturalCoordinates with 1 segment(s)" in result

@@ -158,7 +158,6 @@ class SegmentNaturalCoordinates(SegmentNaturalCoordinatesReprMixin, np.ndarray):
         return (left_interpolation_matrix @ np.linalg.inv(lever_arm_force_matrix)).T
 
 
-
 def validate_and_convert(input_value: Union[np.ndarray, list], name: str) -> np.ndarray:
     """
     This function validates and converts the input value to a numpy array.

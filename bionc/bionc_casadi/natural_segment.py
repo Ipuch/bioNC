@@ -116,9 +116,9 @@ class NaturalSegment(AbstractNaturalSegment):
     def __str__(self) -> str:
         mass_str = f"{float(self.mass):.4f} kg" if self.mass is not None else "not defined"
         length_val = float(self.length) if self.length is not None else 0
-        alpha_val = float(self.alpha) if self.alpha is not None else np.pi/2
-        beta_val = float(self.beta) if self.beta is not None else np.pi/2
-        gamma_val = float(self.gamma) if self.gamma is not None else np.pi/2
+        alpha_val = float(self.alpha) if self.alpha is not None else np.pi / 2
+        beta_val = float(self.beta) if self.beta is not None else np.pi / 2
+        gamma_val = float(self.gamma) if self.gamma is not None else np.pi / 2
         out = f"NaturalSegment: {self.name}\n"
         out += f"  index: {self.index}\n"
         out += f"  length: {length_val:.4f} m\n"

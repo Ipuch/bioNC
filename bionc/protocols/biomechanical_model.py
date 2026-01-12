@@ -180,6 +180,19 @@ class GenericBiomechanicalModel(ABC):
         # the order of the segment matters
         self._mass_matrix = self._update_mass_matrix()
 
+    def __repr__(self) -> str:
+        return f"BiomechanicalModel(nb_segments={self.nb_segments}, nb_joints={self.nb_joints}, nb_markers={self.nb_markers})"
+
+    def __str__(self) -> str:
+        total_mass = sum(float(seg.mass) for seg in self.segments_no_ground.values() if seg.mass is not None)
+        out = "BiomechanicalModel\n"
+        out += f"  Segments: {self.nb_segments} ({', '.join(self.segment_names)})\n"
+        out += f"  Joints: {self.nb_joints}\n"
+        out += f"  Markers: {self.nb_markers}\n"
+        out += f"  Total mass: {total_mass:.4f} kg\n"
+        out += f"  DOFs: {self.nb_Q} natural coordinates\n"
+        return out
+
     def __getitem__(self, name: str):
         """
         This function returns the segment with the given name

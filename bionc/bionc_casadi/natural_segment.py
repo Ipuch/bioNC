@@ -110,6 +110,23 @@ class NaturalSegment(AbstractNaturalSegment):
         self._markers = NaturalSegmentMarkers()
         self._vectors = NaturalSegmentVectors()
 
+    def __repr__(self) -> str:
+        return f"NaturalSegment(name={self.name!r}, index={self.index})"
+
+    def __str__(self) -> str:
+        mass_str = f"{float(self.mass):.4f} kg" if self.mass is not None else "not defined"
+        length_val = float(self.length) if self.length is not None else 0
+        alpha_val = float(self.alpha) if self.alpha is not None else np.pi / 2
+        beta_val = float(self.beta) if self.beta is not None else np.pi / 2
+        gamma_val = float(self.gamma) if self.gamma is not None else np.pi / 2
+        out = f"NaturalSegment: {self.name}\n"
+        out += f"  index: {self.index}\n"
+        out += f"  length: {length_val:.4f} m\n"
+        out += f"  alpha: {np.rad2deg(alpha_val):.2f}°, beta: {np.rad2deg(beta_val):.2f}°, gamma: {np.rad2deg(gamma_val):.2f}°\n"
+        out += f"  mass: {mass_str}\n"
+        out += f"  markers: {self.nb_markers}, vectors: {self._vectors.nb_vectors}\n"
+        return out
+
     def set_natural_inertial_parameters(
         self, mass: float, natural_center_of_mass: np.ndarray, natural_pseudo_inertia: np.ndarray
     ):

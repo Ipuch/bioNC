@@ -2,8 +2,10 @@ import numpy as np
 from casadi import MX, vertcat
 from typing import Union
 
+from ..protocols.repr_mixins import SegmentNaturalVelocitiesReprMixin
 
-class SegmentNaturalVelocities(MX):
+
+class SegmentNaturalVelocities(SegmentNaturalVelocitiesReprMixin, MX):
     """
     This class is made to handle Generalized Coordinates of a Segment
     """
@@ -178,3 +180,9 @@ class NaturalVelocities(MX):
     def vector(self, segment_idx: int):
         array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12)
         return SegmentNaturalVelocities(self[array_idx])
+
+    def __repr__(self) -> str:
+        return f"NaturalVelocities(nb_segments={self.nb_qdoti()}, shape={self.shape})"
+
+    def __str__(self) -> str:
+        return f"NaturalVelocities with {self.nb_qdoti()} segment(s), shape={self.shape}"

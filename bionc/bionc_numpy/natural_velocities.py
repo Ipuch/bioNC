@@ -1,8 +1,10 @@
 import numpy as np
 from typing import Union
 
+from ..protocols.repr_mixins import SegmentNaturalVelocitiesReprMixin, NaturalVelocitiesReprMixin
 
-class SegmentNaturalVelocities(np.ndarray):
+
+class SegmentNaturalVelocities(SegmentNaturalVelocitiesReprMixin, np.ndarray):
     """
     This class is made to handle Generalized Coordinates of a Segment
     """
@@ -86,7 +88,7 @@ class SegmentNaturalVelocities(np.ndarray):
         return self.udot, self.rpdot, self.rddot, self.wdot
 
 
-class NaturalVelocities(np.ndarray):
+class NaturalVelocities(NaturalVelocitiesReprMixin, np.ndarray):
     def __new__(cls, input_array: np.ndarray):
         """
         Create a new instance of the class.

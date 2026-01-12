@@ -5,10 +5,11 @@ from casadi import MX, vertcat, inv, cross, horzcat
 
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .natural_vector import NaturalVector
+from ..protocols.repr_mixins import SegmentNaturalCoordinatesReprMixin
 from ..utils.enums import NaturalAxis
 
 
-class SegmentNaturalCoordinates(MX):
+class SegmentNaturalCoordinates(SegmentNaturalCoordinatesReprMixin, MX):
     """
     This class is made to handle Generalized Coordinates of a Segment
     """
@@ -271,3 +272,9 @@ class NaturalCoordinates(MX):
         else:
             array_idx = np.arange(segment_idx * 12, (segment_idx + 1) * 12).tolist()
             return SegmentNaturalCoordinates(self[array_idx])
+
+    def __repr__(self) -> str:
+        return f"NaturalCoordinates(nb_segments={self.nb_qi()}, shape={self.shape})"
+
+    def __str__(self) -> str:
+        return f"NaturalCoordinates with {self.nb_qi()} segment(s), shape={self.shape}"

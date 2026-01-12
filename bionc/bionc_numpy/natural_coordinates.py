@@ -4,10 +4,11 @@ import numpy as np
 
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .natural_vector import NaturalVector
+from ..protocols.repr_mixins import SegmentNaturalCoordinatesReprMixin, NaturalCoordinatesReprMixin
 from ..utils.enums import NaturalAxis
 
 
-class SegmentNaturalCoordinates(np.ndarray):
+class SegmentNaturalCoordinates(SegmentNaturalCoordinatesReprMixin, np.ndarray):
     """
     This class is made to handle Generalized Coordinates of a Segment
     """
@@ -157,6 +158,7 @@ class SegmentNaturalCoordinates(np.ndarray):
         return (left_interpolation_matrix @ np.linalg.inv(lever_arm_force_matrix)).T
 
 
+
 def validate_and_convert(input_value: Union[np.ndarray, list], name: str) -> np.ndarray:
     """
     This function validates and converts the input value to a numpy array.
@@ -187,7 +189,7 @@ def validate_and_convert(input_value: Union[np.ndarray, list], name: str) -> np.
     return input_value
 
 
-class NaturalCoordinates(np.ndarray):
+class NaturalCoordinates(NaturalCoordinatesReprMixin, np.ndarray):
     def __new__(cls, input_array: np.ndarray):
         """
         Create a new instance of the class.

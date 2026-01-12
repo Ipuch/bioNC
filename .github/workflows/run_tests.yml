@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             label: linux-64
             prefix: /usr/share/miniconda3/envs/bionc
           - os: macos-latest
@@ -21,7 +21,7 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v4
       
       - name: Setup environment
         uses: conda-incubator/setup-miniconda@v3
@@ -53,7 +53,7 @@ jobs:
         run: pwd; ls -a
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           flags: unittests
           fail_ci_if_error: true
@@ -62,7 +62,7 @@ jobs:
           file: coverage.xml
         if: matrix.label == 'osx-64'
 
-      - name: Test installed version of bioviz on LINUX
+      - name: Test installed version of bionc on LINUX
         run: |
           python setup.py install
           cd

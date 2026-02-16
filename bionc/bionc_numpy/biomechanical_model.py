@@ -252,82 +252,65 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         return K
 
-    def holonomic_constraints_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
+    def holonomic_constraints_acceleration_bias(self, Qdot: NaturalVelocities) -> np.ndarray:
         """
-        This function returns the Jacobian matrix the holonomic constraints, denoted Kdot.
-        They are organized as follow, for each segment, the rows of the matrix are:
-        [Phi_k_0, Phi_r_0, Phi_k_1, Phi_r_1, ..., Phi_k_n, Phi_r_n]
-        [joint constraint 0, rigid body constraint 0, joint constraint 1, rigid body constraint 1, ...]
+        Compute the holonomic constraints acceleration bias vector.
 
-        ```math
-        \begin{equation}
-        \frac{d}{dt} \frac{\partial \Phi^k}{\partial Q} =
-        \begin{bmatrix}
-        \frac{d}{dt} \frac{\partial \Phi^k_0}{\partial Q} \\
-        \frac{d}{dt} \frac{\partial \Phi^r_0}{\partial Q} \\
-        \frac{d}{dt} \frac{\partial \Phi^k_1}{\partial Q} \\
-        \frac{d}{dt} \frac{\partial \Phi^r_1}{\partial Q} \\
-        \vdots \\
-        \frac{d}{dt} \frac{\partial \Phi^k_n}{\partial Q} \\
-        \frac{d}{dt} \frac{\partial \Phi^r_n}{\partial Q} \\
-        \end{bmatrix}
-        \end{equation}
-        ```
+        For every holonomic constraint phi(Q) = 0, the acceleration-level form is:
+            K(Q) * Qddot + bias(Qdot) = 0
+        where bias_k = Qdot^T H_k Qdot  (quadratic velocity terms).
+
+        This method assembles the full bias vector by calling:
+          - joint.constraint_acceleration_bias(Qdot_parent, Qdot_child) for each joint
+          - segment.rigid_body_constraint_acceleration_bias(Qdoti)     for each segment
+
+        The rows are ordered identically to holonomic_constraints_jacobian:
+            [joint constraints for segment 0, rigid body constraints for segment 0,
+             joint constraints for segment 1, rigid body constraints for segment 1, ...]
+
+        In the DAE right-hand side the bias enters with a minus sign:
+            bias_rhs = -holonomic_constraints_acceleration_bias(Qdot)
 
         Parameters
         ----------
         Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
+            The natural velocities [12 * nb_segments, 1]
 
         Returns
         -------
-            Holonomic constraints jacobian derivative [nb_holonomic_constraints, 12 * nb_segments]
+        np.ndarray
+            The acceleration bias vector [nb_holonomic_constraints, 1]
         """
-
-        # first we compute the rigid body constraints jacobian
-        rigid_body_constraints_jacobian_dot = self.rigid_body_constraint_jacobian_derivative(Qdot)
-
-        # then we compute the holonomic constraints jacobian
+        bias = np.zeros((self.nb_holonomic_constraints, 1))
         nb_constraints = 0
-        Kdot = np.zeros((self.nb_holonomic_constraints, 12 * self.nb_segments))
+
         for i in range(self.nb_segments):
-            # add the joint constraints first
+            # --- joint constraints (for joints whose child is segment i) ---
             joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
 
-                    idx_col_child = slice(
-                        12 * self.segments[j.child.name].index, 12 * (self.segments[j.child.name].index + 1)
-                    )
-                    idx_col_parent = (
-                        slice(12 * self.segments[j.parent.name].index, 12 * (self.segments[j.parent.name].index + 1))
-                        if j.parent is not None
-                        else None
-                    )
-
                     Qdot_parent = (
                         None if j.parent is None else Qdot.vector(self.segments[j.parent.name].index)
-                    )  # if the joint is a joint with the ground, the parent is None
+                    )
                     Qdot_child = Qdot.vector(self.segments[j.child.name].index)
 
-                    Kdot[idx_row, idx_col_child] = j.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-                    if j.parent is not None:  # If the joint is not a ground joint
-                        Kdot[idx_row, idx_col_parent] = j.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+                    joint_bias = j.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+                    bias[idx_row] = joint_bias
 
                     nb_constraints += j.nb_constraints
 
-            # add the rigid body constraint
+            # --- rigid body constraints for segment i ---
             idx_row = slice(nb_constraints, nb_constraints + 6)
-            idx_rigid_body_constraint = slice(6 * i, 6 * (i + 1))
-            idx_segment = slice(12 * i, 12 * (i + 1))
+            Qdoti = Qdot.vector(i)
 
-            Kdot[idx_row, idx_segment] = rigid_body_constraints_jacobian_dot[idx_rigid_body_constraint, idx_segment]
+            from .natural_segment import NaturalSegment
+            bias[idx_row] = NaturalSegment.rigid_body_constraint_acceleration_bias(Qdoti)
 
             nb_constraints += 6
 
-        return Kdot
+        return bias
 
     def gravity_forces(self) -> np.ndarray:
         """
@@ -424,8 +407,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             + fext
             # + natural_joint_forces
         )
-        Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
-        bias = -Kdot @ Qdot
+        bias = -self.holonomic_constraints_acceleration_bias(Qdot)
 
         if stabilization is not None:
             # raise NotImplementedError("Stabilization is not implemented yet")

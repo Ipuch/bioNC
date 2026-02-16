@@ -424,39 +424,6 @@ class NaturalSegment(AbstractNaturalSegment):
         return self.rigid_body_constraint_jacobian(Qi) @ Qdoti
 
     @staticmethod
-    def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities) -> MX:
-        """
-        This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
-
-        Returns
-        -------
-        Kr_dot : np.ndarray
-            derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 ]
-        """
-        # initialisation
-        Kr_dot = MX.zeros((6, 12))
-
-        Kr_dot[0, 0:3] = 2 * Qdoti.udot
-
-        Kr_dot[1, 0:3] = Qdoti.vdot
-        Kr_dot[1, 3:6] = Qdoti.udot
-        Kr_dot[1, 6:9] = -Qdoti.udot
-
-        Kr_dot[2, 0:3] = Qdoti.wdot
-        Kr_dot[2, 9:12] = Qdoti.udot
-
-        Kr_dot[3, 3:6] = 2 * Qdoti.vdot
-        Kr_dot[3, 6:9] = -2 * Qdoti.vdot
-
-        Kr_dot[4, 3:6] = Qdoti.wdot
-        Kr_dot[4, 6:9] = -Qdoti.wdot
-        Kr_dot[4, 9:12] = Qdoti.vdot
-
-        Kr_dot[5, 9:12] = 2 * Qdoti.wdot
-
-        return Kr_dot
-
-    @staticmethod
     def rigid_body_constraint_acceleration_bias(Qdoti: SegmentNaturalVelocities) -> MX:
         """Compute the acceleration bias (quadratic velocity terms) for rigid-body constraints.
 
@@ -538,8 +505,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         Gi = self.mass_matrix
         Kr = self.rigid_body_constraint_jacobian(Qi)
-        Krdot = self.rigid_body_constraint_jacobian_derivative(Qdoti)
-        bias = -Krdot @ Qdoti.vector
+        bias = -self.rigid_body_constraint_acceleration_bias(Qdoti)
 
         if stabilization is not None:
             bias -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[

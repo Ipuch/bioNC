@@ -43,27 +43,19 @@ class GroundJoint:
         ) -> MX:
             return None
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return None
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return None
-
         def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
-            return None
-
-        def constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
             return None
 
         def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
+            """
+            Ground Free joint has no constraints, so no acceleration bias.
+
+            Returns
+            -------
+            None
+            """
             return None
 
         def constraint_acceleration_biais(
@@ -157,18 +149,6 @@ class GroundJoint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return None
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_child = MX.zeros((self.nb_constraints, 12))
-
-            return K_k_child
-
         def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
@@ -182,30 +162,22 @@ class GroundJoint:
 
             return self.child_constraint_jacobian(Q_parent, Q_child)
 
-        def constraint_jacobian_derivative(
+        def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
             """
-            This function returns the kinematic constraints of the joint, denoted K_kdot
-            as a function of the natural velocities Qdot_parent and Qdot_child.
+            Compute the acceleration bias (quadratic velocity terms) for this ground Hinge joint.
+
+            All constraints have constant Jacobians w.r.t. the child coordinates
+            (the parent is the ground, a constant). Therefore the Hessian is zero
+            and the bias = qdot^T H qdot = 0.
 
             Returns
             -------
             MX
-                joint constraints jacobian of the child segment [5, 12]
+                Acceleration bias vector [5, 1]. All zeros.
             """
-
-            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-        def constraint_acceleration_bias(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
-
-            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-            if K_k_child_dot is None:
-                return None
-            return -(K_k_child_dot @ Qdot_child)
+            return MX.zeros(self.nb_constraints, 1)
 
         # Backward-compatibility alias
         def constraint_acceleration_biais(
@@ -291,12 +263,19 @@ class GroundJoint:
         def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
-            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+            """
+            Compute the acceleration bias (quadratic velocity terms) for this ground Universal joint.
 
-            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-            if K_k_child_dot is None:
-                return None
-            return -(K_k_child_dot @ Qdot_child)
+            All constraints have constant Jacobians w.r.t. the child coordinates
+            (the parent is the ground, a constant). Therefore the Hessian is zero
+            and the bias = qdot^T H qdot = 0.
+
+            Returns
+            -------
+            MX
+                Acceleration bias vector [4, 1]. All zeros.
+            """
+            return MX.zeros(self.nb_constraints, 1)
 
         # Backward-compatibility alias
         def constraint_acceleration_biais(
@@ -319,18 +298,6 @@ class GroundJoint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return None
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_child_dot = MX.zeros((self.nb_constraints, 12))
-
-            return K_k_child_dot
-
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[MX, MX]:
@@ -345,21 +312,6 @@ class GroundJoint:
             """
 
             return self.child_constraint_jacobian(Q_parent, Q_child)
-
-        def constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> tuple[MX, MX]:
-            """
-            This function returns the kinematic constraints of the joint, denoted K_k
-            as a function of the natural coordinates Q_parent and Q_child.
-
-            Returns
-            -------
-            tuple[MX, MX]
-                joint constraints jacobian of the parent and child segment [4, 12] and [4, 12]
-            """
-
-            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
     class Spherical(JointBase):
         """
@@ -407,18 +359,6 @@ class GroundJoint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return None
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            K_k_child = MX.zeros((self.nb_constraints, 12))
-
-            return K_k_child
-
         def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
@@ -432,30 +372,24 @@ class GroundJoint:
 
             return self.child_constraint_jacobian(Q_parent, Q_child)
 
-        def constraint_jacobian_derivative(
+        def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
             """
-            This function returns the kinematic constraints of the joint, denoted K_kdot
-            as a function of the natural velocities Qdot_parent and Qdot_child.
+            Compute the acceleration bias (quadratic velocity terms) for this ground Spherical joint.
+
+            The constraint is:
+              phi = ground_point - rp_child  (linear in Q_child, constant parent)
+
+            Since the Jacobian is constant, the Hessian is zero.
+            Therefore: bias = qdot^T H qdot = 0
 
             Returns
             -------
             MX
-                joint constraints jacobian of the child segment [3, 12]
+                Acceleration bias vector [3, 1]. All zeros.
             """
-
-            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-        def constraint_acceleration_bias(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
-
-            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-            if K_k_child_dot is None:
-                return None
-            return -(K_k_child_dot @ Qdot_child)
+            return MX.zeros(self.nb_constraints, 1)
 
         # Backward-compatibility alias
         def constraint_acceleration_biais(
@@ -511,18 +445,6 @@ class GroundJoint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return None
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_child = MX.zeros((self.nb_constraints, 12))
-
-            return K_k_child
-
         def constraint_jacobian(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
             """
             This function returns the kinematic constraints of the joint, denoted K_k
@@ -536,30 +458,24 @@ class GroundJoint:
 
             return self.child_constraint_jacobian(Q_parent, Q_child)
 
-        def constraint_jacobian_derivative(
+        def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
             """
-            This function returns the kinematic constraints of the joint, denoted K_kdot
-            as a function of the natural velocities Qdot_parent and Qdot_child.
+            Compute the acceleration bias (quadratic velocity terms) for this ground Weld joint.
+
+            The constraint is:
+              phi = [rp_ref - rp_child; rd_ref - rd_child]  (linear in Q_child, constant parent)
+
+            Since the Jacobian is constant, the Hessian is zero.
+            Therefore: bias = qdot^T H qdot = 0
 
             Returns
             -------
             MX
-                joint constraints jacobian of the child segment [12, 12]
+                Acceleration bias vector [6, 1]. All zeros.
             """
-
-            return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-
-        def constraint_acceleration_bias(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
-
-            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-            if K_k_child_dot is None:
-                return None
-            return -(K_k_child_dot @ Qdot_child)
+            return MX.zeros(self.nb_constraints, 1)
 
         # Backward-compatibility alias
         def constraint_acceleration_biais(

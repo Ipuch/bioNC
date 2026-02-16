@@ -51,8 +51,6 @@ class GenericBiomechanicalModelJoints(ABC):
         Returns the joint constraints of all joints.
     constraints_jacobian(self, Q: NaturalCoordinates)
         Returns the joint constraints of all joints.
-    constraints_jacobian_derivative(self, Qdot: NaturalVelocities)
-        Returns the derivative of the Jacobian matrix of the joint constraints.
     """
 
     def __init__(
@@ -402,17 +400,4 @@ class GenericBiomechanicalModelJoints(ABC):
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
 
-    @abstractmethod
-    def constraints_jacobian_derivative(self, Qdot: NaturalVelocities):
-        """
-        This function returns the derivative of the Jacobian matrix of the joint constraints denoted Kk_dot
 
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-            The derivative of the Jacobian matrix of the joint constraints [nb_joint_constraints, 12 * nb_segments]
-        """

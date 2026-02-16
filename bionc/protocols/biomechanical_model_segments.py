@@ -59,8 +59,6 @@ class GenericBiomechanicalModelSegments(ABC):
         Returns the derivative of the rigid body constraints.
     rigid_body_constraints_jacobian(self, Q: NaturalCoordinates)
         Returns the rigid body constraints of all segments.
-    rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray
-        Returns the derivative of the Jacobian matrix of the rigid body constraints.
     kinetic_energy(self, Qdot: NaturalVelocities) -> Union[np.ndarray, MX]
         Returns the kinetic energy of the system.
     potential_energy(self, Q: NaturalCoordinates) -> Union[np.ndarray, MX]
@@ -288,17 +286,4 @@ class GenericBiomechanicalModelSegments(ABC):
             Rigid body constraints of the segment [6 * nb_segments, nbQ]
         """
 
-    @abstractmethod
-    def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> np.ndarray:
-        """
-        This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot
 
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-            The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
-        """

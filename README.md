@@ -7,7 +7,10 @@ Inverse and Forward approach are implemented.
 ![Forks](https://img.shields.io/github/forks/Ipuch/bioNC?style=social)
 
 ![Release Version](https://img.shields.io/github/v/release/Ipuch/bioNC) <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-success" alt="License"/></a>  
-[![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/) <a href="https://codeclimate.com/github/Ipuch/bioNC/maintainability"><img src="https://api.codeclimate.com/v1/badges/1f46b245f72858ae8bd5/maintainability" /></a> [![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) [![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Build status](https://github.com/Ipuch/bioNC/actions/workflows/run_tests.yml/badge.svg)](https://github.com/Ipuch/bioNC/actions/) 
+[![Maintainability](https://qlty.sh/gh/Ipuch/projects/bioNC/maintainability.svg)](https://qlty.sh/gh/Ipuch/projects/bioNC)
+[![codecov](https://codecov.io/gh/ipuch/bionc/branch/main/graph/badge.svg)](https://codecov.io/gh/ipuch/bionc) 
+[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ![Last Commit](https://img.shields.io/github/last-commit/Ipuch/bioNC)
 ![Contributors](https://img.shields.io/github/contributors/Ipuch/bioNC)

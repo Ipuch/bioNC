@@ -71,6 +71,17 @@ class GroundJoint:
         ) -> np.ndarray:
             return None
 
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return None
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -221,6 +232,27 @@ class GroundJoint:
             """
 
             return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            if Qdot_child is not None and not isinstance(Qdot_child, SegmentNaturalVelocities):
+                Qdot_child = SegmentNaturalVelocities(Qdot_child)
+
+            qdot_child = None if Qdot_child is None else np.asarray(Qdot_child).reshape(-1, 1)
+
+            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            if K_k_child_dot is None:
+                return None
+            return -(K_k_child_dot @ qdot_child)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
         def to_mx(self):
             """
@@ -376,6 +408,27 @@ class GroundJoint:
 
             return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            if Qdot_child is not None and not isinstance(Qdot_child, SegmentNaturalVelocities):
+                Qdot_child = SegmentNaturalVelocities(Qdot_child)
+
+            qdot_child = None if Qdot_child is None else np.asarray(Qdot_child).reshape(-1, 1)
+
+            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            if K_k_child_dot is None:
+                return None
+            return -(K_k_child_dot @ qdot_child)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -490,6 +543,27 @@ class GroundJoint:
 
             return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            if Qdot_child is not None and not isinstance(Qdot_child, SegmentNaturalVelocities):
+                Qdot_child = SegmentNaturalVelocities(Qdot_child)
+
+            qdot_child = None if Qdot_child is None else np.asarray(Qdot_child).reshape(-1, 1)
+
+            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            if K_k_child_dot is None:
+                return None
+            return -(K_k_child_dot @ qdot_child)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -599,6 +673,27 @@ class GroundJoint:
             """
 
             return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            if Qdot_child is not None and not isinstance(Qdot_child, SegmentNaturalVelocities):
+                Qdot_child = SegmentNaturalVelocities(Qdot_child)
+
+            qdot_child = None if Qdot_child is None else np.asarray(Qdot_child).reshape(-1, 1)
+
+            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            if K_k_child_dot is None:
+                return None
+            return -(K_k_child_dot @ qdot_child)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
         def to_mx(self):
             """

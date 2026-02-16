@@ -373,20 +373,20 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         external_forces = self.external_force_set() if external_forces is None else external_forces
         fext = external_forces.to_natural_external_forces(Q)
         # if stabilization is not None:
-        #     biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+        #     bias -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
         #         "beta"
         #     ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
         # augmented system
         # [G, K.T] [Qddot]  = [forces]
-        # [K, 0  ] [lambda] = [biais]
+        # [K, 0  ] [lambda] = [bias]
         augmented_mass_matrix = self.augmented_mass_matrix(Q)
 
         forces = self.gravity_forces() + fext
 
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
-        biais = -Kdot @ Qdot
-        B = vertcat(forces, biais)
+        bias = -Kdot @ Qdot
+        B = vertcat(forces, bias)
 
         # solve the linear system Ax = B with casadi symbolic qr
         x = solve(augmented_mass_matrix, B, "symbolicqr")

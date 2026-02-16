@@ -456,6 +456,35 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return Kr_dot
 
+    @staticmethod
+    def rigid_body_constraint_acceleration_bias(Qdoti: SegmentNaturalVelocities) -> MX:
+        """Compute the acceleration bias (quadratic velocity terms) for rigid-body constraints.
+
+        For the rigid-body constraints phi_r(Q)=0, the acceleration-level form is
+        Kr(Q) * Qddot + bias(Qdot) = 0, where bias_k = Qdot^T * H_k * Qdot.
+
+        This mirrors the numpy implementation and avoids forming an explicit 3rd-order tensor.
+        """
+
+        udot = Qdoti.udot
+        vdot = Qdoti.vdot
+        wdot = Qdoti.wdot
+
+        bias = MX.zeros((6, 1))
+        bias[0] = 2 * dot(udot, udot)
+        bias[1] = 2 * dot(udot, vdot)
+        bias[2] = 2 * dot(udot, wdot)
+        bias[3] = 2 * dot(vdot, vdot)
+        bias[4] = 2 * dot(vdot, wdot)
+        bias[5] = 2 * dot(wdot, wdot)
+
+        return bias
+
+    # Backward-compatibility alias
+    @staticmethod
+    def rigid_body_constraint_acceleration_biais(Qdoti: SegmentNaturalVelocities) -> MX:
+        return NaturalSegment.rigid_body_constraint_acceleration_bias(Qdoti)
+
     def center_of_mass_position(self, Qi: SegmentNaturalCoordinates) -> MX:
         """
         This function returns the position of the center of mass of the segment in the global coordinate system.
@@ -510,10 +539,10 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi = self.mass_matrix
         Kr = self.rigid_body_constraint_jacobian(Qi)
         Krdot = self.rigid_body_constraint_jacobian_derivative(Qdoti)
-        biais = Krdot @ Qdoti.vector
+        bias = -Krdot @ Qdoti.vector
 
         if stabilization is not None:
-            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+            bias -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
                 "beta"
             ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
@@ -523,7 +552,7 @@ class NaturalSegment(AbstractNaturalSegment):
         A[0:12, 12:18] = Kr.T
         A[12:, 12:18] = MX.zeros((6, 6))
 
-        B = vertcat([self.gravity_force(), biais])
+        B = vertcat([self.gravity_force(), bias])
 
         # solve the linear system Ax = B with numpy
         raise NotImplementedError("This function is not implemented yet. You should invert the a matrix with casadi")

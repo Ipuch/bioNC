@@ -416,7 +416,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         # augmented system
         # [G, K.T] [Qddot]  = [forces]
-        # [K, 0  ] [lambda] = [biais]
+        # [K, 0  ] [lambda] = [bias]
         augmented_mass_matrix = self.augmented_mass_matrix(Q)
 
         forces = (
@@ -425,16 +425,16 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             # + natural_joint_forces
         )
         Kdot = self.holonomic_constraints_jacobian_derivative(Qdot)
-        biais = -Kdot @ Qdot
+        bias = -Kdot @ Qdot
 
         if stabilization is not None:
             # raise NotImplementedError("Stabilization is not implemented yet")
-            biais -= (
+            bias -= (
                 stabilization["alpha"] * self.holonomic_constraints(Q)
                 + stabilization["beta"] * self.holonomic_constraints_jacobian(Q) @ Qdot
             )
 
-        B = np.concatenate([forces, biais], axis=0)
+        B = np.concatenate([forces, bias], axis=0)
 
         # solve the linear system Ax = B with numpy
         x = np.linalg.solve(augmented_mass_matrix, B)

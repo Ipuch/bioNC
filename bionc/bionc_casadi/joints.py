@@ -172,6 +172,25 @@ class Joint:
                 Qdot_parent, Qdot_child
             ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_parent_dot, K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            bias = MX.zeros(self.nb_constraints, 1)
+            if K_k_parent_dot is not None:
+                bias -= K_k_parent_dot @ Qdot_parent
+            if K_k_child_dot is not None:
+                bias -= K_k_child_dot @ Qdot_child
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+
     class Universal(JointBase):
         """
         This class is to define a Universal joint between two segments.
@@ -324,6 +343,25 @@ class Joint:
                 Qdot_parent, Qdot_child
             ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_parent_dot, K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            bias = MX.zeros(self.nb_constraints, 1)
+            if K_k_parent_dot is not None:
+                bias -= K_k_parent_dot @ Qdot_parent
+            if K_k_child_dot is not None:
+                bias -= K_k_child_dot @ Qdot_child
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+
     class Spherical(JointBase):
         def __init__(
             self,
@@ -439,6 +477,25 @@ class Joint:
             return self.parent_constraint_jacobian_derivative(
                 Qdot_parent, Qdot_child
             ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_parent_dot, K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            bias = MX.zeros(self.nb_constraints, 1)
+            if K_k_parent_dot is not None:
+                bias -= K_k_parent_dot @ Qdot_parent
+            if K_k_child_dot is not None:
+                bias -= K_k_child_dot @ Qdot_child
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
     class SphereOnPlane(JointBase):
         """
@@ -570,6 +627,25 @@ class Joint:
             return self.parent_constraint_jacobian_derivative(
                 Qdot_parent, Qdot_child
             ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_parent_dot, K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            bias = MX.zeros(self.nb_constraints, 1)
+            if K_k_parent_dot is not None:
+                bias -= K_k_parent_dot @ Qdot_parent
+            if K_k_child_dot is not None:
+                bias -= K_k_child_dot @ Qdot_child
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
     class ConstantLength(JointBase):
         def __init__(
@@ -705,3 +781,22 @@ class Joint:
             K_k_child_dot = self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
             return K_k_parent_dot, K_k_child_dot
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_parent_dot, K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            bias = MX.zeros(self.nb_constraints, 1)
+            if K_k_parent_dot is not None:
+                bias -= K_k_parent_dot @ Qdot_parent
+            if K_k_child_dot is not None:
+                bias -= K_k_child_dot @ Qdot_child
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)

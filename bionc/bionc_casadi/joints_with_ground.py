@@ -61,6 +61,16 @@ class GroundJoint:
         ) -> MX:
             return None
 
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return None
+
     class Hinge(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
@@ -187,6 +197,22 @@ class GroundJoint:
 
             return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            if K_k_child_dot is None:
+                return None
+            return -(K_k_child_dot @ Qdot_child)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+
     class Universal(JointBase):
         """
         This class is to define a Universal joint between two segments.
@@ -261,6 +287,22 @@ class GroundJoint:
             constraint[3] = dot(self.parent_vector, Q_child.axis(self.child_axis)) - np.cos(self.theta)
 
             return constraint
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            if K_k_child_dot is None:
+                return None
+            return -(K_k_child_dot @ Qdot_child)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
@@ -405,6 +447,22 @@ class GroundJoint:
 
             return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
 
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            if K_k_child_dot is None:
+                return None
+            return -(K_k_child_dot @ Qdot_child)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+
     class Weld(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
@@ -492,3 +550,19 @@ class GroundJoint:
             """
 
             return self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Return the RHS acceleration bias term (-Jdot(q)*qdot) for this joint."""
+
+            K_k_child_dot = self.constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            if K_k_child_dot is None:
+                return None
+            return -(K_k_child_dot @ Qdot_child)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)

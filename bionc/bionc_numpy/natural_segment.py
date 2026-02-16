@@ -539,7 +539,7 @@ class NaturalSegment(AbstractNaturalSegment):
         return Kr_dot
 
     @staticmethod
-    def rigid_body_constraint_acceleration_biais(Qidot: SegmentNaturalVelocities) -> np.ndarray:
+    def rigid_body_constraint_acceleration_bias(Qidot: SegmentNaturalVelocities) -> np.ndarray:
         """
         Computes the acceleration bias vector (gamma or b) for the rigid body constraints.
         This vector contains the quadratic velocity terms for the acceleration-level constraints.
@@ -574,6 +574,11 @@ class NaturalSegment(AbstractNaturalSegment):
         ]).reshape(6, 1)
 
         return bias_vector
+
+    # Backward-compatibility alias
+    @staticmethod
+    def rigid_body_constraint_acceleration_biais(Qidot: SegmentNaturalVelocities) -> np.ndarray:
+        return NaturalSegment.rigid_body_constraint_acceleration_bias(Qidot)
 
     def center_of_mass_position(self, Qi: SegmentNaturalCoordinates) -> np.ndarray:
         """
@@ -639,10 +644,10 @@ class NaturalSegment(AbstractNaturalSegment):
         Gi = self.mass_matrix
         Kr = self.rigid_body_constraint_jacobian(Qi)
         Krdot = self.rigid_body_constraint_jacobian_derivative(Qdoti)
-        biais = -Krdot @ Qdoti.vector
+        bias = -Krdot @ Qdoti.vector
 
         if stabilization is not None:
-            biais -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
+            bias -= stabilization["alpha"] * self.rigid_body_constraint(Qi) + stabilization[
                 "beta"
             ] * self.rigid_body_constraint_derivative(Qi, Qdoti)
 
@@ -652,7 +657,7 @@ class NaturalSegment(AbstractNaturalSegment):
         A[0:12, 12:18] = Kr.T
         A[12:, 12:18] = np.zeros((6, 6))
 
-        B = np.concatenate([self.gravity_force(), biais], axis=0)
+        B = np.concatenate([self.gravity_force(), bias], axis=0)
 
         # solve the linear system Ax = B with numpy
         x = np.linalg.solve(A, B)

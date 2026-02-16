@@ -597,8 +597,8 @@ class InverseKinematics:
 
         return self.output
 
-    def export_in_c3d(self, filename):
+    def export_in_c3d(self, filename, unit="m"):
         c3d_export = C3DInverseKinematicsExporter(model=self.model, filename=filename)
-        c3d_export.add_natural_coordinate(self.Qopt)
-        c3d_export.add_technical_markers(self.Qopt)
-        c3d_export.export(None)
+        c3d_export.add_natural_coordinate(self.Qopt, unit=unit)
+        c3d_export.add_technical_markers(self.Qopt, unit=unit)
+        c3d_export.export()

@@ -390,7 +390,7 @@ def test_inverse_dynamics(bionc_type):
     ]
     Qddot = NaturalAccelerations.from_qddoti(tuple(tuple_of_Qddot))
 
-    (torques, forces, lambdas) = model.inverse_dynamics(Q, Qddot)
+    torques, forces, lambdas = model.inverse_dynamics(Q, Qddot)
 
     print(torques)
     print(forces)

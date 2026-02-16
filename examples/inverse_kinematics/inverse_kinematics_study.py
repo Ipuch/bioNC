@@ -66,18 +66,20 @@ if __name__ == "__main__":
     plt.show()
 
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
-    from pyorerun import PhaseRerun
+    from pyorerun import PhaseRerun, PyoMarkers
 
     model_interface = BioncModelNoMesh(model)
 
     slice_chunk = slice(197, 198)
     prr = PhaseRerun(t_span=np.linspace(0, 1, slice_chunk.stop - slice_chunk.start))
-    pyomarkers = Markers(markers[:, :, slice_chunk], model.marker_names_technical)
+
+    pyomarkers = PyoMarkers(data=markers[:, :, slice_chunk], marker_names=model.marker_names_technical)
     prr.add_animated_model(model_interface, Qopt[:, slice_chunk], tracked_markers=pyomarkers)
     prr.rerun()
 
     slice_chunk = slice(0, 198)
     prr = PhaseRerun(t_span=np.linspace(0, 1, slice_chunk.stop - slice_chunk.start))
-    pyomarkers = Markers(markers[:, :, slice_chunk], model.marker_names_technical)
+
+    pyomarkers = PyoMarkers(data=markers[:, :, slice_chunk], marker_names=model.marker_names_technical)
     prr.add_animated_model(model_interface, Qopt[:, slice_chunk], tracked_markers=pyomarkers)
     prr.rerun()

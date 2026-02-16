@@ -1,6 +1,6 @@
 import numpy as np
 
-from pyorerun.biorbd_components.model_display_options import DisplayModelOptions
+from pyorerun.model_components.model_display_options import DisplayModelOptions
 from ..bionc_numpy import NaturalVector, NaturalCoordinates
 from ..bionc_numpy.joints import Joint
 from ..protocols.biomechanical_model import GenericBiomechanicalModel
@@ -176,6 +176,13 @@ class BioncModelNoMesh:
         """
         Returns the radii of the soft contacts
         """
+        pass
+
+    @property
+    def has_rigid_contacts(self) -> bool:
+        return False
+
+    def rigid_contacts_names(self) -> tuple[str, ...]:
         pass
 
     @property

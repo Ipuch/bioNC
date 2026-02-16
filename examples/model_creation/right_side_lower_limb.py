@@ -384,14 +384,15 @@ def main():
     Qxp = model.Q_from_markers(markers_xp[:, :, 0:2])
 
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
-    from pyorerun import PhaseRerun
+    from pyorerun import PhaseRerun, PyoMarkers
 
     # display the experimental markers in white and the model markers in blue
     # almost superimposed because the model is well defined on the experimental data
     prr = PhaseRerun(t_span=np.linspace(0, 1, markers_xp.shape[2]))
     model_interface = BioncModelNoMesh(model)
-    markers = Markers(markers_xp, model.marker_names_technical)
-    prr.add_animated_model(model_interface, Qxp, markers)
+
+    pyomarker = PyoMarkers.from_c3d(filename)
+    prr.add_animated_model(model_interface, Qxp, pyomarker)
     prr.rerun()
 
     # remove the c3d file

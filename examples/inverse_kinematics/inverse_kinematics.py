@@ -63,11 +63,11 @@ if __name__ == "__main__":
     print(model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0])))
 
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
-    from pyorerun import PhaseRerun
+    from pyorerun import PhaseRerun, PyoMarkers
 
     model_interface = BioncModelNoMesh(model)
     prr = PhaseRerun(t_span=np.linspace(0, 1, 200))
 
-    pyomarkers = Markers(markers, model.marker_names_technical)
+    pyomarkers = PyoMarkers(data=markers, marker_names=model.marker_names_technical)
     prr.add_animated_model(model_interface, Qopt, tracked_markers=pyomarkers)
     prr.rerun()

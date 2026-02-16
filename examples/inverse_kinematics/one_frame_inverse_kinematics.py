@@ -94,12 +94,13 @@ def main(model, filename, show_animation=True):
     Qopt = r["x"].toarray()
 
     if show_animation:
-        from pyorerun import PhaseRerun
+        from pyorerun import PhaseRerun, PyoMarkers
         from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
 
         model_interface = BioncModelNoMesh(model)
         prr = PhaseRerun(t_span=np.linspace(0, 1, 1))
-        pyomarkers = Markers(markers[:, :, 0:1], model.marker_names_technical)
+
+        pyomarkers = PyoMarkers(markers[:, :, 0:1], marker_names=model.marker_names_technical)
         prr.add_animated_model(model_interface, Qopt, tracked_markers=pyomarkers)
         prr.rerun()
 

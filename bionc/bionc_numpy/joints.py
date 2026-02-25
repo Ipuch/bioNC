@@ -13,7 +13,108 @@ class Joint:
     """
     The public interface to the different Joint classes
     """
+    class Free(JointBase):
+        """
+        This joint is defined by 3 constraints to pivot around a given axis defined by two angles.
+        """
 
+        def __init__(
+            self,
+            name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            index: int,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(Joint.Free, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis, None
+            )
+
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            np.ndarray
+                Kinematic constraints of the joint [5, 1]
+            """
+            return None
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> np.ndarray:
+            return None
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> np.ndarray:
+
+            return None
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[np.ndarray, np.ndarray]:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[np.ndarray, np.ndarray]
+                joint constraints jacobian of the parent and child segment [5, 12] and [5, 12]
+            """
+
+            return None
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> tuple[np.ndarray, np.ndarray]:
+            """
+            This function returns the jacobian derivative of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[np.ndarray, np.ndarray]
+                joint constraints jacobian derivative of the parent and child segment [5, 12] and [5, 12]
+            """
+            return None
+
+        def to_mx(self):
+            """
+            This function returns the joint as a mx joint
+
+            Returns
+            -------
+            JointBase
+                The joint as a mx joint
+            """
+            from ..bionc_casadi.joints import Joint as CasadiJoint
+
+            return CasadiJoint.Free(
+                name=self.name,
+                parent=self.parent.to_mx(),
+                child=self.child.to_mx(),
+                index=self.index,
+                projection_basis=self.projection_basis,
+                parent_basis=self.parent_basis,
+                child_basis=self.child_basis,
+            )
     class Hinge(JointBase):
         """
         This joint is defined by 3 constraints to pivot around a given axis defined by two angles.

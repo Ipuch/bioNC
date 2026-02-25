@@ -14,6 +14,87 @@ class Joint:
     """
     The public interface to the different Joint classes
     """
+    class Free(JointBase):
+        """
+        This joint is defined by 0 constraints to let the joint be free between parent and child.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            index: int,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(Joint.Free, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis, None
+            )
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                Kinematic constraints of the joint (None for free joint - 0 constraints)
+            """
+            return None
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            return None
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+
+            return None
+
+        def parent_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+
+            return None
+
+        def child_constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+
+            return None
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the jacobian of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                joint constraints jacobian of the parent and child segment (None for free joint)
+            """
+            return None
+
+        def constraint_jacobian_derivative(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the jacobian derivative of the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                joint constraints jacobian derivative of the parent and child segment (None for free joint)
+            """
+            return None
 
     class Hinge(JointBase):
         """

@@ -199,31 +199,6 @@ class Joint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_parent_dot = MX.zeros((self.nb_constraints, 12))
-            for i in range(2):
-                K_k_parent_dot[i + 3, :] = (
-                    transpose(self.parent_vector[i].interpolate().rot)
-                    @ self.child_vector[i].interpolate().rot
-                    @ Qdot_child
-                )
-
-            return K_k_parent_dot
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_child_dot = MX.zeros((self.nb_constraints, 12))
-            for i in range(2):
-                K_k_child_dot[i + 3, :] = (
-                    transpose(self.parent_vector[i].interpolate().rot @ Qdot_parent)
-                    @ self.child_vector[i].interpolate().rot
-                )
-
-            return K_k_child_dot
-
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[MX, MX]:
@@ -238,21 +213,41 @@ class Joint:
             """
             return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
-        def constraint_jacobian_derivative(
+        def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> tuple[MX, MX]:
+        ) -> MX:
             """
-            This function returns the jacobian derivative of the kinematic constraints of the joint, denoted Phi_k
-            as a function of the natural coordinates Q_parent and Q_child.
+            Compute the acceleration bias (quadratic velocity terms) for this Hinge joint.
+
+            The Hinge joint has 5 constraints:
+              phi_0..2 = rp_parent - rd_child  (linear in Q => Hessian = 0 => bias = 0)
+              phi_i = u_p^T v_c  (for i=3,4; bilinear in Q_parent, Q_child)
+
+            For the bilinear constraints phi_i = (N_up * q_p)^T (N_vc * q_c):
+              H_pp = H_cc = 0, H_pc = N_up^T N_vc, H_cp = N_vc^T N_up
+              => bias_i = qdot^T H qdot = 2 * (N_up * qdot_p)^T (N_vc * qdot_c)
 
             Returns
             -------
-            tuple[MX, MX]
-                joint constraints jacobian derivative of the parent and child segment [5, 12] and [5, 12]
+            MX
+                Acceleration bias vector [5, 1]. Enter the DAE RHS as -bias.
             """
-            return self.parent_constraint_jacobian_derivative(
-                Qdot_parent, Qdot_child
-            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            bias = MX.zeros(self.nb_constraints, 1)
+
+            for i in range(2):
+                N_up = self.parent_vector[i].interpolate().rot  # 3x12
+                N_vc = self.child_vector[i].interpolate().rot   # 3x12
+                u_p_dot = N_up @ Qdot_parent  # 3x1
+                v_c_dot = N_vc @ Qdot_child   # 3x1
+                bias[i + 3] = 2 * dot(u_p_dot, v_c_dot)
+
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
     class Universal(JointBase):
         """
@@ -354,28 +349,6 @@ class Joint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_parent = MX.zeros((self.nb_constraints, 12))
-
-            K_k_parent[3, :] = (
-                transpose(self.parent_vector.interpolate().rot) @ self.child_vector.interpolate().rot @ Qdot_child
-            )
-
-            return K_k_parent
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_child = MX.zeros((self.nb_constraints, 12))
-
-            K_k_child[3, :] = (
-                transpose(self.parent_vector.interpolate().rot @ Qdot_parent) @ self.child_vector.interpolate().rot
-            )
-
-            return K_k_child
-
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[MX, MX]:
@@ -390,21 +363,42 @@ class Joint:
             """
             return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
-        def constraint_jacobian_derivative(
+        def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> tuple[MX, MX]:
+        ) -> MX:
             """
-            This function returns the derivative of kinematic constraints of the joint, denoted K_k
-            as a function of the natural velocities Qdot_parent and Qdot_child.
+            Compute the acceleration bias (quadratic velocity terms) for this Universal joint.
+
+            The Universal joint has 4 constraints:
+              phi_0..2 = rp_parent - rd_child  (linear in Q => Hessian = 0 => bias = 0)
+              phi_3 = u_p^T v_c  (bilinear in Q_parent, Q_child)
+
+            For the bilinear constraint phi_3 = (N_up * q_p)^T (N_vc * q_c):
+              H_pp = H_cc = 0, H_pc = N_up^T N_vc, H_cp = N_vc^T N_up
+              => bias_3 = qdot^T H qdot = 2 * (N_up * qdot_p)^T (N_vc * qdot_c)
 
             Returns
             -------
-            tuple[MX, MX]
-                joint constraints jacobian derivative of the parent and child segment [4, 12] and [4, 12]
+            MX
+                Acceleration bias vector [4, 1]. Enter the DAE RHS as -bias.
             """
-            return self.parent_constraint_jacobian_derivative(
-                Qdot_parent, Qdot_child
-            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            bias = MX.zeros(self.nb_constraints, 1)
+
+            # First 3 constraints are linear => bias = 0
+            # Last constraint is a bilinear dot product
+            N_up = self.parent_vector.interpolate().rot  # 3x12
+            N_vc = self.child_vector.interpolate().rot   # 3x12
+            u_p_dot = N_up @ Qdot_parent  # 3x1
+            v_c_dot = N_vc @ Qdot_child   # 3x1
+            bias[3] = 2 * dot(u_p_dot, v_c_dot)
+
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
     class Spherical(JointBase):
         def __init__(
@@ -480,18 +474,6 @@ class Joint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_parent = MX.zeros((self.nb_constraints, 12))
-            return K_k_parent
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_child = MX.zeros((self.nb_constraints, 12))
-            return K_k_child
-
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[MX, MX]:
@@ -506,21 +488,30 @@ class Joint:
             """
             return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
-        def constraint_jacobian_derivative(
+        def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> tuple[MX, MX]:
+        ) -> MX:
             """
-            This function returns the kinematic constraints of the joint, denoted K_k
-            as a function of the natural coordinates Q_parent and Q_child.
+            Compute the acceleration bias (quadratic velocity terms) for this Spherical joint.
+
+            The Spherical joint constraint is:
+              phi = N_p * q_p - N_c * q_c  (linear in Q)
+
+            Since all constraints are linear, the Hessian is zero everywhere.
+            Therefore: bias = qdot^T H qdot = 0
 
             Returns
             -------
-            tuple[MX, MX]
-                joint constraints jacobian of the parent and child segment [3, 12] and [3, 12]
+            MX
+                Acceleration bias vector [3, 1]. All zeros for spherical joints.
             """
-            return self.parent_constraint_jacobian_derivative(
-                Qdot_parent, Qdot_child
-            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            return MX.zeros(self.nb_constraints, 1)
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
     class SphereOnPlane(JointBase):
         """
@@ -601,28 +592,6 @@ class Joint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            parent_point_velocity = self.sphere_center.interpolation_matrix @ Qdot_parent
-            child_point_velocity = self.plane_point.interpolation_matrix @ Qdot_child
-
-            K_k_parent_dot = (
-                -(self.plane_normal.interpolation_matrix @ Qdot_child).T @ self.plane_point.interpolation_matrix
-                + (parent_point_velocity - child_point_velocity).T @ self.plane_normal.interpolation_matrix
-            )
-
-            return K_k_parent_dot
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            K_k_child_dot = (
-                self.plane_normal.interpolation_matrix @ Qdot_child
-            ).T @ self.sphere_center.interpolation_matrix
-
-            return K_k_child_dot
-
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[MX, MX]:
@@ -637,21 +606,47 @@ class Joint:
             """
             return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
 
-        def constraint_jacobian_derivative(
+        def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> tuple[MX, MX]:
+        ) -> MX:
             """
-            This function returns the kinematic constraints of the joint, denoted K_k
-            as a function of the natural coordinates Q_parent and Q_child.
+            Compute the acceleration bias (quadratic velocity terms) for this SphereOnPlane joint.
+
+            The constraint is:
+              phi = (P - A)^T n - r
+            where P = Np*q_p (sphere center), A = Na*q_c (plane point), n = Nn*q_c (plane normal), r = const.
+
+            Writing q = [q_p; q_c], the full Hessian blocks are:
+              H_pp = 0  (P is linear in q_p, and n doesn't depend on q_p)
+              H_pc = Np^T Nn  (cross term: d/dq_c of dPhi/dq_p = Np^T n => d(Np^T Nn q_c)/dq_c)
+              H_cp = Nn^T Np  (transpose of H_pc)
+              H_cc = -(Nn^T Na + Na^T Nn)  (from -A^T n term, both A and n depend on q_c)
+
+            bias = qdot^T H qdot
+                 = 2*(Np*qdot_p)^T*(Nn*qdot_c) - 2*(Nn*qdot_c)^T*(Na*qdot_c)
 
             Returns
             -------
-            tuple[MX, MX]
-                joint constraints jacobian of the parent and child segment [1, 12] and [1, 12]
+            MX
+                Acceleration bias vector [1, 1]. Enter the DAE RHS as -bias.
             """
-            return self.parent_constraint_jacobian_derivative(
-                Qdot_parent, Qdot_child
-            ), self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            Np = self.sphere_center.interpolation_matrix  # 3x12
+            Na = self.plane_point.interpolation_matrix     # 3x12
+            Nn = self.plane_normal.interpolation_matrix    # 3x12
+
+            P_dot = Np @ Qdot_parent  # 3x1
+            A_dot = Na @ Qdot_child   # 3x1
+            n_dot = Nn @ Qdot_child   # 3x1
+
+            bias = 2 * transpose(P_dot) @ n_dot - 2 * transpose(n_dot) @ A_dot
+
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
     class ConstantLength(JointBase):
         def __init__(
@@ -728,30 +723,6 @@ class Joint:
 
             return K_k_child
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            parent_point_location = self.parent_point.position_in_global(Qdot_parent)
-            child_point_location = self.child_point.position_in_global(Qdot_child)
-
-            K_k_child_dot = (
-                2 * (parent_point_location - child_point_location).T @ self.parent_point.interpolation_matrix
-            )
-
-            return K_k_child_dot
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            parent_point_location = self.parent_point.position_in_global(Qdot_parent)
-            child_point_location = self.child_point.position_in_global(Qdot_child)
-
-            K_k_parent_dot = (
-                -2 * (parent_point_location - child_point_location).T @ self.child_point.interpolation_matrix
-            )
-
-            return K_k_parent_dot
-
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[MX, MX]:
@@ -770,20 +741,37 @@ class Joint:
 
             return K_k_parent, K_k_child
 
-        def constraint_jacobian_derivative(
+        def constraint_acceleration_bias(
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> tuple[MX, MX]:
+        ) -> MX:
             """
-            This function returns the kinematic constraints of the joint, denoted K_k
-            as a function of the natural coordinates Q_parent and Q_child.
+            Compute the acceleration bias (quadratic velocity terms) for this ConstantLength joint.
+
+            The constraint is:
+              phi = ||Np*q_p - Nc*q_c||^2 - L^2
+
+            The Hessian of phi w.r.t. q = [q_p; q_c] is the constant matrix:
+              H = 2 * [Np; -Nc]^T [Np; -Nc]
+            i.e. H_pp = 2*Np^T*Np, H_cc = 2*Nc^T*Nc, H_pc = -2*Np^T*Nc
+
+            Therefore:
+              bias = qdot^T H qdot = 2 * ||Np*qdot_p - Nc*qdot_c||^2
 
             Returns
             -------
-            tuple[MX, MX]
-                Kinematic constraints of the joint [1, 12] for parent and child
+            MX
+                Acceleration bias vector [1, 1]. Enter the DAE RHS as -bias.
             """
+            Np = self.parent_point.interpolation_matrix  # 3x12
+            Nc = self.child_point.interpolation_matrix   # 3x12
 
-            K_k_parent_dot = self.parent_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
-            K_k_child_dot = self.child_constraint_jacobian_derivative(Qdot_parent, Qdot_child)
+            diff_vel = Np @ Qdot_parent - Nc @ Qdot_child  # 3x1
+            bias = 2 * sumsqr(diff_vel)
 
-            return K_k_parent_dot, K_k_child_dot
+            return bias
+
+        # Backward-compatibility alias
+        def constraint_acceleration_biais(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)

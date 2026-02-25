@@ -79,4 +79,7 @@ class TestUtils:
         if isinstance(value, MX):
             TestUtils.mx_assert_equal(value, expected, decimal=decimal, squeeze=squeeze, expand=expand)
         else:
+            if squeeze:
+                value = np.array(value).squeeze()
+                expected = np.array(expected).squeeze()
             np.testing.assert_almost_equal(value, expected, decimal=decimal)

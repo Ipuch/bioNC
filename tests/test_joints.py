@@ -303,6 +303,37 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
+        TestUtils.assert_equal(
+            joint.constraint_acceleration_biais(Q1, Q2),
+            -(
+                np.vstack(
+                    (
+                        np.zeros((3, 12)),
+                        np.array(
+                            [
+                                [-0.1, -1.1, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                                [0.0, 0.0, 0.0, 1.7, 2.0, 5.3, -1.7, -2.0, -5.3, 0.0, 0.0, 0.0],
+                            ]
+                        ),
+                    )
+                )
+                @ TestUtils.to_array(Q1)
+                + np.vstack(
+                    (
+                        np.zeros((3, 12)),
+                        np.array(
+                            [
+                                [0.0, 0.0, 0.0, 1.0, 2.0, 3.05, -1.0, -2.0, -3.05, 0.0, 0.0, 0.0],
+                                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.1, -1.0, -1.0],
+                            ]
+                        ),
+                    )
+                )
+                @ TestUtils.to_array(Q2)
+            ),
+            decimal=6,
+        )
+
     elif joint_type == JointType.UNIVERSAL:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
@@ -365,6 +396,35 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
+        TestUtils.assert_equal(
+            joint.constraint_acceleration_biais(Q1, Q2),
+            -(
+                np.vstack(
+                    (
+                        np.zeros((3, 12)),
+                        np.array(
+                            [
+                                [1.7, 2.0, 5.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                            ]
+                        ),
+                    )
+                )
+                @ TestUtils.to_array(Q1)
+                + np.vstack(
+                    (
+                        np.zeros((3, 12)),
+                        np.array(
+                            [
+                                [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.05],
+                            ]
+                        ),
+                    )
+                )
+                @ TestUtils.to_array(Q2)
+            ),
+            decimal=6,
+        )
+
     elif joint_type == JointType.SPHERICAL:
         ## Spherical joint rd rp
         TestUtils.assert_equal(
@@ -405,6 +465,12 @@ def test_joints(bionc_type, joint_type: JointType):
         TestUtils.assert_equal(
             child_jacobian_dot,
             np.zeros((3, 12)),
+            decimal=6,
+        )
+
+        TestUtils.assert_equal(
+            joint_distal_proximal.constraint_acceleration_biais(Q1, Q2),
+            np.zeros((3,)),
             decimal=6,
         )
 
@@ -549,6 +615,12 @@ def test_joints(bionc_type, joint_type: JointType):
             squeeze=False,
         )
 
+        TestUtils.assert_equal(
+            joint.constraint_acceleration_biais(Q1, Q2),
+            -(parent_jacobian_dot @ TestUtils.to_array(Q1) + child_jacobian_dot @ TestUtils.to_array(Q2)),
+            decimal=6,
+        )
+
     elif joint_type == JointType.SPHERE_ON_PLANE:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
@@ -650,6 +722,12 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
+        TestUtils.assert_equal(
+            joint.constraint_acceleration_biais(Q1, Q2),
+            -(child_jacobian_dot @ TestUtils.to_array(Q2)),
+            decimal=6,
+        )
+
     elif joint_type == JointType.GROUND_SPHERICAL:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
@@ -676,6 +754,12 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
+        TestUtils.assert_equal(
+            joint.constraint_acceleration_biais(Q1, Q2),
+            -(child_jacobian_dot @ TestUtils.to_array(Q2)),
+            decimal=6,
+        )
+
         assert joint.parent_constraint_jacobian(Q1, Q2) is None
         assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
 
@@ -696,6 +780,12 @@ def test_joints(bionc_type, joint_type: JointType):
         TestUtils.assert_equal(
             child_jacobian_dot,
             np.zeros((6, 12)),
+            decimal=6,
+        )
+
+        TestUtils.assert_equal(
+            joint.constraint_acceleration_biais(Q1, Q2),
+            -(child_jacobian_dot @ TestUtils.to_array(Q2)),
             decimal=6,
         )
 
@@ -726,6 +816,12 @@ def test_joints(bionc_type, joint_type: JointType):
         TestUtils.assert_equal(
             child_jacobian_dot,
             np.zeros((4, 12)),
+            decimal=6,
+        )
+
+        TestUtils.assert_equal(
+            joint.constraint_acceleration_biais(Q1, Q2),
+            -(child_jacobian_dot @ TestUtils.to_array(Q2)),
             decimal=6,
         )
 

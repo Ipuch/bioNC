@@ -78,25 +78,4 @@ class BiomechanicalModelSegments(GenericBiomechanicalModelSegments):
 
         return K_r
 
-    def rigid_body_constraint_jacobian_derivative(self, Qdot: NaturalVelocities) -> MX:
-        """
-        This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot
 
-        Parameters
-        ----------
-        Qdot : NaturalVelocities
-            The natural velocities of the segment [12 * nb_segments, 1]
-
-        Returns
-        -------
-        MX
-            The derivative of the Jacobian matrix of the rigid body constraints [6 * nb_segments, 12 * nb_segments]
-        """
-
-        Kr_dot = MX.zeros((6 * self.nb_segments, Qdot.shape[0]))
-        for i, segment in enumerate(self.segments_no_ground.values()):
-            idx_row = slice(6 * i, 6 * (i + 1))
-            idx_col = slice(12 * i, 12 * (i + 1))
-            Kr_dot[idx_row, idx_col] = segment.rigid_body_constraint_jacobian_derivative(Qdot.vector(i))
-
-        return Kr_dot

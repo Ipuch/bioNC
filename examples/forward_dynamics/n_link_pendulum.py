@@ -48,8 +48,6 @@ def drop_the_pendulum(
 
     print("Evaluate Rigid Body Constraints:")
     print(model.rigid_body_constraints(Q_init))
-    print("Evaluate Rigid Body Constraints Jacobian Derivative:")
-    print(model.rigid_body_constraint_jacobian_derivative(Qdot_init))
 
     if (model.rigid_body_constraints(Q_init) > 1e-6).any():
         print(model.rigid_body_constraints(Q_init))
@@ -245,7 +243,7 @@ if __name__ == "__main__":
         plt.show()
 
     # actual simulation
-    t_final = 10  # seconds
+    t_final = 30  # seconds
     steps_per_second = 50
     time_steps, all_states, dynamics = drop_the_pendulum(
         model=model,

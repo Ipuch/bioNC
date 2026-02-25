@@ -16,6 +16,7 @@ class JointType(Enum):
     GROUND_UNIVERSAL = GroundJoint.Universal
     GROUND_SPHERICAL = GroundJoint.Spherical
     CONSTANT_LENGTH = Joint.ConstantLength
+    FREE = Joint.Free
     REVOLUTE = Joint.Hinge
     # PRISMATIC = "not implemented yet"
     UNIVERSAL = Joint.Universal

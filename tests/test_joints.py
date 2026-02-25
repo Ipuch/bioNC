@@ -184,6 +184,15 @@ def test_joints(bionc_type, joint_type: JointType):
         )
         assert joint.nb_constraints == 1
         assert joint.nb_joint_dof == 5
+    elif joint_type == JointType.FREE:
+        joint = Joint.Free(
+            name="Free",
+            parent=box,
+            child=bbox,
+            index=0,
+        )
+        assert joint.nb_constraints == 0
+        assert joint.nb_joint_dof == 6
     elif joint_type == JointType.GROUND_WELD:
         joint = GroundJoint.Weld(
             name="Weld",

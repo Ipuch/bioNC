@@ -53,5 +53,5 @@ def test_ik_export():
     MOCK_IK = InverseKinematics(model=model, experimental_markers=markers)
 
     MOCK_IK.Qopt = np.random.random((model.nb_Q, 2))
-    MOCK_IK.export_in_c3d(filename,unit="mm")
-    MOCK_IK.export_in_c3d(filename,unit="mm")
+    MOCK_IK.export_in_c3d(filename, unit="mm")
+    MOCK_IK.export_in_c3d(filename, unit="mm")

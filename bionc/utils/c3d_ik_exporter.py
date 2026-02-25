@@ -92,11 +92,11 @@ class C3DInverseKinematicsExporter:
 
         most_occurence_factor = max(set(list_factor), key=list_factor.count)
         factor = 10**most_occurence_factor
-        
+
         unit_factor = {"mm": 1000, "m": 1}.get(unit)
         if unit_factor is None:
             raise ValueError("unit must be 'm' or 'mm'")
-        
+
         dict_to_add = dict()
         # We add the segment rp,rd,u,w to the c3d file
         for s in range(Q.nb_qi()):

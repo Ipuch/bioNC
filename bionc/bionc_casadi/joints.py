@@ -14,6 +14,7 @@ class Joint:
     """
     The public interface to the different Joint classes
     """
+
     class Free(JointBase):
         """
         This joint is defined by 0 constraints to let the joint be free between parent and child.

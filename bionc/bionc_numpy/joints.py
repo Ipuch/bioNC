@@ -13,6 +13,7 @@ class Joint:
     """
     The public interface to the different Joint classes
     """
+
     class Free(JointBase):
         """
         This joint is defined by 3 constraints to pivot around a given axis defined by two angles.
@@ -31,7 +32,6 @@ class Joint:
             super(Joint.Free, self).__init__(
                 name, parent, child, index, projection_basis, parent_basis, child_basis, None
             )
-
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
             """
@@ -115,6 +115,7 @@ class Joint:
                 parent_basis=self.parent_basis,
                 child_basis=self.child_basis,
             )
+
     class Hinge(JointBase):
         """
         This joint is defined by 3 constraints to pivot around a given axis defined by two angles.

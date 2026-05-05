@@ -37,6 +37,33 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         joints = BiomechanicalModelJoints() if joints is None else joints
         markers = BiomechanicalModelMarkers(segments)
         super().__init__(segments=segments, joints=joints, markers=markers)
+        self.muscles: dict = {}
+
+    def add_muscle(self, muscle) -> None:
+        """Add a muscle to the model. The muscle name must be unique."""
+        if muscle.name in self.muscles:
+            raise ValueError(f"A muscle named {muscle.name!r} already exists in the model.")
+        self.muscles[muscle.name] = muscle
+
+    @property
+    def nb_muscles(self) -> int:
+        return len(self.muscles)
+
+    @property
+    def muscle_names(self) -> list:
+        return list(self.muscles.keys())
+
+    def muscle_lengths(self, Q) -> np.ndarray:
+        """Return the length of every muscle as a 1D array (one entry per muscle)."""
+        return np.array([m.length(Q, self) for m in self.muscles.values()])
+
+    def muscle_moment_arms(self, Q) -> np.ndarray:
+        """
+        Return the moment arms ``- d L / d Q`` stacked as a (nb_muscles, 12 * nb_segments) array.
+        """
+        if not self.muscles:
+            return np.zeros((0, 12 * self.nb_segments))
+        return np.vstack([m.moment_arm(Q, self) for m in self.muscles.values()])
 
     def to_mx(self):
         """
@@ -66,6 +93,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         biomechanical_model._update_mass_matrix()
         biomechanical_model.set_numpy_model(self)
+
+        for name, muscle in self.muscles.items():
+            biomechanical_model.muscles[name] = muscle.to_mx()
 
         return biomechanical_model
 

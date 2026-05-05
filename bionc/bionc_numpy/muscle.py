@@ -46,6 +46,41 @@ class MuscleViaPoint:
             self.position = position
             self.interpolation_matrix = position.interpolate()
 
+    @classmethod
+    def from_cartesian(
+        cls,
+        name: str,
+        parent_segment,
+        location,
+        is_distal_location: bool = False,
+        transformation_matrix_type=None,
+    ) -> "MuscleViaPoint":
+        """
+        Build a via point attached to a segment but specified in the segment's
+        orthogonal Cartesian frame (origin at the proximal point, by default).
+
+        Parameters
+        ----------
+        name
+            Name of the via point.
+        parent_segment
+            The NaturalSegment the via point is attached to.
+        location
+            3D position in the segment's orthogonal coordinate system.
+        is_distal_location
+            If True, ``location`` is taken relative to the distal point rd
+            instead of the proximal point rp.
+        transformation_matrix_type
+            Type of transformation matrix used to convert from segment-Cartesian
+            to natural (non-orthogonal) coordinates. Defaults to Buv.
+        """
+        location = np.asarray(location, dtype=float).reshape(3)
+        T = parent_segment.compute_transformation_matrix(transformation_matrix_type)
+        natural = np.linalg.inv(T) @ location
+        if is_distal_location:
+            natural = natural + np.array([0.0, -1.0, 0.0])
+        return cls(name=name, parent_name=parent_segment.name, position=natural)
+
     def position_in_global(self, Q: NaturalCoordinates, model) -> np.ndarray:
         if self.is_ground:
             return self.position.reshape(3)

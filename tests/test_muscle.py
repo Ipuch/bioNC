@@ -9,19 +9,41 @@ def test_pendulum_with_muscle_example_runs():
     module = TestUtils.load_module(bionc + "/examples/muscle/pendulum_with_muscle.py")
     result = module.main()
 
-    assert result["model"].nb_muscles == 1
-    assert result["model"].muscle_names == ["muscle1"]
+    assert result["model"].nb_muscles == 2
+    assert result["model"].muscle_names == ["muscle1", "muscle2"]
 
-    expected_length = np.sqrt(0.38)
-    u_in = np.array([-0.3, -0.5, -0.2]) / expected_length
-    expected_ma = np.zeros(12)
-    expected_ma[3:6] = -0.5 * u_in
-    expected_ma[6:9] = -0.5 * u_in
+    # muscle1: origin (0.3, 0, 0.2) -> insertion at v=-0.5 i.e. (0, -0.5, 0)
+    expected_length1 = np.sqrt(0.38)
+    u_in1 = np.array([-0.3, -0.5, -0.2]) / expected_length1
+    expected_ma1 = np.zeros(12)
+    expected_ma1[3:6] = -0.5 * u_in1
+    expected_ma1[6:9] = -0.5 * u_in1
 
-    np.testing.assert_almost_equal(float(result["length_numpy"].squeeze()), expected_length, decimal=10)
-    np.testing.assert_almost_equal(float(result["length_casadi"]), expected_length, decimal=10)
-    np.testing.assert_almost_equal(result["moment_arm_numpy"].squeeze(), expected_ma, decimal=10)
-    np.testing.assert_almost_equal(result["moment_arm_casadi"], expected_ma, decimal=10)
+    # muscle2: origin2 (-0.2, 0.1, 0.0); insertion2 from cartesian (0, -0.7, 0.05) on pendulum.
+    # Pendulum has alpha=beta=gamma=pi/2 and length=1, so the orthogonal frame coincides with
+    # the natural frame: cartesian (0, -0.7, 0.05) -> natural (0, -0.7, 0.05) which means
+    # global insertion = 0.3*rp + 0.7*rd + 0*u + 0.05*w = (0, -0.7, 0.05).
+    insertion2_global = np.array([0.0, -0.7, 0.05])
+    diff2 = insertion2_global - np.array([-0.2, 0.1, 0.0])
+    expected_length2 = np.linalg.norm(diff2)
+    u_in2 = diff2 / expected_length2
+    expected_ma2 = np.zeros(12)
+    # NaturalVector(0, -0.7, 0.05): u_coef=0, v=-0.7, w_coef=0.05 -> N = [0*I | 0.3*I | 0.7*I | 0.05*I]
+    expected_ma2[3:6] = -0.3 * u_in2
+    expected_ma2[6:9] = -0.7 * u_in2
+    expected_ma2[9:12] = -0.05 * u_in2
+
+    L_np = np.array(result["length_numpy"]).reshape(-1)
+    L_mx = np.array(result["length_casadi"]).reshape(-1)
+    MA_np = np.array(result["moment_arm_numpy"])
+    MA_mx = np.array(result["moment_arm_casadi"])
+
+    np.testing.assert_almost_equal(L_np, [expected_length1, expected_length2], decimal=10)
+    np.testing.assert_almost_equal(L_mx, [expected_length1, expected_length2], decimal=10)
+    np.testing.assert_almost_equal(MA_np[0], expected_ma1, decimal=10)
+    np.testing.assert_almost_equal(MA_np[1], expected_ma2, decimal=10)
+    np.testing.assert_almost_equal(MA_mx[0], expected_ma1, decimal=10)
+    np.testing.assert_almost_equal(MA_mx[1], expected_ma2, decimal=10)
 
 
 def _build_pendulum_with_muscle(bionc_type: str):
@@ -149,6 +171,64 @@ def test_muscle_requires_two_via_points():
 
     with pytest.raises(ValueError, match="at least two via points"):
         Muscle(name="bad", via_points=[MuscleViaPoint("a", "GROUND", np.zeros(3))])
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_via_point_from_cartesian_matches_natural(bionc_type):
+    """A via point built from segment-Cartesian coords must place the global point
+    at the same location as the equivalent natural via point and (because the
+    pendulum has an orthogonal natural frame) match identical natural coordinates."""
+    from bionc import TransformationMatrixType
+
+    model, Q = _build_pendulum_with_muscle(bionc_type)
+
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import MuscleViaPoint as MVP
+    else:
+        from bionc.bionc_numpy import MuscleViaPoint as MVP
+
+    cartesian = np.array([0.0, -0.7, 0.05])
+    vp_cart = MVP.from_cartesian(
+        name="cart",
+        parent_segment=model["pendulum"],
+        location=cartesian,
+        transformation_matrix_type=TransformationMatrixType.Buv,
+    )
+    # Pendulum has alpha=beta=gamma=pi/2 and length=1 so transformation is identity.
+    np.testing.assert_almost_equal(np.array(vp_cart.position).reshape(3), cartesian, decimal=10)
+
+    # With Q hanging vertically (rp=0, rd=(0,-1,0), u=(1,0,0), w=(0,0,1)),
+    # global position = u_coef*u + (1+v)*rp + (-v)*rd + w_coef*w
+    #                 = (0, -0.7, 0.05).
+    if bionc_type == "casadi":
+        from casadi import Function
+        from bionc.bionc_casadi import NaturalCoordinates as MXNaturalCoordinates
+
+        Q_num = np.array([1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 1], dtype=float)
+        Q_sym = MXNaturalCoordinates.sym(model.nb_segments)
+        p_sym = vp_cart.position_in_global(Q_sym, model)
+        p = np.array(Function("p", [Q_sym], [p_sym])(Q_num)).reshape(3)
+    else:
+        p = vp_cart.position_in_global(Q, model)
+    np.testing.assert_almost_equal(p, cartesian, decimal=10)
+
+
+def test_via_point_from_cartesian_distal_offset():
+    """is_distal_location adds (0, -1, 0) in natural coords, i.e. shifts origin to rd."""
+    from bionc.bionc_numpy import MuscleViaPoint
+    from bionc import TransformationMatrixType
+
+    model, Q = _build_pendulum_with_muscle("numpy")
+    vp = MuscleViaPoint.from_cartesian(
+        name="distal",
+        parent_segment=model["pendulum"],
+        location=np.array([0.0, 0.0, 0.0]),
+        is_distal_location=True,
+        transformation_matrix_type=TransformationMatrixType.Buv,
+    )
+    # rd-anchored zero offset -> global rd = (0, -1, 0)
+    p = vp.position_in_global(Q, model)
+    np.testing.assert_almost_equal(p, np.array([0.0, -1.0, 0.0]), decimal=10)
 
 
 def test_finite_difference_matches_moment_arm():

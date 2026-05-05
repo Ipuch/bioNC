@@ -54,6 +54,16 @@ def build_model() -> BiomechanicalModel:
     origin = MuscleViaPoint(name="origin", parent_name="GROUND", position=np.array([0.3, 0.0, 0.2]))
     insertion = MuscleViaPoint(name="insertion", parent_name="pendulum", position=(0.0, -0.5, 0.0))
     model.add_muscle(Muscle(name="muscle1", via_points=[origin, insertion]))
+
+    # Second muscle defined using segment-Cartesian coordinates via from_cartesian.
+    origin2 = MuscleViaPoint(name="origin2", parent_name="GROUND", position=np.array([-0.2, 0.1, 0.0]))
+    insertion2 = MuscleViaPoint.from_cartesian(
+        name="insertion2",
+        parent_segment=model["pendulum"],
+        location=np.array([0.0, -0.7, 0.05]),
+        transformation_matrix_type=TransformationMatrixType.Buv,
+    )
+    model.add_muscle(Muscle(name="muscle2", via_points=[origin2, insertion2]))
     return model
 
 

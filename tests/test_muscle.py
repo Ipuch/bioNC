@@ -195,7 +195,13 @@ def test_via_point_from_cartesian_matches_natural(bionc_type):
         transformation_matrix_type=TransformationMatrixType.Buv,
     )
     # Pendulum has alpha=beta=gamma=pi/2 and length=1 so transformation is identity.
-    np.testing.assert_almost_equal(np.array(vp_cart.position).reshape(3), cartesian, decimal=10)
+    if bionc_type == "casadi":
+        from casadi import evalf
+
+        pos_arr = np.array(evalf(vp_cart.position)).reshape(3)
+    else:
+        pos_arr = np.array(vp_cart.position).reshape(3)
+    np.testing.assert_almost_equal(pos_arr, cartesian, decimal=10)
 
     # With Q hanging vertically (rp=0, rd=(0,-1,0), u=(1,0,0), w=(0,0,1)),
     # global position = u_coef*u + (1+v)*rp + (-v)*rd + w_coef*w

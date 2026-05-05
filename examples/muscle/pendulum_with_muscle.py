@@ -52,9 +52,7 @@ def build_model() -> BiomechanicalModel:
     # Local coordinates on the pendulum are expressed as (u, v, w) with v ∈ [0, -1]
     # going from rp (proximal) to rd (distal). v = -0.5 places the via point at mid-segment.
     origin = MuscleViaPoint(name="origin", parent_name="GROUND", position=np.array([0.3, 0.0, 0.2]))
-    insertion = MuscleViaPoint(
-        name="insertion", parent_name="pendulum", position=(0.0, -0.5, 0.0)
-    )
+    insertion = MuscleViaPoint(name="insertion", parent_name="pendulum", position=(0.0, -0.5, 0.0))
     model.add_muscle(Muscle(name="muscle1", via_points=[origin, insertion]))
     return model
 
@@ -65,9 +63,7 @@ def main():
     print(f"Muscles: {model.muscle_names}")
 
     # Pendulum hanging vertically: rp at the origin, rd one meter below.
-    Qi = SegmentNaturalCoordinates.from_components(
-        u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1]
-    )
+    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
     Q = NaturalCoordinates(Qi)
 
     print("\n=== Numpy ===")

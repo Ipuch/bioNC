@@ -75,9 +75,7 @@ def _build_pendulum_with_muscle(bionc_type: str):
     insertion = MuscleViaPoint(name="insertion", parent_name="pendulum", position=(0.0, -0.5, 0.0))
     model.add_muscle(Muscle(name="muscle1", via_points=[origin, insertion]))
 
-    Qi = SegmentNaturalCoordinates.from_components(
-        u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1]
-    )
+    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
     Q = NaturalCoordinates(Qi)
     return model, Q
 
@@ -129,9 +127,7 @@ def test_numpy_and_casadi_agree():
     Q_num = np.array([1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 1], dtype=float)
     Q_sym = MXNaturalCoordinates.sym(model_mx.nb_segments)
     L_mx = float(np.array(Function("L", [Q_sym], [model_mx.muscle_lengths(Q_sym)])(Q_num)).squeeze())
-    MA_mx = np.array(
-        Function("MA", [Q_sym], [model_mx.muscle_moment_arms(Q_sym)])(Q_num)
-    ).squeeze()
+    MA_mx = np.array(Function("MA", [Q_sym], [model_mx.muscle_moment_arms(Q_sym)])(Q_num)).squeeze()
 
     L_np = float(model_np.muscle_lengths(Q_np).squeeze())
     MA_np = model_np.muscle_moment_arms(Q_np).squeeze()

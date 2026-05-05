@@ -43,6 +43,30 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         markers = BiomechanicalModelMarkers(segments=segments)
         super().__init__(segments=segments, joints=joints, markers=markers)
         self._numpy_model = None
+        self.muscles: dict = {}
+
+    def add_muscle(self, muscle) -> None:
+        if muscle.name in self.muscles:
+            raise ValueError(f"A muscle named {muscle.name!r} already exists in the model.")
+        self.muscles[muscle.name] = muscle
+
+    @property
+    def nb_muscles(self) -> int:
+        return len(self.muscles)
+
+    @property
+    def muscle_names(self) -> list:
+        return list(self.muscles.keys())
+
+    def muscle_lengths(self, Q) -> MX:
+        if not self.muscles:
+            return MX.zeros(0, 1)
+        return vertcat(*[m.length(Q, self) for m in self.muscles.values()])
+
+    def muscle_moment_arms(self, Q) -> MX:
+        if not self.muscles:
+            return MX.zeros(0, 12 * self.nb_segments)
+        return vertcat(*[m.moment_arm(Q, self).T for m in self.muscles.values()])
 
     def set_numpy_model(self, numpy_model: GenericBiomechanicalModel):
         self._numpy_model = numpy_model

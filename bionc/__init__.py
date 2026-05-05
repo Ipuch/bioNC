@@ -13,6 +13,8 @@ from .bionc_numpy import (
     NaturalInertialParameters,
     compute_transformation_matrix,
     InverseKinematics,
+    Muscle,
+    MuscleViaPoint,
 )
 from .bionc_numpy.homogenous_transform import HomogeneousTransform
 from .bionc_numpy.natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerations

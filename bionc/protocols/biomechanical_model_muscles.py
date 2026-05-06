@@ -43,7 +43,7 @@ class GenericBiomechanicalModelMuscles(ABC):
 
     @abstractmethod
     def lengths(self, Q: NaturalCoordinates, model):
-        """Return the length of every muscle, stacked along axis 0."""
+        """Return the length of every muscles, stacked along axis 0."""
 
     @abstractmethod
     def moment_arms(self, Q: NaturalCoordinates, model):

@@ -6,7 +6,7 @@ from .utils import TestUtils
 
 def test_pendulum_with_muscle_example_runs():
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/muscle/pendulum_with_muscle.py")
+    module = TestUtils.load_module(bionc + "/examples/muscles/pendulum_with_muscle.py")
     result = module.main()
 
     assert result["model"].nb_muscles == 2

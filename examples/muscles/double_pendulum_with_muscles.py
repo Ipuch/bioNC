@@ -155,5 +155,37 @@ def main():
     )
 
 
+def _segment_Q_about_x(theta: float, rp: np.ndarray) -> SegmentNaturalCoordinates:
+    """Q for a unit segment hinged about the global X axis, at angle ``theta`` from -Y."""
+    c, s = np.cos(theta), np.sin(theta)
+    rd = rp + np.array([0.0, -c, -s])
+    w = np.array([0.0, -s, c])
+    return SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=rp, rd=rd, w=w)
+
+
+def animate(nb_frames: int = 120):
+    """Animate the double pendulum + muscles by sweeping both hinge angles."""
+    model = build_model()
+
+    t = np.linspace(0.0, 2.0 * np.pi, nb_frames)
+    theta0 = 0.6 * np.sin(t)
+    theta1 = 0.9 * np.sin(t + np.pi / 3)
+
+    Q_traj = np.zeros((model.nb_Q, nb_frames))
+    for k in range(nb_frames):
+        Q0 = _segment_Q_about_x(theta0[k], rp=np.zeros(3))
+        rp1 = np.array(Q0.rd).reshape(3)
+        Q1 = _segment_Q_about_x(theta0[k] + theta1[k], rp=rp1)
+        Q_traj[:, k] = np.array(NaturalCoordinates.from_qi((Q0, Q1))).reshape(-1)
+
+    from pyorerun import PhaseRerun
+    from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+
+    prr = PhaseRerun(t_span=t)
+    prr.add_animated_model(BioncModelNoMesh(model), Q_traj)
+    prr.rerun()
+
+
 if __name__ == "__main__":
     main()
+    animate()

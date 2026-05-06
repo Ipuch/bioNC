@@ -103,7 +103,7 @@ def test_main_registers_one_arrow_per_axis_per_tile():
     # Origins of the first frame land at (i*spacing, 0, 0) for tile i.
     origins_per_tile = {}
     for arrow in captured["arrows"]:
-        type_label = arrow.name.split("/")[-2]  # ".../<TYPE>/<axis>/force_vector_<num>"
+        type_label = arrow.name.split("/")[-3]  # ".../<TYPE>/<axis>/force_vector_<num>"
         origins_per_tile.setdefault(type_label, set()).add(tuple(arrow.vector_origins[:, 0]))
     for i, type_enum in enumerate(module._implemented_types()):
         # All six arrows of a tile share the same origin.

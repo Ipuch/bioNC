@@ -180,9 +180,11 @@ def animate(nb_frames: int = 120):
 
     from pyorerun import PhaseRerun
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+    from bionc.vizualization.pyorerun_natural_vectors import add_natural_vectors
 
     prr = PhaseRerun(t_span=t)
     prr.add_animated_model(BioncModelNoMesh(model), Q_traj)
+    add_natural_vectors(prr, model, Q_traj, scale_u=0.25, scale_v=1.0, scale_w=0.25)
     prr.rerun()
 
 

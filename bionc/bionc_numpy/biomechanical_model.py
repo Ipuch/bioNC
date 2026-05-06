@@ -5,6 +5,7 @@ from numpy import transpose
 
 from .biomechanical_model_joints import BiomechanicalModelJoints
 from .biomechanical_model_markers import BiomechanicalModelMarkers
+from .biomechanical_model_muscles import BiomechanicalModelMuscles
 from .biomechanical_model_segments import BiomechanicalModelSegments
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .external_force import ExternalForceSet
@@ -36,7 +37,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         segments = BiomechanicalModelSegments() if segments is None else segments
         joints = BiomechanicalModelJoints() if joints is None else joints
         markers = BiomechanicalModelMarkers(segments)
-        super().__init__(segments=segments, joints=joints, markers=markers)
+        muscles = BiomechanicalModelMuscles(segments)
+        super().__init__(segments=segments, joints=joints, markers=markers, muscles=muscles)
 
     def to_mx(self):
         """
@@ -66,6 +68,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         biomechanical_model._update_mass_matrix()
         biomechanical_model.set_numpy_model(self)
+
+        for muscle in self.muscles.values():
+            biomechanical_model.add_muscle(muscle.to_mx())
 
         return biomechanical_model
 

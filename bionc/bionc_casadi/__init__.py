@@ -16,6 +16,7 @@ from .natural_accelerations import SegmentNaturalAccelerations, NaturalAccelerat
 from .natural_axis import Axis
 from .natural_coordinates import SegmentNaturalCoordinates, NaturalCoordinates
 from .natural_marker import NaturalMarker, Marker, SegmentNaturalVector
+from .muscle import Muscle, MuscleViaPoint
 from .natural_segment import NaturalSegment
 from .natural_segment import NaturalSegment
 from .natural_vector import NaturalVector

@@ -7,6 +7,7 @@ from casadi import MX
 
 from .biomechanical_model_joints import GenericBiomechanicalModelJoints
 from .biomechanical_model_markers import GenericBiomechanicalModelMarkers
+from .biomechanical_model_muscles import GenericBiomechanicalModelMuscles
 from .biomechanical_model_segments import GenericBiomechanicalModelSegments
 from .biomechanical_model_tree import GenericBiomechanicalModelTree
 from .external_force import ExternalForceSet
@@ -31,6 +32,8 @@ class GenericBiomechanicalModel(ABC):
         The generalized mass matrix of the system.
     _markers : GenericBiomechanicalModelMarkers
         The markers of the model handled in a specific class.
+    _muscles : GenericBiomechanicalModelMuscles
+        The muscles of the model handled in a specific class.
 
     Methods
     -------
@@ -167,10 +170,12 @@ class GenericBiomechanicalModel(ABC):
         segments: GenericBiomechanicalModelSegments = None,
         joints: GenericBiomechanicalModelJoints = None,
         markers: GenericBiomechanicalModelMarkers = None,
+        muscles: GenericBiomechanicalModelMuscles = None,
     ):
         self.segments = segments
         self.joints = joints
         self._markers = markers
+        self._muscles = muscles
         self._tree = GenericBiomechanicalModelTree(segments, joints)
         # From Pythom 3.7 the insertion order in a dict is preserved. This is important because when writing a new
         # the order of the segment matters
@@ -571,6 +576,27 @@ class GenericBiomechanicalModel(ABC):
 
     def center_of_mass_position(self, Q: NaturalCoordinates):
         return self._markers.center_of_mass_position(Q)
+
+    def add_muscle(self, muscle) -> None:
+        return self._muscles.add_muscle(muscle)
+
+    @property
+    def muscles(self) -> dict:
+        return self._muscles.muscles
+
+    @property
+    def nb_muscles(self) -> int:
+        return self._muscles.nb_muscles
+
+    @property
+    def muscle_names(self) -> list[str]:
+        return self._muscles.names
+
+    def muscle_lengths(self, Q: NaturalCoordinates):
+        return self._muscles.lengths(Q, self)
+
+    def muscle_moment_arms(self, Q: NaturalCoordinates):
+        return self._muscles.moment_arms(Q, self)
 
     @abstractmethod
     def holonomic_constraints(self, Q: NaturalCoordinates) -> MX | np.ndarray:

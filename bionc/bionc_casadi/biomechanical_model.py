@@ -4,6 +4,7 @@ from typing import Any
 
 from .biomechanical_model_joints import BiomechanicalModelJoints
 from .biomechanical_model_markers import BiomechanicalModelMarkers
+from .biomechanical_model_muscles import BiomechanicalModelMuscles
 from .biomechanical_model_segments import BiomechanicalModelSegments
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .external_force import ExternalForceSet
@@ -41,7 +42,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         segments = BiomechanicalModelSegments() if segments is None else segments
         joints = BiomechanicalModelJoints() if joints is None else joints
         markers = BiomechanicalModelMarkers(segments=segments)
-        super().__init__(segments=segments, joints=joints, markers=markers)
+        muscles = BiomechanicalModelMuscles(segments=segments)
+        super().__init__(segments=segments, joints=joints, markers=markers, muscles=muscles)
         self._numpy_model = None
 
     def set_numpy_model(self, numpy_model: GenericBiomechanicalModel):

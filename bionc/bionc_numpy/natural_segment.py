@@ -624,7 +624,7 @@ class NaturalSegment(AbstractNaturalSegment):
         A[0:12, 12:18] = Kr.T
         A[12:, 12:18] = np.zeros((6, 6))
 
-        B = np.concatenate([self.gravity_force(), bias], axis=0)
+        B = np.concatenate([self.gravity_force(), bias.squeeze()], axis=0)
 
         # solve the linear system Ax = B with numpy
         x = np.linalg.solve(A, B)

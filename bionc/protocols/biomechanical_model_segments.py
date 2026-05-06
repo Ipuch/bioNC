@@ -285,5 +285,3 @@ class GenericBiomechanicalModelSegments(ABC):
         np.ndarray | MX
             Rigid body constraints of the segment [6 * nb_segments, nbQ]
         """
-
-

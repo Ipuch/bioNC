@@ -256,9 +256,9 @@ class Joint:
             # Last 2 constraints are bilinear dot products
             for i in range(2):
                 N_up = self.parent_vector[i].interpolate().rot  # 3x12
-                N_vc = self.child_vector[i].interpolate().rot   # 3x12
+                N_vc = self.child_vector[i].interpolate().rot  # 3x12
                 u_p_dot = N_up @ np.array(Qdot_parent)  # 3x1
-                v_c_dot = N_vc @ np.array(Qdot_child)   # 3x1
+                v_c_dot = N_vc @ np.array(Qdot_child)  # 3x1
                 bias[i + 3] = 2 * u_p_dot.T @ v_c_dot
 
             return bias
@@ -433,9 +433,9 @@ class Joint:
             # First 3 constraints are linear => bias = 0
             # Last constraint is a bilinear dot product
             N_up = self.parent_vector.interpolate().rot  # 3x12
-            N_vc = self.child_vector.interpolate().rot   # 3x12
+            N_vc = self.child_vector.interpolate().rot  # 3x12
             u_p_dot = N_up @ np.array(Qdot_parent)  # 3x1
-            v_c_dot = N_vc @ np.array(Qdot_child)   # 3x1
+            v_c_dot = N_vc @ np.array(Qdot_child)  # 3x1
             bias[3] = 2 * u_p_dot.T @ v_c_dot
 
             return bias
@@ -736,12 +736,12 @@ class Joint:
                 Acceleration bias vector [1, 1]. Enter the DAE RHS as -bias.
             """
             Np = self.sphere_center.interpolation_matrix.to_array()  # 3x12
-            Na = self.plane_point.interpolation_matrix.to_array()    # 3x12
-            Nn = self.plane_normal.interpolation_matrix              # 3x12
+            Na = self.plane_point.interpolation_matrix.to_array()  # 3x12
+            Nn = self.plane_normal.interpolation_matrix  # 3x12
 
             P_dot = Np @ np.array(Qdot_parent)  # 3x1
-            A_dot = Na @ np.array(Qdot_child)   # 3x1
-            n_dot = Nn @ np.array(Qdot_child)   # 3x1
+            A_dot = Na @ np.array(Qdot_child)  # 3x1
+            n_dot = Nn @ np.array(Qdot_child)  # 3x1
 
             bias = 2 * P_dot.T @ n_dot - 2 * n_dot.T @ A_dot
 
@@ -901,7 +901,7 @@ class Joint:
                 Acceleration bias vector [1, 1]. Enter the DAE RHS as -bias.
             """
             Np = self.parent_point.interpolation_matrix  # 3x12
-            Nc = self.child_point.interpolation_matrix   # 3x12
+            Nc = self.child_point.interpolation_matrix  # 3x12
 
             diff_vel = Np @ np.array(Qdot_parent) - Nc @ np.array(Qdot_child)  # 3x1
             bias = 2 * diff_vel.T @ diff_vel

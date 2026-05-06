@@ -531,18 +531,19 @@ class NaturalSegment(AbstractNaturalSegment):
 
         # Compute the quadratic form (q_dot.T * H * q_dot) for each constraint
         # This forms the components of the bias vector
-        bias_vector = np.array([
-            Qidot.T @ H1 @ Qidot,
-            Qidot.T @ H2 @ Qidot,
-            Qidot.T @ H3 @ Qidot,
-            Qidot.T @ H4 @ Qidot,
-            Qidot.T @ H5 @ Qidot,
-            Qidot.T @ H6 @ Qidot
-        ]).reshape(6, 1)
+        bias_vector = np.array(
+            [
+                Qidot.T @ H1 @ Qidot,
+                Qidot.T @ H2 @ Qidot,
+                Qidot.T @ H3 @ Qidot,
+                Qidot.T @ H4 @ Qidot,
+                Qidot.T @ H5 @ Qidot,
+                Qidot.T @ H6 @ Qidot,
+            ]
+        ).reshape(6, 1)
 
         return bias_vector
 
-    # Backward-compatibility alias
     @staticmethod
     def rigid_body_constraint_acceleration_biais(Qidot: SegmentNaturalVelocities) -> np.ndarray:
         return NaturalSegment.rigid_body_constraint_acceleration_bias(Qidot)
@@ -853,12 +854,7 @@ def first_rigid_body_constraint_hessian() -> np.ndarray:
     Z = np.zeros((3, 3))
 
     # Derived from H_1 = 2 * J_u^T * J_u
-    H1 = np.block([
-        [2 * I, Z, Z, Z],
-        [Z, Z, Z, Z],
-        [Z, Z, Z, Z],
-        [Z, Z, Z, Z]
-    ])
+    H1 = np.block([[2 * I, Z, Z, Z], [Z, Z, Z, Z], [Z, Z, Z, Z], [Z, Z, Z, Z]])
     return H1
 
 
@@ -871,12 +867,7 @@ def second_rigid_body_constraint_hessian() -> np.ndarray:
     Z = np.zeros((3, 3))
 
     # Derived from H_2 = J_u^T * J_v + J_v^T * J_u
-    H2 = np.block([
-        [Z, I, -I, Z],
-        [I, Z, Z, Z],
-        [-I, Z, Z, Z],
-        [Z, Z, Z, Z]
-    ])
+    H2 = np.block([[Z, I, -I, Z], [I, Z, Z, Z], [-I, Z, Z, Z], [Z, Z, Z, Z]])
     return H2
 
 
@@ -889,12 +880,7 @@ def third_rigid_body_constraint_hessian() -> np.ndarray:
     Z = np.zeros((3, 3))
 
     # Derived from H_3 = J_u^T * J_w + J_w^T * J_u
-    H3 = np.block([
-        [Z, Z, Z, I],
-        [Z, Z, Z, Z],
-        [Z, Z, Z, Z],
-        [I, Z, Z, Z]
-    ])
+    H3 = np.block([[Z, Z, Z, I], [Z, Z, Z, Z], [Z, Z, Z, Z], [I, Z, Z, Z]])
     return H3
 
 
@@ -907,12 +893,7 @@ def fourth_rigid_body_constraint_hessian() -> np.ndarray:
     Z = np.zeros((3, 3))
 
     # Derived from H_4 = 2 * J_v^T * J_v
-    H4 = np.block([
-        [Z, Z, Z, Z],
-        [Z, 2 * I, -2 * I, Z],
-        [Z, -2 * I, 2 * I, Z],
-        [Z, Z, Z, Z]
-    ])
+    H4 = np.block([[Z, Z, Z, Z], [Z, 2 * I, -2 * I, Z], [Z, -2 * I, 2 * I, Z], [Z, Z, Z, Z]])
     return H4
 
 
@@ -925,12 +906,7 @@ def fifth_rigid_body_constraint_hessian() -> np.ndarray:
     Z = np.zeros((3, 3))
 
     # Derived from H_5 = J_v^T * J_w + J_w^T * J_v
-    H5 = np.block([
-        [Z, Z, Z, Z],
-        [Z, Z, Z, I],
-        [Z, Z, Z, -I],
-        [Z, I, -I, Z]
-    ])
+    H5 = np.block([[Z, Z, Z, Z], [Z, Z, Z, I], [Z, Z, Z, -I], [Z, I, -I, Z]])
     return H5
 
 
@@ -943,10 +919,5 @@ def sixth_rigid_body_constraint_hessian() -> np.ndarray:
     Z = np.zeros((3, 3))
 
     # Derived from H_6 = 2 * J_w^T * J_w
-    H6 = np.block([
-        [Z, Z, Z, Z],
-        [Z, Z, Z, Z],
-        [Z, Z, Z, Z],
-        [Z, Z, Z, 2 * I]
-    ])
+    H6 = np.block([[Z, Z, Z, Z], [Z, Z, Z, Z], [Z, Z, Z, Z], [Z, Z, Z, 2 * I]])
     return H6

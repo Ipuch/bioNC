@@ -77,5 +77,3 @@ class BiomechanicalModelSegments(GenericBiomechanicalModelSegments):
             K_r[idx_row, idx_col] = segment.rigid_body_constraint_jacobian(Q.vector(i))
 
         return K_r
-
-

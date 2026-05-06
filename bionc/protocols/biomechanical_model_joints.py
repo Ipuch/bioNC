@@ -399,5 +399,3 @@ class GenericBiomechanicalModelJoints(ABC):
         -------
             Joint constraints of the segment [nb_joint_constraints, 1]
         """
-
-

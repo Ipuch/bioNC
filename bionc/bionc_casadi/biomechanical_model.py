@@ -292,9 +292,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
                 for j in joints:
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
 
-                    Qdot_parent = (
-                        None if j.parent is None else Qdot.vector(self.segments[j.parent.name].index)
-                    )
+                    Qdot_parent = None if j.parent is None else Qdot.vector(self.segments[j.parent.name].index)
                     Qdot_child = Qdot.vector(self.segments[j.child.name].index)
 
                     joint_bias = j.constraint_acceleration_bias(Qdot_parent, Qdot_child)
@@ -307,6 +305,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             Qdoti = Qdot.vector(i)
 
             from .natural_segment import NaturalSegment
+
             bias[idx_row] = NaturalSegment.rigid_body_constraint_acceleration_bias(Qdoti)
 
             nb_constraints += 6

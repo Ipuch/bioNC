@@ -76,5 +76,3 @@ class BiomechanicalModelJoints(GenericBiomechanicalModelJoints):
             K_k[idx_row, idx_col_child] = joint.child_constraint_jacobian(Q_parent, Q_child)
 
         return K_k
-
-

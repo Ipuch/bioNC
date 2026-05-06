@@ -9,4 +9,4 @@ class NaturalVectorColors(Enum):
     # modified-yellow
     V = (150, 255, 0)
     # modified-cyan
-    W = (255, 255, 150)
+    W = (150, 255, 255)

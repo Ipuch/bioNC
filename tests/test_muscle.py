@@ -237,6 +237,73 @@ def test_via_point_from_cartesian_distal_offset():
     np.testing.assert_almost_equal(p, np.array([0.0, -1.0, 0.0]), decimal=10)
 
 
+def test_double_pendulum_with_muscles_example_runs():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/muscles/double_pendulum_with_muscles.py")
+    result = module.main()
+
+    model = result["model"]
+    assert model.nb_segments == 2
+    assert model.nb_muscles == 4
+    assert model.muscle_names == [
+        "m_ground_to_seg1",
+        "m_ground_to_seg2",
+        "m_seg1_to_seg2",
+        "m_multi_via",
+    ]
+
+    # Both segments hanging vertically:
+    #   pendulum_0: rp=(0,0,0), rd=(0,-1,0)
+    #   pendulum_1: rp=(0,-1,0), rd=(0,-2,0)
+    # Lengths derived from via point geometry (see example for the via-point definitions).
+    expected_length_m1 = np.sqrt(0.38)  # (0.3,0,0.2) -> (0,-0.5,0)
+    expected_length_m2 = np.sqrt(0.38)  # (0.3,-1,0.2) -> (0,-1.5,0)
+    expected_length_m3 = 0.4  # (0.05,-0.8,0) -> (0.05,-1.2,0)
+    # m4: 4 via points, three segments
+    expected_length_m4 = np.sqrt(0.2725) + 0.9 + np.sqrt(0.1625)
+
+    expected = np.array(
+        [expected_length_m1, expected_length_m2, expected_length_m3, expected_length_m4]
+    )
+    L_np = np.array(result["length_numpy"]).reshape(-1)
+    L_mx = np.array(result["length_casadi"]).reshape(-1)
+    np.testing.assert_almost_equal(L_np, expected, decimal=10)
+    np.testing.assert_almost_equal(L_mx, expected, decimal=10)
+
+    MA_np = np.array(result["moment_arm_numpy"])
+    MA_mx = np.array(result["moment_arm_casadi"])
+    assert MA_np.shape == (4, 12 * model.nb_segments)
+    assert MA_mx.shape == (4, 12 * model.nb_segments)
+    np.testing.assert_almost_equal(MA_np, MA_mx, decimal=10)
+
+    # Mono-articular muscles only have non-zero entries in their own segment block.
+    seg0 = slice(0, 12)
+    seg1 = slice(12, 24)
+    assert np.allclose(MA_np[0, seg1], 0.0)  # m1 doesn't touch seg2
+    assert np.allclose(MA_np[1, seg0], 0.0)  # m2 doesn't touch seg1
+
+
+def test_double_pendulum_with_muscles_animation_Q_is_consistent():
+    """The animate() helper must build Q frames that satisfy rigid body and joint constraints."""
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/muscles/double_pendulum_with_muscles.py")
+
+    model = module.build_model()
+    from bionc import NaturalCoordinates
+
+    for theta0, theta1 in [(0.0, 0.0), (0.3, 0.5), (-0.4, 0.7)]:
+        Q0 = module._segment_Q_about_x(theta0, rp=np.zeros(3))
+        rp1 = np.array(Q0.rd).reshape(3)
+        Q1 = module._segment_Q_about_x(theta0 + theta1, rp=rp1)
+        Q = NaturalCoordinates.from_qi((Q0, Q1))
+
+        np.testing.assert_allclose(model.rigid_body_constraints(Q), 0.0, atol=1e-12)
+        np.testing.assert_allclose(model.joint_constraints(Q).squeeze(), 0.0, atol=1e-12)
+        # Lengths are positive and finite.
+        L = model.muscle_lengths(Q)
+        assert np.all(L > 0) and np.all(np.isfinite(L))
+
+
 def test_finite_difference_matches_moment_arm():
     """Numerically validate moment_arm = -dL/dQ via central finite differences."""
     model, Q = _build_pendulum_with_muscle("numpy")

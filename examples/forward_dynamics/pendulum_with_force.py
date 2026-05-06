@@ -130,8 +130,6 @@ def drop_the_pendulum(
 
     print("Evaluate Rigid Body Constraints:")
     print(model.rigid_body_constraints(Q_init))
-    print("Evaluate Rigid Body Constraints Jacobian Derivative:")
-    print(model.rigid_body_constraint_jacobian_derivative(Qdot_init))
 
     if (model.rigid_body_constraints(Q_init) > 1e-6).any():
         print(model.rigid_body_constraints(Q_init))
@@ -205,8 +203,8 @@ def main(mode: str = "moment_equilibrium"):
 
 if __name__ == "__main__":
     # model, all_states, time_steps = main(mode="moment_equilibrium")
-    model, all_states, time_steps = main(mode="force_equilibrium")
-    # model, all_states, time_steps = main(mode="no_equilibrium")
+    # model, all_states, time_steps = main(mode="force_equilibrium")
+    model, all_states, time_steps = main(mode="no_equilibrium")
 
     # animate the motion
     from pyorerun import PhaseRerun

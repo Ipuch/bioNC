@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy.ma.core import squeeze
 
 from bionc import JointType, NaturalAxis, CartesianAxis, TransformationMatrixType
 from .utils import TestUtils
@@ -271,35 +272,14 @@ def test_joints(bionc_type, joint_type: JointType):
             ),
             decimal=6,
         )
-        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        bias = joint.constraint_acceleration_bias(Q1, Q2)
+        expected_shape = (5, 1)
+        assert expected_shape == bias.shape
+
         TestUtils.assert_equal(
-            parent_jacobian_dot,
-            np.vstack(
-                (
-                    np.zeros((3, 12)),
-                    np.array(
-                        [
-                            [-0.1, -1.1, -1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 1.7, 2.0, 5.3, -1.7, -2.0, -5.3, 0.0, 0.0, 0.0],
-                        ]
-                    ),
-                )
-            ),
-            decimal=6,
-        )
-        TestUtils.assert_equal(
-            child_jacobian_dot,
-            np.vstack(
-                (
-                    np.zeros((3, 12)),
-                    np.array(
-                        [
-                            [0.0, 0.0, 0.0, 1.0, 2.0, 3.05, -1.0, -2.0, -3.05, 0.0, 0.0, 0.0],
-                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.1, -1.0, -1.0],
-                        ]
-                    ),
-                )
-            ),
+            bias,
+            np.array([[0.0], [0.0], [0.0], [-10.7], [-14.94]]),
+            squeeze=False,
             decimal=6,
         )
 
@@ -335,33 +315,14 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
-        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        bias = joint.constraint_acceleration_bias(Q1, Q2)
+        expected_shape = (4, 1)
+        assert expected_shape == bias.shape
+
         TestUtils.assert_equal(
-            parent_jacobian_dot,
-            np.vstack(
-                (
-                    np.zeros((3, 12)),
-                    np.array(
-                        [
-                            [1.7, 2.0, 5.3, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                        ]
-                    ),
-                )
-            ),
-            decimal=6,
-        )
-        TestUtils.assert_equal(
-            child_jacobian_dot,
-            np.vstack(
-                (
-                    np.zeros((3, 12)),
-                    np.array(
-                        [
-                            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.05],
-                        ]
-                    ),
-                )
-            ),
+            bias,
+            np.array([[0.0], [0.0], [0.0], [43.73]]),
+            squeeze=False,
             decimal=6,
         )
 
@@ -396,15 +357,9 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
-        parent_jacobian_dot, child_jacobian_dot = joint_distal_proximal.constraint_jacobian_derivative(Q1, Q2)
         TestUtils.assert_equal(
-            parent_jacobian_dot,
-            np.zeros((3, 12)),
-            decimal=6,
-        )
-        TestUtils.assert_equal(
-            child_jacobian_dot,
-            np.zeros((3, 12)),
+            joint_distal_proximal.constraint_acceleration_bias(Q1, Q2),
+            np.zeros((3,)),
             decimal=6,
         )
 
@@ -535,16 +490,11 @@ def test_joints(bionc_type, joint_type: JointType):
             squeeze=False,
         )
 
-        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        bias = joint.constraint_acceleration_bias(Q1, Q2)
+        assert bias.shape == (1, 1)
         TestUtils.assert_equal(
-            parent_jacobian_dot,
-            parent_jacobian_res,
-            decimal=6,
-            squeeze=False,
-        )
-        TestUtils.assert_equal(
-            child_jacobian_dot,
-            child_jacobian_res,
+            bias,
+            np.array([[1.55779064]]),
             decimal=6,
             squeeze=False,
         )
@@ -608,16 +558,11 @@ def test_joints(bionc_type, joint_type: JointType):
             squeeze=False,
         )
 
-        parent_jacobian_dot, child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        bias = joint.constraint_acceleration_bias(Q1, Q2)
+        assert bias.shape == (1, 1)
         TestUtils.assert_equal(
-            parent_jacobian_dot,
-            parent_jacobian_res,
-            decimal=6,
-            squeeze=False,
-        )
-        TestUtils.assert_equal(
-            child_jacobian_dot,
-            child_jacobian_res,
+            bias,
+            np.array([[5.19462695]]),
             decimal=6,
             squeeze=False,
         )
@@ -643,10 +588,13 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
-        child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        expected_shape = (5, 1)
+
+        biais = joint.constraint_acceleration_bias(Q1, Q2)
+        assert biais.shape == expected_shape
         TestUtils.assert_equal(
-            child_jacobian_dot,
-            np.zeros((5, 12)),
+            biais,
+            np.zeros(expected_shape).squeeze(),
             decimal=6,
         )
 
@@ -669,15 +617,17 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
-        child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        bias = joint.constraint_acceleration_bias(Q1, Q2)
+        expected_shape = (3, 1)
+        assert bias.shape == expected_shape
+
         TestUtils.assert_equal(
-            child_jacobian_dot,
-            np.zeros((3, 12)),
+            bias,
+            np.zeros(expected_shape).squeeze(),
             decimal=6,
         )
 
         assert joint.parent_constraint_jacobian(Q1, Q2) is None
-        assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
 
     elif joint_type == JointType.GROUND_WELD:
         TestUtils.assert_equal(
@@ -692,15 +642,16 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
-        child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        constraint_acceleration_bias = joint.constraint_acceleration_bias(Q1, Q2)
+        expected_shape = (6, 1)
+        assert constraint_acceleration_bias.shape == (expected_shape)
         TestUtils.assert_equal(
-            child_jacobian_dot,
-            np.zeros((6, 12)),
+            constraint_acceleration_bias,
+            np.zeros(expected_shape).squeeze(),
             decimal=6,
         )
 
         assert joint.parent_constraint_jacobian(Q1, Q2) is None
-        assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
 
     elif joint_type == JointType.GROUND_UNIVERSAL:
         TestUtils.assert_equal(
@@ -722,15 +673,16 @@ def test_joints(bionc_type, joint_type: JointType):
             decimal=6,
         )
 
-        child_jacobian_dot = joint.constraint_jacobian_derivative(Q1, Q2)
+        bias = joint.constraint_acceleration_bias(Q1, Q2)
+        expected_shape = (4, 1)
+        assert expected_shape == bias.shape
         TestUtils.assert_equal(
-            child_jacobian_dot,
-            np.zeros((4, 12)),
+            bias,
+            np.zeros(expected_shape).squeeze(),
             decimal=6,
         )
 
         assert joint.parent_constraint_jacobian(Q1, Q2) is None
-        assert joint.parent_constraint_jacobian_derivative(Q1, Q2) is None
 
 
 @pytest.mark.parametrize(

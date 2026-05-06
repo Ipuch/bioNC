@@ -62,7 +62,6 @@ def test_ground_segment(bionc_type):
     assert model.rigid_body_constraints(Q).shape[0] == 6 * 3
     assert model.rigid_body_constraints_derivative(Q, Qdot).shape[0] == 6 * 3
     assert model.rigid_body_constraints_jacobian(Q).shape == (6 * 3, 12 * 3)
-    assert model.rigid_body_constraint_jacobian_derivative(Qdot).shape == (6 * 3, 12 * 3)
 
     if bionc_type == "casadi":
         # todo: this feature is not well implemented in casadi. The test should be updated when it is fixed.
@@ -70,7 +69,6 @@ def test_ground_segment(bionc_type):
         return
 
     assert model.joint_constraints(Q).shape[0] == 2 * 5  # (five constraints for a hinge)
-    assert model.joint_constraints_jacobian_derivative(Qdot).shape == (2 * 5, 12 * 3)
     assert model.joint_constraints_jacobian(Q).shape == (2 * 5, 12 * 3)
 
     assert model.mass_matrix.shape == (12 * 3, 12 * 3)
@@ -89,7 +87,7 @@ def test_ground_segment(bionc_type):
     assert model.markers_constraints_jacobian().shape == (6, 12 * 3)
     assert model.holonomic_constraints(Q=Q).shape == (6 * 3 + 10, 1)
     assert model.holonomic_constraints_jacobian(Q=Q).shape == (6 * 3 + 10, 12 * 3)
-    assert model.holonomic_constraints_jacobian_derivative(Qdot=Qdot).shape == (6 * 3 + 10, 12 * 3)
+
     if bionc_type == "casadi":
         TestUtils.assert_equal(sum1(model.gravity_forces()), np.array([-29.43]), expand=False)
     else:

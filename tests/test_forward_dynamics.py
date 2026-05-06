@@ -8,9 +8,7 @@ from .utils import TestUtils
 from .utils_constant_forward_dynamics import (
     G as G_EXPECTED,
     K as K_EXPECTED,
-    PHIR_DOT as PHIR_DOT_EXPECTED,
-    PHIJ_DOT as PHIJ_DOT_EXPECTED,
-    KDOT as KDOT_EXPECTED,
+    bias_expected as BIAS_EXPECTED,
     AUGMENTED_MASS_MATRIX as AUGMENTED_MASS_MATRIX_EXPECTED,
 )
 
@@ -272,17 +270,12 @@ def test_forward_dynamics_n_pendulum(bionc_type):
     # inspect each element of the forward dynamics
     G = model.mass_matrix
     K = model.holonomic_constraints_jacobian(Q_init)
-    Phirdot = model.rigid_body_constraint_jacobian_derivative(Qdot_init)
-    Phijdot = model.joint_constraints_jacobian_derivative(Qdot_init)
-    Kdot = model.holonomic_constraints_jacobian_derivative(Qdot_init)
+    bias = model.holonomic_constraints_acceleration_bias(Qdot_init)
     augmented_mass_matrix = model.augmented_mass_matrix(Q_init)
     TestUtils.assert_equal(G, G_EXPECTED)
     TestUtils.assert_equal(K, K_EXPECTED)
-    TestUtils.assert_equal(Phirdot, PHIR_DOT_EXPECTED)
-    TestUtils.assert_equal(Phijdot, PHIJ_DOT_EXPECTED)
-    TestUtils.assert_equal(Kdot, KDOT_EXPECTED)
-    TestUtils.assert_equal(-Kdot @ Qdot_init, -KDOT_EXPECTED @ Qdot_init)
-
+    assert bias.shape == BIAS_EXPECTED.shape
+    TestUtils.assert_equal(bias, BIAS_EXPECTED.squeeze())
     TestUtils.assert_equal(augmented_mass_matrix, AUGMENTED_MASS_MATRIX_EXPECTED)
     Qddot, lagrange_multipliers = model.forward_dynamics(Q_init, Qdot_init)
 

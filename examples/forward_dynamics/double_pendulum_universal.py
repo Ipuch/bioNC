@@ -48,8 +48,6 @@ def drop_the_pendulum(
 
     print("Evaluate Rigid Body Constraints:")
     print(model.rigid_body_constraints(Q_init))
-    print("Evaluate Rigid Body Constraints Jacobian Derivative:")
-    print(model.rigid_body_constraint_jacobian_derivative(Qdot_init))
 
     if (model.rigid_body_constraints(Q_init) > 1e-6).any():
         print(model.rigid_body_constraints(Q_init))
@@ -175,7 +173,7 @@ def main(show_results: bool = True):
         gamma=np.pi / 2,
         length=1,
         mass=1,
-        center_of_mass=np.array([00, 0.1, 00]),  # in segment coordinates system
+        center_of_mass=np.array([00, -0.1, 00]),  # in segment coordinates system
         inertia=np.array([[0.01, 0, 0], [0, 0.01, 0], [0, 0, 0.01]]),  # in segment coordinates system
     )
 
@@ -265,7 +263,7 @@ if __name__ == "__main__":
 
     from viz import plot_series
 
-    plot_series(np.linspace(0, 2, 401), minimal_coordinate_time_series, legend="minimal_coordinates")
+    # plot_series(np.linspace(0, 2, 401), minimal_coordinate_time_series, legend="minimal_coordinates")
 
     # animate the motion
     from pyorerun import PhaseRerun

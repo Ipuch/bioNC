@@ -328,12 +328,6 @@ class AbstractNaturalSegment(ABC):
         """
 
     @staticmethod
-    def rigid_body_constraint_jacobian_derivative(Qdoti: SegmentNaturalVelocities):
-        """
-        This function returns the derivative of the Jacobian matrix of the rigid body constraints denoted Kr_dot [6 x 12 x N_frame]
-        """
-
-    @staticmethod
     def compute_pseudo_inertia_matrix(
         mass,
         cartesian_center_of_mass,

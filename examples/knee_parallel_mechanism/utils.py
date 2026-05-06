@@ -43,8 +43,6 @@ def forward_integration(
 
     print("Evaluate Rigid Body Constraints:")
     print(model.rigid_body_constraints(Q_init))
-    print("Evaluate Rigid Body Constraints Jacobian Derivative:")
-    print(model.rigid_body_constraint_jacobian_derivative(Qdot_init))
 
     if (model.rigid_body_constraints(Q_init) > 1e-4).any():
         print(model.rigid_body_constraints(Q_init))

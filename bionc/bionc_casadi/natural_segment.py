@@ -447,11 +447,6 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return bias
 
-    # Backward-compatibility alias
-    @staticmethod
-    def rigid_body_constraint_acceleration_biais(Qdoti: SegmentNaturalVelocities) -> MX:
-        return NaturalSegment.rigid_body_constraint_acceleration_bias(Qdoti)
-
     def center_of_mass_position(self, Qi: SegmentNaturalCoordinates) -> MX:
         """
         This function returns the position of the center of mass of the segment in the global coordinate system.

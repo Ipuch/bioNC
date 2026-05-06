@@ -179,12 +179,6 @@ class GroundJoint:
             """
             return MX.zeros(self.nb_constraints, 1)
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
     class Universal(JointBase):
         """
         This class is to define a Universal joint between two segments.
@@ -276,12 +270,6 @@ class GroundJoint:
                 Acceleration bias vector [4, 1]. All zeros.
             """
             return MX.zeros(self.nb_constraints, 1)
-
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
@@ -391,12 +379,6 @@ class GroundJoint:
             """
             return MX.zeros(self.nb_constraints, 1)
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
     class Weld(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
@@ -476,9 +458,3 @@ class GroundJoint:
                 Acceleration bias vector [6, 1]. All zeros.
             """
             return MX.zeros(self.nb_constraints, 1)
-
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)

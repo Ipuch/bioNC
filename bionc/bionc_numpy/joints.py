@@ -263,12 +263,6 @@ class Joint:
 
             return bias
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -440,12 +434,6 @@ class Joint:
 
             return bias
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -579,8 +567,6 @@ class Joint:
                 Acceleration bias vector [3, 1]. All zeros for spherical joints.
             """
             return np.zeros((self.nb_constraints, 1))
-
-
 
         def to_mx(self):
             """
@@ -743,12 +729,6 @@ class Joint:
 
             return np.array(bias).reshape(self.nb_constraints, 1)
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -903,12 +883,6 @@ class Joint:
             bias = 2 * diff_vel.T @ diff_vel
 
             return np.array(bias).reshape(self.nb_constraints, 1)
-
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
         def to_mx(self):
             """

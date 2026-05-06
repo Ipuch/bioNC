@@ -262,9 +262,7 @@ def test_double_pendulum_with_muscles_example_runs():
     # m4: 4 via points, three segments
     expected_length_m4 = np.sqrt(0.2725) + 0.9 + np.sqrt(0.1625)
 
-    expected = np.array(
-        [expected_length_m1, expected_length_m2, expected_length_m3, expected_length_m4]
-    )
+    expected = np.array([expected_length_m1, expected_length_m2, expected_length_m3, expected_length_m4])
     L_np = np.array(result["length_numpy"]).reshape(-1)
     L_mx = np.array(result["length_casadi"]).reshape(-1)
     np.testing.assert_almost_equal(L_np, expected, decimal=10)

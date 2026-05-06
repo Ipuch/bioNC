@@ -113,22 +113,31 @@ class BioncModelNoMesh:
     @property
     def nb_muscles(self) -> int:
         """
-        Returns the number of ligaments
+        Returns the number of muscles
         """
-        return 0
+        return self.model.nb_muscles
 
     @property
     def muscle_names(self) -> tuple[str, ...]:
         """
-        Returns the names of the ligaments
+        Returns the names of the muscles
         """
-        return tuple()
+        return tuple(self.model.muscle_names)
 
     def muscle_strips(self, q: np.ndarray) -> list[list[np.ndarray]]:
         """
-        Returns the position of the ligaments in the global reference frame
+        Returns the position of the via points of each muscle in the global reference frame.
+        Each strip is the ordered list of 3D via point positions for one muscle.
         """
-        return list()
+        if self.model.nb_muscles == 0:
+            return list()
+
+        Q = NaturalCoordinates(q[:, None] if q.ndim == 1 else q)
+        strips = []
+        for muscle in self.model.muscles.values():
+            points = np.asarray(muscle.via_points_in_global(Q, self.model))
+            strips.append([points[:, k].reshape(3) for k in range(points.shape[1])])
+        return strips
 
     @property
     def nb_q(self) -> int:

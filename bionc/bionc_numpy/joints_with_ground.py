@@ -68,12 +68,6 @@ class GroundJoint:
             """
             return None
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -214,12 +208,6 @@ class GroundJoint:
                 Acceleration bias vector [5, 1]. All zeros.
             """
             return np.zeros((self.nb_constraints, 1))
-
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
         def to_mx(self):
             """
@@ -365,12 +353,6 @@ class GroundJoint:
             """
             return np.zeros((self.nb_constraints, 1))
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -477,12 +459,6 @@ class GroundJoint:
             """
             return np.zeros((self.nb_constraints, 1))
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -584,12 +560,6 @@ class GroundJoint:
                 Acceleration bias vector [6, 1]. All zeros.
             """
             return np.zeros((self.nb_constraints, 1))
-
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
         def to_mx(self):
             """

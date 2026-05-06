@@ -580,11 +580,7 @@ class Joint:
             """
             return np.zeros((self.nb_constraints, 1))
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> np.ndarray:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
+
 
         def to_mx(self):
             """

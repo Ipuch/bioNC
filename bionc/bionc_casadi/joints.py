@@ -57,18 +57,6 @@ class Joint:
 
             return None
 
-        def parent_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-
-            return None
-
-        def child_constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-
-            return None
-
         def constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> tuple[MX, MX]:
@@ -80,20 +68,6 @@ class Joint:
             -------
             tuple[MX, MX]
                 joint constraints jacobian of the parent and child segment (None for free joint)
-            """
-            return None
-
-        def constraint_jacobian_derivative(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> tuple[MX, MX]:
-            """
-            This function returns the jacobian derivative of the kinematic constraints of the joint, denoted Phi_k
-            as a function of the natural coordinates Q_parent and Q_child.
-
-            Returns
-            -------
-            tuple[MX, MX]
-                joint constraints jacobian derivative of the parent and child segment (None for free joint)
             """
             return None
 
@@ -243,12 +217,6 @@ class Joint:
 
             return bias
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
     class Universal(JointBase):
         """
         This class is to define a Universal joint between two segments.
@@ -394,12 +362,6 @@ class Joint:
 
             return bias
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
     class Spherical(JointBase):
         def __init__(
             self,
@@ -506,12 +468,6 @@ class Joint:
                 Acceleration bias vector [3, 1]. All zeros for spherical joints.
             """
             return MX.zeros(self.nb_constraints, 1)
-
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
 
     class SphereOnPlane(JointBase):
         """
@@ -642,12 +598,6 @@ class Joint:
 
             return bias
 
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)
-
     class ConstantLength(JointBase):
         def __init__(
             self,
@@ -769,9 +719,3 @@ class Joint:
             bias = 2 * sumsqr(diff_vel)
 
             return bias
-
-        # Backward-compatibility alias
-        def constraint_acceleration_biais(
-            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
-        ) -> MX:
-            return self.constraint_acceleration_bias(Qdot_parent, Qdot_child)

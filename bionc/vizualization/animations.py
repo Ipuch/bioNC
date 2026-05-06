@@ -4,9 +4,9 @@ from enum import Enum
 class NaturalVectorColors(Enum):
     """Colors for the vectors."""
 
-    # light red
-    U = (255, 20, 0)
-    # light green
-    V = (0, 255, 20)
-    # light blue
-    W = (20, 0, 255)
+    # modified-magenta
+    U = (255, 0, 150)
+    # modified-yellow
+    V = (150, 255, 0)
+    # modified-cyan
+    W = (255, 255, 150)

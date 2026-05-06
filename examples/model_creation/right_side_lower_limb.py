@@ -384,6 +384,7 @@ def main():
     Qxp = model.Q_from_markers(markers_xp[:, :, 0:2])
 
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
+    from bionc.vizualization.pyorerun_natural_vectors import add_natural_vectors
     from pyorerun import PhaseRerun, PyoMarkers
 
     # display the experimental markers in white and the model markers in blue
@@ -393,6 +394,7 @@ def main():
 
     pyomarker = PyoMarkers.from_c3d(filename)
     prr.add_animated_model(model_interface, Qxp, pyomarker)
+    add_natural_vectors(prr, model, np.asarray(Qxp), scale_u=0.1, scale_v=1.0, scale_w=0.1)
     prr.rerun()
 
     # remove the c3d file

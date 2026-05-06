@@ -9,9 +9,7 @@ from bionc import TransformationMatrixType
 
 def _load_module():
     bionc = TestUtils.bionc_folder()
-    return TestUtils.load_module(
-        bionc + "/examples/transformation_matrix/compare_transformation_matrices.py"
-    )
+    return TestUtils.load_module(bionc + "/examples/transformation_matrix/compare_transformation_matrices.py")
 
 
 def test_implemented_types_excludes_unimplemented_ones():
@@ -55,8 +53,12 @@ def test_buv_orthogonal_frame_is_identity_per_frame():
 
 @pytest.mark.parametrize(
     "type_enum",
-    [TransformationMatrixType.Buv, TransformationMatrixType.Bvu,
-     TransformationMatrixType.Bwu, TransformationMatrixType.Buw],
+    [
+        TransformationMatrixType.Buv,
+        TransformationMatrixType.Bvu,
+        TransformationMatrixType.Bwu,
+        TransformationMatrixType.Buw,
+    ],
 )
 def test_orthogonal_axes_have_unit_norm(type_enum):
     """For every implemented type and every frame, the three columns of the

@@ -20,7 +20,6 @@ from bionc.bionc_numpy.transformation_matrix import (
 from bionc.vizualization.animations import NaturalVectorColors
 from bionc.vizualization.pyorerun_natural_vectors import _ColoredVector
 
-
 RGB_RED = (255, 0, 0)
 RGB_GREEN = (0, 255, 0)
 RGB_BLUE = (0, 0, 255)

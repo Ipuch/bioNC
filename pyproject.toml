@@ -7,7 +7,7 @@ packages = ["bionc"]
 
 [project]
 name = "bionc"
-version = "0.10.0"
+version = "0.11.0"
 authors = [{name = "Pierre Puchaud", email = "puchaud.pierre@gmail.com"}]
 maintainers = [{name = "Pierre Puchaud", email = "puchaud.pierre@gmail.com"}]
 description = "Natural Coordinates with python for biomechanics"

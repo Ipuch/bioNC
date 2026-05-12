@@ -61,7 +61,7 @@ if __name__ == "__main__":
     print("")
     print("RKNI residuals along x, y, z for each frame")
     idx = model.marker_names.index("RKNI")
-    for f in range(0,10):
+    for f in range(0, 10):
         marker_residuals = stats["marker_residuals_xyz"][:, idx, :].squeeze()
         print(f"X,\tY,\tZ\t:\t{marker_residuals[0,f]}\t{marker_residuals[1,f]}\t{marker_residuals[2,f]}")
 

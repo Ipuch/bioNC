@@ -425,22 +425,13 @@ class InverseKinematics:
         step_eps = options.get("step_eps", options["eps"])
         objective_eps = options.get("objective_eps", options["eps"])
 
-        marker_jacobian = np.ascontiguousarray(
-            self.model.markers_constraints_jacobian(only_technical=True)
-        )
+        marker_jacobian = np.ascontiguousarray(self.model.markers_constraints_jacobian(only_technical=True))
         marker_jacobian_transpose = np.ascontiguousarray(marker_jacobian.T)
         hessian = np.ascontiguousarray(
-            marker_jacobian_transpose @ marker_jacobian
-            + options["regularization"] * np.eye(marker_jacobian.shape[1])
+            marker_jacobian_transpose @ marker_jacobian + options["regularization"] * np.eye(marker_jacobian.shape[1])
         )
-        dik_evaluator = (
-            self._setup_dik_evaluator()
-            if options["use_casadi_dik_evaluators"]
-            else None
-        )
-        qp = self._setup_dik_qp(
-            proxsuite, hessian, self.model.nb_holonomic_constraints, options
-        )
+        dik_evaluator = self._setup_dik_evaluator() if options["use_casadi_dik_evaluators"] else None
+        qp = self._setup_dik_qp(proxsuite, hessian, self.model.nb_holonomic_constraints, options)
 
         for f in range(self.nb_frames):
             q_current = np.asarray(Q_init[:, f], dtype=float).reshape(-1)
@@ -449,17 +440,12 @@ class InverseKinematics:
 
             for iteration in range(max_iter):
                 marker_defects = self._dik_marker_defects(marker_jacobian, q_current, f)
-                holonomic_constraints, holonomic_jacobian = (
-                    self._dik_holonomic_constraints(q_current, dik_evaluator)
-                )
+                holonomic_constraints, holonomic_jacobian = self._dik_holonomic_constraints(q_current, dik_evaluator)
 
                 final_constraint_norm = np.linalg.norm(holonomic_constraints)
                 marker_objective = 0.5 * marker_defects.T @ marker_defects
                 constraints_ok = final_constraint_norm < constraint_eps
-                if (
-                    constraints_ok
-                    and abs(previous_objective - marker_objective) < objective_eps
-                ):
+                if constraints_ok and abs(previous_objective - marker_objective) < objective_eps:
                     converged = True
                     print("converged at iteration ", iteration)
                     break
@@ -485,16 +471,12 @@ class InverseKinematics:
                     break
 
             marker_defects = self._dik_marker_defects(marker_jacobian, q_current, f)
-            holonomic_constraints, _ = self._dik_holonomic_constraints(
-                q_current, dik_evaluator
-            )
+            holonomic_constraints, _ = self._dik_holonomic_constraints(q_current, dik_evaluator)
             final_constraint_norm = np.linalg.norm(holonomic_constraints)
 
             Qopt[:, f : f + 1] = q_current[:, np.newaxis]
             self.objective_function[f] = 0.5 * marker_defects.T @ marker_defects
-            self.success_optim.append(
-                converged or final_constraint_norm < constraint_eps
-            )
+            self.success_optim.append(converged or final_constraint_norm < constraint_eps)
             Q_init = self._update_initial_guess(Q_init, Qopt, initial_guess_mode, f)
 
         return Qopt
@@ -520,9 +502,7 @@ class InverseKinematics:
             ],
         ).expand()
 
-    def _dik_marker_defects(
-        self, marker_jacobian: np.ndarray, q_current: np.ndarray, frame: int
-    ) -> np.ndarray:
+    def _dik_marker_defects(self, marker_jacobian: np.ndarray, q_current: np.ndarray, frame: int) -> np.ndarray:
         experimental_markers = self.experimental_markers[:, :, frame].flatten("F")
         return np.ascontiguousarray(experimental_markers + marker_jacobian @ q_current)
 
@@ -533,9 +513,7 @@ class InverseKinematics:
     ) -> tuple[np.ndarray, np.ndarray]:
         if dik_evaluator is not None:
             constraints, jacobian = dik_evaluator(q_current)
-            return np.array(constraints, dtype=float).reshape(-1), np.ascontiguousarray(
-                np.array(jacobian, dtype=float)
-            )
+            return np.array(constraints, dtype=float).reshape(-1), np.ascontiguousarray(np.array(jacobian, dtype=float))
 
         Q_current = NaturalCoordinatesNumpy(q_current[:, np.newaxis])
         return (
@@ -544,9 +522,7 @@ class InverseKinematics:
         )
 
     @staticmethod
-    def _setup_dik_qp(
-        proxsuite, hessian: np.ndarray, nb_constraints: int, options: dict
-    ):
+    def _setup_dik_qp(proxsuite, hessian: np.ndarray, nb_constraints: int, options: dict):
         nb_q = hessian.shape[0]
         max_delta_q = options["max_delta_q"]
         has_delta_bounds = max_delta_q is not None and np.isfinite(max_delta_q)

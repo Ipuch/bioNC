@@ -304,20 +304,7 @@ class InverseKinematics:
         default_options = {
             "sqpmethod": constants.SQP_IK_VALUES,
             "ipopt": constants.IPOPT_IK_VALUES,
-            "dik": {
-                "max_iter": 100,
-                "eps": 1e-6,
-                "constraint_eps": 1e-6,
-                "step_eps": 1e-8,
-                "objective_eps": 1e-12,
-                "regularization": 1e-8,
-                "max_delta_q": np.inf,
-                "proxqp_eps_abs": 1e-8,
-                "proxqp_max_iter": 1000,
-                "proxqp_update_preconditioner": False,
-                "use_casadi_dik_evaluators": True,
-                "verbose": False,
-            },
+            "dik": constants.PROXQP_DIK_VALUES,
         }
         if options is None:
             if method not in default_options:

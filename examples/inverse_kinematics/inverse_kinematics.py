@@ -38,8 +38,13 @@ def main():
     Qopt_ipopt = ik_solver.solve(method="ipopt")  # tend to find lower cost functions but may flip axis.
     toc1 = time.time()
 
+    tic2 = time.time()
+    ik_solver.solve(method="dik")  # QP-based differential inverse kinematics
+    toc2 = time.time()
+
     print(f"Time to solve 200 frames with sqpmethod: {toc0 - tic0}")
     print(f"time to solve 200 frames with ipopt: {toc1 - tic1}")
+    print(f"Time to solve 200 frames with dik: {toc2 - tic2}")
 
     return ik_solver, Qopt_sqp, Qopt_ipopt, model, markers
 

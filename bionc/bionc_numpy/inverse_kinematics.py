@@ -275,7 +275,8 @@ class InverseKinematics:
         initial_guess_mode : InitialGuessModeType
             The type of initialization, by default InitialGuessModeType.FROM_CURRENT_MARKERS
         method : str
-            The method to use to solve the NLP (ipopt, sqpmethod, ...)
+            The method to use to solve the inverse kinematics (ipopt, sqpmethod, dik, ...)
+            Use "dik" for QP-based differential inverse kinematics with proxsuite/proxQP.
         options : dict
             The options to pass to the solver
 
@@ -286,21 +287,52 @@ class InverseKinematics:
         """
 
         options = self._get_solver_options(method, options)
+        if method == "dik":
+            self._validate_dik_problem()
         Q_init = self._get_initial_guess(Q_init, initial_guess_mode)
 
-        Qopt = self._solve_frame_per_frame(Q_init, initial_guess_mode, method, options)
+        if method == "dik":
+            Qopt = self._solve_frame_per_frame_dik(Q_init, initial_guess_mode, options)
+        else:
+            Qopt = self._solve_frame_per_frame(Q_init, initial_guess_mode, method, options)
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
         self.check_segment_determinants()
         return Qopt
 
     def _get_solver_options(self, method: str, options: dict) -> dict:
-        default_options = {"sqpmethod": constants.SQP_IK_VALUES, "ipopt": constants.IPOPT_IK_VALUES}
+        default_options = {
+            "sqpmethod": constants.SQP_IK_VALUES,
+            "ipopt": constants.IPOPT_IK_VALUES,
+            "dik": {
+                "max_iter": 100,
+                "eps": 1e-6,
+                "regularization": 1e-8,
+                "max_delta_q": np.inf,
+                "proxqp_eps_abs": 1e-8,
+                "proxqp_max_iter": 1000,
+                "verbose": False,
+            },
+        }
         if options is None:
             if method not in default_options:
-                raise ValueError("method must be one of the following str: 'sqpmethod' or 'ipopt'")
+                raise ValueError("method must be one of the following str: 'sqpmethod', 'ipopt' or 'dik'")
             return default_options[method]
+        if method == "dik":
+            if method not in default_options:
+                raise ValueError("method must be one of the following str: 'sqpmethod', 'ipopt' or 'dik'")
+            return {**default_options[method], **options}
         return options
+
+    def _validate_dik_problem(self):
+        if self.experimental_markers is None:
+            raise ValueError('method="dik" only supports marker-based inverse kinematics.')
+        if self.experimental_heatmaps is not None:
+            raise ValueError('method="dik" does not support heatmap-based inverse kinematics.')
+        if self._active_direct_frame_constraints:
+            raise ValueError('method="dik" does not support active_direct_frame_constraints.')
+        if len(self.objective_sym) > 1:
+            raise ValueError('method="dik" only supports the default marker objective.')
 
     def _get_initial_guess(
         self,
@@ -363,6 +395,128 @@ class InverseKinematics:
             Q_init = self._update_initial_guess(Q_init, Qopt, initial_guess_mode, f)
 
         return Qopt
+
+    def _solve_frame_per_frame_dik(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        initial_guess_mode: InitialGuessModeType,
+        options: dict,
+    ) -> np.ndarray:
+        """
+        Solves marker-based inverse kinematics frame per frame with differential IK.
+
+        At each frame, this iteratively solves the linearized QP:
+            min_dQ 1/2 ||Phi_m(Q) + K_m dQ||^2
+            s.t.   K_h dQ = -Phi_h(Q)
+        where Phi_m are marker defects and Phi_h are holonomic constraints.
+        """
+        self._check_proxsuite_available()
+
+        Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
+        self.objective_function = np.zeros(self.nb_frames)
+
+        max_iter = options["max_iter"]
+        eps = options["eps"]
+
+        for f in range(self.nb_frames):
+            q_current = np.asarray(Q_init[:, f], dtype=float).reshape(-1)
+            converged = False
+            final_constraint_norm = np.inf
+
+            for iteration in range(max_iter):
+                Q_current = NaturalCoordinatesNumpy(q_current[:, np.newaxis])
+
+                marker_defects = self.model.markers_constraints(
+                    self.experimental_markers[:, :, f], Q_current, only_technical=True
+                )
+                marker_jacobian = self.model.markers_constraints_jacobian(only_technical=True)
+                holonomic_constraints = self.model.holonomic_constraints(Q_current).reshape(-1)
+                holonomic_jacobian = self.model.holonomic_constraints_jacobian(Q_current)
+
+                final_constraint_norm = np.linalg.norm(holonomic_constraints)
+                if final_constraint_norm < eps:
+                    converged = True
+                    break
+
+                delta_q, success = self._solve_dik_qp(
+                    marker_jacobian,
+                    marker_defects,
+                    holonomic_jacobian,
+                    -holonomic_constraints,
+                    options,
+                    f,
+                    iteration,
+                )
+                if not success:
+                    break
+
+                q_current = q_current + delta_q
+
+                if np.linalg.norm(delta_q) < eps:
+                    converged = final_constraint_norm < eps
+                    break
+
+            Q_current = NaturalCoordinatesNumpy(q_current[:, np.newaxis])
+            marker_defects = self.model.markers_constraints(
+                self.experimental_markers[:, :, f], Q_current, only_technical=True
+            )
+            holonomic_constraints = self.model.holonomic_constraints(Q_current).reshape(-1)
+            final_constraint_norm = np.linalg.norm(holonomic_constraints)
+
+            Qopt[:, f : f + 1] = q_current[:, np.newaxis]
+            self.objective_function[f] = 0.5 * marker_defects.T @ marker_defects
+            self.success_optim.append(
+                converged or max(final_constraint_norm) < eps
+            )
+            Q_init = self._update_initial_guess(Q_init, Qopt, initial_guess_mode, f)
+
+        return Qopt
+
+    @staticmethod
+    def _check_proxsuite_available():
+        try:
+            import proxsuite  # noqa: F401
+        except ImportError as exc:
+            raise ImportError(
+                'proxsuite is required to use method="dik". Install it with: pip install proxsuite'
+            ) from exc
+
+    def _solve_dik_qp(
+        self,
+        marker_jacobian: np.ndarray,
+        marker_defects: np.ndarray,
+        constraint_jacobian: np.ndarray,
+        constraint_rhs: np.ndarray,
+        options: dict,
+        frame: int,
+        iteration: int,
+    ) -> tuple[np.ndarray, bool]:
+        import proxsuite
+
+        nb_q = marker_jacobian.shape[1]
+        regularization = options["regularization"]
+        H = marker_jacobian.T @ marker_jacobian + regularization * np.eye(nb_q)
+        g = marker_jacobian.T @ marker_defects
+
+        max_delta_q = options["max_delta_q"]
+        has_delta_bounds = max_delta_q is not None and np.isfinite(max_delta_q)
+        nb_inequality = nb_q if has_delta_bounds else 0
+        C = np.eye(nb_q) if has_delta_bounds else None
+        l = -max_delta_q * np.ones(nb_q) if has_delta_bounds else None
+        u = max_delta_q * np.ones(nb_q) if has_delta_bounds else None
+
+        qp = proxsuite.proxqp.dense.QP(nb_q, constraint_jacobian.shape[0], nb_inequality)
+        qp.settings.eps_abs = options["proxqp_eps_abs"]
+        qp.settings.max_iter = options["proxqp_max_iter"]
+        qp.settings.verbose = options["verbose"]
+        qp.init(H, g, constraint_jacobian, constraint_rhs, C, l, u)
+        qp.solve()
+
+        success = qp.results.info.status == proxsuite.proxqp.QPSolverOutput.PROXQP_SOLVED
+        if not success and options["verbose"]:
+            print(f"Warning: proxQP failed at frame {frame}, iteration {iteration}: {qp.results.info.status}")
+
+        return qp.results.x, success
 
     def _setup_nlp(self) -> dict:
         constraints = self._constraints(self._Q_sym)

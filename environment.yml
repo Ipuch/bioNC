@@ -16,3 +16,4 @@ dependencies:
 - pyorerun
 - biorbd
 - numba
+- proxsuite

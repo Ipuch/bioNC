@@ -38,8 +38,13 @@ def main():
     Qopt_ipopt = ik_solver.solve(method="ipopt")  # tend to find lower cost functions but may flip axis.
     toc1 = time.time()
 
+    tic2 = time.time()
+    ik_solver.solve(method="dik")  # QP-based differential inverse kinematics
+    toc2 = time.time()
+
     print(f"Time to solve 200 frames with sqpmethod: {toc0 - tic0}")
     print(f"time to solve 200 frames with ipopt: {toc1 - tic1}")
+    print(f"Time to solve 200 frames with dik: {toc2 - tic2}")
 
     return ik_solver, Qopt_sqp, Qopt_ipopt, model, markers
 
@@ -53,13 +58,13 @@ if __name__ == "__main__":
     print(f"Max rigidbody violation: {stats['max_rigidbody_violation']}")
     print(f"Max joint violation: {stats['max_joint_violation']}")
 
+    print("")
     print("RKNI residuals along x, y, z for each frame")
     idx = model.marker_names.index("RKNI")
-    for f in range(ik_solver.nb_markers):
+    for f in range(0, 10):
         marker_residuals = stats["marker_residuals_xyz"][:, idx, :].squeeze()
         print(f"X,\tY,\tZ\t:\t{marker_residuals[0,f]}\t{marker_residuals[1,f]}\t{marker_residuals[2,f]}")
 
-    # convert the natural coordinates to joint angles (still experimental)
     print(model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0])))
 
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh

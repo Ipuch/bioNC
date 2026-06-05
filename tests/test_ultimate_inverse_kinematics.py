@@ -69,9 +69,7 @@ def _assert_inverse_kinematics_solution(ik_solver, Qopt, model, markers, toleran
 )
 def test_ik_example_solves_two_side_lower_limbs(method, active_direct_frame_constraints):
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(
-        bionc + "/examples/inverse_kinematics/inverse_kinematics.py"
-    )
+    module = TestUtils.load_module(bionc + "/examples/inverse_kinematics/inverse_kinematics.py")
 
     results, model, markers = module.main(
         methods=(method,),
@@ -85,10 +83,7 @@ def test_ik_example_solves_two_side_lower_limbs(method, active_direct_frame_cons
     assert model.marker_names_technical == TWO_SIDE_TECHNICAL_MARKERS
     assert markers.shape == (3, len(TWO_SIDE_TECHNICAL_MARKERS), 2)
     assert result["elapsed"] >= 0
-    assert (
-        result["solver"]._active_direct_frame_constraints
-        is active_direct_frame_constraints
-    )
+    assert result["solver"]._active_direct_frame_constraints is active_direct_frame_constraints
 
     _assert_inverse_kinematics_solution(
         result["solver"],
@@ -101,9 +96,7 @@ def test_ik_example_solves_two_side_lower_limbs(method, active_direct_frame_cons
 
 def test_inverse_kinematics_class():
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(
-        bionc + "/examples/model_creation/right_side_lower_limb.py"
-    )
+    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     filename = module.generate_c3d_file()
     natural_model = module.model_creation_from_measured_data(filename)
@@ -129,9 +122,7 @@ def test_inverse_kinematics_class():
 
 def test_ik_frame_per_frame_extra_obj():
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(
-        bionc + "/examples/model_creation/right_side_lower_limb.py"
-    )
+    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     filename = module.generate_c3d_file()
     natural_model = module.model_creation_from_measured_data(filename)
@@ -162,9 +153,7 @@ def test_ik_frame_per_frame_extra_obj():
 
 def test_dik_rejects_extra_objectives():
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(
-        bionc + "/examples/model_creation/right_side_lower_limb.py"
-    )
+    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
 
     filename = module.generate_c3d_file()
     natural_model = module.model_creation_from_measured_data(filename)
@@ -178,9 +167,7 @@ def test_dik_rejects_extra_objectives():
     )
     ik.add_objective(extra_objective_function)
 
-    with pytest.raises(
-        ValueError, match='method="dik" only supports the default marker objective.'
-    ):
+    with pytest.raises(ValueError, match='method="dik" only supports the default marker objective.'):
         ik.solve(method="dik")
 
 

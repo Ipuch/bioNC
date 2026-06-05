@@ -16,30 +16,22 @@ DEFAULT_METHODS = ("dik",)
 def load_two_side_lower_limb_model():
     """Build the two-side lower-limb model and return it with its generated c3d file."""
     bionc = TestUtils.bionc_folder()
-    right_lower_limb = TestUtils.load_module(
-        bionc + "/examples/model_creation/right_side_lower_limb.py"
-    )
-    two_side_lower_limbs = TestUtils.load_module(
-        bionc + "/examples/model_creation/two_side_lower_limbs.py"
-    )
+    right_lower_limb = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
+    two_side_lower_limbs = TestUtils.load_module(bionc + "/examples/model_creation/two_side_lower_limbs.py")
 
     filename = right_lower_limb.generate_c3d_file(two_side=True)
     model = two_side_lower_limbs.model_creation_from_measured_data(filename)
     return model, filename
 
 
-def generate_noisy_markers(
-    model, filename, n_repeats: int = 100, noise_std: float = 0.01, seed: int = 42
-):
+def generate_noisy_markers(model, filename, n_repeats: int = 100, noise_std: float = 0.01, seed: int = 42):
     """
     Load the generated c3d markers, reorder them like the model, duplicate the two c3d frames, and add noise.
     """
     if n_repeats < 1:
         raise ValueError("n_repeats must be greater than or equal to 1.")
 
-    markers = Markers.from_c3d(
-        filename, usecols=model.marker_names_technical
-    ).to_numpy()[:3, :, :]
+    markers = Markers.from_c3d(filename, usecols=model.marker_names_technical).to_numpy()[:3, :, :]
     markers = np.repeat(markers, n_repeats, axis=2)
 
     rng = np.random.default_rng(seed)
@@ -76,9 +68,7 @@ def main(
     print_timing: bool = True,
 ):
     model, filename = load_two_side_lower_limb_model()
-    markers = generate_noisy_markers(
-        model, filename, n_repeats=n_repeats, noise_std=noise_std, seed=seed
-    )
+    markers = generate_noisy_markers(model, filename, n_repeats=n_repeats, noise_std=noise_std, seed=seed)
 
     if isinstance(methods, str):
         methods = (methods,)

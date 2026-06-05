@@ -434,7 +434,7 @@ class InverseKinematics:
                 constraints_ok = final_constraint_norm < constraint_eps
                 if constraints_ok and abs(previous_objective - marker_objective) < objective_eps:
                     converged = True
-                    print("converged at iteration ", iteration)
+                    # print("converged at iteration ", iteration)
                     break
 
                 delta_q, success = self._solve_dik_qp(

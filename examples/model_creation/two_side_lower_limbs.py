@@ -106,7 +106,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     model["LTHIGH"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisFunctionTemplate(
-                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, left_hip_joint(m, bio), "LKNE", "LKNI")
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, left_hip_joint(m, bio), "LKNI", "LKNE")
             ),
             proximal_point=left_hip_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
@@ -163,7 +163,7 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
     model["LSHANK"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisFunctionTemplate(
-                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, left_knee_joint(m, bio), "LANE", "LANI")
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, left_knee_joint(m, bio), "LANI", "LANE")
             ),
             proximal_point=left_knee_joint,
             # the knee joint computed from the medial femoral epicondyle and the lateral femoral epicondyle
@@ -240,6 +240,9 @@ def model_creation_from_measured_data(c3d_filename: str = "statref.c3d") -> Biom
         joint_type=JointType.SPHERICAL,
         parent="PELVIS",
         child="LTHIGH",
+        # without this, the joint defaults to the PELVIS distal point (rd = right hip), which would force the
+        # left hip center to coincide with the right hip; use the left hip marker on the PELVIS instead
+        parent_point="LEFT_HIP_JOINT",
     )
 
     model.add_joint(
@@ -293,6 +296,7 @@ def main():
 
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
     from pyorerun import PhaseRerun, PyoMarkers
+    from bionc.vizualization.pyorerun_natural_vectors import add_natural_vectors
 
     # display the experimental markers in blue and the model in white
     # almost superimposed because the model is well defined on the experimental data
@@ -300,7 +304,8 @@ def main():
     model_interface = BioncModelNoMesh(model)
 
     pyomarkers = PyoMarkers.from_c3d(filename)
-    prr.add_animated_model(model_interface, Qxp, pyomarkers)
+    prr.add_animated_model(model_interface, Qxp, tracked_markers=pyomarkers)
+    add_natural_vectors(prr, model, Qxp)
     prr.rerun()
 
     # remove the c3d file

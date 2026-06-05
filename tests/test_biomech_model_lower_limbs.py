@@ -14,8 +14,12 @@ from .utils import TestUtils
 )
 def test_biomech_model(bionc_type):
     bionc = TestUtils.bionc_folder()
-    module_c3d = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
-    module = TestUtils.load_module(bionc + "/examples/model_creation/two_side_lower_limbs.py")
+    module_c3d = TestUtils.load_module(
+        bionc + "/examples/model_creation/right_side_lower_limb.py"
+    )
+    module = TestUtils.load_module(
+        bionc + "/examples/model_creation/two_side_lower_limbs.py"
+    )
 
     # Generate c3d file
     filename = module_c3d.generate_c3d_file(two_side=True)
@@ -45,6 +49,44 @@ def test_biomech_model(bionc_type):
 
     assert natural_model.has_free_joint(0) == True
     assert natural_model.has_free_joint(1) == False
+    assert natural_model.segment_names == [
+        "PELVIS",
+        "RTHIGH",
+        "LTHIGH",
+        "RSHANK",
+        "LSHANK",
+        "RFOOT",
+        "LFOOT",
+    ]
+    assert natural_model.marker_names_technical == [
+        "RFWT",
+        "LFWT",
+        "RBWT",
+        "LBWT",
+        "RKNE",
+        "RKNI",
+        "LKNE",
+        "LKNI",
+        "RANE",
+        "RANI",
+        "LANE",
+        "LANI",
+        "RHEE",
+        "RTARI",
+        "RTAR",
+        "LHEE",
+        "LTARI",
+        "LTAR",
+    ]
+    assert natural_model.joint_names == [
+        "free_joint_PELVIS",
+        "right_hip",
+        "left_hip",
+        "right_knee",
+        "left_knee",
+        "right_ankle",
+        "left_ankle",
+    ]
 
     # only for testing purpose
     natural_model._remove_free_joint(0)

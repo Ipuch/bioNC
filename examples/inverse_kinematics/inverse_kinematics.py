@@ -10,68 +10,117 @@ from pyomeca import Markers
 from bionc import InverseKinematics, NaturalCoordinates
 from tests.utils import TestUtils
 
+DEFAULT_METHODS = ("dik",)
 
-def main():
-    # build the model from the lower limb example
+
+def load_two_side_lower_limb_model():
+    """Build the two-side lower-limb model and return it with its generated c3d file."""
     bionc = TestUtils.bionc_folder()
-    module = TestUtils.load_module(bionc + "/examples/model_creation/right_side_lower_limb.py")
+    right_lower_limb = TestUtils.load_module(
+        bionc + "/examples/model_creation/right_side_lower_limb.py"
+    )
+    two_side_lower_limbs = TestUtils.load_module(
+        bionc + "/examples/model_creation/two_side_lower_limbs.py"
+    )
 
-    # Generate c3d file
-    filename = module.generate_c3d_file()
-    # Generate model
-    model = module.model_creation_from_measured_data(filename)
+    filename = right_lower_limb.generate_c3d_file(two_side=True)
+    model = two_side_lower_limbs.model_creation_from_measured_data(filename)
+    return model, filename
 
-    # getting noisy markers for 200 frames
-    markers = Markers.from_c3d(filename).to_numpy()[:3, :, :]  # 2 frames
-    markers = np.repeat(markers, 100, axis=2)  # 2 x 100 frames
-    np.random.seed(42)
-    markers = markers + np.random.normal(0, 0.01, markers.shape)  # add noise
 
-    # you can import the class from bionc
-    ik_solver = InverseKinematics(model, markers)
+def generate_noisy_markers(
+    model, filename, n_repeats: int = 100, noise_std: float = 0.01, seed: int = 42
+):
+    """
+    Load the generated c3d markers, reorder them like the model, duplicate the two c3d frames, and add noise.
+    """
+    if n_repeats < 1:
+        raise ValueError("n_repeats must be greater than or equal to 1.")
 
-    tic0 = time.time()
-    Qopt_sqp = ik_solver.solve(method="sqpmethod")  # tend to be faster (with limited-memory hessian approximation)
-    toc0 = time.time()
+    markers = Markers.from_c3d(
+        filename, usecols=model.marker_names_technical
+    ).to_numpy()[:3, :, :]
+    markers = np.repeat(markers, n_repeats, axis=2)
 
-    tic1 = time.time()
-    Qopt_ipopt = ik_solver.solve(method="ipopt")  # tend to find lower cost functions but may flip axis.
-    toc1 = time.time()
+    rng = np.random.default_rng(seed)
+    return markers + rng.normal(0, noise_std, markers.shape)
 
-    tic2 = time.time()
-    ik_solver.solve(method="dik")  # QP-based differential inverse kinematics
-    toc2 = time.time()
 
-    print(f"Time to solve 200 frames with sqpmethod: {toc0 - tic0}")
-    print(f"time to solve 200 frames with ipopt: {toc1 - tic1}")
-    print(f"Time to solve 200 frames with dik: {toc2 - tic2}")
+def solve_inverse_kinematics(
+    model,
+    markers,
+    method: str,
+    options: dict | None = None,
+    active_direct_frame_constraints: bool = False,
+):
+    ik_solver = InverseKinematics(
+        model,
+        markers,
+        active_direct_frame_constraints=active_direct_frame_constraints,
+    )
 
-    return ik_solver, Qopt_sqp, Qopt_ipopt, model, markers
+    tic = time.time()
+    Qopt = ik_solver.solve(method=method, options=options)
+    toc = time.time()
+
+    return ik_solver, Qopt, toc - tic
+
+
+def main(
+    methods: tuple[str, ...] | list[str] | str = DEFAULT_METHODS,
+    n_repeats: int = 100,
+    noise_std: float = 0.01,
+    seed: int = 42,
+    solver_options: dict[str, dict] | None = None,
+    active_direct_frame_constraints: bool = False,
+    print_timing: bool = True,
+):
+    model, filename = load_two_side_lower_limb_model()
+    markers = generate_noisy_markers(
+        model, filename, n_repeats=n_repeats, noise_std=noise_std, seed=seed
+    )
+
+    if isinstance(methods, str):
+        methods = (methods,)
+
+    results = {}
+    for method in methods:
+        options = solver_options.get(method) if solver_options is not None else None
+        ik_solver, Qopt, elapsed = solve_inverse_kinematics(
+            model,
+            markers,
+            method=method,
+            options=options,
+            active_direct_frame_constraints=active_direct_frame_constraints,
+        )
+        results[method] = {"solver": ik_solver, "Qopt": Qopt, "elapsed": elapsed}
+
+        if print_timing:
+            print(f"Time to solve {Qopt.shape[-1]} frames with {method}: {elapsed}")
+
+    return results, model, markers
 
 
 if __name__ == "__main__":
-    ik_solver, Qopt, _, model, markers = main()
+    results, model, markers = main()
+    method = next(iter(results))
+    ik_solver = results[method]["solver"]
+    Qopt = results[method]["Qopt"]
 
     stats = ik_solver.sol()
 
-    print(f"Max marker distance: {stats['max_marker_distance']}")
-    print(f"Max rigidbody violation: {stats['max_rigidbody_violation']}")
-    print(f"Max joint violation: {stats['max_joint_violation']}")
+    print(f"Max marker residual: {np.max(stats['marker_residuals_norm'])}")
+    print(f"Max rigidbody residual: {np.max(np.abs(stats['rigidity_residuals']))}")
+    print(f"Max joint residual: {np.max(np.abs(stats['joint_residuals']))}")
 
-    print("")
-    print("RKNI residuals along x, y, z for each frame")
-    idx = model.marker_names.index("RKNI")
-    for f in range(0, 10):
-        marker_residuals = stats["marker_residuals_xyz"][:, idx, :].squeeze()
-        print(f"X,\tY,\tZ\t:\t{marker_residuals[0,f]}\t{marker_residuals[1,f]}\t{marker_residuals[2,f]}")
-
+    print("Joint Angles Extraction for the first frame.")
     print(model.natural_coordinates_to_joint_angles(NaturalCoordinates(Qopt[:, 0])))
 
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
     from pyorerun import PhaseRerun, PyoMarkers
 
     model_interface = BioncModelNoMesh(model)
-    prr = PhaseRerun(t_span=np.linspace(0, 1, 200))
+    prr = PhaseRerun(t_span=np.linspace(0, 1, Qopt.shape[-1]))
 
     pyomarkers = PyoMarkers(data=markers, marker_names=model.marker_names_technical)
     prr.add_animated_model(model_interface, Qopt, tracked_markers=pyomarkers)

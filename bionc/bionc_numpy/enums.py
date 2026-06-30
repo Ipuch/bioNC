@@ -22,6 +22,9 @@ class JointType(Enum):
     UNIVERSAL = Joint.Universal
     SPHERICAL = Joint.Spherical
     SPHERE_ON_PLANE = Joint.SphereOnPlane
+    ELLIPSOID_ON_PLANE = Joint.EllipsoidOnPlane
+    POINT_ON_ELLIPSOID = Joint.PointOnEllipsoid
+    TWO_POINTS_ON_ELLIPSOID = Joint.TwoPointsOnEllipsoid
 
     # PLANAR = "planar"
 

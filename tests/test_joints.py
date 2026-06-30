@@ -185,6 +185,98 @@ def test_joints(bionc_type, joint_type: JointType):
         )
         assert joint.nb_constraints == 1
         assert joint.nb_joint_dof == 5
+    elif joint_type == JointType.ELLIPSOID_ON_PLANE:
+        box.add_natural_marker_from_segment_coordinates(
+            name="ELLIPSOID_CENTER",
+            location=np.array([0.1, 0.2, 0.3]),
+            is_anatomical=True,
+        )
+        box.add_natural_vector_from_segment_coordinates(
+            name="AXIS_A", direction=np.array([1.0, 0.0, 0.0]), normalize=True
+        )
+        box.add_natural_vector_from_segment_coordinates(
+            name="AXIS_B", direction=np.array([0.0, 1.0, 0.0]), normalize=True
+        )
+        box.add_natural_vector_from_segment_coordinates(
+            name="AXIS_C", direction=np.array([0.0, 0.0, 1.0]), normalize=True
+        )
+        bbox.add_natural_marker_from_segment_coordinates(
+            name="PLANE_POINT",
+            location=np.array([0.2, 0.04, 0.05]),
+            is_anatomical=True,
+        )
+        bbox.add_natural_vector_from_segment_coordinates(
+            name="PLANE_NORMAL",
+            direction=np.array([0.2, 0.04, 0.05]),
+            normalize=True,
+        )
+        joint = Joint.EllipsoidOnPlane(
+            name="ellipsoid_on_plane",
+            parent=box,
+            child=bbox,
+            index=0,
+            semi_axis_lengths=(0.02, 0.03, 0.04),
+            ellipsoid_center="ELLIPSOID_CENTER",
+            ellipsoid_axis_a="AXIS_A",
+            ellipsoid_axis_b="AXIS_B",
+            ellipsoid_axis_c="AXIS_C",
+            plane_point="PLANE_POINT",
+            plane_normal="PLANE_NORMAL",
+        )
+        assert joint.nb_constraints == 1
+        assert joint.nb_joint_dof == 5
+    elif joint_type == JointType.POINT_ON_ELLIPSOID:
+        box.add_natural_marker_from_segment_coordinates(
+            name="ELLIPSOID_CENTER", location=np.array([0.1, 0.2, 0.3]), is_anatomical=True
+        )
+        box.add_natural_vector_from_segment_coordinates(name="AXIS_A", direction=np.array([1.0, 0.0, 0.0]))
+        box.add_natural_vector_from_segment_coordinates(name="AXIS_B", direction=np.array([0.0, 1.0, 0.0]))
+        box.add_natural_vector_from_segment_coordinates(name="AXIS_C", direction=np.array([0.0, 0.0, 1.0]))
+        bbox.add_natural_marker_from_segment_coordinates(
+            name="CONTACT_POINT", location=np.array([0.2, 0.04, 0.05]), is_anatomical=True
+        )
+        joint = Joint.PointOnEllipsoid(
+            name="point_on_ellipsoid",
+            parent=box,
+            child=bbox,
+            index=0,
+            semi_axis_lengths=(2.0, 3.0, 4.0),
+            ellipsoid_center="ELLIPSOID_CENTER",
+            ellipsoid_axis_a="AXIS_A",
+            ellipsoid_axis_b="AXIS_B",
+            ellipsoid_axis_c="AXIS_C",
+            contact_point="CONTACT_POINT",
+        )
+        assert joint.nb_constraints == 1
+        assert joint.nb_joint_dof == 5
+    elif joint_type == JointType.TWO_POINTS_ON_ELLIPSOID:
+        box.add_natural_marker_from_segment_coordinates(
+            name="ELLIPSOID_CENTER", location=np.array([0.1, 0.2, 0.3]), is_anatomical=True
+        )
+        box.add_natural_vector_from_segment_coordinates(name="AXIS_A", direction=np.array([1.0, 0.0, 0.0]))
+        box.add_natural_vector_from_segment_coordinates(name="AXIS_B", direction=np.array([0.0, 1.0, 0.0]))
+        box.add_natural_vector_from_segment_coordinates(name="AXIS_C", direction=np.array([0.0, 0.0, 1.0]))
+        bbox.add_natural_marker_from_segment_coordinates(
+            name="CONTACT_POINT_1", location=np.array([0.2, 0.04, 0.05]), is_anatomical=True
+        )
+        bbox.add_natural_marker_from_segment_coordinates(
+            name="CONTACT_POINT_2", location=np.array([0.1, -0.2, 0.15]), is_anatomical=True
+        )
+        joint = Joint.TwoPointsOnEllipsoid(
+            name="two_points_on_ellipsoid",
+            parent=box,
+            child=bbox,
+            index=0,
+            semi_axis_lengths=(2.0, 3.0, 4.0),
+            ellipsoid_center="ELLIPSOID_CENTER",
+            ellipsoid_axis_a="AXIS_A",
+            ellipsoid_axis_b="AXIS_B",
+            ellipsoid_axis_c="AXIS_C",
+            contact_point_1="CONTACT_POINT_1",
+            contact_point_2="CONTACT_POINT_2",
+        )
+        assert joint.nb_constraints == 2
+        assert joint.nb_joint_dof == 4
     elif joint_type == JointType.FREE:
         joint = Joint.Free(
             name="Free",
@@ -567,6 +659,170 @@ def test_joints(bionc_type, joint_type: JointType):
             squeeze=False,
         )
 
+    elif joint_type == JointType.ELLIPSOID_ON_PLANE:
+        TestUtils.assert_equal(
+            joint.constraint(Q1, Q2),
+            3.56502444729687,
+            decimal=6,
+        )
+        parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+
+        parent_jacobian_res = np.array(
+            [
+                [
+                    0.150499715,
+                    0.217100884,
+                    0.347100085,
+                    1.690439745,
+                    2.438515998,
+                    3.898690291,
+                    -0.275770200,
+                    -0.397807758,
+                    -0.636013561,
+                    0.477168917,
+                    0.688332159,
+                    1.100502890,
+                ]
+            ]
+        )
+        child_jacobian_res = np.array(
+            [
+                [
+                    -0.446456138,
+                    -0.252059245,
+                    0.361378359,
+                    -1.440906685,
+                    -2.055521148,
+                    -3.241439403,
+                    0.026237140,
+                    0.014812908,
+                    -0.021237326,
+                    -0.023972010,
+                    -0.013534066,
+                    0.019403845,
+                ]
+            ]
+        )
+
+        TestUtils.assert_equal(parent_jacobian, parent_jacobian_res, decimal=6, squeeze=False)
+        TestUtils.assert_equal(child_jacobian, child_jacobian_res, decimal=6, squeeze=False)
+
+    elif joint_type == JointType.POINT_ON_ELLIPSOID:
+        TestUtils.assert_equal(joint.constraint(Q1, Q2), 1.755018926, decimal=6)
+        parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        parent_jacobian_res = np.array(
+            [
+                [
+                    -0.089395866,
+                    0.464891721,
+                    1.734629843,
+                    2.389468016,
+                    4.489308181,
+                    7.858377615,
+                    -0.436031769,
+                    -0.736328260,
+                    -1.168313258,
+                    0.467328151,
+                    1.163243975,
+                    2.451258356,
+                ]
+            ]
+        )
+        child_jacobian_res = np.array(
+            [
+                [
+                    -0.390687249,
+                    -0.750595984,
+                    -1.338012871,
+                    -1.976395986,
+                    -3.797090620,
+                    -6.768696116,
+                    0.022959739,
+                    0.044110699,
+                    0.078631759,
+                    -0.020977556,
+                    -0.040302491,
+                    -0.071843246,
+                ]
+            ]
+        )
+        TestUtils.assert_equal(parent_jacobian, parent_jacobian_res, decimal=6, squeeze=False)
+        TestUtils.assert_equal(child_jacobian, child_jacobian_res, decimal=6, squeeze=False)
+
+    elif joint_type == JointType.TWO_POINTS_ON_ELLIPSOID:
+        TestUtils.assert_equal(
+            joint.constraint(Q1, Q2),
+            np.array([1.755018926, -0.626439648]),
+            decimal=6,
+        )
+        parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
+        parent_jacobian_res = np.array(
+            [
+                [
+                    -0.089395866,
+                    0.464891721,
+                    1.734629843,
+                    2.389468016,
+                    4.489308181,
+                    7.858377615,
+                    -0.436031769,
+                    -0.736328260,
+                    -1.168313258,
+                    0.467328151,
+                    1.163243975,
+                    2.451258356,
+                ],
+                [
+                    -0.052095567,
+                    0.090777602,
+                    0.436672470,
+                    0.873306983,
+                    1.629003881,
+                    2.916952896,
+                    -0.162089720,
+                    -0.277457058,
+                    -0.460518387,
+                    0.153088105,
+                    0.383755077,
+                    0.830380469,
+                ],
+            ]
+        )
+        child_jacobian_res = np.array(
+            [
+                [
+                    -0.390687249,
+                    -0.750595984,
+                    -1.338012871,
+                    -1.976395986,
+                    -3.797090620,
+                    -6.768696116,
+                    0.022959739,
+                    0.044110699,
+                    0.078631759,
+                    -0.020977556,
+                    -0.040302491,
+                    -0.071843246,
+                ],
+                [
+                    -0.071121726,
+                    -0.135154682,
+                    -0.245643451,
+                    -0.610792553,
+                    -1.160706831,
+                    -2.109583083,
+                    -0.100424709,
+                    -0.190839992,
+                    -0.346851426,
+                    -0.084549668,
+                    -0.160672191,
+                    -0.292021488,
+                ],
+            ]
+        )
+        TestUtils.assert_equal(parent_jacobian, parent_jacobian_res, decimal=6, squeeze=False)
+        TestUtils.assert_equal(child_jacobian, child_jacobian_res, decimal=6, squeeze=False)
+
     elif joint_type == JointType.GROUND_REVOLUTE:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
@@ -742,6 +998,205 @@ def test_missing_parent(bionc_type):
         Joint.Hinge(
             name="hinge", parent=None, child=bbox, index=0, parent_axis=parent_axis, child_axis=child_axis, theta=theta
         )
+
+
+def _build_ellipsoid_on_plane(semi_axis_lengths, axes_directions):
+    """Helper: numpy EllipsoidOnPlane joint with a given ellipsoid (semi-axes + principal axes)."""
+    from bionc.bionc_numpy import NaturalSegment, Joint
+
+    parent = NaturalSegment.with_cartesian_inertial_parameters(
+        name="ellipsoid_segment",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([0, 0, 0]),
+        inertia=np.eye(3),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+    child = NaturalSegment.with_cartesian_inertial_parameters(
+        name="plane_segment",
+        alpha=np.pi / 1.9,
+        beta=np.pi / 2.3,
+        gamma=np.pi / 2.1,
+        length=1.5,
+        mass=1.1,
+        center_of_mass=np.array([0.1, 0.11, 0.111]),
+        inertia=np.diag([1.1, 1.2, 1.3]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+    parent.add_natural_marker_from_segment_coordinates(
+        name="ELLIPSOID_CENTER", location=np.array([0.1, 0.2, 0.3]), is_anatomical=True
+    )
+    for name, direction in zip(("AXIS_A", "AXIS_B", "AXIS_C"), axes_directions):
+        parent.add_natural_vector_from_segment_coordinates(
+            name=name, direction=np.array(direction, dtype=float), normalize=True
+        )
+    child.add_natural_marker_from_segment_coordinates(
+        name="PLANE_POINT", location=np.array([0.2, 0.04, 0.05]), is_anatomical=True
+    )
+    child.add_natural_vector_from_segment_coordinates(
+        name="PLANE_NORMAL", direction=np.array([0.2, 0.04, 0.05]), normalize=True
+    )
+    return Joint.EllipsoidOnPlane(
+        name="ellipsoid_on_plane",
+        parent=parent,
+        child=child,
+        index=0,
+        semi_axis_lengths=semi_axis_lengths,
+        ellipsoid_center="ELLIPSOID_CENTER",
+        ellipsoid_axis_a="AXIS_A",
+        ellipsoid_axis_b="AXIS_B",
+        ellipsoid_axis_c="AXIS_C",
+        plane_point="PLANE_POINT",
+        plane_normal="PLANE_NORMAL",
+    )
+
+
+def test_ellipsoid_on_plane_jacobian_finite_difference():
+    """The analytic parent/child jacobians must match central finite differences of the constraint."""
+    from bionc.bionc_numpy import SegmentNaturalCoordinates
+
+    joint = _build_ellipsoid_on_plane((0.02, 0.03, 0.04), ([1, 0, 0], [0, 1, 0], [0, 0, 1]))
+    Q1 = SegmentNaturalCoordinates.from_components(u=[1, 2, 3.05], rp=[1.1, 1, 3.1], rd=[1.2, 2, 4.1], w=[1.3, 2, 5.1])
+    Q2 = SegmentNaturalCoordinates.from_components(
+        u=[1.4, 2.1, 3.2], rp=[1.5, 1.1, 3.2], rd=[1.6, 2.2, 4.2], w=[1.7, 2, 5.3]
+    )
+
+    K_parent, K_child = joint.constraint_jacobian(Q1, Q2)
+    K_parent = np.array(K_parent).reshape(-1)
+    K_child = np.array(K_child).reshape(-1)
+
+    q1 = np.array(Q1, dtype=float).reshape(-1)
+    q2 = np.array(Q2, dtype=float).reshape(-1)
+    eps = 1e-7
+    fd_parent = np.zeros(12)
+    fd_child = np.zeros(12)
+    for i in range(12):
+        dq = np.zeros(12)
+        dq[i] = eps
+        fd_parent[i] = (
+            float(np.array(joint.constraint(SegmentNaturalCoordinates(q1 + dq), Q2)))
+            - float(np.array(joint.constraint(SegmentNaturalCoordinates(q1 - dq), Q2)))
+        ) / (2 * eps)
+        fd_child[i] = (
+            float(np.array(joint.constraint(Q1, SegmentNaturalCoordinates(q2 + dq))))
+            - float(np.array(joint.constraint(Q1, SegmentNaturalCoordinates(q2 - dq))))
+        ) / (2 * eps)
+
+    np.testing.assert_allclose(K_parent, fd_parent, atol=1e-6)
+    np.testing.assert_allclose(K_child, fd_child, atol=1e-6)
+
+
+def test_ellipsoid_on_plane_is_rotation_invariant_when_spherical():
+    """With equal semi-axes (a sphere), the constraint must not depend on the choice of principal axes."""
+    from bionc.bionc_numpy import SegmentNaturalCoordinates
+
+    Q1 = SegmentNaturalCoordinates.from_components(u=[1, 2, 3.05], rp=[1.1, 1, 3.1], rd=[1.2, 2, 4.1], w=[1.3, 2, 5.1])
+    Q2 = SegmentNaturalCoordinates.from_components(
+        u=[1.4, 2.1, 3.2], rp=[1.5, 1.1, 3.2], rd=[1.6, 2.2, 4.2], w=[1.7, 2, 5.3]
+    )
+
+    aligned = _build_ellipsoid_on_plane((0.05, 0.05, 0.05), ([1, 0, 0], [0, 1, 0], [0, 0, 1]))
+    # a different orthonormal frame (90 deg rotation about z): x->y, y->-x, z->z
+    rotated = _build_ellipsoid_on_plane((0.05, 0.05, 0.05), ([0, 1, 0], [-1, 0, 0], [0, 0, 1]))
+
+    np.testing.assert_allclose(
+        float(np.array(aligned.constraint(Q1, Q2))),
+        float(np.array(rotated.constraint(Q1, Q2))),
+        atol=1e-9,
+    )
+
+
+def _build_points_on_ellipsoid(two_points: bool):
+    """Numpy PointOnEllipsoid / TwoPointsOnEllipsoid joint sharing the parametrized-test geometry."""
+    from bionc.bionc_numpy import NaturalSegment, Joint
+
+    parent = NaturalSegment.with_cartesian_inertial_parameters(
+        name="thorax",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([0, 0, 0]),
+        inertia=np.eye(3),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+    child = NaturalSegment.with_cartesian_inertial_parameters(
+        name="scapula",
+        alpha=np.pi / 1.9,
+        beta=np.pi / 2.3,
+        gamma=np.pi / 2.1,
+        length=1.5,
+        mass=1.1,
+        center_of_mass=np.array([0.1, 0.11, 0.111]),
+        inertia=np.diag([1.1, 1.2, 1.3]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+    parent.add_natural_marker_from_segment_coordinates(
+        name="ELLIPSOID_CENTER", location=np.array([0.1, 0.2, 0.3]), is_anatomical=True
+    )
+    for name, direction in zip(("AXIS_A", "AXIS_B", "AXIS_C"), ([1, 0, 0], [0, 1, 0], [0, 0, 1])):
+        parent.add_natural_vector_from_segment_coordinates(name=name, direction=np.array(direction, dtype=float))
+    child.add_natural_marker_from_segment_coordinates(
+        name="P1", location=np.array([0.2, 0.04, 0.05]), is_anatomical=True
+    )
+    child.add_natural_marker_from_segment_coordinates(
+        name="P2", location=np.array([0.1, -0.2, 0.15]), is_anatomical=True
+    )
+    common = dict(
+        name="contact",
+        parent=parent,
+        child=child,
+        index=0,
+        semi_axis_lengths=(2.0, 3.0, 4.0),
+        ellipsoid_center="ELLIPSOID_CENTER",
+        ellipsoid_axis_a="AXIS_A",
+        ellipsoid_axis_b="AXIS_B",
+        ellipsoid_axis_c="AXIS_C",
+    )
+    if two_points:
+        return Joint.TwoPointsOnEllipsoid(contact_point_1="P1", contact_point_2="P2", **common)
+    return Joint.PointOnEllipsoid(contact_point="P1", **common)
+
+
+@pytest.mark.parametrize("two_points", [False, True])
+def test_points_on_ellipsoid_jacobian_finite_difference(two_points):
+    """The analytic parent/child jacobians must match central finite differences of the constraint."""
+    from bionc.bionc_numpy import SegmentNaturalCoordinates
+
+    joint = _build_points_on_ellipsoid(two_points)
+    Q1 = SegmentNaturalCoordinates.from_components(u=[1, 2, 3.05], rp=[1.1, 1, 3.1], rd=[1.2, 2, 4.1], w=[1.3, 2, 5.1])
+    Q2 = SegmentNaturalCoordinates.from_components(
+        u=[1.4, 2.1, 3.2], rp=[1.5, 1.1, 3.2], rd=[1.6, 2.2, 4.2], w=[1.7, 2, 5.3]
+    )
+    nc = joint.nb_constraints
+
+    K_parent = np.array(joint.parent_constraint_jacobian(Q1, Q2)).reshape(nc, 12)
+    K_child = np.array(joint.child_constraint_jacobian(Q1, Q2)).reshape(nc, 12)
+
+    q1 = np.array(Q1, dtype=float).reshape(-1)
+    q2 = np.array(Q2, dtype=float).reshape(-1)
+    eps = 1e-7
+    fd_parent = np.zeros((nc, 12))
+    fd_child = np.zeros((nc, 12))
+    for i in range(12):
+        dq = np.zeros(12)
+        dq[i] = eps
+        fd_parent[:, i] = (
+            np.array(joint.constraint(SegmentNaturalCoordinates(q1 + dq), Q2)).reshape(-1)
+            - np.array(joint.constraint(SegmentNaturalCoordinates(q1 - dq), Q2)).reshape(-1)
+        ) / (2 * eps)
+        fd_child[:, i] = (
+            np.array(joint.constraint(Q1, SegmentNaturalCoordinates(q2 + dq))).reshape(-1)
+            - np.array(joint.constraint(Q1, SegmentNaturalCoordinates(q2 - dq))).reshape(-1)
+        ) / (2 * eps)
+
+    # large constraint magnitudes at these (non-rigid) coordinates -> compare with a relative tolerance
+    np.testing.assert_allclose(K_parent, fd_parent, rtol=1e-5, atol=1e-6)
+    np.testing.assert_allclose(K_child, fd_child, rtol=1e-5, atol=1e-6)
 
 
 # def test_numpy_jacobian_from_casadi_derivatives()

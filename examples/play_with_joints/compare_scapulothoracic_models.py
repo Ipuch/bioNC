@@ -9,10 +9,12 @@ Following Naaim (2016/2017), the scapula is linked to a thorax ellipsoid by eith
 
 We synthesise a "true" scapula motion gliding on the ellipsoid (tangent contact, zero penetration),
 sample three scapula markers (like angulus acromialis / trigonum spinae / angulus inferior) plus
-three thorax markers, add Gaussian noise, then run differential inverse kinematics (``method="dik"``)
-with each of the three joint models tracking the very same markers. We report, per model, the marker
-tracking error and the scapula penetration into the ellipsoid, and (optionally) display the three
-reconstructions side by side in a single pyorerun scene.
+three thorax markers, add Gaussian noise to the scapula markers only (the thorax markers are kept
+exact so the thorax -- and therefore its ellipsoid -- reconstructs at a fixed pose), then run
+differential inverse kinematics (``method="dik"``) with each of the three joint models tracking the
+very same markers. We report, per model, the marker tracking error and the scapula penetration into
+the ellipsoid, and (optionally) display the three reconstructions side by side in a single pyorerun
+scene with one fixed ellipsoid per model.
 
 ------------------------------------------------------------------------------------------------
 Natural-coordinate poses used to synthesise the reference motion
@@ -122,6 +124,20 @@ def build_model(model_type: str) -> BiomechanicalModel:
     else:
         raise ValueError(f"unknown model_type {model_type!r}")
 
+    # Weld the thorax to ground at the world origin so the ellipsoid is genuinely fixed: the weld
+    # holds rp/rd exactly (a hard constraint in the inverse kinematics) and the three noise-free
+    # thorax markers pin the remaining rotation, so the thorax cannot be traded off against the
+    # scapula markers. This is what makes the static ellipsoid in the viz exact.
+    model._add_joint(
+        dict(
+            name="thorax_to_ground",
+            joint_type=JointType.GROUND_WELD,
+            parent="GROUND",
+            child="thorax",
+            rp_child_ref=np.array([0.0, 0.0, 0.0]),
+            rd_child_ref=np.array([0.0, -1.0, 0.0]),
+        )
+    )
     model._add_joint(dict(name="scapulothoracic", parent="thorax", child="scapula", **ellipsoid, **joint))
     return model
 
@@ -225,8 +241,16 @@ def main(n_frames: int = 60, noise_std: float = 0.003, seed: int = 0, show_resul
     reference_model = build_model("tangent")
     q_true = reference_motion(n_frames)
     markers_true = technical_markers(reference_model, q_true)
+
+    # Noise is added only to the scapula markers: the thorax markers stay exact so the thorax (and
+    # therefore its ellipsoid) reconstructs exactly at the world origin -- which is what lets us draw
+    # a single, fixed (static) ellipsoid in the viz.
     rng = np.random.default_rng(seed)
-    markers_noisy = markers_true + rng.normal(0, noise_std, markers_true.shape)
+    tech_names = reference_model.marker_names_technical
+    scapula_mask = np.array([name in SCAPULA_MARKERS for name in tech_names])
+    noise = rng.normal(0, noise_std, markers_true.shape)
+    noise[:, ~scapula_mask, :] = 0.0
+    markers_noisy = markers_true + noise
 
     # 2) track the same markers with each joint model
     results = {}

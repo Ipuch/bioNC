@@ -287,12 +287,14 @@ class InverseKinematics:
         """
 
         options = self._get_solver_options(method, options)
-        if method == "dik":
+        if method in ("dik", "dik_native"):
             self._validate_dik_problem()
         Q_init = self._get_initial_guess(Q_init, initial_guess_mode)
 
         if method == "dik":
             Qopt = self._solve_frame_per_frame_dik(Q_init, initial_guess_mode, options)
+        elif method == "dik_native":
+            Qopt = self._solve_frame_per_frame_dik_native(Q_init, options)
         else:
             Qopt = self._solve_frame_per_frame(Q_init, initial_guess_mode, method, options)
 
@@ -305,14 +307,14 @@ class InverseKinematics:
             "sqpmethod": constants.SQP_IK_VALUES,
             "ipopt": constants.IPOPT_IK_VALUES,
             "dik": constants.PROXQP_DIK_VALUES,
+            # the native backend reuses the same SQP/QP options as the python dik solver
+            "dik_native": constants.PROXQP_DIK_VALUES,
         }
         if options is None:
             if method not in default_options:
-                raise ValueError("method must be one of the following str: 'sqpmethod', 'ipopt' or 'dik'")
+                raise ValueError("method must be one of the following str: 'sqpmethod', 'ipopt', 'dik' or 'dik_native'")
             return default_options[method]
-        if method == "dik":
-            if method not in default_options:
-                raise ValueError("method must be one of the following str: 'sqpmethod', 'ipopt' or 'dik'")
+        if method in ("dik", "dik_native"):
             return {**default_options[method], **options}
         return options
 
@@ -466,6 +468,38 @@ class InverseKinematics:
             self.success_optim.append(converged or final_constraint_norm < constraint_eps)
             Q_init = self._update_initial_guess(Q_init, Qopt, initial_guess_mode, f)
 
+        return Qopt
+
+    def _solve_frame_per_frame_dik_native(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        options: dict,
+    ) -> np.ndarray:
+        """
+        Native (C++/Eigen + nanobind) counterpart of :meth:`_solve_frame_per_frame_dik`.
+
+        The model's holonomic constraints + jacobian are emitted as C by CasADi codegen
+        and compiled to a shared library (cached per model); a generic nanobind module
+        runs the whole frame/Newton loop in Eigen, avoiding the per-iteration
+        Python<->CasADi/NumPy boundary cost that dominates the pure-python solver.
+
+        Same maths as the python dik solver (identical results), only faster.
+        """
+        from ..utils.native_dik import solve_native
+
+        nq = 12 * self.model.nb_segments
+        Q_init = np.ascontiguousarray(np.asarray(Q_init, dtype=float)).reshape(nq, -1)
+        # the native solver inits each frame from its own column of Q_init (no warm chaining),
+        # matching the default FROM_CURRENT_MARKERS behaviour
+        if Q_init.shape[1] == 1 and self.nb_frames > 1:
+            Q_init = np.repeat(Q_init, self.nb_frames, axis=1)
+
+        Qopt, success = solve_native(self.model, self.experimental_markers, Q_init, options)
+
+        self.success_optim = list(success)
+        self.objective_function = TimeSeriesUtils.total_marker_constraints(
+            self.model, Qopt, self.experimental_markers
+        )
         return Qopt
 
     @staticmethod

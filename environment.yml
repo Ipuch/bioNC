@@ -17,3 +17,8 @@ dependencies:
 - biorbd
 - numba
 - proxsuite
+# toolchain for the native (C++/Eigen) differential IK backend (method="dik_native")
+- cxx-compiler
+- cmake
+- eigen
+- nanobind

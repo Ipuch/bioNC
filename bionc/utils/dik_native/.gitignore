@@ -1,0 +1,5 @@
+# Build / codegen artifacts produced at runtime
+_build/
+_cache/
+*.so
+*.o

@@ -10,7 +10,7 @@ from pyomeca import Markers
 from bionc import InverseKinematics, NaturalCoordinates
 from tests.utils import TestUtils
 
-DEFAULT_METHODS = ("dik",)
+DEFAULT_METHODS = ("dik_native",)
 
 
 def load_two_side_lower_limb_model():

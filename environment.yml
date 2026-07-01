@@ -13,6 +13,7 @@ dependencies:
 - pyomeca
 - plotly
 - dill
+- matplotlib = 3.9  # pin: pyorerun imports matplotlib.cm.get_cmap, absent in newer matplotlib on CI
 - pyorerun
 - biorbd
 - numba

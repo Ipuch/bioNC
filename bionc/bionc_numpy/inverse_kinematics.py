@@ -287,14 +287,12 @@ class InverseKinematics:
         """
 
         options = self._get_solver_options(method, options)
-        if method == "dik":
-            self._validate_dik_problem()
         Q_init = self._get_initial_guess(Q_init, initial_guess_mode)
 
         if method == "dik":
-            Qopt = self._solve_frame_per_frame_dik(Q_init, initial_guess_mode, options)
+            Qopt = self._solve_frame_per_frame_dik_proxqp(Q_init, initial_guess_mode, options)
         else:
-            Qopt = self._solve_frame_per_frame(Q_init, initial_guess_mode, method, options)
+            Qopt = self._solve_frame_per_frame_casadi(Q_init, initial_guess_mode, method, options)
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
         self.check_segment_determinants()
@@ -318,7 +316,9 @@ class InverseKinematics:
 
     def _validate_dik_problem(self):
         if self.experimental_markers is None:
-            raise ValueError('method="dik" only supports marker-based inverse kinematics.')
+            raise ValueError('method="dik" requires experimental markers, but none were provided.')
+        if self.experimental_markers.shape[1] == 0:
+            raise ValueError('method="dik" requires at least one experimental marker, but none were provided.')
         if self.experimental_heatmaps is not None:
             raise ValueError('method="dik" does not support heatmap-based inverse kinematics.')
         if self._active_direct_frame_constraints:
@@ -368,7 +368,7 @@ class InverseKinematics:
 
         return Q_init
 
-    def _solve_frame_per_frame(
+    def _solve_frame_per_frame_casadi(
         self,
         Q_init: np.ndarray | NaturalCoordinates,
         initial_guess_mode: InitialGuessModeType,
@@ -388,7 +388,7 @@ class InverseKinematics:
 
         return Qopt
 
-    def _solve_frame_per_frame_dik(
+    def _solve_frame_per_frame_dik_proxqp(
         self,
         Q_init: np.ndarray | NaturalCoordinates,
         initial_guess_mode: InitialGuessModeType,
@@ -402,6 +402,7 @@ class InverseKinematics:
             s.t.   K_h dQ = -Phi_h(Q)
         where Phi_m are marker defects and Phi_h are holonomic constraints.
         """
+        self._validate_dik_problem()
         proxsuite = self._check_proxsuite_available()
 
         Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))

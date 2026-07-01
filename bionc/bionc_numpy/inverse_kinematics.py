@@ -275,7 +275,8 @@ class InverseKinematics:
         initial_guess_mode : InitialGuessModeType
             The type of initialization, by default InitialGuessModeType.FROM_CURRENT_MARKERS
         method : str
-            The method to use to solve the NLP (ipopt, sqpmethod, ...)
+            The method to use to solve the inverse kinematics (ipopt, sqpmethod, dik, ...)
+            Use "dik" for QP-based differential inverse kinematics with proxsuite/proxQP.
         options : dict
             The options to pass to the solver
 
@@ -288,19 +289,42 @@ class InverseKinematics:
         options = self._get_solver_options(method, options)
         Q_init = self._get_initial_guess(Q_init, initial_guess_mode)
 
-        Qopt = self._solve_frame_per_frame(Q_init, initial_guess_mode, method, options)
+        if method == "dik":
+            Qopt = self._solve_frame_per_frame_dik_proxqp(Q_init, initial_guess_mode, options)
+        else:
+            Qopt = self._solve_frame_per_frame_casadi(Q_init, initial_guess_mode, method, options)
 
         self.Qopt = Qopt.reshape((12 * self.model.nb_segments, self.nb_frames))
         self.check_segment_determinants()
         return Qopt
 
     def _get_solver_options(self, method: str, options: dict) -> dict:
-        default_options = {"sqpmethod": constants.SQP_IK_VALUES, "ipopt": constants.IPOPT_IK_VALUES}
+        default_options = {
+            "sqpmethod": constants.SQP_IK_VALUES,
+            "ipopt": constants.IPOPT_IK_VALUES,
+            "dik": constants.PROXQP_DIK_VALUES,
+        }
         if options is None:
             if method not in default_options:
-                raise ValueError("method must be one of the following str: 'sqpmethod' or 'ipopt'")
+                raise ValueError("method must be one of the following str: 'sqpmethod', 'ipopt' or 'dik'")
             return default_options[method]
+        if method == "dik":
+            if method not in default_options:
+                raise ValueError("method must be one of the following str: 'sqpmethod', 'ipopt' or 'dik'")
+            return {**default_options[method], **options}
         return options
+
+    def _validate_dik_problem(self):
+        if self.experimental_markers is None:
+            raise ValueError('method="dik" requires experimental markers, but none were provided.')
+        if self.experimental_markers.shape[1] == 0:
+            raise ValueError('method="dik" requires at least one experimental marker, but none were provided.')
+        if self.experimental_heatmaps is not None:
+            raise ValueError('method="dik" does not support heatmap-based inverse kinematics.')
+        if self._active_direct_frame_constraints:
+            raise ValueError('method="dik" does not support active_direct_frame_constraints.')
+        if len(self.objective_sym) > 1:
+            raise ValueError('method="dik" only supports the default marker objective.')
 
     def _get_initial_guess(
         self,
@@ -344,7 +368,7 @@ class InverseKinematics:
 
         return Q_init
 
-    def _solve_frame_per_frame(
+    def _solve_frame_per_frame_casadi(
         self,
         Q_init: np.ndarray | NaturalCoordinates,
         initial_guess_mode: InitialGuessModeType,
@@ -363,6 +387,179 @@ class InverseKinematics:
             Q_init = self._update_initial_guess(Q_init, Qopt, initial_guess_mode, f)
 
         return Qopt
+
+    def _solve_frame_per_frame_dik_proxqp(
+        self,
+        Q_init: np.ndarray | NaturalCoordinates,
+        initial_guess_mode: InitialGuessModeType,
+        options: dict,
+    ) -> np.ndarray:
+        """
+        Solves marker-based inverse kinematics frame per frame with differential IK.
+
+        At each frame, this iteratively solves the linearized QP:
+            min_dQ 1/2 ||Phi_m(Q) + K_m dQ||^2
+            s.t.   K_h dQ = -Phi_h(Q)
+        where Phi_m are marker defects and Phi_h are holonomic constraints.
+        """
+        self._validate_dik_problem()
+        proxsuite = self._check_proxsuite_available()
+
+        Qopt = np.zeros((12 * self.model.nb_segments, self.nb_frames))
+        self.objective_function = np.zeros(self.nb_frames)
+
+        max_iter = options["max_iter"]
+        constraint_eps = options.get("constraint_eps", options["eps"])
+        step_eps = options.get("step_eps", options["eps"])
+        objective_eps = options.get("objective_eps", options["eps"])
+
+        marker_jacobian = np.ascontiguousarray(self.model.markers_constraints_jacobian(only_technical=True))
+        marker_jacobian_transpose = np.ascontiguousarray(marker_jacobian.T)
+        hessian = np.ascontiguousarray(
+            marker_jacobian_transpose @ marker_jacobian + options["regularization"] * np.eye(marker_jacobian.shape[1])
+        )
+        dik_evaluator = self._setup_dik_evaluator() if options["use_casadi_dik_evaluators"] else None
+        qp = self._setup_dik_qp(proxsuite, hessian, self.model.nb_holonomic_constraints, options)
+
+        for f in range(self.nb_frames):
+            q_current = np.asarray(Q_init[:, f], dtype=float).reshape(-1)
+            converged = False
+            previous_objective = np.inf
+
+            for iteration in range(max_iter):
+                marker_defects = self._dik_marker_defects(marker_jacobian, q_current, f)
+                holonomic_constraints, holonomic_jacobian = self._dik_holonomic_constraints(q_current, dik_evaluator)
+
+                final_constraint_norm = np.linalg.norm(holonomic_constraints)
+                marker_objective = 0.5 * marker_defects.T @ marker_defects
+                constraints_ok = final_constraint_norm < constraint_eps
+                if constraints_ok and abs(previous_objective - marker_objective) < objective_eps:
+                    converged = True
+                    # print("converged at iteration ", iteration)
+                    break
+
+                delta_q, success = self._solve_dik_qp(
+                    qp,
+                    marker_jacobian_transpose,
+                    marker_defects,
+                    holonomic_jacobian,
+                    -holonomic_constraints,
+                    options,
+                    f,
+                    iteration,
+                )
+                if not success:
+                    break
+
+                q_current = q_current + delta_q
+                previous_objective = marker_objective
+
+                if constraints_ok and np.linalg.norm(delta_q) < step_eps:
+                    converged = True
+                    break
+
+            marker_defects = self._dik_marker_defects(marker_jacobian, q_current, f)
+            holonomic_constraints, _ = self._dik_holonomic_constraints(q_current, dik_evaluator)
+            final_constraint_norm = np.linalg.norm(holonomic_constraints)
+
+            Qopt[:, f : f + 1] = q_current[:, np.newaxis]
+            self.objective_function[f] = 0.5 * marker_defects.T @ marker_defects
+            self.success_optim.append(converged or final_constraint_norm < constraint_eps)
+            Q_init = self._update_initial_guess(Q_init, Qopt, initial_guess_mode, f)
+
+        return Qopt
+
+    @staticmethod
+    def _check_proxsuite_available():
+        try:
+            import proxsuite
+        except ImportError as exc:
+            raise ImportError(
+                'proxsuite is required to use method="dik". Install it with: pip install proxsuite'
+            ) from exc
+        return proxsuite
+
+    def _setup_dik_evaluator(self) -> Function:
+        Q = NaturalCoordinates(self._Q_sym)
+        return Function(
+            "dik_evaluator",
+            [self._Q_sym],
+            [
+                self._model_mx.holonomic_constraints(Q),
+                self._model_mx.holonomic_constraints_jacobian(Q),
+            ],
+        ).expand()
+
+    def _dik_marker_defects(self, marker_jacobian: np.ndarray, q_current: np.ndarray, frame: int) -> np.ndarray:
+        experimental_markers = self.experimental_markers[:, :, frame].flatten("F")
+        return np.ascontiguousarray(experimental_markers + marker_jacobian @ q_current)
+
+    def _dik_holonomic_constraints(
+        self,
+        q_current: np.ndarray,
+        dik_evaluator: Function | None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        if dik_evaluator is not None:
+            constraints, jacobian = dik_evaluator(q_current)
+            return np.array(constraints, dtype=float).reshape(-1), np.ascontiguousarray(np.array(jacobian, dtype=float))
+
+        Q_current = NaturalCoordinatesNumpy(q_current[:, np.newaxis])
+        return (
+            self.model.holonomic_constraints(Q_current).reshape(-1),
+            np.ascontiguousarray(self.model.holonomic_constraints_jacobian(Q_current)),
+        )
+
+    @staticmethod
+    def _setup_dik_qp(proxsuite, hessian: np.ndarray, nb_constraints: int, options: dict):
+        nb_q = hessian.shape[0]
+        max_delta_q = options["max_delta_q"]
+        has_delta_bounds = max_delta_q is not None and np.isfinite(max_delta_q)
+        nb_inequality = nb_q if has_delta_bounds else 0
+        C = np.ascontiguousarray(np.eye(nb_q)) if has_delta_bounds else None
+        l = -max_delta_q * np.ones(nb_q) if has_delta_bounds else None
+        u = max_delta_q * np.ones(nb_q) if has_delta_bounds else None
+
+        qp = proxsuite.proxqp.dense.QP(nb_q, nb_constraints, nb_inequality)
+        qp.settings.eps_abs = options["proxqp_eps_abs"]
+        qp.settings.max_iter = options["proxqp_max_iter"]
+        qp.settings.verbose = options["verbose"]
+        qp.init(
+            hessian,
+            np.zeros(nb_q),
+            np.zeros((nb_constraints, nb_q)),
+            np.zeros(nb_constraints),
+            C,
+            l,
+            u,
+        )
+        return qp
+
+    def _solve_dik_qp(
+        self,
+        qp,
+        marker_jacobian_transpose: np.ndarray,
+        marker_defects: np.ndarray,
+        constraint_jacobian: np.ndarray,
+        constraint_rhs: np.ndarray,
+        options: dict,
+        frame: int,
+        iteration: int,
+    ) -> tuple[np.ndarray, bool]:
+        import proxsuite
+
+        qp.update(
+            g=np.ascontiguousarray(marker_jacobian_transpose @ marker_defects),
+            A=np.ascontiguousarray(constraint_jacobian),
+            b=np.ascontiguousarray(constraint_rhs),
+            update_preconditioner=options["proxqp_update_preconditioner"],
+        )
+        qp.solve()
+
+        success = qp.results.info.status == proxsuite.proxqp.QPSolverOutput.PROXQP_SOLVED
+        if not success and options["verbose"]:
+            print(f"Warning: proxQP failed at frame {frame}, iteration {iteration}: {qp.results.info.status}")
+
+        return qp.results.x, success
 
     def _setup_nlp(self) -> dict:
         constraints = self._constraints(self._Q_sym)

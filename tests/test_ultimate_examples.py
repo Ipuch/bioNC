@@ -20,6 +20,43 @@ def test_play_with_joints_two_constant_length():
     module.main("ready_to_swing", False)
 
 
+def test_play_with_joints_plane_on_ellipsoid():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/play_with_joints/plane_on_ellipsoid.py")
+
+    model, joint, phi = module.main(show_results=False)
+
+    assert joint.nb_constraints == 1
+    np.testing.assert_allclose(phi["tangent"], 0.0, atol=1e-9)
+    np.testing.assert_allclose(phi["slide_+y"], 0.0, atol=1e-9)
+    np.testing.assert_allclose(phi["pushed_+x"], -0.02, atol=1e-9)
+
+
+@pytest.mark.parametrize("model_type", ["one", "two"])
+def test_play_with_joints_points_on_ellipsoid(model_type):
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/play_with_joints/points_on_ellipsoid.py")
+
+    model, joint, max_defect = module.main(model_type=model_type, show_results=False)
+
+    assert joint.nb_constraints == (1 if model_type == "one" else 2)
+    np.testing.assert_allclose(max_defect, 0.0, atol=1e-9)
+
+
+def test_play_with_joints_compare_scapulothoracic_models():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/play_with_joints/compare_scapulothoracic_models.py")
+
+    results, markers_noisy = module.main(n_frames=30, noise_std=0.003, seed=0, show_results=False)
+
+    # all three joint models track the markers, with constraints satisfied
+    for model_type in ("tangent", "one_point", "two_point"):
+        assert results[model_type]["rmse_mm"] < 10.0
+    # the tangent-contact model does not penetrate; the two-point model does
+    np.testing.assert_allclose(results["tangent"]["penetration_mm"], 0.0, atol=1e-6)
+    assert results["two_point"]["penetration_mm"] > results["tangent"]["penetration_mm"]
+
+
 def test_inverse_kinematics_one_frame():
     # import the lower limb model
     bionc = TestUtils.bionc_folder()

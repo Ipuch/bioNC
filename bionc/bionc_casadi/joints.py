@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import MX, dot, cos, transpose, sumsqr
+from casadi import MX, dot, cos, transpose, sumsqr, sqrt
 
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_marker import NaturalMarker
@@ -8,6 +8,24 @@ from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
 from ..protocols.joint import JointBaseWithTwoSegments as JointBase
 from ..utils.enums import NaturalAxis, EulerSequence, TransformationMatrixType
+
+
+def _point_on_ellipsoid_terms(q_parent, q_child, N_axes, N_C, N_P, semi_squared):
+    """
+    Constraint and jacobian rows (casadi) for a scapula contact point lying on the thorax ellipsoid.
+    See the numpy backend for the full description.
+    """
+    C = N_C @ q_parent
+    P = N_P @ q_child
+    w = P - C
+    axes = [N_i @ q_parent for N_i in N_axes]
+    d = [dot(axes[i], w) for i in range(3)]
+    phi = sum(d[i] ** 2 / semi_squared[i] for i in range(3)) - 1.0
+    K_parent = sum(
+        (2 * d[i] / semi_squared[i]) * (transpose(w) @ N_axes[i] - transpose(axes[i]) @ N_C) for i in range(3)
+    )
+    K_child = sum((2 * d[i] / semi_squared[i]) * (transpose(axes[i]) @ N_P) for i in range(3))
+    return phi, K_parent, K_child
 
 
 class Joint:
@@ -597,6 +615,337 @@ class Joint:
             bias = 2 * transpose(P_dot) @ n_dot - 2 * transpose(n_dot) @ A_dot
 
             return bias
+
+    class EllipsoidOnPlane(JointBase):
+        """
+        Plane tangent to an ellipsoid joint (e.g. scapulothoracic joint), casadi backend.
+
+        See the numpy ``Joint.EllipsoidOnPlane`` for the full description. The single scalar
+        constraint is ``phi = sqrt(u^T R^T B R u) + u^T (C - A)``.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            index: int,
+            semi_axis_lengths: tuple[float, float, float] | np.ndarray = None,
+            ellipsoid_center: str = None,
+            ellipsoid_axis_a: str = None,
+            ellipsoid_axis_b: str = None,
+            ellipsoid_axis_c: str = None,
+            plane_point: str = None,
+            plane_normal: str = None,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(Joint.EllipsoidOnPlane, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
+            self.nb_constraints = 1
+
+            if semi_axis_lengths is None:
+                raise ValueError("semi_axis_lengths (a, b, c) must be specified for joint EllipsoidOnPlane")
+            if ellipsoid_center is None:
+                raise ValueError("ellipsoid_center must be specified for joint EllipsoidOnPlane")
+            if ellipsoid_axis_a is None or ellipsoid_axis_b is None or ellipsoid_axis_c is None:
+                raise ValueError("ellipsoid_axis_a, _b and _c must be specified for joint EllipsoidOnPlane")
+            if plane_point is None:
+                raise ValueError("plane_point must be specified for joint EllipsoidOnPlane")
+            if plane_normal is None:
+                raise ValueError("plane_normal must be specified for joint EllipsoidOnPlane")
+
+            self.semi_axis_lengths = tuple(float(length) for length in semi_axis_lengths)
+            if len(self.semi_axis_lengths) != 3 or any(length <= 0 for length in self.semi_axis_lengths):
+                raise ValueError("semi_axis_lengths must be 3 strictly positive values (a, b, c)")
+
+            self.ellipsoid_center = parent.marker_from_name(ellipsoid_center)
+            self.ellipsoid_axes = [
+                parent.vector_from_name(axis) for axis in (ellipsoid_axis_a, ellipsoid_axis_b, ellipsoid_axis_c)
+            ]
+            self.plane_point = child.marker_from_name(plane_point)
+            self.plane_normal = child.vector_from_name(plane_normal)
+
+        def _kinematic_terms(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """Common symbolic quantities reused by the constraint and its jacobian."""
+            N_axes = [axis.interpolation_matrix for axis in self.ellipsoid_axes]  # 3 x (3, 12) MX
+            N_C = self.ellipsoid_center.interpolation_matrix  # (3, 12) MX
+            N_A = self.plane_point.interpolation_matrix  # (3, 12) MX
+            N_n = self.plane_normal.interpolation_matrix  # (3, 12) MX
+
+            u = N_n @ Q_child  # plane normal in global (3, 1)
+            axes = [N_i @ Q_parent for N_i in N_axes]  # ellipsoid principal axes in global (3, 1)
+            projections = [dot(axis, u) for axis in axes]  # a_i^T u
+            b = [length**2 for length in self.semi_axis_lengths]
+            s = projections[0] ** 2 * b[0] + projections[1] ** 2 * b[1] + projections[2] ** 2 * b[2]
+
+            return dict(
+                N_axes=N_axes,
+                N_C=N_C,
+                N_A=N_A,
+                N_n=N_n,
+                u=u,
+                axes=axes,
+                p=projections,
+                b=b,
+                s=s,
+                sqrt_s=sqrt(s),
+                C=N_C @ Q_parent,
+                A=N_A @ Q_child,
+            )
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """
+            This function returns the kinematic constraints of the joint, denoted Phi_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            MX
+                Kinematic constraints of the joint [1, 1]
+            """
+            t = self._kinematic_terms(Q_parent, Q_child)
+            return t["sqrt_s"] + dot(t["u"], t["C"] - t["A"])
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            t = self._kinematic_terms(Q_parent, Q_child)
+            b, p, u, N_axes, N_C, sqrt_s = t["b"], t["p"], t["u"], t["N_axes"], t["N_C"], t["sqrt_s"]
+
+            d_sqrt = sum(b[i] * p[i] * (transpose(u) @ N_axes[i]) for i in range(3)) / sqrt_s
+            K_k_parent = d_sqrt + transpose(u) @ N_C
+
+            return K_k_parent
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            t = self._kinematic_terms(Q_parent, Q_child)
+            b, p, u, axes, N_n, N_A, sqrt_s = t["b"], t["p"], t["u"], t["axes"], t["N_n"], t["N_A"], t["sqrt_s"]
+
+            d_sqrt = sum(b[i] * p[i] * (transpose(axes[i]) @ N_n) for i in range(3)) / sqrt_s
+            K_k_child = d_sqrt + transpose(t["C"] - t["A"]) @ N_n - transpose(u) @ N_A
+
+            return K_k_child
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
+            """
+            This function returns the kinematic constraints of the joint, denoted K_k
+            as a function of the natural coordinates Q_parent and Q_child.
+
+            Returns
+            -------
+            tuple[MX, MX]
+                joint constraints jacobian of the parent and child segment [1, 12] and [1, 12]
+            """
+            return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """
+            Not implemented: the EllipsoidOnPlane constraint has a configuration-dependent Hessian
+            (the ``sqrt(u^T R^T B R u)`` term), which the velocity-only model interface cannot
+            supply. See the numpy backend for the analytic expression.
+            """
+            raise NotImplementedError(
+                "constraint_acceleration_bias is configuration-dependent for EllipsoidOnPlane and "
+                "is not supported by the velocity-only model interface; use this joint for "
+                "kinematics/constraint evaluation only."
+            )
+
+    class PointOnEllipsoid(JointBase):
+        """
+        One-contact-point scapulothoracic joint, casadi backend. See the numpy backend for details.
+        A single child point is constrained on the parent ellipsoid:
+        ``phi = sum_i (a_i . (P - C))^2 / s_i - 1``.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            index: int,
+            semi_axis_lengths: tuple[float, float, float] | np.ndarray = None,
+            ellipsoid_center: str = None,
+            ellipsoid_axis_a: str = None,
+            ellipsoid_axis_b: str = None,
+            ellipsoid_axis_c: str = None,
+            contact_point: str = None,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(Joint.PointOnEllipsoid, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
+            self.nb_constraints = 1
+
+            if semi_axis_lengths is None:
+                raise ValueError("semi_axis_lengths (a, b, c) must be specified for joint PointOnEllipsoid")
+            if ellipsoid_center is None:
+                raise ValueError("ellipsoid_center must be specified for joint PointOnEllipsoid")
+            if ellipsoid_axis_a is None or ellipsoid_axis_b is None or ellipsoid_axis_c is None:
+                raise ValueError("ellipsoid_axis_a, _b and _c must be specified for joint PointOnEllipsoid")
+            if contact_point is None:
+                raise ValueError("contact_point must be specified for joint PointOnEllipsoid")
+
+            self.semi_axis_lengths = tuple(float(length) for length in semi_axis_lengths)
+            if len(self.semi_axis_lengths) != 3 or any(length <= 0 for length in self.semi_axis_lengths):
+                raise ValueError("semi_axis_lengths must be 3 strictly positive values (a, b, c)")
+
+            self.ellipsoid_center = parent.marker_from_name(ellipsoid_center)
+            self.ellipsoid_axes = [
+                parent.vector_from_name(axis) for axis in (ellipsoid_axis_a, ellipsoid_axis_b, ellipsoid_axis_c)
+            ]
+            self.contact_point = child.marker_from_name(contact_point)
+
+        def _ellipsoid_matrices(self):
+            N_axes = [axis.interpolation_matrix for axis in self.ellipsoid_axes]
+            N_C = self.ellipsoid_center.interpolation_matrix
+            s = [length**2 for length in self.semi_axis_lengths]
+            return N_axes, N_C, s
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """Kinematic constraint of the joint [1, 1]."""
+            N_axes, N_C, s = self._ellipsoid_matrices()
+            N_P = self.contact_point.interpolation_matrix
+            phi, _, _ = _point_on_ellipsoid_terms(Q_parent, Q_child, N_axes, N_C, N_P, s)
+            return phi
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            N_axes, N_C, s = self._ellipsoid_matrices()
+            N_P = self.contact_point.interpolation_matrix
+            _, K_parent, _ = _point_on_ellipsoid_terms(Q_parent, Q_child, N_axes, N_C, N_P, s)
+            return K_parent
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            N_axes, N_C, s = self._ellipsoid_matrices()
+            N_P = self.contact_point.interpolation_matrix
+            _, _, K_child = _point_on_ellipsoid_terms(Q_parent, Q_child, N_axes, N_C, N_P, s)
+            return K_child
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
+            """Constraint jacobian of the parent and child segment [1, 12] and [1, 12]."""
+            return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Not implemented: configuration-dependent Hessian (see numpy backend)."""
+            raise NotImplementedError(
+                "constraint_acceleration_bias is configuration-dependent for PointOnEllipsoid and is not "
+                "supported by the velocity-only model interface; use this joint for kinematics only."
+            )
+
+    class TwoPointsOnEllipsoid(JointBase):
+        """
+        Two-contact-point scapulothoracic joint, casadi backend. Two child points are constrained
+        on the parent ellipsoid (two scalar constraints). See the numpy backend for details.
+        """
+
+        def __init__(
+            self,
+            name: str,
+            parent: NaturalSegment,
+            child: NaturalSegment,
+            index: int,
+            semi_axis_lengths: tuple[float, float, float] | np.ndarray = None,
+            ellipsoid_center: str = None,
+            ellipsoid_axis_a: str = None,
+            ellipsoid_axis_b: str = None,
+            ellipsoid_axis_c: str = None,
+            contact_point_1: str = None,
+            contact_point_2: str = None,
+            projection_basis: EulerSequence = None,
+            parent_basis: TransformationMatrixType = None,
+            child_basis: TransformationMatrixType = None,
+        ):
+            super(Joint.TwoPointsOnEllipsoid, self).__init__(
+                name, parent, child, index, projection_basis, parent_basis, child_basis
+            )
+            self.nb_constraints = 2
+
+            if semi_axis_lengths is None:
+                raise ValueError("semi_axis_lengths (a, b, c) must be specified for joint TwoPointsOnEllipsoid")
+            if ellipsoid_center is None:
+                raise ValueError("ellipsoid_center must be specified for joint TwoPointsOnEllipsoid")
+            if ellipsoid_axis_a is None or ellipsoid_axis_b is None or ellipsoid_axis_c is None:
+                raise ValueError("ellipsoid_axis_a, _b and _c must be specified for joint TwoPointsOnEllipsoid")
+            if contact_point_1 is None or contact_point_2 is None:
+                raise ValueError("contact_point_1 and contact_point_2 must be specified for joint TwoPointsOnEllipsoid")
+
+            self.semi_axis_lengths = tuple(float(length) for length in semi_axis_lengths)
+            if len(self.semi_axis_lengths) != 3 or any(length <= 0 for length in self.semi_axis_lengths):
+                raise ValueError("semi_axis_lengths must be 3 strictly positive values (a, b, c)")
+
+            self.ellipsoid_center = parent.marker_from_name(ellipsoid_center)
+            self.ellipsoid_axes = [
+                parent.vector_from_name(axis) for axis in (ellipsoid_axis_a, ellipsoid_axis_b, ellipsoid_axis_c)
+            ]
+            self.contact_points = [child.marker_from_name(contact_point_1), child.marker_from_name(contact_point_2)]
+
+        def _ellipsoid_matrices(self):
+            N_axes = [axis.interpolation_matrix for axis in self.ellipsoid_axes]
+            N_C = self.ellipsoid_center.interpolation_matrix
+            s = [length**2 for length in self.semi_axis_lengths]
+            return N_axes, N_C, s
+
+        def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
+            """Kinematic constraints of the joint [2, 1]."""
+            N_axes, N_C, s = self._ellipsoid_matrices()
+            constraint = MX.zeros(self.nb_constraints, 1)
+            for k, point in enumerate(self.contact_points):
+                phi, _, _ = _point_on_ellipsoid_terms(Q_parent, Q_child, N_axes, N_C, point.interpolation_matrix, s)
+                constraint[k, 0] = phi
+            return constraint
+
+        def parent_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            N_axes, N_C, s = self._ellipsoid_matrices()
+            K_parent = MX.zeros(self.nb_constraints, 12)
+            for k, point in enumerate(self.contact_points):
+                _, row, _ = _point_on_ellipsoid_terms(Q_parent, Q_child, N_axes, N_C, point.interpolation_matrix, s)
+                K_parent[k, :] = row
+            return K_parent
+
+        def child_constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> MX:
+            N_axes, N_C, s = self._ellipsoid_matrices()
+            K_child = MX.zeros(self.nb_constraints, 12)
+            for k, point in enumerate(self.contact_points):
+                _, _, row = _point_on_ellipsoid_terms(Q_parent, Q_child, N_axes, N_C, point.interpolation_matrix, s)
+                K_child[k, :] = row
+            return K_child
+
+        def constraint_jacobian(
+            self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
+        ) -> tuple[MX, MX]:
+            """Constraint jacobian of the parent and child segment [2, 12] and [2, 12]."""
+            return self.parent_constraint_jacobian(Q_parent, Q_child), self.child_constraint_jacobian(Q_parent, Q_child)
+
+        def constraint_acceleration_bias(
+            self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
+        ) -> MX:
+            """Not implemented: configuration-dependent Hessian (see numpy backend)."""
+            raise NotImplementedError(
+                "constraint_acceleration_bias is configuration-dependent for TwoPointsOnEllipsoid and is not "
+                "supported by the velocity-only model interface; use this joint for kinematics only."
+            )
 
     class ConstantLength(JointBase):
         def __init__(

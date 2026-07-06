@@ -29,7 +29,7 @@ class C3dData:
 
     def _to_meter(self, data: np.array) -> np.array:
         units = self.ezc3d_data["parameters"]["POINT"]["UNITS"]["value"]
-        factor = 1000 if len(units) > 0 and units[0] == "mm" else 1
+        factor = 1000 if len(units) > 0 and units[0] in ["mm","millimeter"] else 1
 
         data /= factor
         data[3] = 1

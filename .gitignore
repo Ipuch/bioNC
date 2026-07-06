@@ -134,3 +134,5 @@ sandbox/
 tests/pendulum.nmod
 
 examples/forward_dynamics/pendulum_3d.nmod
+
+examples/models/upper_limb.nc

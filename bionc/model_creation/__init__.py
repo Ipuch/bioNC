@@ -16,5 +16,6 @@ from .inertia_parameters_template import InertiaParametersTemplate
 
 # The accepted data formating
 from .c3d_data import C3dData
+from .trc_data import TRCData
 
 # anymore class can be added here (csv, trc, etc.)

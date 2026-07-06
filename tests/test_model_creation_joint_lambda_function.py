@@ -101,7 +101,10 @@ def test_update_resolves_callable_joint_fields_and_keeps_segment_data(monkeypatc
     updated_segment = model.segments["SEGMENT"]
     assert updated_segment.name == "SEGMENT"
     assert updated_segment.experimental_Q_function.__self__ is template.segments["SEGMENT"].natural_segment
-    assert updated_segment.experimental_Q_function.__func__ is template.segments["SEGMENT"].natural_segment.experimental_Q.__func__
+    assert (
+        updated_segment.experimental_Q_function.__func__
+        is template.segments["SEGMENT"].natural_segment.experimental_Q.__func__
+    )
     assert len(updated_segment.added_markers) == 1
     assert updated_segment.added_markers[0]["name"] == "M0"
     np.testing.assert_array_equal(updated_segment.added_markers[0]["Q_xp"], np.array([1.0, 2.0, 3.0]))

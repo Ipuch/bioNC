@@ -30,7 +30,6 @@ class NaturalSegmentTemplate:
             The function to compute the distal end of the segment, distal location of the segment, denoted rd
         w_axis
             The third axis of the segment, denoted w
-
         """
 
         self.u_axis = u_axis

@@ -29,6 +29,7 @@ from .model_creation import (
     InertiaParametersTemplate,
     BiomechanicalModelTemplate,
     C3dData,
+    TRCData,
     Data,
     GenericDynamicModel,
 )

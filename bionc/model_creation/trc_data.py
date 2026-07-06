@@ -26,9 +26,9 @@ class TRCData:
 
     def _get_position(self, marker_names: tuple[str, ...]):
         nb_frames = self.last_frame - self.first_frame + 1
-        positions = np.zeros((4, len(marker_names), nb_frames ))
+        positions = np.zeros((4, len(marker_names), nb_frames))
         for frame in range(self.first_frame, self.last_frame + 1):
-            positions[:3, :, frame] = np.array(self.trc_data[frame][1]).T[:,  self._indices_in_trc(marker_names)]
+            positions[:3, :, frame] = np.array(self.trc_data[frame][1]).T[:, self._indices_in_trc(marker_names)]
         positions[-1, :, :] = 1
 
         return self._to_meter(positions)

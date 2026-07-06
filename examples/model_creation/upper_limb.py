@@ -17,8 +17,19 @@ from bionc import (
 
 import numpy as np
 
-def u_thorax(ij: np.ndarray, centijc7: np.ndarray, centpxt8: np.ndarray):
-    rp = (ij + centijc7) /2
+
+def u_thorax(ij: np.ndarray, centijc7: np.ndarray, centpxt8: np.ndarray) -> np.ndarray:
+    """
+    This function is a helper for the construction of the thorax frame,
+    because the thorax frame rely on the previous computations to get the postero-anterior axis u,
+    I had to redefine the entire sequence of computations for it.
+
+    (rp - rd) x w / norm2((rp - rd) x w)
+
+    It returns a (4 x Nframes) np.ndarray
+
+    """
+    rp = (ij + centijc7) / 2
     rd = centpxt8
 
     v = rp - rd
@@ -35,6 +46,7 @@ def u_thorax(ij: np.ndarray, centijc7: np.ndarray, centpxt8: np.ndarray):
 
     return cross_product
 
+
 def model_creation_from_measured_data(trc_filename) -> BiomechanicalModel:
     """
     Create a model from a data file and we build the biomechanical model as a template using the marker names
@@ -49,9 +61,11 @@ def model_creation_from_measured_data(trc_filename) -> BiomechanicalModel:
     model["THORAX"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
             u_axis=AxisFunctionTemplate(function=u_axis_thorax),
-            proximal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio,"centijc7","ij"),
+            proximal_point=lambda m, bio: MarkerTemplate.middle_of(m, bio, "centijc7", "ij"),
             distal_point="centpxt8",
-            w_axis=AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, "ij", "centijc7", "centpxt8")),
+            w_axis=AxisFunctionTemplate(
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, "ij", "centijc7", "centpxt8")
+            ),
         )
     )
 
@@ -64,7 +78,7 @@ def model_creation_from_measured_data(trc_filename) -> BiomechanicalModel:
             u_axis=AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, "aa", "ai", "ts")),
             proximal_point="aa",
             distal_point="ai",
-            w_axis=AxisTemplate(start="ts",end="aa")
+            w_axis=AxisTemplate(start="ts", end="aa"),
         )
     )
 
@@ -74,10 +88,12 @@ def model_creation_from_measured_data(trc_filename) -> BiomechanicalModel:
 
     model["HUMERUS"] = SegmentTemplate(
         natural_segment=NaturalSegmentTemplate(
-           u_axis=AxisFunctionTemplate(function=lambda m, bio: MarkerTemplate.normal_to(m, bio, "EpL", "centelbow", "gu")),
-           proximal_point="gu",
-           distal_point="centelbow",
-           w_axis=AxisTemplate(start="centelbow", end="EpL")
+            u_axis=AxisFunctionTemplate(
+                function=lambda m, bio: MarkerTemplate.normal_to(m, bio, "EpL", "centelbow", "gu")
+            ),
+            proximal_point="gu",
+            distal_point="centelbow",
+            w_axis=AxisTemplate(start="centelbow", end="EpL"),
         )
     )
     model["HUMERUS"].add_marker(MarkerTemplate(name="gu", parent_name="HUMERUS", is_technical=True))
@@ -111,7 +127,7 @@ def model_creation_from_measured_data(trc_filename) -> BiomechanicalModel:
         child_basis=TransformationMatrixType.Bvu,
     )
 
-    data = TRCData(f"{trc_filename}",first_frame=0, last_frame=200)
+    data = TRCData(f"{trc_filename}", first_frame=0, last_frame=200)
     natural_model = model.update(data)
 
     return natural_model
@@ -132,12 +148,13 @@ def main():
     from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
     from bionc.vizualization.pyorerun_natural_vectors import add_natural_vectors
     from pyorerun import PhaseRerun, PyoMarkers
+
     #
     # # display the experimental markers in white and the model markers in blue
     # # almost superimposed because the model is well defined on the experimental data
     prr = PhaseRerun(t_span=np.linspace(0, 1, markers_xp.shape[2]))
     model_interface = BioncModelNoMesh(model)
-    pyomarker = PyoMarkers.from_trc(trc_filename)/1000
+    pyomarker = PyoMarkers.from_trc(trc_filename) / 1000
     prr.add_animated_model(model_interface, Qxp, pyomarker)
     add_natural_vectors(prr, model, np.asarray(Qxp), scale_u=0.1, scale_v=1.0, scale_w=0.1)
     prr.rerun()

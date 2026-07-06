@@ -33,7 +33,7 @@ class BioncModelNoMesh:
 
         idx_technical = [name.index(n) for n in name_technical]
 
-        return self.model.markers(q).T[:, idx_technical, :]
+        return self.model.markers(q).T[:, idx_technical, :].squeeze()
 
     @property
     def nb_markers(self) -> int:

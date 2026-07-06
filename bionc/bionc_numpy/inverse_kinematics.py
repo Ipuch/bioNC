@@ -735,14 +735,17 @@ class InverseKinematics:
         total_rigidity_residuals = TimeSeriesUtils.total_rigid_body_constraints(self.model, self.Qopt)
 
         ind_max_rigidy_error = np.argmax(segment_rigidity_residual_norm, axis=0)
-        ind_max_joint_constraint_error = np.argmax(joint_residuals, axis=0)
+        ind_max_joint_constraint_error = np.argmax(joint_residuals, axis=0) if joint_residuals.shape[0] != 0 else None
 
         # Create a list of marker, segment and joint from the indices
         max_rigidbody_violation = [self.model.segment_names[ind_max] for ind_max in ind_max_rigidy_error]
-        max_joint_violation = [
-            self.model.joint_names[self.model.joint_constraints_indices[ind_max]]
-            for ind_max in ind_max_joint_constraint_error
-        ]
+        if joint_residuals.shape[0] != 0:
+            max_joint_violation = [
+                self.model.joint_names[self.model.joint_constraints_indices[ind_max]]
+                for ind_max in ind_max_joint_constraint_error
+            ]
+        else:
+            max_joint_violation = []
 
         total_euler_angles = TimeSeriesUtils.total_euler_angles(self.model, self.Qopt)
 

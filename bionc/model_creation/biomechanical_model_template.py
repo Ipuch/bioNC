@@ -1,3 +1,5 @@
+import numpy as np
+
 from .protocols import Data
 
 from .segment_template import SegmentTemplate
@@ -131,6 +133,18 @@ class BiomechanicalModelTemplate:
                 model.segments[name].add_natural_marker(marker.to_natural_marker(data, model, Q_xp))
 
         for key, joint in self.joints.items():
-            model._add_joint(joint)
+            model._add_joint(self._resolve_joint_callables(joint, data, model))
 
         return model
+
+    @staticmethod
+    def _resolve_joint_callables(joint: dict, data: Data, model: "BiomechanicalModel") -> dict:
+        """
+        Collapse any callable joint field (e.g. a data-driven ``length``) into an actual value.
+
+        A callable is evaluated with the same ``(m, bio)`` convention as markers and axes, where
+        ``m`` is the dictionary of experimental marker positions and ``bio`` is the model being built.
+        Returns a shallow copy so the template can be reused across several ``update`` calls.
+        """
+
+        return {key: np.mean(value(data.values, model)) if callable(value) else value for key, value in joint.items()}

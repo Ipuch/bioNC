@@ -173,6 +173,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
+
+                    if j.nb_constraints == 0:
+                        continue
+
                     idx = slice(nb_constraints, nb_constraints + j.nb_constraints)
 
                     Q_parent = (
@@ -219,6 +223,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             joints = self.joints_from_child_index(i, remove_free_joints=True)
             if len(joints) != 0:
                 for j in joints:
+
+                    if j.nb_constraints == 0:
+                        continue
+
                     idx_row = slice(nb_constraints, nb_constraints + j.nb_constraints)
 
                     idx_col_child = slice(

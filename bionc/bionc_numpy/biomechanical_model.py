@@ -642,6 +642,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         # todo: This should be named to_minimal_coordinates instead of joint_angles,
             because we can have translations too.
 
+        # todo: add translations too
+
         Parameters
         ----------
         Q: NaturalCoordinates

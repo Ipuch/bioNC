@@ -69,11 +69,9 @@ class AbstractNaturalSegment(ABC):
 
         if mass is not None and natural_center_of_mass is not None and natural_pseudo_inertia is not None:
             self.set_natural_inertial_parameters(mass, natural_center_of_mass, natural_pseudo_inertia)
-            self._natural_inertial_parameters._initial_transformation_matrix = self.compute_transformation_matrix(
-                inertial_transformation_matrix_type
-            )
-            self._natural_inertial_parameters._initial_transformation_matrix_inverse = (
-                self.compute_transformation_matrix_inverse(inertial_transformation_matrix_type)
+            self._natural_inertial_parameters.set_initial_transformation_matrices(
+                self.compute_transformation_matrix(inertial_transformation_matrix_type),
+                self.compute_transformation_matrix_inverse(inertial_transformation_matrix_type),
             )
 
         # to know if the segment is the ground

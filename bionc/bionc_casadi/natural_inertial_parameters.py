@@ -101,10 +101,25 @@ class NaturalInertialParameters:
         self._natural_center_of_mass = check_natural_center_of_mass(natural_center_of_mass)
         self._natural_pseudo_inertia = check_natural_pseudo_inertia(natural_pseudo_inertia)
         self._mass_matrix = self._update_mass_matrix()
-        self._initial_transformation_matrix = check_initial_transformation_matrix(initial_transformation_matrix)
-        self._initial_transformation_matrix_inverse = check_initial_transformation_matrix(
-            initial_transformation_matrix_inverse
-        )
+        self.set_initial_transformation_matrices(initial_transformation_matrix, initial_transformation_matrix_inverse)
+
+    def set_initial_transformation_matrices(
+        self,
+        transformation_matrix: Union[np.ndarray, MX],
+        transformation_matrix_inverse: Union[np.ndarray, MX] = None,
+    ):
+        """
+        Sets B and inv(B) together, so the two can never drift apart.
+
+        Parameters
+        ----------
+        transformation_matrix : np.ndarray | MX
+            Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        transformation_matrix_inverse : np.ndarray | MX
+            Its analytical inverse [3x3], see NaturalSegment.compute_transformation_matrix_inverse
+        """
+        self._initial_transformation_matrix = check_initial_transformation_matrix(transformation_matrix)
+        self._initial_transformation_matrix_inverse = check_initial_transformation_matrix(transformation_matrix_inverse)
 
     @property
     def mass(self) -> float:

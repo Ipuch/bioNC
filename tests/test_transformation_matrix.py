@@ -4,8 +4,13 @@ import numpy as np
 import pytest
 
 from bionc import NaturalAxis
-from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
+from bionc.bionc_numpy.transformation_matrix import (
+    compute_transformation_matrix,
+    compute_transformation_matrix_inverse,
+    gram_determinant_sqrt,
+)
 from bionc.utils.enums import TransformationMatrixType
+from bionc.utils.gram import gram_determinant
 from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
 from .utils import TestUtils
 
@@ -74,7 +79,7 @@ def test_transformation_matrix_Bwu():
     assert isinstance(result, np.ndarray)
     assert result.shape == (3, 3)
     np.testing.assert_almost_equal(
-        result, np.array([[0.5646425, -1.0358334, 0.0], [0.0, 0.9480368, 0.0], [0.8253356, 1.7551651, 1.0]])
+        result, np.array([[0.5646425, 0.1436025, 0.0], [0.0, 0.9480368, 0.0], [0.8253356, 1.7551651, 1.0]])
     )
 
 
@@ -88,7 +93,7 @@ def test_transformation_matrix_Buw():
             [
                 [1.0, 1.529684374568977, 0.8253356149096783],
                 [0.0, 0.9480367617186112, 0.0],
-                [0.0, -0.4807683268354297, 0.5646424733950354],
+                [0.0, 0.8725204941048372, 0.5646424733950354],
             ]
         ),
     )
@@ -145,15 +150,15 @@ def test_segment_transformation_matrix(bionc_type):
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bvu), res_Bvu)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bvu"), res_Bvu)
 
-    res_Bwu = np.array([[0.97908409, 0.0, 0.20345601], [0.13783542, 1.48828492, -0.12386902], [0.0, 0.0, 1.0]])
+    res_Bwu = np.array([[0.97908409, 0.0, 0.20345601], [0.14023008, 1.48828492, -0.12386902], [0.0, 0.0, 1.0]])
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bwu), res_Bwu)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bwu"), res_Bwu)
 
     res_Buw = np.array(
         [
             [1.0, 0.0, 0.0],
-            [0.11209514, 1.48828491, -0.14716265],
-            [0.20345601, 0, 0.97908408],
+            [0.11209514, 1.48828492, -0.14980884],
+            [0.20345601, 0, 0.97908409],
         ]
     )
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Buw), res_Buw)
@@ -202,3 +207,221 @@ def test_check_plane_invalid_input():
 def test_check_axis_to_keep_invalid_input():
     with pytest.raises(ValueError):
         check_axis_to_keep("X")
+
+
+IMPLEMENTED_TYPES = [
+    TransformationMatrixType.Buv,
+    TransformationMatrixType.Bvu,
+    TransformationMatrixType.Bwu,
+    TransformationMatrixType.Buw,
+]
+
+
+def valid_angle_samples(nb_samples: int = 40, seed: int = 42):
+    """
+    Random (length, alpha, beta, gamma) that describe a segment that actually exists in 3D,
+    i.e. for which the Gram determinant of (u, v/length, w) is safely positive.
+    """
+    rng = np.random.default_rng(seed)
+    samples = []
+    while len(samples) < nb_samples:
+        length = rng.uniform(0.05, 5.0)
+        alpha, beta, gamma = rng.uniform(0.15, np.pi - 0.15, 3)
+        if gram_determinant(alpha, beta, gamma) > 1e-4:
+            samples.append((length, alpha, beta, gamma))
+    return samples
+
+
+ANGLE_SAMPLES = valid_angle_samples()
+
+
+def _backend(bionc_type):
+    """The (compute_transformation_matrix, compute_transformation_matrix_inverse) pair of a backend."""
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi.transformation_matrix import (
+            compute_transformation_matrix as compute,
+            compute_transformation_matrix_inverse as compute_inverse,
+        )
+
+        return (
+            lambda *args: TestUtils.to_array(compute(*args)),
+            lambda *args: TestUtils.to_array(compute_inverse(*args)),
+        )
+
+    return compute_transformation_matrix, compute_transformation_matrix_inverse
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+@pytest.mark.parametrize("matrix_type", IMPLEMENTED_TYPES)
+@pytest.mark.parametrize("length, alpha, beta, gamma", ANGLE_SAMPLES)
+def test_transformation_matrix_reproduces_the_segment_geometry(bionc_type, matrix_type, length, alpha, beta, gamma):
+    """
+    The columns of B are u, rp-rd and w expressed in the segment frame, so B.T @ B must give back
+    the angles and the length the matrix was built from, whatever the transformation matrix type.
+    """
+    compute, _ = _backend(bionc_type)
+    B = compute(matrix_type, length, alpha, beta, gamma)
+    gram = np.array(
+        [
+            [1, length * np.cos(gamma), np.cos(beta)],
+            [length * np.cos(gamma), length**2, length * np.cos(alpha)],
+            [np.cos(beta), length * np.cos(alpha), 1],
+        ]
+    )
+    np.testing.assert_almost_equal(B.T @ B, gram, decimal=8)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+@pytest.mark.parametrize("matrix_type", IMPLEMENTED_TYPES)
+@pytest.mark.parametrize("length, alpha, beta, gamma", ANGLE_SAMPLES)
+def test_transformation_matrix_determinant(bionc_type, matrix_type, length, alpha, beta, gamma):
+    """det(B) = length * sqrt(gram determinant), identical for every transformation matrix type."""
+    compute, _ = _backend(bionc_type)
+    B = compute(matrix_type, length, alpha, beta, gamma)
+    np.testing.assert_almost_equal(np.linalg.det(B), length * gram_determinant_sqrt(alpha, beta, gamma), decimal=8)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+@pytest.mark.parametrize("matrix_type", IMPLEMENTED_TYPES)
+@pytest.mark.parametrize("length, alpha, beta, gamma", ANGLE_SAMPLES)
+def test_transformation_matrix_inverse(bionc_type, matrix_type, length, alpha, beta, gamma):
+    """The analytical inverse must agree with the numerical one, and undo B exactly."""
+    compute, compute_inverse = _backend(bionc_type)
+    B = compute(matrix_type, length, alpha, beta, gamma)
+    B_inv = compute_inverse(matrix_type, length, alpha, beta, gamma)
+
+    np.testing.assert_almost_equal(B_inv, np.linalg.inv(B), decimal=8)
+    np.testing.assert_almost_equal(B @ B_inv, np.eye(3), decimal=8)
+    np.testing.assert_almost_equal(B_inv @ B, np.eye(3), decimal=8)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+@pytest.mark.parametrize("length, alpha, beta, gamma", ANGLE_SAMPLES)
+def test_gram_determinant_sqrt_agrees_across_backends(bionc_type, length, alpha, beta, gamma):
+    """Both backends spell delta out separately, so pin them to the same value."""
+    from bionc.bionc_casadi.transformation_matrix import gram_determinant_sqrt as casadi_gram_determinant_sqrt
+
+    expected = np.sqrt(gram_determinant(alpha, beta, gamma))
+    actual = (
+        TestUtils.to_array(casadi_gram_determinant_sqrt(alpha, beta, gamma))
+        if bionc_type == "casadi"
+        else gram_determinant_sqrt(alpha, beta, gamma)
+    )
+    np.testing.assert_almost_equal(np.squeeze(actual), expected, decimal=10)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+@pytest.mark.parametrize("matrix_type", [TransformationMatrixType.Bvw, TransformationMatrixType.Bwv])
+def test_transformation_matrix_inverse_not_implemented(bionc_type, matrix_type):
+    _, compute_inverse = _backend(bionc_type)
+    with pytest.raises(NotImplementedError):
+        compute_inverse(matrix_type, 2.0, 0.5, 0.6, 0.7)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_transformation_matrix_inverse_invalid_matrix_type(bionc_type):
+    _, compute_inverse = _backend(bionc_type)
+    with pytest.raises(ValueError):
+        compute_inverse("INVALID_TYPE", 2.0, 0.5, 0.6, 0.7)
+
+
+@pytest.mark.parametrize("matrix_type", IMPLEMENTED_TYPES)
+def test_transformation_matrix_inverse_is_not_guarded_against_impossible_angles(matrix_type):
+    """
+    compute_transformation_matrix_inverse divides by sqrt(delta), and does NOT check that the angles
+    are realisable -- that guard lives in NaturalSegment._angle_sanity_check, which every public
+    entry point goes through. Called directly with impossible angles it returns non-finite values
+    rather than raising, exactly like the numerical inverse of the (already non-finite) B does.
+
+    This pins that contract so a future guard is a deliberate change, not a surprise.
+    """
+    impossible = (np.pi / 5, np.pi / 5, np.pi / 1.5)
+    assert gram_determinant(*impossible) < 0
+
+    with np.errstate(invalid="ignore", divide="ignore"):
+        B_inv = compute_transformation_matrix_inverse(matrix_type, 1.5, *impossible)
+        B = compute_transformation_matrix(matrix_type, 1.5, *impossible)
+
+    assert not np.all(np.isfinite(B_inv))
+    assert not np.all(np.isfinite(B))
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_segment_transformation_matrix_inverse(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import NaturalSegment
+    else:
+        from bionc.bionc_numpy import NaturalSegment
+
+    bbox = NaturalSegment(
+        name="bbox",
+        alpha=np.pi / 1.9,
+        beta=np.pi / 2.3,
+        gamma=np.pi / 2.1,
+        length=1.5,
+    )
+
+    for matrix_type in IMPLEMENTED_TYPES:
+        B = TestUtils.to_array(bbox.compute_transformation_matrix(matrix_type=matrix_type))
+        B_inv = bbox.compute_transformation_matrix_inverse(matrix_type=matrix_type)
+
+        # the segment level accessors both transpose, so they stay inverse of one another
+        TestUtils.assert_equal(B_inv, np.linalg.inv(B))
+        TestUtils.assert_equal(B @ TestUtils.to_array(B_inv), np.eye(3))
+
+        # and the string form of the type resolves to the same matrix
+        TestUtils.assert_equal(
+            bbox.compute_transformation_matrix_inverse(matrix_type=matrix_type.value),
+            np.linalg.inv(B),
+        )
+
+    # the default is Buv, like compute_transformation_matrix
+    TestUtils.assert_equal(
+        bbox.compute_transformation_matrix_inverse(),
+        TestUtils.to_array(bbox.compute_transformation_matrix_inverse(matrix_type=TransformationMatrixType.Buv)),
+    )
+
+    for matrix_type in (TransformationMatrixType.Bvw, TransformationMatrixType.Bwv):
+        with pytest.raises(NotImplementedError):
+            bbox.compute_transformation_matrix_inverse(matrix_type=matrix_type)
+
+    with pytest.raises(ValueError):
+        bbox.compute_transformation_matrix_inverse(matrix_type="INVALID_TYPE")
+
+
+@pytest.mark.parametrize("length, alpha, beta, gamma", ANGLE_SAMPLES)
+def test_gram_determinant_equals_its_symmetric_and_spherical_forms(length, alpha, beta, gamma):
+    """
+    gram_determinant evaluates a Horner form for speed. Pin it to the two algebraically identical
+    expressions it stands for, so the optimisation cannot drift from the definition:
+      - the symmetric polynomial, which is the 3x3 Gram determinant expanded;
+      - 4 sin(s) sin(s-a) sin(s-b) sin(s-g), the spherical analogue of Heron's formula.
+    See docs/gram_determinant.md.
+    """
+    ca, cb, cg = np.cos(alpha), np.cos(beta), np.cos(gamma)
+    symmetric = 1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg
+
+    s = (alpha + beta + gamma) / 2
+    spherical = 4 * np.sin(s) * np.sin(s - alpha) * np.sin(s - beta) * np.sin(s - gamma)
+
+    np.testing.assert_almost_equal(gram_determinant(alpha, beta, gamma), symmetric, decimal=12)
+    np.testing.assert_almost_equal(gram_determinant(alpha, beta, gamma), spherical, decimal=12)
+
+
+@pytest.mark.parametrize(
+    "alpha_deg, beta_deg, gamma_deg, realisable",
+    [
+        (36, 36, 120, False),  # gamma > alpha + beta, the case _angle_sanity_check rejects
+        (60, 60, 130, False),  # Foadi & Evans (2011) headline example
+        (170, 170, 170, False),  # perimeter > 2 pi
+        (36, 60, 85.7, True),
+        (90, 90, 90, True),
+    ],
+)
+def test_gram_determinant_sign_is_the_spherical_triangle_inequality(alpha_deg, beta_deg, gamma_deg, realisable):
+    """delta > 0 iff the three angles are the sides of a spherical triangle. See docs/gram_determinant.md."""
+    a, b, g = np.deg2rad([alpha_deg, beta_deg, gamma_deg])
+    triangle = a < b + g and b < a + g and g < a + b and a + b + g < 2 * np.pi
+
+    assert triangle == realisable
+    assert (gram_determinant(a, b, g) > 0) == realisable

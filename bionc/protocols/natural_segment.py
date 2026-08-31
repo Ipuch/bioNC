@@ -9,6 +9,7 @@ from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_markers import AbstractNaturalMarker
 from .natural_velocities import SegmentNaturalVelocities
 from ..utils.enums import TransformationMatrixType
+from ..utils.gram import gram_determinant
 
 
 class AbstractNaturalSegment(ABC):
@@ -68,8 +69,9 @@ class AbstractNaturalSegment(ABC):
 
         if mass is not None and natural_center_of_mass is not None and natural_pseudo_inertia is not None:
             self.set_natural_inertial_parameters(mass, natural_center_of_mass, natural_pseudo_inertia)
-            self._natural_inertial_parameters._initial_transformation_matrix = self.compute_transformation_matrix(
-                inertial_transformation_matrix_type
+            self._natural_inertial_parameters.set_initial_transformation_matrices(
+                self.compute_transformation_matrix(inertial_transformation_matrix_type),
+                self.compute_transformation_matrix_inverse(inertial_transformation_matrix_type),
             )
 
         # to know if the segment is the ground
@@ -79,8 +81,12 @@ class AbstractNaturalSegment(ABC):
     def _angle_sanity_check(alpha: np.ndarray, beta: np.ndarray, gamma: np.ndarray):
         """
         This function checks if angles would produce a singular transformation matrix
+
+        Every transformation matrix B has det(B) = length * sqrt(delta), where delta is the Gram
+        determinant of (u, v/length, w). So delta <= 0 is the exact criterion, whatever the
+        TransformationMatrixType: it means no three vectors in 3D can hold those pairwise angles.
         """
-        if 1 - np.cos(beta) ** 2 - (np.cos(alpha) - np.cos(beta) * np.cos(gamma)) / np.sin(beta) ** 2 < 0:
+        if gram_determinant(alpha, beta, gamma) <= 0:
             raise ValueError(
                 f"The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment"
             )
@@ -270,6 +276,17 @@ class AbstractNaturalSegment(ABC):
         Returns
         -------
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        """
+
+    @abstractmethod
+    def compute_transformation_matrix_inverse(self, transformation_matrix_type: TransformationMatrixType):
+        """
+        This function returns the analytical inverse of the transformation matrix, denoted inv(Bi),
+        from the orthogonal Segment Coordinate System to the Natural Coordinate System.
+
+        Returns
+        -------
+            Transformation matrix from segment coordinate system to natural coordinate [3x3]
         """
 
     @abstractmethod

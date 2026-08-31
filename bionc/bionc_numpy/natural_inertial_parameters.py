@@ -81,6 +81,8 @@ class NaturalInertialParameters:
     _initial_transformation_matrix
         The transformation matrix from the natural coordinate system to the segment coordinate system [3x3],
         that has been initially used to compute the natural inertial parameters.
+    _initial_transformation_matrix_inverse
+        The analytical inverse of _initial_transformation_matrix [3x3].
     """
 
     def __init__(
@@ -89,12 +91,29 @@ class NaturalInertialParameters:
         natural_center_of_mass: np.ndarray = None,
         natural_pseudo_inertia: np.ndarray = None,
         initial_transformation_matrix: np.ndarray = None,
+        initial_transformation_matrix_inverse: np.ndarray = None,
     ):
         self._mass = check_mass(mass)
         self._natural_center_of_mass = check_natural_center_of_mass(natural_center_of_mass)
         self._natural_pseudo_inertia = check_natural_pseudo_inertia(natural_pseudo_inertia)
         self._mass_matrix = self._update_mass_matrix()
-        self._initial_transformation_matrix = check_initial_transformation_matrix(initial_transformation_matrix)
+        self.set_initial_transformation_matrices(initial_transformation_matrix, initial_transformation_matrix_inverse)
+
+    def set_initial_transformation_matrices(
+        self, transformation_matrix: np.ndarray, transformation_matrix_inverse: np.ndarray = None
+    ):
+        """
+        Sets B and inv(B) together, so the two can never drift apart.
+
+        Parameters
+        ----------
+        transformation_matrix : np.ndarray
+            Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        transformation_matrix_inverse : np.ndarray
+            Its analytical inverse [3x3], see NaturalSegment.compute_transformation_matrix_inverse
+        """
+        self._initial_transformation_matrix = check_initial_transformation_matrix(transformation_matrix)
+        self._initial_transformation_matrix_inverse = check_initial_transformation_matrix(transformation_matrix_inverse)
 
     @property
     def mass(self) -> float:
@@ -275,16 +294,20 @@ class NaturalInertialParameters:
         center_of_mass: np.ndarray = None,
         inertia_matrix: np.ndarray = None,
         inertial_transformation_matrix: np.ndarray = None,
+        inertial_transformation_matrix_inverse: np.ndarray = None,
     ):
         if inertia_matrix.shape != (3, 3):
             raise ValueError("Inertia matrix must be 3x3")
 
-        natural_center_of_mass = cls.compute_natural_center_of_mass(center_of_mass, inertial_transformation_matrix)
+        natural_center_of_mass = cls.compute_natural_center_of_mass(
+            center_of_mass, inertial_transformation_matrix, inertial_transformation_matrix_inverse
+        )
         pseudo_inertia_matrix = cls.compute_pseudo_inertia_matrix(
             mass=mass,
             cartesian_center_of_mass=center_of_mass,
             cartesian_inertia=inertia_matrix,
             transformation_mat=inertial_transformation_matrix,
+            transformation_matrix_inverse=inertial_transformation_matrix_inverse,
         )
 
         return cls(
@@ -292,10 +315,15 @@ class NaturalInertialParameters:
             natural_center_of_mass=natural_center_of_mass,
             natural_pseudo_inertia=pseudo_inertia_matrix,
             initial_transformation_matrix=inertial_transformation_matrix,
+            initial_transformation_matrix_inverse=inertial_transformation_matrix_inverse,
         )
 
     @staticmethod
-    def compute_natural_center_of_mass(center_of_mass: np.ndarray, transformation_matrix: np.ndarray) -> NaturalVector:
+    def compute_natural_center_of_mass(
+        center_of_mass: np.ndarray,
+        transformation_matrix: np.ndarray,
+        transformation_matrix_inverse: np.ndarray = None,
+    ) -> NaturalVector:
         """
         This function computes the center of mass of the segment in the natural coordinate system.
         It transforms the center of mass of the segment in the segment coordinate system to the natural coordinate system.
@@ -306,9 +334,13 @@ class NaturalInertialParameters:
             Center of mass of the segment in the segment coordinate system [3x1]
         transformation_matrix : np.ndarray
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        transformation_matrix_inverse : np.ndarray
+            The analytical inverse of transformation_matrix [3x3], see
+            NaturalSegment.compute_transformation_matrix_inverse. Inverted numerically if not given.
         """
+        Binv = inv(transformation_matrix) if transformation_matrix_inverse is None else transformation_matrix_inverse
 
-        return NaturalVector(inv(transformation_matrix) @ center_of_mass)
+        return NaturalVector(Binv @ center_of_mass)
 
     @staticmethod
     def compute_pseudo_inertia_matrix(
@@ -316,6 +348,7 @@ class NaturalInertialParameters:
         cartesian_center_of_mass: np.ndarray,
         cartesian_inertia: np.ndarray,
         transformation_mat: np.ndarray,
+        transformation_matrix_inverse: np.ndarray = None,
     ):
         """
         This function returns the pseudo-inertia matrix of the segment, denoted J_i.
@@ -331,6 +364,9 @@ class NaturalInertialParameters:
             inertia matrix of the segment in Segment Coordinate System
         transformation_mat : np.ndarray
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        transformation_matrix_inverse : np.ndarray
+            The analytical inverse of transformation_mat [3x3], see
+            NaturalSegment.compute_transformation_matrix_inverse. Inverted numerically if not given.
 
         References
         ----------
@@ -346,7 +382,7 @@ class NaturalInertialParameters:
             - np.dot(center_of_mass.T, center_of_mass)
         )
 
-        Binv = inv(transformation_mat)
+        Binv = inv(transformation_mat) if transformation_matrix_inverse is None else transformation_matrix_inverse
         Binv_transpose = np.transpose(Binv)
 
         return Binv @ (middle_block @ Binv_transpose)
@@ -362,4 +398,5 @@ class NaturalInertialParameters:
             natural_center_of_mass=self.natural_center_of_mass,
             natural_pseudo_inertia=self.natural_pseudo_inertia,
             initial_transformation_matrix=self._initial_transformation_matrix,
+            initial_transformation_matrix_inverse=self._initial_transformation_matrix_inverse,
         )

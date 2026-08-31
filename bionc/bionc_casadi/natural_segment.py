@@ -2,7 +2,7 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, transpose, vertcat, inv, dot, sum1, horzcat, solve
+from casadi import cos, transpose, vertcat, dot, sum1, horzcat, solve
 
 from .homogenous_transform import HomogeneousTransform
 from .natural_accelerations import SegmentNaturalAccelerations
@@ -13,7 +13,7 @@ from .natural_segment_markers import NaturalSegmentMarkers
 from .natural_segment_vectors import NaturalSegmentVectors
 from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
-from .transformation_matrix import compute_transformation_matrix
+from .transformation_matrix import compute_transformation_matrix, compute_transformation_matrix_inverse
 from .utils import to_numeric_MX
 from ..protocols.natural_segment import AbstractNaturalSegment
 from ..utils.enums import TransformationMatrixType
@@ -152,6 +152,7 @@ class NaturalSegment(AbstractNaturalSegment):
             center_of_mass=center_of_mass,
             inertia_matrix=inertia_matrix,
             inertial_transformation_matrix=self.compute_transformation_matrix(transformation_matrix),
+            inertial_transformation_matrix_inverse=self.compute_transformation_matrix_inverse(transformation_matrix),
         )
         self._mass = mass
         self._natural_center_of_mass = self._natural_inertial_parameters.natural_center_of_mass
@@ -186,6 +187,9 @@ class NaturalSegment(AbstractNaturalSegment):
             center_of_mass=center_of_mass,
             inertia_matrix=inertia,
             inertial_transformation_matrix=compute_transformation_matrix(
+                inertial_transformation_matrix, length, alpha, beta, gamma
+            ).T,
+            inertial_transformation_matrix_inverse=compute_transformation_matrix_inverse(
                 inertial_transformation_matrix, length, alpha, beta, gamma
             ).T,
         )
@@ -284,6 +288,28 @@ class NaturalSegment(AbstractNaturalSegment):
             matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
         ).T
 
+    def compute_transformation_matrix_inverse(self, matrix_type: str | TransformationMatrixType = None) -> MX:
+        """
+        This function computes the analytical inverse of the transformation matrix, denoted inv(Bi),
+        from the orthogonal Segment Coordinate System to the Natural Coordinate System.
+        Example : if vector a expressed in (Pi, X, Y, Z), inv(B) * a is expressed in (Pi, ui, vi, wi)
+
+        Returns
+        -------
+        MX
+            Transformation matrix from segment coordinate system to natural coordinate [3x3]
+        """
+        if isinstance(matrix_type, str):
+            matrix_type = TransformationMatrixType.from_string(matrix_type)
+
+        if matrix_type is None:
+            matrix_type = TransformationMatrixType.Buv  # NOTE: default value
+
+        # compute_transformation_matrix transposes, and inv(B.T) == inv(B).T
+        return compute_transformation_matrix_inverse(
+            matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
+        ).T
+
     def segment_coordinates_system(
         self,
         Q: SegmentNaturalCoordinates,
@@ -307,13 +333,15 @@ class NaturalSegment(AbstractNaturalSegment):
         if not isinstance(Q, SegmentNaturalCoordinates):
             Q = SegmentNaturalCoordinates(Q)
 
-        transformation_matrix_inverse = transpose(self.compute_transformation_matrix(transformation_matrix_type))
-        transformation_matrix_inverse = inv(transformation_matrix_inverse)
+        # compute_transformation_matrix_inverse is already inv(B.T), so transposing it back
+        # gives inv(B), the inverse of the non-transposed transformation matrix.
+        transformation_matrix_inverse = transpose(
+            self.compute_transformation_matrix_inverse(transformation_matrix_type)
+        )
         transformation_matrix_inverse = to_numeric_MX(transformation_matrix_inverse)
 
         return HomogeneousTransform.from_rt(
             # rotation=self.compute_transformation_matrix(transformation_matrix_type) @ horzcat(Q.u, Q.v, Q.w),
-            # NOTE: I would like to make numerical inversion disappear and the transpose too, plz implement analytical inversion.
             rotation=Q.to_uvw_matrix() @ transformation_matrix_inverse,
             translation=Q.rp,
         )
@@ -570,7 +598,7 @@ class NaturalSegment(AbstractNaturalSegment):
         """
 
         direction = direction / np.linalg.norm(direction) if normalize else direction
-        direction = to_numeric_MX(inv(self.compute_transformation_matrix(transformation_matrix_type))) @ direction
+        direction = to_numeric_MX(self.compute_transformation_matrix_inverse(transformation_matrix_type)) @ direction
 
         natural_vector = SegmentNaturalVector(
             name=name,
@@ -643,7 +671,7 @@ class NaturalSegment(AbstractNaturalSegment):
             The type of the transformation matrix to compute, TransformationMatrixType.Buv by default
         """
 
-        location = to_numeric_MX(inv(self.compute_transformation_matrix(transformation_matrix_type))) @ location
+        location = to_numeric_MX(self.compute_transformation_matrix_inverse(transformation_matrix_type)) @ location
         if is_distal_location:
             location += np.array([0, -1, 0])
 

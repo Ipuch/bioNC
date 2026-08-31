@@ -666,3 +666,90 @@ def test_external_force_in_local(bionc_type):
         expand=False,
         squeeze=True,
     )
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+@pytest.mark.parametrize(
+    "matrix_type",
+    ["Buv", "Bvu", "Bwu", "Buw"],
+)
+def test_external_force_in_local_from_segment(bionc_type, matrix_type):
+    """
+    from_segment takes B and inv(B) from the segment itself, so it must agree with from_components
+    fed the same matrix -- while never inverting anything numerically.
+    """
+    if bionc_type == "numpy":
+        from bionc.bionc_numpy import ExternalForceSet, ExternalForceInLocal, NaturalSegment
+    else:
+        from bionc.bionc_casadi import ExternalForceSet, ExternalForceInLocal, NaturalSegment
+
+    segment = NaturalSegment(
+        name="bbox",
+        alpha=np.pi / 1.9,
+        beta=np.pi / 2.3,
+        gamma=np.pi / 2.1,
+        length=1.5,
+    )
+    application_point = np.array([0.07, 0.08, 0.09])
+    force = np.array([0.01, 0.02, 0.03])
+    torque = np.array([0.04, 0.05, 0.06])
+
+    from_segment = ExternalForceInLocal.from_segment(
+        application_point_in_local=application_point,
+        force=force,
+        torque=torque,
+        segment=segment,
+        transformation_matrix_type=matrix_type,
+    )
+    from_components = ExternalForceInLocal.from_components(
+        application_point_in_local=application_point,
+        force=force,
+        torque=torque,
+        transformation_matrix=segment.compute_transformation_matrix(matrix_type),
+    )
+
+    TestUtils.assert_equal(
+        from_segment.transformation_matrix_inv,
+        TestUtils.to_array(from_components.transformation_matrix_inv),
+    )
+
+    # and the set-level shortcut lands on the same object
+    fext = ExternalForceSet.empty_from_nb_segment(1)
+    fext.add_in_local_from_segment(
+        segment_index=0,
+        external_force=np.concatenate((torque, force)),
+        segment=segment,
+        point_in_local=application_point,
+        transformation_matrix_type=matrix_type,
+    )
+    TestUtils.assert_equal(
+        fext.external_forces[0][0].transformation_matrix_inv,
+        TestUtils.to_array(from_segment.transformation_matrix_inv),
+    )
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_external_force_from_segment_does_not_invert_numerically(bionc_type):
+    """The whole point of the analytical inverse: this path must never call a numerical inverse."""
+    if bionc_type == "numpy":
+        from bionc.bionc_numpy import ExternalForceSet, NaturalSegment
+    else:
+        from bionc.bionc_casadi import ExternalForceSet, NaturalSegment
+
+    segment = NaturalSegment(name="bbox", alpha=np.pi / 1.9, beta=np.pi / 2.3, gamma=np.pi / 2.1, length=1.5)
+
+    calls = []
+    real_inv = np.linalg.inv
+    np.linalg.inv = lambda a: (calls.append(1), real_inv(a))[1]
+    try:
+        fext = ExternalForceSet.empty_from_nb_segment(1)
+        fext.add_in_local_from_segment(
+            segment_index=0,
+            external_force=np.zeros(6),
+            segment=segment,
+            point_in_local=np.zeros(3),
+        )
+    finally:
+        np.linalg.inv = real_inv
+
+    assert calls == [], "add_in_local_from_segment fell back to a numerical inversion"

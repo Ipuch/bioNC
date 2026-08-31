@@ -44,9 +44,9 @@ class MuscleViaPoint:
         from casadi import evalf
 
         location = np.asarray(location, dtype=float).reshape(3)
-        T_raw = parent_segment.compute_transformation_matrix(transformation_matrix_type)
-        T = np.array(evalf(T_raw)).reshape(3, 3)
-        natural = np.linalg.inv(T) @ location
+        T_inv_raw = parent_segment.compute_transformation_matrix_inverse(transformation_matrix_type)
+        T_inv = np.array(evalf(T_inv_raw)).reshape(3, 3)
+        natural = T_inv @ location
         if is_distal_location:
             natural = natural + np.array([0.0, -1.0, 0.0])
         return cls(name=name, parent_name=parent_segment.name, position=natural)

@@ -12,6 +12,7 @@ from .bionc_numpy import (
     ExternalForceInGlobalLocalPoint,
     NaturalInertialParameters,
     compute_transformation_matrix,
+    compute_transformation_matrix_inverse,
     InverseKinematics,
     Muscle,
     MuscleViaPoint,

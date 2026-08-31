@@ -62,7 +62,7 @@ def test_buv_orthogonal_frame_is_identity_per_frame():
 )
 def test_orthogonal_axes_have_unit_norm(type_enum):
     """For every implemented type and every frame, the three columns of the
-    orthogonal rotation matrix are (approximately) unit vectors."""
+    orthogonal rotation matrix are unit vectors."""
     module = _load_module()
     types = module._implemented_types()
     _, alpha, beta, gamma = module._angle_sweep(20)
@@ -70,7 +70,7 @@ def test_orthogonal_axes_have_unit_norm(type_enum):
     rot = ortho[type_enum]
     for k in range(rot.shape[2]):
         for col in range(3):
-            np.testing.assert_almost_equal(np.linalg.norm(rot[:, col, k]), 1.0, decimal=2)
+            np.testing.assert_almost_equal(np.linalg.norm(rot[:, col, k]), 1.0, decimal=10)
 
 
 def test_main_registers_one_arrow_per_axis_per_tile():

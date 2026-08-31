@@ -16,8 +16,11 @@ class ExternalForceInLocal:
         The application point of the force in the natural coordinate system of the segment
     external_forces : np.ndarray
         The external force vector in the global coordinate system (torque, force), in local frame too
-    transformation_matrix : np.ndarray
-         The transformation matrix of the segment
+    transformation_matrix : MX
+         The transformation matrix of the segment, B
+    transformation_matrix_inverse : MX
+         The analytical inverse of that same matrix, inv(B). Stored transposed as
+         transformation_matrix_inv, which is what to_natural_force needs.
 
     Methods
     -------
@@ -38,12 +41,18 @@ class ExternalForceInLocal:
         application_point_in_local: MX,
         external_forces: MX,
         transformation_matrix: MX,
+        transformation_matrix_inverse: MX = None,
     ):
         self.application_point_in_local = MX(application_point_in_local)
         self.external_forces = MX(external_forces)
         self.transformation_matrix = MX(transformation_matrix)
 
-        transformation_matrix_inverse = inv(transpose(self.transformation_matrix))
+        # transformation_matrix_inverse is inv(B), so its transpose is inv(B.T), what is needed here.
+        # See NaturalSegment.compute_transformation_matrix_inverse.
+        if transformation_matrix_inverse is None:
+            transformation_matrix_inverse = inv(transpose(self.transformation_matrix))
+        else:
+            transformation_matrix_inverse = transpose(MX(transformation_matrix_inverse))
         self.transformation_matrix_inv = to_numeric_MX(transformation_matrix_inverse)
 
     @classmethod
@@ -53,6 +62,7 @@ class ExternalForceInLocal:
         force: MX,
         torque: MX,
         transformation_matrix: MX,
+        transformation_matrix_inverse: MX = None,
     ):
         """
         This function creates an external force from its components.
@@ -67,13 +77,62 @@ class ExternalForceInLocal:
             The torque vector in the global coordinate system
         transformation_matrix : MX
             The transformation matrix of the segment
+        transformation_matrix_inverse : MX
+            The analytical inverse of transformation_matrix, see
+            NaturalSegment.compute_transformation_matrix_inverse. Inverted numerically if not given.
 
         Returns
         -------
         ExternalForce
         """
 
-        return cls(application_point_in_local, vertcat(torque, force), transformation_matrix)
+        return cls(
+            application_point_in_local,
+            vertcat(torque, force),
+            transformation_matrix,
+            transformation_matrix_inverse,
+        )
+
+    @classmethod
+    def from_segment(
+        cls,
+        application_point_in_local: MX,
+        force: MX,
+        torque: MX,
+        segment,
+        transformation_matrix_type=None,
+    ):
+        """
+        This function creates an external force from the segment it applies to.
+
+        Prefer it to from_components whenever a segment is at hand: the segment supplies both B and
+        its analytical inverse, so the two cannot be mismatched and nothing is inverted numerically.
+
+        Parameters
+        ----------
+        application_point_in_local : MX
+            The application point of the force in the natural coordinate system of the segment
+        force
+            The force vector in the global coordinate system
+        torque
+            The torque vector in the global coordinate system
+        segment : NaturalSegment
+            The segment the force applies to
+        transformation_matrix_type : TransformationMatrixType | str
+            The type of transformation matrix to use, TransformationMatrixType.Buv by default
+
+        Returns
+        -------
+        ExternalForceInLocal
+        """
+
+        return cls.from_components(
+            application_point_in_local=application_point_in_local,
+            force=force,
+            torque=torque,
+            transformation_matrix=segment.compute_transformation_matrix(transformation_matrix_type),
+            transformation_matrix_inverse=segment.compute_transformation_matrix_inverse(transformation_matrix_type),
+        )
 
     @property
     def force(self) -> MX:

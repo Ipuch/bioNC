@@ -340,12 +340,13 @@ class NaturalInertialParameters:
             The analytical inverse of transformation_matrix [3x3], see
             NaturalSegment.compute_transformation_matrix_inverse. Inverted numerically if not given.
         """
-        if transformation_matrix_inverse is None:
-            transformation_matrix_inverse = inv(to_numeric(transformation_matrix))
-        else:
-            transformation_matrix_inverse = to_numeric(transformation_matrix_inverse)
+        Binv = (
+            inv(to_numeric(transformation_matrix))
+            if transformation_matrix_inverse is None
+            else to_numeric(transformation_matrix_inverse)
+        )
 
-        return NaturalVector(transformation_matrix_inverse @ center_of_mass)
+        return NaturalVector(Binv @ center_of_mass)
 
     @staticmethod
     def compute_pseudo_inertia_matrix(
@@ -385,10 +386,11 @@ class NaturalInertialParameters:
             inertia + mass * dot(center_of_mass, center_of_mass) * MX.eye(3) - dot(center_of_mass, center_of_mass)
         )
 
-        if transformation_matrix_inverse is None:
-            Binv = inv(to_numeric(transformation_mat))
-        else:
-            Binv = to_numeric(transformation_matrix_inverse)
+        Binv = (
+            inv(to_numeric(transformation_mat))
+            if transformation_matrix_inverse is None
+            else to_numeric(transformation_matrix_inverse)
+        )
         Binv_transpose = transpose(Binv)
 
         return Binv @ middle_block @ Binv_transpose

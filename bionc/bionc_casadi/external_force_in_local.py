@@ -16,10 +16,11 @@ class ExternalForceInLocal:
         The application point of the force in the natural coordinate system of the segment
     external_forces : np.ndarray
         The external force vector in the global coordinate system (torque, force), in local frame too
-    transformation_matrix : np.ndarray
-         The transformation matrix of the segment
-    transformation_matrix_inverse : np.ndarray
-         The inverse of the transposed transformation matrix of the segment
+    transformation_matrix : MX
+         The transformation matrix of the segment, B
+    transformation_matrix_inverse : MX
+         The analytical inverse of that same matrix, inv(B). Stored transposed as
+         transformation_matrix_inv, which is what to_natural_force needs.
 
     Methods
     -------

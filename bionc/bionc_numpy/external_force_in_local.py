@@ -16,9 +16,10 @@ class ExternalForceInLocal:
     external_forces : np.ndarray
         The external force vector in the global coordinate system (torque, force), in local frame too
     transformation_matrix : np.ndarray
-         The transformation matrix of the segment
+         The transformation matrix of the segment, B
     transformation_matrix_inverse : np.ndarray
-         The inverse of the transposed transformation matrix of the segment
+         The analytical inverse of that same matrix, inv(B). Stored transposed as
+         transformation_matrix_inv, which is what to_natural_force needs.
 
     Methods
     -------

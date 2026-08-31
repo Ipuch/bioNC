@@ -35,6 +35,13 @@ class BiomechanicalModelTemplate:
         child_point: str = None,
         length: float = None,
         theta: float | tuple[float] | list[float] = None,
+        semi_axis_lengths: tuple[float] | list[float] = None,
+        ellipsoid_center: str = None,
+        ellipsoid_axis_a: str = None,
+        ellipsoid_axis_b: str = None,
+        ellipsoid_axis_c: str = None,
+        plane_point: str = None,
+        plane_normal: str = None,
         projection_basis: EulerSequence = None,
         parent_basis: TransformationMatrixType = None,
         child_basis: TransformationMatrixType = None,
@@ -64,6 +71,20 @@ class BiomechanicalModelTemplate:
             The length for the constant length joint constraint
         theta : float | tuple[float] | list[float]
             The angle of axis constraints, zero, one or two element but not more.
+        semi_axis_lengths : tuple[float] | list[float]
+            The semi axis lengths for the ellipsoid constraint, three element but not more.
+        ellipsoid_center : str
+            The name of the ellipsoid center point
+        ellipsoid_axis_a : str
+            The name of the ellipsoid axis a point
+        ellipsoid_axis_b : str
+            The name of the ellipsoid axis b point
+        ellipsoid_axis_c : str
+            The name of the ellipsoid axis c point
+        plane_point : str
+            The name of the plane point
+        plane_normal : str
+            The name of the plane normal point
         projection_basis : EulerSequence
             The euler projection_basis to project the joint angles on or joint torques on
         parent_basis : TransformationMatrixType
@@ -93,6 +114,13 @@ class BiomechanicalModelTemplate:
             parent_point=parent_point,
             child_point=child_point,
             length=length,
+            semi_axis_lengths=semi_axis_lengths,
+            ellipsoid_center=ellipsoid_center,
+            ellipsoid_axis_a=ellipsoid_axis_a,
+            ellipsoid_axis_b=ellipsoid_axis_b,
+            ellipsoid_axis_c=ellipsoid_axis_c,
+            plane_point=plane_point,
+            plane_normal=plane_normal,
             projection_basis=projection_basis,
             parent_basis=parent_basis,
             child_basis=child_basis,

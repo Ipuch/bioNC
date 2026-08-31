@@ -195,16 +195,16 @@ def _transformation_matrix_Buv_inverse(length: float, alpha: float, beta: float,
     numpy.ndarray
         The inverse of the transformation matrix
     """
-    determinant = gram_determinant_sqrt(alpha, beta, gamma)
+    sqrt_delta = gram_determinant_sqrt(alpha, beta, gamma)
     return np.array(
         [
-            [1, -cos(gamma) / sin(gamma), (cos(alpha) * cos(gamma) - cos(beta)) / (sin(gamma) * determinant)],
+            [1, -cos(gamma) / sin(gamma), (cos(alpha) * cos(gamma) - cos(beta)) / (sin(gamma) * sqrt_delta)],
             [
                 0,
                 1 / (length * sin(gamma)),
-                (cos(beta) * cos(gamma) - cos(alpha)) / (length * sin(gamma) * determinant),
+                (cos(beta) * cos(gamma) - cos(alpha)) / (length * sin(gamma) * sqrt_delta),
             ],
-            [0, 0, sin(gamma) / determinant],
+            [0, 0, sin(gamma) / sqrt_delta],
         ]
     )
 
@@ -229,16 +229,16 @@ def _transformation_matrix_Bvu_inverse(length: float, alpha: float, beta: float,
     numpy.ndarray
         The inverse of the transformation matrix
     """
-    determinant = gram_determinant_sqrt(alpha, beta, gamma)
+    sqrt_delta = gram_determinant_sqrt(alpha, beta, gamma)
     return np.array(
         [
-            [1 / sin(gamma), 0, (cos(alpha) * cos(gamma) - cos(beta)) / (sin(gamma) * determinant)],
+            [1 / sin(gamma), 0, (cos(alpha) * cos(gamma) - cos(beta)) / (sin(gamma) * sqrt_delta)],
             [
                 -cos(gamma) / (length * sin(gamma)),
                 1 / length,
-                (cos(beta) * cos(gamma) - cos(alpha)) / (length * sin(gamma) * determinant),
+                (cos(beta) * cos(gamma) - cos(alpha)) / (length * sin(gamma) * sqrt_delta),
             ],
-            [0, 0, sin(gamma) / determinant],
+            [0, 0, sin(gamma) / sqrt_delta],
         ]
     )
 
@@ -263,12 +263,12 @@ def _transformation_matrix_Bwu_inverse(length: float, alpha: float, beta: float,
     numpy.ndarray
         The inverse of the transformation matrix
     """
-    determinant = gram_determinant_sqrt(alpha, beta, gamma)
+    sqrt_delta = gram_determinant_sqrt(alpha, beta, gamma)
     return np.array(
         [
-            [1 / sin(beta), (cos(alpha) * cos(beta) - cos(gamma)) / (sin(beta) * determinant), 0],
-            [0, sin(beta) / (length * determinant), 0],
-            [-cos(beta) / sin(beta), (cos(beta) * cos(gamma) - cos(alpha)) / (sin(beta) * determinant), 1],
+            [1 / sin(beta), (cos(alpha) * cos(beta) - cos(gamma)) / (sin(beta) * sqrt_delta), 0],
+            [0, sin(beta) / (length * sqrt_delta), 0],
+            [-cos(beta) / sin(beta), (cos(beta) * cos(gamma) - cos(alpha)) / (sin(beta) * sqrt_delta), 1],
         ]
     )
 
@@ -293,16 +293,16 @@ def _transformation_matrix_Buw_inverse(length: float, alpha: float, beta: float,
     numpy.ndarray
         The inverse of the transformation matrix
     """
-    determinant = gram_determinant_sqrt(alpha, beta, gamma)
+    sqrt_delta = gram_determinant_sqrt(alpha, beta, gamma)
     return np.array(
         [
             [
                 1,
-                (cos(alpha) * cos(beta) - cos(gamma)) / (sin(beta) * determinant),
+                (cos(alpha) * cos(beta) - cos(gamma)) / (sin(beta) * sqrt_delta),
                 -cos(beta) / sin(beta),
             ],
-            [0, sin(beta) / (length * determinant), 0],
-            [0, (cos(beta) * cos(gamma) - cos(alpha)) / (sin(beta) * determinant), 1 / sin(beta)],
+            [0, sin(beta) / (length * sqrt_delta), 0],
+            [0, (cos(beta) * cos(gamma) - cos(alpha)) / (sin(beta) * sqrt_delta), 1 / sin(beta)],
         ]
     )
 

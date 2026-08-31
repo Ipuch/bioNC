@@ -267,14 +267,14 @@ def _transformation_matrix_Buv_inverse(length: float, alpha: float, beta: float,
     MX
         The inverse of the transformation matrix
     """
-    determinant = gram_determinant_sqrt(alpha, beta, gamma)
+    sqrt_delta = gram_determinant_sqrt(alpha, beta, gamma)
     B = MX.zeros(3, 3)
     B[0, 0] = 1
     B[0, 1] = -cos(gamma) / sin(gamma)
-    B[0, 2] = (cos(alpha) * cos(gamma) - cos(beta)) / (sin(gamma) * determinant)
+    B[0, 2] = (cos(alpha) * cos(gamma) - cos(beta)) / (sin(gamma) * sqrt_delta)
     B[1, 1] = 1 / (length * sin(gamma))
-    B[1, 2] = (cos(beta) * cos(gamma) - cos(alpha)) / (length * sin(gamma) * determinant)
-    B[2, 2] = sin(gamma) / determinant
+    B[1, 2] = (cos(beta) * cos(gamma) - cos(alpha)) / (length * sin(gamma) * sqrt_delta)
+    B[2, 2] = sin(gamma) / sqrt_delta
     return B
 
 
@@ -298,14 +298,14 @@ def _transformation_matrix_Bvu_inverse(length: float, alpha: float, beta: float,
     MX
         The inverse of the transformation matrix
     """
-    determinant = gram_determinant_sqrt(alpha, beta, gamma)
+    sqrt_delta = gram_determinant_sqrt(alpha, beta, gamma)
     B = MX.zeros(3, 3)
     B[0, 0] = 1 / sin(gamma)
-    B[0, 2] = (cos(alpha) * cos(gamma) - cos(beta)) / (sin(gamma) * determinant)
+    B[0, 2] = (cos(alpha) * cos(gamma) - cos(beta)) / (sin(gamma) * sqrt_delta)
     B[1, 0] = -cos(gamma) / (length * sin(gamma))
     B[1, 1] = 1 / length
-    B[1, 2] = (cos(beta) * cos(gamma) - cos(alpha)) / (length * sin(gamma) * determinant)
-    B[2, 2] = sin(gamma) / determinant
+    B[1, 2] = (cos(beta) * cos(gamma) - cos(alpha)) / (length * sin(gamma) * sqrt_delta)
+    B[2, 2] = sin(gamma) / sqrt_delta
     return B
 
 
@@ -329,13 +329,13 @@ def _transformation_matrix_Bwu_inverse(length: float, alpha: float, beta: float,
     MX
         The inverse of the transformation matrix
     """
-    determinant = gram_determinant_sqrt(alpha, beta, gamma)
+    sqrt_delta = gram_determinant_sqrt(alpha, beta, gamma)
     B = MX.zeros(3, 3)
     B[0, 0] = 1 / sin(beta)
-    B[0, 1] = (cos(alpha) * cos(beta) - cos(gamma)) / (sin(beta) * determinant)
-    B[1, 1] = sin(beta) / (length * determinant)
+    B[0, 1] = (cos(alpha) * cos(beta) - cos(gamma)) / (sin(beta) * sqrt_delta)
+    B[1, 1] = sin(beta) / (length * sqrt_delta)
     B[2, 0] = -cos(beta) / sin(beta)
-    B[2, 1] = (cos(beta) * cos(gamma) - cos(alpha)) / (sin(beta) * determinant)
+    B[2, 1] = (cos(beta) * cos(gamma) - cos(alpha)) / (sin(beta) * sqrt_delta)
     B[2, 2] = 1
     return B
 
@@ -360,13 +360,13 @@ def _transformation_matrix_Buw_inverse(length: float, alpha: float, beta: float,
     MX
         The inverse of the transformation matrix
     """
-    determinant = gram_determinant_sqrt(alpha, beta, gamma)
+    sqrt_delta = gram_determinant_sqrt(alpha, beta, gamma)
     B = MX.zeros(3, 3)
     B[0, 0] = 1
-    B[0, 1] = (cos(alpha) * cos(beta) - cos(gamma)) / (sin(beta) * determinant)
+    B[0, 1] = (cos(alpha) * cos(beta) - cos(gamma)) / (sin(beta) * sqrt_delta)
     B[0, 2] = -cos(beta) / sin(beta)
-    B[1, 1] = sin(beta) / (length * determinant)
-    B[2, 1] = (cos(beta) * cos(gamma) - cos(alpha)) / (sin(beta) * determinant)
+    B[1, 1] = sin(beta) / (length * sqrt_delta)
+    B[2, 1] = (cos(beta) * cos(gamma) - cos(alpha)) / (sin(beta) * sqrt_delta)
     B[2, 2] = 1 / sin(beta)
     return B
 

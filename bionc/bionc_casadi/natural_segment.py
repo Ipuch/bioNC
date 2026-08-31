@@ -2,7 +2,7 @@ from typing import Union, Tuple
 
 import numpy as np
 from casadi import MX
-from casadi import cos, transpose, vertcat, inv, dot, sum1, horzcat, solve
+from casadi import cos, transpose, vertcat, dot, sum1, horzcat, solve
 
 from .homogenous_transform import HomogeneousTransform
 from .natural_accelerations import SegmentNaturalAccelerations

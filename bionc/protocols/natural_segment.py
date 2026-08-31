@@ -82,8 +82,19 @@ class AbstractNaturalSegment(ABC):
     def _angle_sanity_check(alpha: np.ndarray, beta: np.ndarray, gamma: np.ndarray):
         """
         This function checks if angles would produce a singular transformation matrix
+
+        Every transformation matrix B has det(B) = length * sqrt(delta), where delta is the Gram
+        determinant of (u, v/length, w) below. So delta <= 0 is the exact criterion, whatever the
+        TransformationMatrixType: it means no three vectors in 3D can hold those pairwise angles.
         """
-        if 1 - np.cos(beta) ** 2 - (np.cos(alpha) - np.cos(beta) * np.cos(gamma)) / np.sin(beta) ** 2 < 0:
+        delta = (
+            1
+            - np.cos(alpha) ** 2
+            - np.cos(beta) ** 2
+            - np.cos(gamma) ** 2
+            + 2 * np.cos(alpha) * np.cos(beta) * np.cos(gamma)
+        )
+        if delta <= 0:
             raise ValueError(
                 f"The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment"
             )

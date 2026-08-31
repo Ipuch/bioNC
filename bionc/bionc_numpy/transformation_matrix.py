@@ -171,9 +171,7 @@ def gram_determinant_sqrt(alpha: float, beta: float, gamma: float) -> float:
     float
         The square root of the Gram determinant
     """
-    return np.sqrt(
-        1 - cos(alpha) ** 2 - cos(beta) ** 2 - cos(gamma) ** 2 + 2 * cos(alpha) * cos(beta) * cos(gamma)
-    )
+    return np.sqrt(1 - cos(alpha) ** 2 - cos(beta) ** 2 - cos(gamma) ** 2 + 2 * cos(alpha) * cos(beta) * cos(gamma))
 
 
 def _transformation_matrix_Buv_inverse(length: float, alpha: float, beta: float, gamma: float) -> np.ndarray:

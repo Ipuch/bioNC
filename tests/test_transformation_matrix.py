@@ -4,7 +4,11 @@ import numpy as np
 import pytest
 
 from bionc import NaturalAxis
-from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
+from bionc.bionc_numpy.transformation_matrix import (
+    compute_transformation_matrix,
+    compute_transformation_matrix_inverse,
+    gram_determinant_sqrt,
+)
 from bionc.utils.enums import TransformationMatrixType
 from bionc.utils.transformation_matrix import check_plane, TransformationMatrixUtil, check_axis_to_keep
 from .utils import TestUtils
@@ -202,3 +206,125 @@ def test_check_plane_invalid_input():
 def test_check_axis_to_keep_invalid_input():
     with pytest.raises(ValueError):
         check_axis_to_keep("X")
+
+
+IMPLEMENTED_TYPES = [
+    TransformationMatrixType.Buv,
+    TransformationMatrixType.Bvu,
+    TransformationMatrixType.Bwu,
+    TransformationMatrixType.Buw,
+]
+
+
+def valid_angle_samples(nb_samples: int = 200, seed: int = 42):
+    """
+    Random (length, alpha, beta, gamma) that describe a segment that actually exists in 3D,
+    i.e. for which the Gram determinant of (u, v/length, w) is safely positive.
+    """
+    rng = np.random.default_rng(seed)
+    samples = []
+    while len(samples) < nb_samples:
+        length = rng.uniform(0.05, 5.0)
+        alpha, beta, gamma = rng.uniform(0.15, np.pi - 0.15, 3)
+        delta = (
+            1
+            - np.cos(alpha) ** 2
+            - np.cos(beta) ** 2
+            - np.cos(gamma) ** 2
+            + 2 * np.cos(alpha) * np.cos(beta) * np.cos(gamma)
+        )
+        if delta > 1e-4:
+            samples.append((length, alpha, beta, gamma))
+    return samples
+
+
+@pytest.mark.parametrize("matrix_type", IMPLEMENTED_TYPES)
+def test_transformation_matrix_reproduces_the_segment_geometry(matrix_type):
+    """
+    The columns of B are u, rp-rd and w expressed in the segment frame, so B.T @ B must give back
+    the angles and the length the matrix was built from, whatever the transformation matrix type.
+    """
+    for length, alpha, beta, gamma in valid_angle_samples():
+        B = compute_transformation_matrix(matrix_type, length, alpha, beta, gamma)
+        gram = np.array(
+            [
+                [1, length * np.cos(gamma), np.cos(beta)],
+                [length * np.cos(gamma), length**2, length * np.cos(alpha)],
+                [np.cos(beta), length * np.cos(alpha), 1],
+            ]
+        )
+        np.testing.assert_almost_equal(B.T @ B, gram, decimal=8)
+
+
+@pytest.mark.parametrize("matrix_type", IMPLEMENTED_TYPES)
+def test_transformation_matrix_determinant(matrix_type):
+    """det(B) = length * sqrt(gram determinant), identical for every transformation matrix type."""
+    for length, alpha, beta, gamma in valid_angle_samples():
+        B = compute_transformation_matrix(matrix_type, length, alpha, beta, gamma)
+        np.testing.assert_almost_equal(np.linalg.det(B), length * gram_determinant_sqrt(alpha, beta, gamma), decimal=8)
+
+
+@pytest.mark.parametrize("matrix_type", IMPLEMENTED_TYPES)
+def test_transformation_matrix_inverse(matrix_type):
+    """The analytical inverse must agree with the numerical one, and undo B exactly."""
+    for length, alpha, beta, gamma in valid_angle_samples():
+        B = compute_transformation_matrix(matrix_type, length, alpha, beta, gamma)
+        B_inv = compute_transformation_matrix_inverse(matrix_type, length, alpha, beta, gamma)
+
+        np.testing.assert_almost_equal(B_inv, np.linalg.inv(B), decimal=8)
+        np.testing.assert_almost_equal(B @ B_inv, np.eye(3), decimal=8)
+        np.testing.assert_almost_equal(B_inv @ B, np.eye(3), decimal=8)
+
+
+def test_transformation_matrix_inverse_not_implemented():
+    for matrix_type in (TransformationMatrixType.Bvw, TransformationMatrixType.Bwv):
+        with pytest.raises(NotImplementedError):
+            compute_transformation_matrix_inverse(matrix_type, length, alpha, beta, gamma)
+
+
+def test_transformation_matrix_inverse_invalid_matrix_type():
+    with pytest.raises(ValueError):
+        compute_transformation_matrix_inverse("INVALID_TYPE", length, alpha, beta, gamma)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_segment_transformation_matrix_inverse(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import NaturalSegment
+    else:
+        from bionc.bionc_numpy import NaturalSegment
+
+    bbox = NaturalSegment(
+        name="bbox",
+        alpha=np.pi / 1.9,
+        beta=np.pi / 2.3,
+        gamma=np.pi / 2.1,
+        length=1.5,
+    )
+
+    for matrix_type in IMPLEMENTED_TYPES:
+        B = TestUtils.to_array(bbox.compute_transformation_matrix(matrix_type=matrix_type))
+        B_inv = bbox.compute_transformation_matrix_inverse(matrix_type=matrix_type)
+
+        # the segment level accessors both transpose, so they stay inverse of one another
+        TestUtils.assert_equal(B_inv, np.linalg.inv(B))
+        TestUtils.assert_equal(B @ TestUtils.to_array(B_inv), np.eye(3))
+
+        # and the string form of the type resolves to the same matrix
+        TestUtils.assert_equal(
+            bbox.compute_transformation_matrix_inverse(matrix_type=matrix_type.value),
+            np.linalg.inv(B),
+        )
+
+    # the default is Buv, like compute_transformation_matrix
+    TestUtils.assert_equal(
+        bbox.compute_transformation_matrix_inverse(),
+        TestUtils.to_array(bbox.compute_transformation_matrix_inverse(matrix_type=TransformationMatrixType.Buv)),
+    )
+
+    for matrix_type in (TransformationMatrixType.Bvw, TransformationMatrixType.Bwv):
+        with pytest.raises(NotImplementedError):
+            bbox.compute_transformation_matrix_inverse(matrix_type=matrix_type)
+
+    with pytest.raises(ValueError):
+        bbox.compute_transformation_matrix_inverse(matrix_type="INVALID_TYPE")

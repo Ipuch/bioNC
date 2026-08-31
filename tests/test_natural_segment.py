@@ -542,6 +542,7 @@ def test_angle_sanity_check(bionc_type):
             SegmentNaturalCoordinates,
         )
 
+    # u and v both sit pi/5 away from w, yet pi/1.5 apart from each other: impossible in 3D
     with pytest.raises(
         ValueError,
         match="The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment",
@@ -549,10 +550,19 @@ def test_angle_sanity_check(bionc_type):
         NaturalSegment(
             name="bbox",
             alpha=np.pi / 5,
-            beta=np.pi / 3,
-            gamma=np.pi / 2.1,
+            beta=np.pi / 5,
+            gamma=np.pi / 1.5,
             length=1.5,
         )
+
+    # a realisable, non-degenerate set of angles must be accepted
+    NaturalSegment(
+        name="bbox",
+        alpha=np.pi / 5,
+        beta=np.pi / 3,
+        gamma=np.pi / 2.1,
+        length=1.5,
+    )
 
 
 @pytest.mark.parametrize(

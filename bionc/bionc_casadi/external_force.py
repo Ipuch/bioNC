@@ -110,6 +110,7 @@ class ExternalForceSet:
         external_force: MX,
         point_in_local: MX = None,
         transformation_matrix=None,
+        transformation_matrix_inverse=None,
     ):
         """
         Add an external force to the segment
@@ -122,12 +123,18 @@ class ExternalForceSet:
             The external force in local cartesian frame to add [6 x 1], (torque, force)
         point_in_local: MX
             The point in global coordinates [3 x 1]
+        transformation_matrix:
+            The transformation matrix of the segment
+        transformation_matrix_inverse:
+            The analytical inverse of transformation_matrix, see
+            NaturalSegment.compute_transformation_matrix_inverse. Inverted numerically if not given.
         """
         self.external_forces[segment_index].append(
             ExternalForceInLocal(
                 application_point_in_local=point_in_local if point_in_local is not None else MX.zeros(3, 1),
                 external_forces=external_force,
                 transformation_matrix=transformation_matrix,
+                transformation_matrix_inverse=transformation_matrix_inverse,
             )
         )
 

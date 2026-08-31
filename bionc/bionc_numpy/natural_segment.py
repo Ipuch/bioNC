@@ -2,7 +2,6 @@ from typing import Union, Tuple, Callable
 
 import numpy as np
 from numpy import cos, zeros, sum, dot, transpose
-from numpy.linalg import inv
 
 from .homogenous_transform import HomogeneousTransform
 from .natural_accelerations import SegmentNaturalAccelerations
@@ -375,9 +374,7 @@ class NaturalSegment(AbstractNaturalSegment):
             matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
         ).T
 
-    def compute_transformation_matrix_inverse(
-        self, matrix_type: str | TransformationMatrixType = None
-    ) -> np.ndarray:
+    def compute_transformation_matrix_inverse(self, matrix_type: str | TransformationMatrixType = None) -> np.ndarray:
         """
         This function computes the analytical inverse of the transformation matrix, denoted inv(Bi),
         from the orthogonal Segment Coordinate System to the Natural Coordinate System.

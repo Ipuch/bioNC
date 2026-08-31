@@ -387,3 +387,41 @@ def test_segment_transformation_matrix_inverse(bionc_type):
 
     with pytest.raises(ValueError):
         bbox.compute_transformation_matrix_inverse(matrix_type="INVALID_TYPE")
+
+
+@pytest.mark.parametrize("length, alpha, beta, gamma", ANGLE_SAMPLES)
+def test_gram_determinant_equals_its_symmetric_and_spherical_forms(length, alpha, beta, gamma):
+    """
+    gram_determinant evaluates a Horner form for speed. Pin it to the two algebraically identical
+    expressions it stands for, so the optimisation cannot drift from the definition:
+      - the symmetric polynomial, which is the 3x3 Gram determinant expanded;
+      - 4 sin(s) sin(s-a) sin(s-b) sin(s-g), the spherical analogue of Heron's formula.
+    See docs/gram_determinant.md.
+    """
+    ca, cb, cg = np.cos(alpha), np.cos(beta), np.cos(gamma)
+    symmetric = 1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg
+
+    s = (alpha + beta + gamma) / 2
+    spherical = 4 * np.sin(s) * np.sin(s - alpha) * np.sin(s - beta) * np.sin(s - gamma)
+
+    np.testing.assert_almost_equal(gram_determinant(alpha, beta, gamma), symmetric, decimal=12)
+    np.testing.assert_almost_equal(gram_determinant(alpha, beta, gamma), spherical, decimal=12)
+
+
+@pytest.mark.parametrize(
+    "alpha_deg, beta_deg, gamma_deg, realisable",
+    [
+        (36, 36, 120, False),  # gamma > alpha + beta, the case _angle_sanity_check rejects
+        (60, 60, 130, False),  # Foadi & Evans (2011) headline example
+        (170, 170, 170, False),  # perimeter > 2 pi
+        (36, 60, 85.7, True),
+        (90, 90, 90, True),
+    ],
+)
+def test_gram_determinant_sign_is_the_spherical_triangle_inequality(alpha_deg, beta_deg, gamma_deg, realisable):
+    """delta > 0 iff the three angles are the sides of a spherical triangle. See docs/gram_determinant.md."""
+    a, b, g = np.deg2rad([alpha_deg, beta_deg, gamma_deg])
+    triangle = a < b + g and b < a + g and g < a + b and a + b + g < 2 * np.pi
+
+    assert triangle == realisable
+    assert (gram_determinant(a, b, g) > 0) == realisable

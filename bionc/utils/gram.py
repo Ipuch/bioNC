@@ -23,6 +23,14 @@ def gram_determinant(alpha, beta, gamma):
     implies sin(alpha), sin(beta) and sin(gamma) are all non-zero, which is what makes the divisions
     in the analytical inverses safe.
 
+    Symmetrically, with ca, cb, cg = cos(alpha), cos(beta), cos(gamma):
+
+        delta = 1 - ca**2 - cb**2 - cg**2 + 2 * ca * cb * cg
+
+    Evaluated below as a Horner form in ca, which is the same value to 1e-15 in three fewer
+    operations. See docs/gram_determinant.md for the derivation, the equivalent forms and why this
+    one is used.
+
     Parameters
     ----------
     alpha
@@ -36,10 +44,6 @@ def gram_determinant(alpha, beta, gamma):
     -------
         The Gram determinant, of the same type as the angles
     """
-    return (
-        1
-        - np.cos(alpha) ** 2
-        - np.cos(beta) ** 2
-        - np.cos(gamma) ** 2
-        + 2 * np.cos(alpha) * np.cos(beta) * np.cos(gamma)
-    )
+    ca, cb, cg = np.cos(alpha), np.cos(beta), np.cos(gamma)
+
+    return ca * (2 * cb * cg - ca) + 1 - cb * cb - cg * cg

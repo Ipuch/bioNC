@@ -71,6 +71,9 @@ class AbstractNaturalSegment(ABC):
             self._natural_inertial_parameters._initial_transformation_matrix = self.compute_transformation_matrix(
                 inertial_transformation_matrix_type
             )
+            self._natural_inertial_parameters._initial_transformation_matrix_inverse = (
+                self.compute_transformation_matrix_inverse(inertial_transformation_matrix_type)
+            )
 
         # to know if the segment is the ground
         self._is_ground = is_ground
@@ -270,6 +273,17 @@ class AbstractNaturalSegment(ABC):
         Returns
         -------
             Transformation matrix from natural coordinate to segment coordinate system [3x3]
+        """
+
+    @abstractmethod
+    def compute_transformation_matrix_inverse(self, transformation_matrix_type: TransformationMatrixType):
+        """
+        This function returns the analytical inverse of the transformation matrix, denoted inv(Bi),
+        from the orthogonal Segment Coordinate System to the Natural Coordinate System.
+
+        Returns
+        -------
+            Transformation matrix from segment coordinate system to natural coordinate [3x3]
         """
 
     @abstractmethod

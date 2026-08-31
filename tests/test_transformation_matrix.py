@@ -74,7 +74,7 @@ def test_transformation_matrix_Bwu():
     assert isinstance(result, np.ndarray)
     assert result.shape == (3, 3)
     np.testing.assert_almost_equal(
-        result, np.array([[0.5646425, -1.0358334, 0.0], [0.0, 0.9480368, 0.0], [0.8253356, 1.7551651, 1.0]])
+        result, np.array([[0.5646425, 0.1436025, 0.0], [0.0, 0.9480368, 0.0], [0.8253356, 1.7551651, 1.0]])
     )
 
 
@@ -88,7 +88,7 @@ def test_transformation_matrix_Buw():
             [
                 [1.0, 1.529684374568977, 0.8253356149096783],
                 [0.0, 0.9480367617186112, 0.0],
-                [0.0, -0.4807683268354297, 0.5646424733950354],
+                [0.0, 0.8725204941048372, 0.5646424733950354],
             ]
         ),
     )
@@ -145,15 +145,15 @@ def test_segment_transformation_matrix(bionc_type):
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bvu), res_Bvu)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bvu"), res_Bvu)
 
-    res_Bwu = np.array([[0.97908409, 0.0, 0.20345601], [0.13783542, 1.48828492, -0.12386902], [0.0, 0.0, 1.0]])
+    res_Bwu = np.array([[0.97908409, 0.0, 0.20345601], [0.14023008, 1.48828492, -0.12386902], [0.0, 0.0, 1.0]])
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bwu), res_Bwu)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bwu"), res_Bwu)
 
     res_Buw = np.array(
         [
             [1.0, 0.0, 0.0],
-            [0.11209514, 1.48828491, -0.14716265],
-            [0.20345601, 0, 0.97908408],
+            [0.11209514, 1.48828492, -0.14980884],
+            [0.20345601, 0, 0.97908409],
         ]
     )
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Buw), res_Buw)

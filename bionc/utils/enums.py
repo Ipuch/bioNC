@@ -77,7 +77,7 @@ class TransformationMatrixType(Enum):
     Buv = "Buv"  # implemented
     Bvu = "Bvu"  # implemented
     Bwu = "Bwu"  # implemented
-    Buw = "Buw"  # not implemented
+    Buw = "Buw"  # implemented
     Bvw = "Bvw"  # not implemented
     Bwv = "Bwv"  # not implemented
 

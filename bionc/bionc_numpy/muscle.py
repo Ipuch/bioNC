@@ -75,8 +75,7 @@ class MuscleViaPoint:
             to natural (non-orthogonal) coordinates. Defaults to Buv.
         """
         location = np.asarray(location, dtype=float).reshape(3)
-        T = parent_segment.compute_transformation_matrix(transformation_matrix_type)
-        natural = np.linalg.inv(T) @ location
+        natural = parent_segment.compute_transformation_matrix_inverse(transformation_matrix_type) @ location
         if is_distal_location:
             natural = natural + np.array([0.0, -1.0, 0.0])
         return cls(name=name, parent_name=parent_segment.name, position=natural)

@@ -24,4 +24,4 @@ from .natural_segment import NaturalSegment
 from .natural_segment import NaturalSegment
 from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities, NaturalVelocities
-from .transformation_matrix import compute_transformation_matrix
+from .transformation_matrix import compute_transformation_matrix, compute_transformation_matrix_inverse

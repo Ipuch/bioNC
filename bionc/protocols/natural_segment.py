@@ -9,6 +9,7 @@ from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_markers import AbstractNaturalMarker
 from .natural_velocities import SegmentNaturalVelocities
 from ..utils.enums import TransformationMatrixType
+from ..utils.gram import gram_determinant
 
 
 class AbstractNaturalSegment(ABC):
@@ -84,17 +85,10 @@ class AbstractNaturalSegment(ABC):
         This function checks if angles would produce a singular transformation matrix
 
         Every transformation matrix B has det(B) = length * sqrt(delta), where delta is the Gram
-        determinant of (u, v/length, w) below. So delta <= 0 is the exact criterion, whatever the
+        determinant of (u, v/length, w). So delta <= 0 is the exact criterion, whatever the
         TransformationMatrixType: it means no three vectors in 3D can hold those pairwise angles.
         """
-        delta = (
-            1
-            - np.cos(alpha) ** 2
-            - np.cos(beta) ** 2
-            - np.cos(gamma) ** 2
-            + 2 * np.cos(alpha) * np.cos(beta) * np.cos(gamma)
-        )
-        if delta <= 0:
+        if gram_determinant(alpha, beta, gamma) <= 0:
             raise ValueError(
                 f"The angles alpha, beta, gamma, would produce a singular transformation matrix for the segment"
             )

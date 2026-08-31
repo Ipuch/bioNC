@@ -11,46 +11,6 @@ from casadi import cos, sin, MX, sqrt
 from ..utils.enums import NaturalAxis, TransformationMatrixType
 
 
-def compute_transformation_matrix(
-    matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float
-):
-    """
-    Create a transformation matrix from a TransformationMatrixType
-
-    Parameters
-    ----------
-    matrix_type: TransformationMatrixType
-        The type of transformation matrix to create, such as TransformationMatrixType.Buv, TransformationMatrixType.Bvw, etc.
-    length: float
-        The length of the segment
-    alpha: float
-        The alpha angle
-    beta: float
-        The beta angle
-    gamma: float
-        The gamma angle
-
-    Returns
-    -------
-    numpy.ndarray
-        The transformation matrix
-    """
-    if matrix_type == TransformationMatrixType.Buv:
-        return _transformation_matrix_Buv(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bvu:
-        return _transformation_matrix_Bvu(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bwu:
-        return _transformation_matrix_Bwu(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Buw:
-        return _transformation_matrix_Buw(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bvw:
-        return _transformation_matrix_Bvw(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bwv:
-        return _transformation_matrix_Bwv(length, alpha, beta, gamma)
-    else:
-        raise ValueError(f"Unknown TransformationMatrixType: {matrix_type}")
-
-
 def _transformation_matrix_Buv(length: float, alpha: float, beta: float, gamma: float) -> MX:
     """
     Create a transformation matrix of type Buv
@@ -177,49 +137,6 @@ def _transformation_matrix_Bvw(length: float, alpha: float, beta: float, gamma: 
 
 def _transformation_matrix_Bwv(length: float, alpha: float, beta: float, gamma: float) -> MX:
     raise NotImplementedError("The transformation matrix Bwv is not implemented yet.")
-
-
-def compute_transformation_matrix_inverse(
-    matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float
-):
-    """
-    Create the analytical inverse of a transformation matrix from a TransformationMatrixType
-
-    This is the exact inverse of compute_transformation_matrix called with the same arguments,
-    computed in closed form rather than by numerical inversion.
-
-    Parameters
-    ----------
-    matrix_type: TransformationMatrixType
-        The type of transformation matrix to invert, such as TransformationMatrixType.Buv, TransformationMatrixType.Bvw, etc.
-    length: float
-        The length of the segment
-    alpha: float
-        The alpha angle
-    beta: float
-        The beta angle
-    gamma: float
-        The gamma angle
-
-    Returns
-    -------
-    MX
-        The inverse of the transformation matrix
-    """
-    if matrix_type == TransformationMatrixType.Buv:
-        return _transformation_matrix_Buv_inverse(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bvu:
-        return _transformation_matrix_Bvu_inverse(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bwu:
-        return _transformation_matrix_Bwu_inverse(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Buw:
-        return _transformation_matrix_Buw_inverse(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bvw:
-        return _transformation_matrix_Bvw_inverse(length, alpha, beta, gamma)
-    elif matrix_type == TransformationMatrixType.Bwv:
-        return _transformation_matrix_Bwv_inverse(length, alpha, beta, gamma)
-    else:
-        raise ValueError(f"Unknown TransformationMatrixType: {matrix_type}")
 
 
 def gram_determinant_sqrt(alpha: float, beta: float, gamma: float) -> MX:
@@ -377,3 +294,85 @@ def _transformation_matrix_Bvw_inverse(length: float, alpha: float, beta: float,
 
 def _transformation_matrix_Bwv_inverse(length: float, alpha: float, beta: float, gamma: float) -> MX:
     raise NotImplementedError("The transformation matrix Bwv is not implemented yet.")
+
+
+TRANSFORMATION_MAP = {
+    TransformationMatrixType.Buv: _transformation_matrix_Buv,
+    TransformationMatrixType.Bvu: _transformation_matrix_Bvu,
+    TransformationMatrixType.Bwu: _transformation_matrix_Bwu,
+    TransformationMatrixType.Buw: _transformation_matrix_Buw,
+    TransformationMatrixType.Bvw: _transformation_matrix_Bvw,
+    TransformationMatrixType.Bwv: _transformation_matrix_Bwv,
+}
+
+INVERSE_TRANSFORMATION_MAP = {
+    TransformationMatrixType.Buv: _transformation_matrix_Buv_inverse,
+    TransformationMatrixType.Bvu: _transformation_matrix_Bvu_inverse,
+    TransformationMatrixType.Bwu: _transformation_matrix_Bwu_inverse,
+    TransformationMatrixType.Buw: _transformation_matrix_Buw_inverse,
+    TransformationMatrixType.Bvw: _transformation_matrix_Bvw_inverse,
+    TransformationMatrixType.Bwv: _transformation_matrix_Bwv_inverse,
+}
+
+
+def compute_transformation_matrix(
+    matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float
+):
+    """
+    Create a transformation matrix from a TransformationMatrixType
+
+    Parameters
+    ----------
+    matrix_type: TransformationMatrixType
+        The type of transformation matrix to create, such as TransformationMatrixType.Buv, TransformationMatrixType.Bvw, etc.
+    length: float
+        The length of the segment
+    alpha: float
+        The alpha angle
+    beta: float
+        The beta angle
+    gamma: float
+        The gamma angle
+
+    Returns
+    -------
+    MX
+        The transformation matrix
+    """
+    if matrix_type not in TRANSFORMATION_MAP:
+        raise ValueError(f"Unknown TransformationMatrixType: {matrix_type}")
+
+    return TRANSFORMATION_MAP[matrix_type](length, alpha, beta, gamma)
+
+
+def compute_transformation_matrix_inverse(
+    matrix_type: TransformationMatrixType, length: float, alpha: float, beta: float, gamma: float
+):
+    """
+    Create the analytical inverse of a transformation matrix from a TransformationMatrixType
+
+    This is the exact inverse of compute_transformation_matrix called with the same arguments,
+    computed in closed form rather than by numerical inversion.
+
+    Parameters
+    ----------
+    matrix_type: TransformationMatrixType
+        The type of transformation matrix to invert, such as TransformationMatrixType.Buv, TransformationMatrixType.Bvw, etc.
+    length: float
+        The length of the segment
+    alpha: float
+        The alpha angle
+    beta: float
+        The beta angle
+    gamma: float
+        The gamma angle
+
+    Returns
+    -------
+    MX
+        The inverse of the transformation matrix
+    """
+    if matrix_type not in INVERSE_TRANSFORMATION_MAP:
+        raise ValueError(f"Unknown TransformationMatrixType: {matrix_type}")
+
+    return INVERSE_TRANSFORMATION_MAP[matrix_type](length, alpha, beta, gamma)

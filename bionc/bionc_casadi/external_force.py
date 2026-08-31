@@ -138,6 +138,39 @@ class ExternalForceSet:
             )
         )
 
+    def add_in_local_from_segment(
+        self,
+        segment_index: int,
+        external_force: MX,
+        segment,
+        point_in_local: MX = None,
+        transformation_matrix_type=None,
+    ):
+        """
+        Add an external force in the local frame of a segment, taking both the transformation matrix
+        and its analytical inverse from that segment. Nothing is inverted numerically.
+
+        Parameters
+        ----------
+        segment_index: int
+            The index of the segment
+        external_force:
+            The external force in local cartesian frame to add [6 x 1], (torque, force)
+        segment : NaturalSegment
+            The segment the force applies to
+        point_in_local: MX
+            The point in the local frame [3 x 1]
+        transformation_matrix_type : TransformationMatrixType | str
+            The type of transformation matrix to use, TransformationMatrixType.Buv by default
+        """
+        self.add_in_local(
+            segment_index=segment_index,
+            external_force=external_force,
+            point_in_local=point_in_local,
+            transformation_matrix=segment.compute_transformation_matrix(transformation_matrix_type),
+            transformation_matrix_inverse=segment.compute_transformation_matrix_inverse(transformation_matrix_type),
+        )
+
     def to_natural_external_forces(self, Q: NaturalCoordinates) -> MX:
         """
         Converts and sums all natural external forces

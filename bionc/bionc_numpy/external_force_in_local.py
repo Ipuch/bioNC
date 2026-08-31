@@ -91,6 +91,47 @@ class ExternalForceInLocal:
             transformation_matrix_inverse,
         )
 
+    @classmethod
+    def from_segment(
+        cls,
+        application_point_in_local: np.ndarray,
+        force: np.ndarray,
+        torque: np.ndarray,
+        segment,
+        transformation_matrix_type=None,
+    ):
+        """
+        This function creates an external force from the segment it applies to.
+
+        Prefer it to from_components whenever a segment is at hand: the segment supplies both B and
+        its analytical inverse, so the two cannot be mismatched and nothing is inverted numerically.
+
+        Parameters
+        ----------
+        application_point_in_local : np.ndarray
+            The application point of the force in the natural coordinate system of the segment
+        force
+            The force vector in the global coordinate system
+        torque
+            The torque vector in the global coordinate system
+        segment : NaturalSegment
+            The segment the force applies to
+        transformation_matrix_type : TransformationMatrixType | str
+            The type of transformation matrix to use, TransformationMatrixType.Buv by default
+
+        Returns
+        -------
+        ExternalForceInLocal
+        """
+
+        return cls.from_components(
+            application_point_in_local=application_point_in_local,
+            force=force,
+            torque=torque,
+            transformation_matrix=segment.compute_transformation_matrix(transformation_matrix_type),
+            transformation_matrix_inverse=segment.compute_transformation_matrix_inverse(transformation_matrix_type),
+        )
+
     @property
     def force(self) -> np.ndarray:
         """The force vector in the global coordinate system"""

@@ -250,9 +250,7 @@ def test_generalized_kinetic_energy_equals_rigid_body_kinetic_energy(bionc_type)
 
     omega = np.array([0.4, -1.1, 0.8])
     v_p = np.array([0.5, 0.2, -0.7])
-    qdot = np.concatenate(
-        [np.cross(omega, u), v_p, v_p + np.cross(omega, rd - rp), np.cross(omega, w)]
-    )
+    qdot = np.concatenate([np.cross(omega, u), v_p, v_p + np.cross(omega, rd - rp), np.cross(omega, w)])
 
     generalized = 0.5 * qdot @ _to_numpy(segment.mass_matrix) @ qdot
 

@@ -119,26 +119,28 @@ def dumas_inverse_dynamics_gc(Q, inertia, Qddot, F_ground, M_ground):
         for k in range(n):
             u, rp, rd, w = Q[i][0:3, k], Q[i][3:6, k], Q[i][6:9, k], Q[i][9:12, k]
             o = np.zeros(3)
-            Kt = np.array(
-                [
-                    np.concatenate((2 * u, rp - rd, w, o, o, o)),
-                    np.concatenate((o, u, o, 2 * (rp - rd), w, o)),
-                    np.concatenate((o, -u, o, -2 * (rp - rd), -w, o)),
-                    np.concatenate((o, o, u, o, rp - rd, 2 * w)),
-                ]
-            ).reshape(4, 6, 3).transpose(0, 2, 1).reshape(12, 6)
-            Bstar = np.column_stack((np.cross(w, u), np.cross(u, rp - rd), np.cross(-(rp - rd), w)))
-            Nstart = (
-                np.block(
+            Kt = (
+                np.array(
                     [
-                        [o[:, None], (rp - rd)[:, None], o[:, None]],
-                        [o[:, None], o[:, None], -w[:, None]],
-                        [o[:, None], o[:, None], w[:, None]],
-                        [u[:, None], o[:, None], o[:, None]],
+                        np.concatenate((2 * u, rp - rd, w, o, o, o)),
+                        np.concatenate((o, u, o, 2 * (rp - rd), w, o)),
+                        np.concatenate((o, -u, o, -2 * (rp - rd), -w, o)),
+                        np.concatenate((o, o, u, o, rp - rd, 2 * w)),
                     ]
                 )
-                @ np.linalg.inv(Bstar)
+                .reshape(4, 6, 3)
+                .transpose(0, 2, 1)
+                .reshape(12, 6)
             )
+            Bstar = np.column_stack((np.cross(w, u), np.cross(u, rp - rd), np.cross(-(rp - rd), w)))
+            Nstart = np.block(
+                [
+                    [o[:, None], (rp - rd)[:, None], o[:, None]],
+                    [o[:, None], o[:, None], -w[:, None]],
+                    [o[:, None], o[:, None], w[:, None]],
+                    [u[:, None], o[:, None], o[:, None]],
+                ]
+            ) @ np.linalg.inv(Bstar)
             # distal neighbour: force plate (centre of pressure) for the foot, the previous segment otherwise
             rp_distal = Q[i - 1][3:6, k]
             rhs = (

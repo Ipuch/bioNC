@@ -451,7 +451,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         torques = MX.zeros((3, self.nb_segments))
         forces = MX.zeros((3, self.nb_segments))
         lambdas = MX.zeros((6, self.nb_segments))
-        _, forces, torques, lambdas = self._inverse_dynamics_recursive_step(
+        _, torques, forces, lambdas = self._inverse_dynamics_recursive_step(
             Q=Q,
             Qddot=Qddot,
             external_forces=external_forces,
@@ -528,13 +528,14 @@ class BiomechanicalModel(GenericBiomechanicalModel):
                     forces=forces,
                     lambdas=lambdas,
                 )
-            # sum the generalized forces of each subsegment and transport them to the parent proximal point
+            # the child applies the opposite of its joint wrench on the parent (action-reaction),
+            # transported from the child proximal point to the parent proximal point, force and moment
             intersegmental_generalized_forces = ExternalForceInGlobalOnProximal.from_components(
-                force=forces[:, child_index], torque=torques[:, child_index]
+                force=-forces[:, child_index], torque=-torques[:, child_index]
             )
             subtree_intersegmental_generalized_forces += intersegmental_generalized_forces.transport_to_another_segment(
                 Qfrom=Q.vector(child_index), Qto=Q.vector(segment_index)
-            ).natural_forces()
+            ).to_generalized_natural_forces(Q.vector(segment_index))
 
         segment_i = self.segment_from_index(segment_index)
 

@@ -140,7 +140,7 @@ class ExternalForceInGlobalOnProximal:
         old_application_point_in_global = np.array(proximal_interpolation_matrix @ qi_array).squeeze()
         new_application_point_in_global = np.array(proximal_interpolation_matrix @ qj_array).squeeze()
 
-        lever_arm = new_application_point_in_global - old_application_point_in_global
+        lever_arm = old_application_point_in_global - new_application_point_in_global
 
         return ExternalForceInGlobalOnProximal.from_components(
             self.force, self.torque + np.cross(lever_arm, self.force)

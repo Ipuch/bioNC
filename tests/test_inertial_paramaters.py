@@ -135,9 +135,9 @@ def test_from_cartesian_inertial_parameters(bionc_type):
         obj.natural_pseudo_inertia,
         np.array(
             [
-                [58.25814425, -14.43488179, -17.05540064],
-                [-14.43488179, 54.77616526, -8.35459409],
-                [-17.05540064, -8.35459409, 57.71369183],
+                [4.30428589, 10.03194821, 13.13873817],
+                [10.03194821, 26.95483268, 34.7654673],
+                [13.13873817, 34.7654673, 46.06970138],
             ]
         ),
     )
@@ -162,9 +162,99 @@ def test_from_cartesian_inertial_parameters(bionc_type):
         obj.inertia(transformation_matrix_2),
         np.array(
             [
-                [-2.23189053, -0.72722177, 0.90716309],
-                [-0.72722177, 9.69832619, -0.5630764],
-                [0.90716309, -0.5630764, -2.39357526],
+                [1.10389246, 0.00115498, -0.00039709],
+                [0.00115498, 0.99890769, -0.00002370],
+                [-0.00039709, -0.00002370, 1.10498982],
             ]
         ),
     )
+
+
+def _huygens_test_data():
+    mass = 2.5
+    length = 0.4
+    center_of_mass = np.array([0.1, -0.3, 0.05])
+    inertia = np.array(
+        [
+            [0.30, 0.05, -0.02],
+            [0.05, 0.25, 0.04],
+            [-0.02, 0.04, 0.20],
+        ]
+    )
+    return mass, length, center_of_mass, inertia
+
+
+def _to_numpy(value):
+    from casadi import MX, evalf
+
+    if isinstance(value, MX):
+        return np.array(evalf(value).full())
+    return np.array(value)
+
+
+def _build_orthogonal_segment(bionc_type):
+    if bionc_type == "numpy":
+        from bionc import NaturalSegment
+    else:
+        from bionc.bionc_casadi import NaturalSegment
+
+    mass, length, center_of_mass, inertia = _huygens_test_data()
+    return NaturalSegment.with_cartesian_inertial_parameters(
+        name="huygens",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=length,
+        mass=mass,
+        center_of_mass=center_of_mass[:, np.newaxis],
+        inertia=inertia,
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_pseudo_inertia_huygens_formula(bionc_type):
+    """
+    Orthogonal segment, B = diag(1, L, 1): the pseudo-inertia is the second moment of mass,
+    J = inv(B) S inv(B)^T with S = 0.5 tr(I_P) E - I_P and I_P = I_C + m ((c.c) E - c c^T) the inertia at the proximal point.
+    """
+    mass, length, c, inertia = _huygens_test_data()
+    segment = _build_orthogonal_segment(bionc_type)
+
+    inertia_at_proximal_point = inertia + mass * ((c @ c) * np.eye(3) - np.outer(c, c))
+    inv_b = np.linalg.inv(np.diag([1.0, length, 1.0]))
+    second_moment = 0.5 * np.trace(inertia_at_proximal_point) * np.eye(3) - inertia_at_proximal_point
+    expected = inv_b @ second_moment @ inv_b.T
+
+    TestUtils.assert_equal(_to_numpy(segment.natural_pseudo_inertia), expected, expand=False)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_generalized_kinetic_energy_equals_rigid_body_kinetic_energy(bionc_type):
+    """Rigid motion of a rotated orthogonal segment: 0.5 Qdot^T G Qdot = 0.5 m |v_C|^2 + 0.5 w^T R I R^T w."""
+    mass, length, c, inertia = _huygens_test_data()
+    segment = _build_orthogonal_segment(bionc_type)
+
+    # non-trivial orientation (Rodrigues rotation around an oblique axis)
+    axis = np.array([1.0, -2.0, 0.5])
+    axis /= np.linalg.norm(axis)
+    angle = 0.7
+    k = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    rotation = np.eye(3) + np.sin(angle) * k + (1 - np.cos(angle)) * k @ k
+
+    u = rotation[:, 0]
+    v = length * rotation[:, 1]  # v = rp - rd
+    w = rotation[:, 2]
+    rp = np.array([0.3, -0.2, 0.9])
+    rd = rp - v
+
+    omega = np.array([0.4, -1.1, 0.8])
+    v_p = np.array([0.5, 0.2, -0.7])
+    qdot = np.concatenate([np.cross(omega, u), v_p, v_p + np.cross(omega, rd - rp), np.cross(omega, w)])
+
+    generalized = 0.5 * qdot @ _to_numpy(segment.mass_matrix) @ qdot
+
+    v_c = v_p + np.cross(omega, rotation @ c)
+    rigid = 0.5 * mass * v_c @ v_c + 0.5 * omega @ (rotation @ inertia @ rotation.T) @ omega
+
+    np.testing.assert_allclose(generalized, rigid, rtol=1e-10)

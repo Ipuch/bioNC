@@ -182,7 +182,7 @@ def main(mode: str = "moment_equilibrium"):
         fext.add_in_global_local_point(
             external_force=np.concatenate([torque, force]),
             segment_index=0,
-            point_in_local=np.array([0, 0.5, 0]),
+            point_in_local=np.array([0, -0.5, 0]),  # at the center of mass to cancel gravity
         )
 
     elif mode == "no_equilibrium":

@@ -200,10 +200,11 @@ def main(mode: str = "force_equilibrium"):
     fext = ExternalForceSet.empty_from_nb_segment(nb_segment=nb_segments)
     # then add a force
     if mode == "force_equilibrium":
+        # applied at the center of mass of each segment to cancel gravity
         wrench = np.concatenate((np.array([0, 0, 0]), np.array([0, 0, 1 * 9.81])))
-        fext.add_in_global_local_point(segment_index=0, external_force=wrench, point_in_local=np.array([0, 0.5, 0]))
+        fext.add_in_global_local_point(segment_index=0, external_force=wrench, point_in_local=np.array([0, -0.5, 0]))
         wrench2 = np.concatenate((np.array([0, 0, 0]), np.array([0, 0, 1 * 9.81])))
-        fext.add_in_global_local_point(segment_index=1, external_force=wrench2, point_in_local=np.array([0, 0.5, 0]))
+        fext.add_in_global_local_point(segment_index=1, external_force=wrench2, point_in_local=np.array([0, -0.5, 0]))
 
     elif mode == "no_equilibrium":
         wrench1 = np.concatenate((np.array([0, 0, 0]), np.array([0, 0, 1 * 9.81])))

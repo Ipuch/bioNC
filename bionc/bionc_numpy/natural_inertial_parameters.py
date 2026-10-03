@@ -237,12 +237,13 @@ class NaturalInertialParameters:
             Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
         """
         B = transformation_mat
-        middle_block = B @ (pseudo_inertia @ B.T)
-        inertia = (
-            middle_block
-            - mass * np.dot(cartesian_center_of_mass.T, cartesian_center_of_mass) * np.eye(3)
-            + np.dot(cartesian_center_of_mass.T, cartesian_center_of_mass)
-        )
+        c = np.asarray(cartesian_center_of_mass).reshape(3)
+        # second moment of mass at the proximal point, in the segment coordinate system
+        second_moment = B @ (pseudo_inertia @ B.T)
+        # inertia tensor at the proximal point
+        inertia_at_proximal_point = np.trace(second_moment) * np.eye(3) - second_moment
+        # Huygens: from the proximal point back to the center of mass
+        inertia = inertia_at_proximal_point - mass * (np.dot(c, c) * np.eye(3) - np.outer(c, c))
         return inertia
 
     def center_of_mass(self, transformation_matrix: np.ndarray = None) -> np.ndarray:
@@ -373,14 +374,13 @@ class NaturalInertialParameters:
             Dumas, R., Chèze, L., 2007 3D inverse dynamics in non-orthonormal segment coordinate system in section 2.2.2
 
         """
-        center_of_mass = cartesian_center_of_mass
+        c = np.asarray(cartesian_center_of_mass).reshape(3)
         inertia = cartesian_inertia
 
-        middle_block = (
-            inertia
-            + mass * np.dot(center_of_mass.T, center_of_mass) * eye(3)
-            - np.dot(center_of_mass.T, center_of_mass)
-        )
+        # Huygens: from the center of mass to the proximal point
+        inertia_at_proximal_point = inertia + mass * (np.dot(c, c) * eye(3) - np.outer(c, c))
+        # the pseudo-inertia is the second moment of mass int(n n^T dm), not the inertia tensor
+        middle_block = 0.5 * np.trace(inertia_at_proximal_point) * eye(3) - inertia_at_proximal_point
 
         Binv = inv(transformation_mat) if transformation_matrix_inverse is None else transformation_matrix_inverse
         Binv_transpose = np.transpose(Binv)

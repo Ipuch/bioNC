@@ -2,7 +2,7 @@ from typing import Union
 
 import numpy as np
 from casadi import MX
-from casadi import transpose, dot
+from casadi import transpose, dot, trace
 
 # to_numeric returns a numpy array, so the fallback numerical inversion is numpy's, not casadi's
 from numpy.linalg import inv
@@ -239,12 +239,13 @@ class NaturalInertialParameters:
             Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
         """
         B = transformation_mat
-        middle_block = B @ (pseudo_inertia @ transpose(B))
-        inertia = (
-            middle_block
-            - mass * transpose(cartesian_center_of_mass) @ cartesian_center_of_mass * MX.eye(3)
-            + transpose(cartesian_center_of_mass) @ cartesian_center_of_mass
-        )
+        c = MX(cartesian_center_of_mass)
+        # second moment of mass at the proximal point, in the segment coordinate system
+        second_moment = B @ (pseudo_inertia @ transpose(B))
+        # inertia tensor at the proximal point
+        inertia_at_proximal_point = trace(second_moment) * MX.eye(3) - second_moment
+        # Huygens: from the proximal point back to the center of mass
+        inertia = inertia_at_proximal_point - mass * (dot(c, c) * MX.eye(3) - c @ transpose(c))
         return inertia
 
     def center_of_mass(self, transformation_matrix: MX = None) -> MX:
@@ -379,12 +380,13 @@ class NaturalInertialParameters:
             Dumas, R., Chèze, L., 2007 3D inverse dynamics in non-orthonormal segment coordinate system in section 2.2.2
 
         """
-        center_of_mass = cartesian_center_of_mass
+        c = MX(cartesian_center_of_mass)
         inertia = cartesian_inertia
 
-        middle_block = (
-            inertia + mass * dot(center_of_mass, center_of_mass) * MX.eye(3) - dot(center_of_mass, center_of_mass)
-        )
+        # Huygens: from the center of mass to the proximal point
+        inertia_at_proximal_point = inertia + mass * (dot(c, c) * MX.eye(3) - c @ transpose(c))
+        # the pseudo-inertia is the second moment of mass int(n n^T dm), not the inertia tensor
+        middle_block = 0.5 * trace(inertia_at_proximal_point) * MX.eye(3) - inertia_at_proximal_point
 
         Binv = (
             inv(to_numeric(transformation_mat))

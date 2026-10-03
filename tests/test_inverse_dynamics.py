@@ -522,3 +522,69 @@ def test_id_example_with_fext():
         ),
         expand=False,
     )
+
+
+def build_n_link_chain(nb_segments: int, masses: list[float]) -> BiomechanicalModel:
+    """Build a n-link pendulum where each segment hangs from the previous one, hinges about the global x-axis"""
+    model = BiomechanicalModel()
+    for i in range(nb_segments):
+        name = f"pendulum_{i}"
+        model[name] = NaturalSegment.with_cartesian_inertial_parameters(
+            name=name,
+            alpha=np.pi / 2,
+            beta=np.pi / 2,
+            gamma=np.pi / 2,
+            length=1,
+            mass=masses[i],
+            center_of_mass=np.array([0, -0.5, 0]),
+            inertia=np.diag([0.1, 0.2, 0.3]),
+            inertial_transformation_matrix=TransformationMatrixType.Buv,
+        )
+    model._add_joint(
+        dict(
+            name="hinge_0",
+            joint_type=JointType.GROUND_REVOLUTE,
+            parent="GROUND",
+            child="pendulum_0",
+            parent_axis=[CartesianAxis.X, CartesianAxis.X],
+            child_axis=[NaturalAxis.V, NaturalAxis.W],
+            theta=[np.pi / 2, np.pi / 2],
+        )
+    )
+    for i in range(1, nb_segments):
+        model._add_joint(
+            dict(
+                name=f"hinge_{i}",
+                joint_type=JointType.REVOLUTE,
+                parent=f"pendulum_{i - 1}",
+                child=f"pendulum_{i}",
+                parent_axis=[NaturalAxis.U, NaturalAxis.U],
+                child_axis=[NaturalAxis.V, NaturalAxis.W],
+                theta=[np.pi / 2, np.pi / 2],
+            )
+        )
+    return model
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_inverse_dynamics_single_segment_outputs_order(bionc_type):
+    """
+    One horizontal segment along -y at rest, gravity along -z: the ground holds it with F = m g along +z
+    and M_x = m g (y_com - y_rp) at its proximal point.
+    """
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import SegmentNaturalCoordinates, NaturalCoordinates, NaturalAccelerations
+    else:
+        from bionc.bionc_numpy import SegmentNaturalCoordinates, NaturalCoordinates, NaturalAccelerations
+
+    model = build_n_link_chain(1, [2.0])
+    if bionc_type == "casadi":
+        model = model.to_mx()
+
+    Q = NaturalCoordinates.from_qi(
+        (SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1]),)
+    )
+    torques, forces, _ = model.inverse_dynamics(Q, NaturalAccelerations(np.zeros(12)))
+
+    TestUtils.assert_equal(forces, np.array([0, 0, 2 * 9.81]), expand=False)
+    TestUtils.assert_equal(torques, np.array([2 * 9.81 * -0.5, 0, 0]), expand=False)

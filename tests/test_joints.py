@@ -1401,3 +1401,108 @@ def test_knee_feikes_forward_dynamics_runs():
         Q = NaturalCoordinates(all_states[: model.nb_Q, k])
         assert np.max(np.abs(model.rigid_body_constraints(Q))) < 1e-6
         assert np.max(np.abs(model.joint_constraints(Q))) < 1e-6
+
+
+def _build_welded_segment(bionc_type, use_Q_ref: bool):
+    """Helper: one orthogonal segment (off-axis center of mass) welded to the ground at a rotated, non axis-aligned
+    pose. Returns the model and the reference natural coordinates."""
+    from bionc import BiomechanicalModel, NaturalSegment, JointType, EulerSequence
+
+    length = 1.3
+    # non axis-aligned rotation matrix
+    angle, axis = 0.7, np.array([1.0, 2.0, -0.5])
+    axis = axis / np.linalg.norm(axis)
+    K = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    R = np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * K @ K
+    u, v, w = R[:, 0], R[:, 1] * length, R[:, 2]
+    rp = np.array([0.3, -0.2, 0.5])
+    rd = rp - v
+    Q_ref = np.concatenate((u, rp, rd, w))
+
+    model = BiomechanicalModel()
+    model["box"] = NaturalSegment.with_cartesian_inertial_parameters(
+        name="box",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=length,
+        mass=1.2,
+        center_of_mass=np.array([0.1, -0.4, 0.2]),
+        inertia=np.diag([0.1, 0.2, 0.3]),
+    )
+    weld = dict(Q_child_ref=Q_ref) if use_Q_ref else dict(rp_child_ref=rp, rd_child_ref=rd)
+    model._add_joint(
+        dict(
+            name="weld",
+            joint_type=JointType.GROUND_WELD,
+            parent="GROUND",
+            child="box",
+            projection_basis=EulerSequence.XYZ,
+            child_basis=TransformationMatrixType.Buv,
+            **weld,
+        )
+    )
+    return (model.to_mx() if bionc_type == "casadi" else model), Q_ref
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_ground_weld_full_rank(bionc_type):
+    from bionc import NaturalCoordinates
+
+    def evaluate(function, Q_ref):
+        value = function(NaturalCoordinates(Q_ref))
+        if bionc_type == "casadi":
+            value = TestUtils.mx_to_array(value, squeeze=False)
+        return np.array(value, dtype=float)
+
+    model, Q_ref = _build_welded_segment(bionc_type, use_Q_ref=True)
+    jacobian = evaluate(model.holonomic_constraints_jacobian, Q_ref)
+    assert jacobian.shape == (12, 12)
+    assert np.linalg.matrix_rank(jacobian) == 12
+    assert np.max(np.abs(evaluate(model.joint_constraints, Q_ref))) < 1e-12
+    assert np.max(np.abs(evaluate(model.rigid_body_constraints, Q_ref))) < 1e-12
+
+    model, Q_ref = _build_welded_segment(bionc_type, use_Q_ref=False)
+    jacobian = evaluate(model.holonomic_constraints_jacobian, Q_ref)
+    assert np.linalg.matrix_rank(jacobian) == 11
+
+
+def test_ground_weld_forward_dynamics_holds():
+    from bionc import NaturalCoordinates, NaturalVelocities
+
+    model, Q_ref = _build_welded_segment("numpy", use_Q_ref=True)
+    Qddot, _ = model.forward_dynamics(NaturalCoordinates(Q_ref), NaturalVelocities(np.zeros(12)))
+    np.testing.assert_allclose(Qddot.to_array(), np.zeros(12), atol=1e-10)
+
+    model, Q_ref = _build_welded_segment("numpy", use_Q_ref=False)
+    with pytest.raises(np.linalg.LinAlgError):
+        model.forward_dynamics(NaturalCoordinates(Q_ref), NaturalVelocities(np.zeros(12)))
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_ground_weld_child_jacobian_matches_finite_differences(bionc_type):
+    """Ground joints have no parent jacobian: only the child one is compared with central finite differences."""
+    model, Q_ref = _build_welded_segment(bionc_type, use_Q_ref=True)
+    joint = model.joints["weld"]
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import SegmentNaturalCoordinates
+    else:
+        from bionc.bionc_numpy import SegmentNaturalCoordinates
+
+    rng = np.random.default_rng(7)
+    q_child = Q_ref + rng.uniform(-0.3, 0.3, 12)
+
+    def constraint(qc):
+        value = joint.constraint(None, SegmentNaturalCoordinates(qc))
+        return np.atleast_1d(np.array(TestUtils.to_array(value), dtype=float)).reshape(-1)
+
+    h = 1e-6
+    fd = np.zeros((6, 12))
+    for i in range(12):
+        dq = np.zeros(12)
+        dq[i] = h
+        fd[:, i] = (constraint(q_child + dq) - constraint(q_child - dq)) / (2 * h)
+
+    value = joint.child_constraint_jacobian(None, SegmentNaturalCoordinates(q_child))
+    analytic = np.array(TestUtils.mx_to_array(value, squeeze=False) if bionc_type == "casadi" else value, dtype=float)
+    assert np.max(np.abs(analytic.reshape(6, 12) - fd)) < 1e-7

@@ -816,7 +816,8 @@ class NaturalSegment(AbstractNaturalSegment):
         float
             Potential energy of the segment
         """
-        return (self.mass * self.natural_center_of_mass.interpolate() @ Qi.vector)[2]
+        # V = -m g . r_C, with the same gravity as the dynamics: gravity_force() = N_C^T m g
+        return -float(self.gravity_force() @ np.asarray(Qi.vector).reshape(12))
 
     def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
         """

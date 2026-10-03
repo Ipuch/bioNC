@@ -709,7 +709,8 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Potential energy of the segment
         """
-        return (self.mass * self.natural_center_of_mass.interpolate() @ Qi.vector)[2, 0]
+        # V = -m g . r_C, with the same gravity as the dynamics: gravity_force() = N_C^T m g
+        return -transpose(self.gravity_force()) @ Qi.vector
 
     def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
         """

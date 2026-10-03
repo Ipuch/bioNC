@@ -253,7 +253,7 @@ def test_natural_segment(bionc_type):
     )
 
     TestUtils.assert_equal(my_segment.kinetic_energy(Qdoti), np.array(0.6755135), expand=False)
-    TestUtils.assert_equal(my_segment.potential_energy(Qi), np.array(0.229), expand=False)
+    TestUtils.assert_equal(my_segment.potential_energy(Qi), np.array(2.24649), expand=False)
 
     my_segment2 = NaturalSegment.with_cartesian_inertial_parameters(
         name="box",

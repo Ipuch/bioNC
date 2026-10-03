@@ -451,7 +451,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         torques = MX.zeros((3, self.nb_segments))
         forces = MX.zeros((3, self.nb_segments))
         lambdas = MX.zeros((6, self.nb_segments))
-        _, forces, torques, lambdas = self._inverse_dynamics_recursive_step(
+        _, torques, forces, lambdas = self._inverse_dynamics_recursive_step(
             Q=Q,
             Qddot=Qddot,
             external_forces=external_forces,

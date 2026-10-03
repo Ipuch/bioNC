@@ -210,11 +210,11 @@ def test_inverse_dynamics_projected(bionc_type, configuration):
     torques, *_ = model.inverse_dynamics(Q, Qddot)
 
     if configuration == 1:
-        expected_torques = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-39.24, 19.62, 29.43]])
+        expected_torques = np.array([[-4.905, -9.81, -14.715], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     elif configuration == 2:
-        expected_torques = np.array([[0.0, 0.0, 0.0], [-39.24, 19.62, 29.43], [0.0, 0.0, 0.0]])
+        expected_torques = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     else:
-        expected_torques = np.array([[0.0, 0.0, 0.0], [0.0, -19.62, 0.0], [-39.24, 0.0, 29.43]])
+        expected_torques = np.array([[-4.905, 0.0, 0.0], [0.0, 0.0, -14.715], [0.0, 0.0, 0.0]])
 
     projected_torques = model.express_joint_torques_in_euler_basis(Q, torques)
 
@@ -396,10 +396,10 @@ def test_inverse_dynamics(bionc_type):
     print(forces)
     print(lambdas)
 
-    TestUtils.assert_equal(torques, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-39.24, 19.62, 29.43]]), expand=False)
+    TestUtils.assert_equal(forces, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-39.24, 19.62, 29.43]]), expand=False)
 
     TestUtils.assert_equal(
-        forces,
+        torques,
         np.array(
             [
                 [1.20137851e-15, -6.00689255e-16, -9.01033882e-16],
@@ -442,10 +442,10 @@ def test_id_example():
     forces = b[1]
     lambdas = b[2]
 
-    TestUtils.assert_equal(torques, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-29.43, 9.81, 19.62]]), expand=False)
+    TestUtils.assert_equal(forces, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-29.43, 9.81, 19.62]]), expand=False)
 
     TestUtils.assert_equal(
-        forces,
+        torques,
         np.array(
             [
                 [9.01033882e-16, -3.00344627e-16, -6.00689255e-16],
@@ -485,7 +485,7 @@ def test_id_example_with_fext():
     lambdas = b[2]
 
     TestUtils.assert_equal(
-        torques,
+        forces,
         np.array(
             [
                 [1.1000e-02, -1.0000e-02, -1.0000e-03],
@@ -497,7 +497,7 @@ def test_id_example_with_fext():
     )
 
     TestUtils.assert_equal(
-        forces,
+        torques,
         np.array(
             [
                 [0.0, -0.1013, -0.012],

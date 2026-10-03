@@ -481,8 +481,9 @@ class GroundJoint:
 
     class Weld(JointBase):
         """
-        This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
-        defined by two angles.
+        This joint welds the child segment to the ground with 6 linear constraints S (Q_ref - Q_child) = 0,
+        see weld_selection_matrix. Give Q_child_ref to fully weld the segment, or only rp_child_ref and
+        rd_child_ref to fix rp and rd (the rotation about rp - rd then stays free).
         """
 
         def __init__(
@@ -491,15 +492,27 @@ class GroundJoint:
             child: NaturalSegment,
             rp_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
             rd_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
+            Q_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
             index: int = None,
             projection_basis: EulerSequence = None,
             child_basis: TransformationMatrixType = None,
         ):
             super(GroundJoint.Weld, self).__init__(name, None, child, index, projection_basis, None, child_basis, None)
 
+            if Q_child_ref is not None:
+                Q_child_ref = np.asarray(Q_child_ref, dtype=float).reshape(12)
+                rp_child_ref, rd_child_ref = Q_child_ref[3:6], Q_child_ref[6:9]
+            elif rp_child_ref is None or rd_child_ref is None:
+                raise ValueError("Q_child_ref, or rp_child_ref and rd_child_ref, must be given for a Weld joint")
+
             self.rp_child_ref = rp_child_ref
             self.rd_child_ref = rd_child_ref
-            # check size and type of parent axis
+            self.Q_child_ref = Q_child_ref
+            self.selection = weld_selection_matrix(Q_child_ref)
+            self._q_ref = np.zeros(12) if Q_child_ref is None else Q_child_ref.copy()
+            self._q_ref[3:6], self._q_ref[6:9] = np.asarray(rp_child_ref).reshape(3), np.asarray(rd_child_ref).reshape(
+                3
+            )
             self.nb_constraints = 6
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> np.ndarray:
@@ -513,7 +526,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [12, 1]
             """
 
-            return np.concatenate((self.rp_child_ref - Q_child.rp, self.rd_child_ref - Q_child.rd), axis=0)
+            return self.selection @ (self._q_ref - np.asarray(Q_child).reshape(12))
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
@@ -523,7 +536,7 @@ class GroundJoint:
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
-            K_k_child = -np.eye(12)[3:9, :]
+            K_k_child = -self.selection
 
             return K_k_child
 
@@ -549,7 +562,7 @@ class GroundJoint:
             Compute the acceleration bias (quadratic velocity terms) for this ground Weld joint.
 
             The constraint is:
-              phi = [rp_ref - rp_child; rd_ref - rd_child]  (linear in Q_child, constant parent)
+              phi = S (Q_ref - Q_child)  (linear in Q_child, constant parent)
 
             Since the Jacobian is constant, the Hessian is zero.
             Therefore: bias = qdot^T H qdot = 0
@@ -578,6 +591,34 @@ class GroundJoint:
                 index=self.index,
                 rp_child_ref=self.rp_child_ref,
                 rd_child_ref=self.rd_child_ref,
+                Q_child_ref=self.Q_child_ref,
                 projection_basis=self.projection_basis,
                 child_basis=self.child_basis,
             )
+
+
+def weld_selection_matrix(Q_child_ref: np.ndarray = None) -> np.ndarray:
+    """
+    Rows S of the linear weld constraints S (Q_ref - Q_child) = 0 [6 x 12].
+
+    Without Q_child_ref, rp and rd are fixed: the rotation about rp - rd stays free, and the constraint
+    |rp - rd| = L is redundant with the rigid body constraints (singular in forward dynamics).
+    With Q_child_ref, rp is fixed, rd is fixed in the two directions orthogonal to v = rp - rd, and u is fixed in
+    the direction v x u: six constraints independent of the rigid body constraints, the segment is fully welded.
+    """
+    selection = np.zeros((6, 12))
+    selection[0:3, 3:6] = np.eye(3)
+    if Q_child_ref is None:
+        selection[3:6, 6:9] = np.eye(3)
+        return selection
+
+    Q_child_ref = np.asarray(Q_child_ref, dtype=float).reshape(12)
+    u, v = Q_child_ref[0:3], Q_child_ref[3:6] - Q_child_ref[6:9]
+    v = v / np.linalg.norm(v)
+    e_u = np.cross(v, u)  # direction of u when the segment rotates about v
+    e_u = e_u / np.linalg.norm(e_u)
+    e_2 = np.cross(v, e_u)  # (e_u, e_2) span the plane orthogonal to v
+    selection[3, 6:9] = e_u
+    selection[4, 6:9] = e_2
+    selection[5, 0:3] = e_u
+    return selection

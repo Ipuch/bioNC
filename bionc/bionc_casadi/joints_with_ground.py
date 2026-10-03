@@ -8,6 +8,7 @@ from ..protocols.joint import JointBase
 from .natural_vector import NaturalVector
 from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 from .cartesian_vector import CartesianVector
+from ..bionc_numpy.joints_with_ground import weld_selection_matrix
 
 
 class GroundJoint:
@@ -381,8 +382,9 @@ class GroundJoint:
 
     class Weld(JointBase):
         """
-        This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
-        defined by two angles.
+        This joint welds the child segment to the ground with 6 linear constraints S (Q_ref - Q_child) = 0,
+        see bionc_numpy.joints_with_ground.weld_selection_matrix. Give Q_child_ref to fully weld the segment, or only
+        rp_child_ref and rd_child_ref to fix rp and rd (the rotation about rp - rd then stays free).
         """
 
         def __init__(
@@ -391,15 +393,26 @@ class GroundJoint:
             child: NaturalSegment,
             rp_child_ref: SegmentNaturalCoordinates = None,
             rd_child_ref: SegmentNaturalCoordinates = None,
+            Q_child_ref: SegmentNaturalCoordinates | np.ndarray = None,
             index: int = None,
             projection_basis: EulerSequence = None,
             child_basis: TransformationMatrixType = None,
         ):
             super(GroundJoint.Weld, self).__init__(name, None, child, index, projection_basis, None, child_basis)
 
-            # check size and type of parent axis
+            if Q_child_ref is not None:
+                Q_child_ref = np.asarray(Q_child_ref, dtype=float).reshape(12)
+                rp_child_ref, rd_child_ref = Q_child_ref[3:6], Q_child_ref[6:9]
+            elif rp_child_ref is None or rd_child_ref is None:
+                raise ValueError("Q_child_ref, or rp_child_ref and rd_child_ref, must be given for a Weld joint")
+
             self.rp_child_ref = rp_child_ref
             self.rd_child_ref = rd_child_ref
+            self.Q_child_ref = Q_child_ref
+            self.selection = MX(weld_selection_matrix(Q_child_ref))
+            q_ref = np.zeros(12) if Q_child_ref is None else Q_child_ref.copy()
+            q_ref[3:6], q_ref[6:9] = np.asarray(rp_child_ref).reshape(3), np.asarray(rd_child_ref).reshape(3)
+            self._q_ref = MX(q_ref)
             self.nb_constraints = 6
 
         def constraint(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates) -> MX:
@@ -413,7 +426,7 @@ class GroundJoint:
                 Kinematic constraints of the joint [12, 1]
             """
 
-            return vertcat(self.rp_child_ref - Q_child.rp, self.rd_child_ref - Q_child.rd)
+            return self.selection @ (self._q_ref - Q_child)
 
         def parent_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
@@ -423,7 +436,7 @@ class GroundJoint:
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> MX:
-            K_k_child = -MX.eye(12)[3:9, :]
+            K_k_child = -self.selection
 
             return K_k_child
 
@@ -447,7 +460,7 @@ class GroundJoint:
             Compute the acceleration bias (quadratic velocity terms) for this ground Weld joint.
 
             The constraint is:
-              phi = [rp_ref - rp_child; rd_ref - rd_child]  (linear in Q_child, constant parent)
+              phi = S (Q_ref - Q_child)  (linear in Q_child, constant parent)
 
             Since the Jacobian is constant, the Hessian is zero.
             Therefore: bias = qdot^T H qdot = 0

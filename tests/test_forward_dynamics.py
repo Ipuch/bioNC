@@ -499,3 +499,55 @@ def test_forward_dynamics_n_pendulum(bionc_type):
             squeeze=False,
             expand=False,
         )
+
+
+def test_actuated_3d_pendulum_example_runs(monkeypatch, tmp_path):
+    # the example saves pendulum_3d.nmod in the cwd, so run it from a temporary directory
+    monkeypatch.chdir(tmp_path)
+
+    from bionc.bionc_numpy import NaturalCoordinates, NaturalVelocities
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/actuated_3d_pendulum.py")
+
+    model, time_steps, all_states, dynamics = module.apply_force_and_drop_pendulum(t_final=1)
+    assert not np.isnan(all_states).any()
+
+    # the pendulum is released at rest, pivot at the origin, center of mass at (0, -1, -0.5), gravity along -z:
+    # the torque about the pivot is r_C x (0, 0, -m g) = (m g, 0, 0), so the rotation is about X only,
+    # alpha = m g / I_pivot with I_pivot = I_xx + m (y_C^2 + z_C^2) = 0.01 + 1 * 1.25 = 1.26
+    # and the acceleration of the center of mass is alpha_vec x r_C
+    g, mass = 9.81, 1.0
+    r_C = np.array([0, -1, -0.5])
+    I_pivot = 0.01 + mass * (r_C[1] ** 2 + r_C[2] ** 2)
+    alpha_vec = np.array([mass * g / I_pivot, 0, 0])
+    a_C_expected = np.cross(alpha_vec, r_C)
+
+    Q0 = NaturalCoordinates(all_states[: model.nb_Q, 0])
+    Qdot0 = NaturalVelocities(all_states[model.nb_Q : model.nb_Q + model.nb_Qdot, 0])
+    Qddot0, _ = model.forward_dynamics(Q0, Qdot0)
+    a_C = model.segments["pendulum"].natural_center_of_mass.interpolate() @ np.array(Qddot0).reshape(-1)
+    np.testing.assert_allclose(a_C, a_C_expected, atol=1e-3)
+
+    # the angular motion stays about X: x-coordinates of rp, rd and the center of mass stay at zero
+    # natural coordinates are [u, rp, rd, w]
+    interpolation = model.segments["pendulum"].natural_center_of_mass.interpolate()
+    np.testing.assert_allclose(all_states[3, :], 0, atol=1e-8)  # rp_x
+    np.testing.assert_allclose(all_states[6, :], 0, atol=1e-8)  # rd_x
+    com_x = interpolation[0, :] @ all_states[: model.nb_Q, :]
+    np.testing.assert_allclose(com_x, 0, atol=1e-8)
+
+
+def test_forward_dynamics_refuses_joint_generalized_forces(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    from bionc.bionc_numpy import NaturalCoordinates, NaturalVelocities
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/actuated_3d_pendulum.py")
+    model = module.build_3d_pendulum()
+
+    Q = NaturalCoordinates(np.array([1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 1], dtype=float))
+    Qdot = NaturalVelocities(np.zeros(12))
+    with pytest.raises(NotImplementedError):
+        model.forward_dynamics(Q, Qdot, joint_generalized_forces=np.zeros(3))

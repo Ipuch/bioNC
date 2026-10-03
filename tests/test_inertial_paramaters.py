@@ -168,3 +168,59 @@ def test_from_cartesian_inertial_parameters(bionc_type):
             ]
         ),
     )
+
+
+def _huygens_test_data():
+    mass = 2.5
+    length = 0.4
+    center_of_mass = np.array([0.1, -0.3, 0.05])
+    inertia = np.array(
+        [
+            [0.30, 0.05, -0.02],
+            [0.05, 0.25, 0.04],
+            [-0.02, 0.04, 0.20],
+        ]
+    )
+    return mass, length, center_of_mass, inertia
+
+
+def _to_numpy(value):
+    from casadi import MX, evalf
+
+    if isinstance(value, MX):
+        return np.array(evalf(value).full())
+    return np.array(value)
+
+
+def _build_orthogonal_segment(bionc_type):
+    if bionc_type == "numpy":
+        from bionc import NaturalSegment
+    else:
+        from bionc.bionc_casadi import NaturalSegment
+
+    mass, length, center_of_mass, inertia = _huygens_test_data()
+    return NaturalSegment.with_cartesian_inertial_parameters(
+        name="huygens",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=length,
+        mass=mass,
+        center_of_mass=center_of_mass[:, np.newaxis],
+        inertia=inertia,
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_pseudo_inertia_huygens_formula(bionc_type):
+    """Orthogonal segment: J = inv(B) (I_C + m ((c.c) E - c c^T)) inv(B)^T with B = diag(1, L, 1)."""
+    mass, length, c, inertia = _huygens_test_data()
+    segment = _build_orthogonal_segment(bionc_type)
+
+    inertia_at_proximal_point = inertia + mass * ((c @ c) * np.eye(3) - np.outer(c, c))
+    inv_b = np.linalg.inv(np.diag([1.0, length, 1.0]))
+    expected = inv_b @ inertia_at_proximal_point @ inv_b.T
+
+    TestUtils.assert_equal(_to_numpy(segment.natural_pseudo_inertia), expected, expand=False)
+

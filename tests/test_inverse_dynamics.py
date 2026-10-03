@@ -210,11 +210,11 @@ def test_inverse_dynamics_projected(bionc_type, configuration):
     torques, *_ = model.inverse_dynamics(Q, Qddot)
 
     if configuration == 1:
-        expected_torques = np.array([[-4.905, -9.81, -14.715], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
+        expected_torques = np.array([[-107.91, -9.81, -14.715], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     elif configuration == 2:
         expected_torques = np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
     else:
-        expected_torques = np.array([[-4.905, 0.0, 0.0], [0.0, 0.0, -14.715], [0.0, 0.0, 0.0]])
+        expected_torques = np.array([[-53.955, 0.0, 0.0], [-14.715, 0.0, -14.715], [0.0, 0.0, 0.0]])
 
     projected_torques = model.express_joint_torques_in_euler_basis(Q, torques)
 
@@ -500,9 +500,9 @@ def test_id_example_with_fext():
         torques,
         np.array(
             [
-                [0.0, -0.0987, -0.008],
-                [0.0, -0.1999, -0.021],
-                [0.0, -0.3005, -0.03],
+                [-0.1287, -0.0987, -0.008],
+                [-0.2099, -0.1999, -0.021],
+                [-0.3305, -0.3005, -0.03],
             ]
         ),
         expand=False,

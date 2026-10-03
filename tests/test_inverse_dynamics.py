@@ -588,3 +588,33 @@ def test_inverse_dynamics_single_segment_outputs_order(bionc_type):
 
     TestUtils.assert_equal(forces, np.array([0, 0, 2 * 9.81]), expand=False)
     TestUtils.assert_equal(torques, np.array([2 * 9.81 * -0.5, 0, 0]), expand=False)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_inverse_dynamics_static_chain_forces(bionc_type):
+    """
+    Horizontal chain along -y at rest, gravity along -z: the parent holds segment i and everything below it,
+    F_i = g * sum_{j>=i} m_j along +z.
+    """
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import SegmentNaturalCoordinates, NaturalCoordinates, NaturalAccelerations
+    else:
+        from bionc.bionc_numpy import SegmentNaturalCoordinates, NaturalCoordinates, NaturalAccelerations
+
+    nb_segments = 3
+    masses = [1.0, 2.0, 3.0]
+    model = build_n_link_chain(nb_segments, masses)
+    if bionc_type == "casadi":
+        model = model.to_mx()
+
+    Q = NaturalCoordinates.from_qi(
+        tuple(
+            SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i - 1, 0], w=[0, 0, 1])
+            for i in range(nb_segments)
+        )
+    )
+    _, forces, _ = model.inverse_dynamics(Q, NaturalAccelerations(np.zeros(12 * nb_segments)))
+
+    expected_forces = np.zeros((3, nb_segments))
+    expected_forces[2, :] = [9.81 * sum(masses[i:]) for i in range(nb_segments)]
+    TestUtils.assert_equal(forces, expected_forces, expand=False)

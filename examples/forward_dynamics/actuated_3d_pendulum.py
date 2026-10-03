@@ -46,7 +46,7 @@ def build_3d_pendulum():
     return model
 
 
-def apply_force_and_drop_pendulum(t_final: float = 10, joint_generalized_forces=None):
+def apply_force_and_drop_pendulum(t_final: float = 10):
     """
     This function is used to test the external force
 
@@ -54,7 +54,6 @@ def apply_force_and_drop_pendulum(t_final: float = 10, joint_generalized_forces=
     ----------
     t_final: float
         The final time of the simulation
-    joint_generalized_forces:
 
     Returns
     -------
@@ -80,7 +79,6 @@ def apply_force_and_drop_pendulum(t_final: float = 10, joint_generalized_forces=
         model=model,
         Q_init=Q,
         Qdot_init=Qdot,
-        joint_generalized_forces=joint_generalized_forces,
         t_final=t_final,
         steps_per_second=200,
     )
@@ -92,7 +90,6 @@ def drop_the_pendulum(
     model: BiomechanicalModel,
     Q_init: NaturalCoordinates,
     Qdot_init: NaturalVelocities,
-    joint_generalized_forces=None,
     t_final: float = 2,
     steps_per_second: int = 50,
 ):
@@ -107,8 +104,6 @@ def drop_the_pendulum(
         The initial natural coordinates of the segment
     Qdot_init : SegmentNaturalVelocities
         The initial natural velocities of the segment
-    joint_generalized_forces : np.ndarray, optional
-        The joint generalized forces, by default None
     t_final : float, optional
         The final time of the simulation, by default 2
     steps_per_second : int, optional
@@ -127,8 +122,6 @@ def drop_the_pendulum(
 
     print("Evaluate Rigid Body Constraints:")
     print(model.rigid_body_constraints(Q_init))
-    print("Evaluate Rigid Body Constraints Jacobian Derivative:")
-    print(model.rigid_body_constraint_jacobian_derivative(Qdot_init))
 
     if (model.rigid_body_constraints(Q_init) > 1e-6).any():
         print(model.rigid_body_constraints(Q_init))
@@ -151,7 +144,6 @@ def drop_the_pendulum(
         qddot, lambdas = model.forward_dynamics(
             NaturalCoordinates(states[idx_coordinates]),
             NaturalVelocities(states[idx_velocities]),
-            joint_generalized_forces=joint_generalized_forces,
             stabilization=dict(alpha=50, beta=20),
         )
         return np.concatenate((states[idx_velocities], qddot.to_array()), axis=0), lambdas
@@ -228,12 +220,8 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
 
 
 def main(show_results: bool = True):
-    # as euler sequence is XYZ, we actuate along X axis first
-    joint_generalized_forces = np.array([0.000, 0.0, 0.0])
-
-    model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(
-        t_final=5, joint_generalized_forces=joint_generalized_forces
-    )
+    # passive for now: joint_generalized_forces are not implemented in forward_dynamics yet
+    model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(t_final=5)
 
     if show_results:
         defects, defects_dot, joint_defects, all_lambdas = post_computations(
@@ -268,6 +256,3 @@ if __name__ == "__main__":
     model_interface = BioncModelNoMesh(model)
     prr.add_animated_model(model_interface, all_states[:12, :200])
     prr.rerun()
-    # This example stil have an unexpected behaviour, should at least fall in the direction of the gravity force during
-    # the first frames, but it does not.
-    # the pendulum should not rotate around the Z axis

@@ -366,8 +366,7 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
         joint_generalized_forces : np.ndarray
-            The joint generalized forces in joint euler-basis, and forces in parent basis, like in minimal coordinates,
-            one per dof of the system. If None, the joint generalized forces are set to 0
+            Not implemented yet, must be None (raises NotImplementedError otherwise).
         external_forces : ExternalForceSet
             The list of external forces applied on the system
         stabilization: dict
@@ -387,6 +386,11 @@ class BiomechanicalModel(GenericBiomechanicalModel):
 
         external_forces = self.external_force_set() if external_forces is None else external_forces
         fext = external_forces.to_natural_external_forces(Q)
+
+        if joint_generalized_forces is not None:
+            raise NotImplementedError(
+                "joint_generalized_forces are not implemented in forward_dynamics yet, they would be ignored."
+            )
 
         joint_generalized_forces_object = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_segments)
         # each segment is actuated from its parent segment (assuming tree-like structure)

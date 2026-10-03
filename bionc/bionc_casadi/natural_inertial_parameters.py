@@ -239,12 +239,10 @@ class NaturalInertialParameters:
             Pseudo-inertia matrix of the segment in the natural coordinate system [3x3]
         """
         B = transformation_mat
+        c = MX(cartesian_center_of_mass)
         middle_block = B @ (pseudo_inertia @ transpose(B))
-        inertia = (
-            middle_block
-            - mass * transpose(cartesian_center_of_mass) @ cartesian_center_of_mass * MX.eye(3)
-            + transpose(cartesian_center_of_mass) @ cartesian_center_of_mass
-        )
+        # Huygens: from the proximal point back to the center of mass
+        inertia = middle_block - mass * (dot(c, c) * MX.eye(3) - c @ transpose(c))
         return inertia
 
     def center_of_mass(self, transformation_matrix: MX = None) -> MX:
@@ -379,12 +377,11 @@ class NaturalInertialParameters:
             Dumas, R., Chèze, L., 2007 3D inverse dynamics in non-orthonormal segment coordinate system in section 2.2.2
 
         """
-        center_of_mass = cartesian_center_of_mass
+        c = MX(cartesian_center_of_mass)
         inertia = cartesian_inertia
 
-        middle_block = (
-            inertia + mass * dot(center_of_mass, center_of_mass) * MX.eye(3) - dot(center_of_mass, center_of_mass)
-        )
+        # Huygens: from the center of mass to the proximal point
+        middle_block = inertia + mass * (dot(c, c) * MX.eye(3) - c @ transpose(c))
 
         Binv = (
             inv(to_numeric(transformation_mat))

@@ -133,3 +133,85 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
         all_lambdas[:, i : i + 1] = dynamics(time_steps[i], all_states[:, i])[1]
 
     return defects, defects_dot, joint_defects, all_lambdas
+
+
+def knee_angles(model: BiomechanicalModel, Q: NaturalCoordinates, femur: str = "THIGH", tibia: str = "SHANK"):
+    """
+    Flexion (positive), abduction and axial rotation of the tibia relative to the femur [deg],
+    as a ZXY sequence of the femur segment coordinate system (X anterior, Y proximal, Z lateral)
+    """
+    femur_segment, tibia_segment = model.segments[femur], model.segments[tibia]
+    R = (
+        femur_segment.segment_coordinates_system(Q.vector(femur_segment.index)).rot.T
+        @ tibia_segment.segment_coordinates_system(Q.vector(tibia_segment.index)).rot
+    )
+    z = np.arctan2(-R[0, 1], R[1, 1])
+    x = np.arcsin(np.clip(R[2, 1], -1, 1))
+    y = np.arctan2(-R[2, 0], R[2, 2])
+    return np.degrees([-z, x, y])
+
+
+def knee_pose_at_flexion(
+    model: BiomechanicalModel,
+    Q_femur: np.ndarray,
+    Q_tibia: np.ndarray,
+    flexion: float,
+    femur: str = "THIGH",
+    tibia: str = "SHANK",
+    step: float = 0.002,
+) -> np.ndarray:
+    """
+    Follow the one degree of freedom path of the knee mechanism, femur fixed, from Q_tibia (a pose satisfying the
+    knee constraints, e.g. full extension) in the direction of flexion, up to the given flexion [deg].
+
+    Returns
+    -------
+    np.ndarray
+        The tibia natural coordinates [12]
+    """
+    from bionc.bionc_numpy import SegmentNaturalCoordinates
+
+    femur_segment, tibia_segment = model.segments[femur], model.segments[tibia]
+    joints = [j for j in model.joints.values() if j.parent is femur_segment and j.child is tibia_segment]
+    Q_femur = SegmentNaturalCoordinates(np.asarray(Q_femur, dtype=float).reshape(12))
+    q_tibia = np.asarray(Q_tibia, dtype=float).reshape(12).copy()
+
+    def constraints(q):
+        Q_t = SegmentNaturalCoordinates(q)
+        return np.concatenate(
+            [np.atleast_1d(j.constraint(Q_femur, Q_t)).ravel() for j in joints]
+            + [tibia_segment.rigid_body_constraint(Q_t)]
+        )
+
+    def jacobian(q):
+        Q_t = SegmentNaturalCoordinates(q)
+        return np.vstack(
+            [np.atleast_2d(j.child_constraint_jacobian(Q_femur, Q_t)) for j in joints]
+            + [tibia_segment.rigid_body_constraint_jacobian(Q_t)]
+        )
+
+    def flexion_of(q):
+        Q = np.zeros(12 * model.nb_segments)
+        Q[12 * femur_segment.index : 12 * femur_segment.index + 12] = Q_femur.to_array()
+        Q[12 * tibia_segment.index : 12 * tibia_segment.index + 12] = q
+        return knee_angles(model, NaturalCoordinates(Q), femur, tibia)[0]
+
+    previous_direction = None
+    while flexion_of(q_tibia) < flexion:
+        # the knee constraints leave one degree of freedom: the null space of their jacobian
+        direction = np.linalg.svd(jacobian(q_tibia))[2][-1]
+        if previous_direction is None:
+            if flexion_of(q_tibia + 1e-4 * direction) < flexion_of(q_tibia):
+                direction = -direction
+        elif direction @ previous_direction < 0:
+            direction = -direction
+        previous_direction = direction
+        q_tibia = q_tibia + step * direction
+        # Newton projection back on the constraints
+        for _ in range(20):
+            residual = constraints(q_tibia)
+            if np.abs(residual).max() < 1e-13:
+                break
+            q_tibia = q_tibia - np.linalg.lstsq(jacobian(q_tibia), residual, rcond=None)[0]
+
+    return q_tibia

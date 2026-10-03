@@ -790,3 +790,110 @@ def test_center_of_mass(bionc_type):
         ),
         expand=False,
     )
+
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_potential_energy_is_m_g_z(bionc_type):
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import NaturalSegment, SegmentNaturalCoordinates
+    else:
+        from bionc.bionc_numpy import NaturalSegment, SegmentNaturalCoordinates
+
+    mass = 2.5
+    segment = NaturalSegment.with_cartesian_inertial_parameters(
+        name="box",
+        alpha=np.pi / 2 + 0.1,
+        beta=np.pi / 2 - 0.2,
+        gamma=np.pi / 2 + 0.3,
+        length=0.7,
+        mass=mass,
+        center_of_mass=np.array([0.1, 0.2, -0.3]),  # off-axis
+        inertia=np.array([[0.05, 0, 0], [0, 0.06, 0], [0, 0, 0.07]]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+
+    Qi = SegmentNaturalCoordinates.from_components(
+        u=np.array([0.11, 0.12, 0.13]),
+        rp=np.array([0.21, 0.22, 0.23]),
+        rd=np.array([0.31, 0.32, 0.33]),
+        w=np.array([0.41, 0.42, 0.43]),
+    )
+
+    # z coordinate of the center of mass: z_C = (N_C Q)_z
+    z_C = (segment.natural_center_of_mass.interpolate() @ Qi.vector)[2]
+
+    # (casadi: TestUtils.assert_equal would compare an MX expected value with itself, so evaluate it first)
+    if bionc_type == "casadi":
+        z_C = TestUtils.mx_to_array(z_C, expand=False)
+    TestUtils.assert_equal(segment.potential_energy(Qi), np.array(mass * 9.81 * z_C), expand=False)
+
+
+def test_passive_pendulum_conserves_energy():
+    from bionc import NaturalAxis, CartesianAxis, RK4
+    from bionc.bionc_numpy import (
+        BiomechanicalModel,
+        NaturalSegment,
+        JointType,
+        SegmentNaturalCoordinates,
+        NaturalCoordinates,
+        NaturalVelocities,
+    )
+
+    model = BiomechanicalModel()
+    model["pendulum"] = NaturalSegment.with_cartesian_inertial_parameters(
+        name="pendulum",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([0.1, 0.1, -0.1]),
+        inertia=np.array([[0.05, 0, 0], [0, 0.05, 0], [0, 0, 0.05]]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+    model._add_joint(
+        dict(
+            name="hinge",
+            joint_type=JointType.GROUND_REVOLUTE,
+            parent="GROUND",
+            child="pendulum",
+            parent_axis=[CartesianAxis.X, CartesianAxis.X],
+            child_axis=[NaturalAxis.V, NaturalAxis.W],
+            theta=[np.pi / 2, np.pi / 2],
+        )
+    )
+
+    # hanging pendulum rotated by 45 deg around x, at rest
+    a = np.pi / 4
+    Q = NaturalCoordinates(
+        SegmentNaturalCoordinates.from_components(
+            u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -np.cos(a), -np.sin(a)], w=[0, -np.sin(a), np.cos(a)]
+        )
+    )
+    states_0 = np.concatenate((Q.to_array(), np.zeros(model.nb_Qdot)))
+
+    def dynamics(t, states):
+        qddot, _ = model.forward_dynamics(
+            NaturalCoordinates(states[: model.nb_Q]), NaturalVelocities(states[model.nb_Q :])
+        )
+        return np.concatenate((states[model.nb_Q :], qddot.to_array()))
+
+    drifts = []
+    potential_range = []
+    for steps_per_second in (200, 400):
+        t = np.linspace(0, 2, 2 * steps_per_second + 1)
+        states = RK4(t=t, f=dynamics, y0=states_0)
+        V = np.array([model.potential_energy(NaturalCoordinates(states[: model.nb_Q, i])) for i in range(len(t))])
+        T = np.array([model.kinetic_energy(NaturalVelocities(states[model.nb_Q :, i])) for i in range(len(t))])
+        E = T + V
+        drifts.append(np.max(np.abs(E - E[0])))
+        potential_range.append(V.max() - V.min())
+
+    # the pendulum really swings, and the energy is conserved up to the integration error
+    assert potential_range[0] > 1
+    assert drifts[0] < 1e-3 * potential_range[0]
+    # RK4 is 4th order: halving the step divides the drift by ~16
+    assert drifts[0] / drifts[1] > 8

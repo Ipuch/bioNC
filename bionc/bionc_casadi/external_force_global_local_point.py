@@ -91,7 +91,7 @@ class ExternalForceInGlobalLocalPoint:
         new_application_point_in_global = new_point_interpolation_matrix @ qi_array
 
         # Bour's formula to transport the moment from the application point to the new application point
-        lever_arm = new_application_point_in_global - old_application_point_in_global
+        lever_arm = old_application_point_in_global - new_application_point_in_global
 
         additional_torque = cross(lever_arm, self.force)
 

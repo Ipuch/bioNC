@@ -753,3 +753,50 @@ def test_external_force_from_segment_does_not_invert_numerically(bionc_type):
         np.linalg.inv = real_inv
 
     assert calls == [], "add_in_local_from_segment fell back to a numerical inversion"
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_transport_moment_lever_arm(bionc_type):
+    """
+    A force F = (0, 0, -1) applied at A = (1, 0, 0) creates the moment A x F = (0, 1, 0) about the origin.
+    Each transport to a proximal point rP = (0, 0, 0) must give M = M_A + (A - rP) x F.
+    """
+    if bionc_type == "numpy":
+        from bionc.bionc_numpy import (
+            SegmentNaturalCoordinates,
+            ExternalForceInGlobal,
+            ExternalForceInGlobalLocalPoint,
+            ExternalForceInGlobalOnProximal,
+        )
+    else:
+        from bionc.bionc_casadi import (
+            SegmentNaturalCoordinates,
+            ExternalForceInGlobal,
+            ExternalForceInGlobalLocalPoint,
+            ExternalForceInGlobalOnProximal,
+        )
+
+    force = np.array([0, 0, -1.0])
+    torque = np.array([0.1, 0.2, 0.3])
+    expected_torque = torque + np.array([0, 1.0, 0])
+
+    Q_at_origin = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
+    Q_at_A = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[1, 0, 0], rd=[1, -1, 0], w=[0, 0, 1])
+
+    in_global = ExternalForceInGlobal.from_components(
+        application_point_in_global=np.array([1.0, 0, 0]), force=force, torque=torque
+    )
+    TestUtils.assert_equal(in_global.transport_on_proximal(Q_at_origin).torque, expected_torque, squeeze=True)
+
+    # natural point [1, 0, 0] is rp + 1 * u = A
+    in_global_local_point = ExternalForceInGlobalLocalPoint(
+        application_point_in_local=np.array([1.0, 0, 0]), external_forces=np.concatenate((torque, force))
+    )
+    TestUtils.assert_equal(
+        in_global_local_point.transport_on_proximal(Q_at_origin).torque, expected_torque, squeeze=True
+    )
+
+    on_proximal = ExternalForceInGlobalOnProximal.from_components(force=force, torque=torque)
+    transported = on_proximal.transport_to_another_segment(Qfrom=Q_at_A, Qto=Q_at_origin)
+    TestUtils.assert_equal(transported.torque, expected_torque, squeeze=True)
+    TestUtils.assert_equal(transported.force, force, squeeze=True)

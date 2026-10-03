@@ -1213,3 +1213,191 @@ def test_points_on_ellipsoid_jacobian_finite_difference(two_points):
 # j_jacobian_func = Function("j_jacobian_func", [sym], [j_jacobian_sym])
 #
 # jacobian_mx = j_jacobian_func(np.arange(24)).toarray()
+
+
+def _build_two_segment_joint(bionc_type, joint_type: JointType):
+    """Helper: build a two-segment joint of the requested type, for numpy or casadi."""
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import NaturalSegment, Joint
+    else:
+        from bionc.bionc_numpy import NaturalSegment, Joint
+
+    parent = NaturalSegment.with_cartesian_inertial_parameters(
+        name="box",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=1,
+        mass=1,
+        center_of_mass=np.array([0, 0, 0]),
+        inertia=np.eye(3),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+    child = NaturalSegment.with_cartesian_inertial_parameters(
+        name="bbox",
+        alpha=np.pi / 1.9,
+        beta=np.pi / 2.3,
+        gamma=np.pi / 2.1,
+        length=1.5,
+        mass=1.1,
+        center_of_mass=np.array([0.1, 0.11, 0.111]),
+        inertia=np.diag([1.1, 1.2, 1.3]),
+        inertial_transformation_matrix=TransformationMatrixType.Buv,
+    )
+    common = dict(name=joint_type.name.lower(), parent=parent, child=child, index=0)
+
+    def add_ellipsoid_on_parent():
+        parent.add_natural_marker_from_segment_coordinates(
+            name="ELLIPSOID_CENTER", location=np.array([0.1, 0.2, 0.3]), is_anatomical=True
+        )
+        for axis_name, direction in zip(("AXIS_A", "AXIS_B", "AXIS_C"), np.eye(3)):
+            parent.add_natural_vector_from_segment_coordinates(name=axis_name, direction=direction)
+        return dict(
+            semi_axis_lengths=(2.0, 3.0, 4.0),
+            ellipsoid_center="ELLIPSOID_CENTER",
+            ellipsoid_axis_a="AXIS_A",
+            ellipsoid_axis_b="AXIS_B",
+            ellipsoid_axis_c="AXIS_C",
+        )
+
+    if joint_type == JointType.REVOLUTE:
+        return Joint.Hinge(
+            **common,
+            parent_axis=(NaturalAxis.U, NaturalAxis.V),
+            child_axis=(NaturalAxis.V, NaturalAxis.W),
+            theta=(np.pi / 3, 3 * np.pi / 4),
+        )
+    if joint_type == JointType.UNIVERSAL:
+        return Joint.Universal(**common, parent_axis=NaturalAxis.U, child_axis=NaturalAxis.W, theta=0.4)
+    if joint_type == JointType.SPHERICAL:
+        parent.add_natural_marker_from_segment_coordinates(name="P1", location=[0.1, 0.2, 0.3], is_anatomical=True)
+        child.add_natural_marker_from_segment_coordinates(name="P2", location=[0.2, 0.04, 0.05], is_anatomical=True)
+        return Joint.Spherical(**common, parent_point="P1", child_point="P2")
+    if joint_type == JointType.CONSTANT_LENGTH:
+        parent.add_natural_marker_from_segment_coordinates(name="P1", location=[0.1, 0.2, 0.3], is_anatomical=True)
+        child.add_natural_marker_from_segment_coordinates(name="P2", location=[0.2, 0.04, 0.05], is_anatomical=True)
+        return Joint.ConstantLength(**common, parent_point="P1", child_point="P2", length=1.5)
+    if joint_type in (JointType.SPHERE_ON_PLANE, JointType.ELLIPSOID_ON_PLANE):
+        child.add_natural_marker_from_segment_coordinates(
+            name="PLANE_POINT", location=np.array([0.2, 0.04, 0.05]), is_anatomical=True
+        )
+        child.add_natural_vector_from_segment_coordinates(
+            name="PLANE_NORMAL", direction=np.array([0.2, 0.04, 0.05]), normalize=True
+        )
+        if joint_type == JointType.SPHERE_ON_PLANE:
+            parent.add_natural_marker_from_segment_coordinates(
+                name="SPHERE_CENTER", location=np.array([0.1, 0.2, 0.3]), is_anatomical=True
+            )
+            return Joint.SphereOnPlane(
+                **common,
+                sphere_radius=0.02,
+                sphere_center="SPHERE_CENTER",
+                plane_point="PLANE_POINT",
+                plane_normal="PLANE_NORMAL",
+            )
+        return Joint.EllipsoidOnPlane(
+            **common, **add_ellipsoid_on_parent(), plane_point="PLANE_POINT", plane_normal="PLANE_NORMAL"
+        )
+    if joint_type == JointType.POINT_ON_ELLIPSOID:
+        ellipsoid = add_ellipsoid_on_parent()
+        child.add_natural_marker_from_segment_coordinates(
+            name="CONTACT_POINT", location=np.array([0.2, 0.04, 0.05]), is_anatomical=True
+        )
+        return Joint.PointOnEllipsoid(**common, **ellipsoid, contact_point="CONTACT_POINT")
+    if joint_type == JointType.TWO_POINTS_ON_ELLIPSOID:
+        ellipsoid = add_ellipsoid_on_parent()
+        child.add_natural_marker_from_segment_coordinates(
+            name="CONTACT_POINT_1", location=np.array([0.2, 0.04, 0.05]), is_anatomical=True
+        )
+        child.add_natural_marker_from_segment_coordinates(
+            name="CONTACT_POINT_2", location=np.array([0.1, -0.2, 0.15]), is_anatomical=True
+        )
+        return Joint.TwoPointsOnEllipsoid(
+            **common, **ellipsoid, contact_point_1="CONTACT_POINT_1", contact_point_2="CONTACT_POINT_2"
+        )
+    raise ValueError(f"Joint type {joint_type} not handled by this helper")
+
+
+@pytest.mark.parametrize(
+    "joint_type",
+    [
+        JointType.REVOLUTE,
+        JointType.UNIVERSAL,
+        JointType.SPHERICAL,
+        JointType.CONSTANT_LENGTH,
+        JointType.SPHERE_ON_PLANE,
+        JointType.ELLIPSOID_ON_PLANE,
+        JointType.POINT_ON_ELLIPSOID,
+        JointType.TWO_POINTS_ON_ELLIPSOID,
+    ],
+)
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_joint_constraint_jacobians_match_finite_differences(bionc_type, joint_type: JointType):
+    """Parent and child jacobians must match central finite differences of the constraint (regression for the
+    SphereOnPlane parent/child jacobian swap)."""
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import SegmentNaturalCoordinates
+    else:
+        from bionc.bionc_numpy import SegmentNaturalCoordinates
+
+    joint = _build_two_segment_joint(bionc_type, joint_type)
+
+    rng = np.random.default_rng(42)
+    q_parent = rng.uniform(-1, 1, 12)
+    q_child = rng.uniform(-1, 1, 12)
+
+    def constraint(qp, qc):
+        value = joint.constraint(SegmentNaturalCoordinates(qp), SegmentNaturalCoordinates(qc))
+        return np.atleast_1d(np.array(TestUtils.to_array(value), dtype=float)).reshape(-1)
+
+    def jacobian(function):
+        value = function(SegmentNaturalCoordinates(q_parent), SegmentNaturalCoordinates(q_child))
+        return np.array(TestUtils.mx_to_array(value, squeeze=False) if bionc_type == "casadi" else value, dtype=float)
+
+    nb_constraints = constraint(q_parent, q_child).shape[0]
+    h = 1e-6
+    fd_parent = np.zeros((nb_constraints, 12))
+    fd_child = np.zeros((nb_constraints, 12))
+    for i in range(12):
+        dq = np.zeros(12)
+        dq[i] = h
+        fd_parent[:, i] = (constraint(q_parent + dq, q_child) - constraint(q_parent - dq, q_child)) / (2 * h)
+        fd_child[:, i] = (constraint(q_parent, q_child + dq) - constraint(q_parent, q_child - dq)) / (2 * h)
+
+    for analytic, fd in (
+        (jacobian(joint.parent_constraint_jacobian), fd_parent),
+        (jacobian(joint.child_constraint_jacobian), fd_child),
+    ):
+        analytic = analytic.reshape(nb_constraints, 12)
+        scale = max(np.max(np.abs(fd)), 1.0)
+        assert np.max(np.abs(analytic - fd)) < 1e-7 * scale
+
+
+def test_knee_feikes_forward_dynamics_runs():
+    """The Feikes knee (sphere-on-plane contacts and ligaments) must integrate without blowing up and keep its
+    constraints satisfied."""
+    from bionc import NaturalCoordinates, NaturalVelocities, SegmentNaturalCoordinates, RK4
+
+    module = TestUtils.load_module(TestUtils.bionc_folder() + "/examples/knee_parallel_mechanism/knee_feikes.py")
+    model = module.create_knee_model()
+
+    Q0 = SegmentNaturalCoordinates(np.array([0, 0, 1, 0, 0.0, 0, 0, 0.4, 0, -1, 0, 0]))
+    Q1 = SegmentNaturalCoordinates(np.array([0, 0, 1, 0, 0.4, 0, 0, 0.8, 0, -1, 0, 0]))
+    Q_init = NaturalCoordinates.from_qi((Q0, Q1))
+    states_0 = np.concatenate((Q_init.to_array(), np.zeros(model.nb_Qdot)))
+
+    def dynamics(t, states):
+        qddot, _ = model.forward_dynamics(
+            NaturalCoordinates(states[: model.nb_Q]), NaturalVelocities(states[model.nb_Q :])
+        )
+        return np.concatenate((states[model.nb_Q :], qddot.to_array()))
+
+    t_final, steps_per_second = 0.3, 1000
+    time_steps = np.linspace(0, t_final, int(steps_per_second * t_final + 1))
+    all_states = RK4(t=time_steps, f=dynamics, y0=states_0, normalize_idx=model.normalized_coordinates)
+
+    assert not np.isnan(all_states).any()
+    for k in range(len(time_steps)):
+        Q = NaturalCoordinates(all_states[: model.nb_Q, k])
+        assert np.max(np.abs(model.rigid_body_constraints(Q))) < 1e-6
+        assert np.max(np.abs(model.joint_constraints(Q))) < 1e-6

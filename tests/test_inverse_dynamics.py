@@ -396,13 +396,13 @@ def test_inverse_dynamics(bionc_type):
     print(forces)
     print(lambdas)
 
-    TestUtils.assert_equal(forces, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-39.24, 19.62, 29.43]]), expand=False)
+    TestUtils.assert_equal(forces, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [58.86, 19.62, 29.43]]), expand=False)
 
     TestUtils.assert_equal(
         torques,
         np.array(
             [
-                [1.20137851e-15, -6.00689255e-16, -9.01033882e-16],
+                [-3.00344627e-16, -6.00689255e-16, -9.01033882e-16],
                 [0.00000000e00, 0.00000000e00, 0.00000000e00],
                 [0.00000000e00, 0.00000000e00, 0.00000000e00],
             ]
@@ -442,13 +442,13 @@ def test_id_example():
     forces = b[1]
     lambdas = b[2]
 
-    TestUtils.assert_equal(forces, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-29.43, 9.81, 19.62]]), expand=False)
+    TestUtils.assert_equal(forces, np.array([[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [29.43, 9.81, 19.62]]), expand=False)
 
     TestUtils.assert_equal(
         torques,
         np.array(
             [
-                [9.01033882e-16, -3.00344627e-16, -6.00689255e-16],
+                [0.00000000e00, -3.00344627e-16, -6.00689255e-16],
                 [0.00000000e00, 0.00000000e00, 0.00000000e00],
                 [0.00000000e00, 0.00000000e00, 0.00000000e00],
             ],
@@ -488,9 +488,9 @@ def test_id_example_with_fext():
         forces,
         np.array(
             [
-                [1.1000e-02, -1.0000e-02, -1.0000e-03],
-                [2.2000e-02, -2.0000e-02, -2.0000e-03],
-                [-2.9397e01, 9.7800e00, 1.9617e01],
+                [-1.1000e-02, -1.0000e-02, -1.0000e-03],
+                [-2.2000e-02, -2.0000e-02, -2.0000e-03],
+                [2.9397e01, 9.7800e00, 1.9617e01],
             ],
         ),
         expand=False,

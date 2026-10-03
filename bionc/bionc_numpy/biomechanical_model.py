@@ -556,9 +556,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
                     forces=forces,
                     lambdas=lambdas,
                 )
-            # sum the generalized forces of each subsegment and transport them to the parent proximal point
+            # the child applies the opposite of its joint wrench on the parent (action-reaction),
+            # transported from the child proximal point to the parent proximal point
             intersegmental_generalized_forces = ExternalForceInGlobalOnProximal.from_components(
-                force=forces[:, child_index], torque=torques[:, child_index]
+                force=-forces[:, child_index], torque=-torques[:, child_index]
             )
             subtree_intersegmental_generalized_forces += intersegmental_generalized_forces.transport_to_another_segment(
                 Qfrom=Q.vector(child_index), Qto=Q.vector(segment_index)

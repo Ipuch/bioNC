@@ -5,6 +5,7 @@ from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
 from knee_feikes import create_knee_model
 from pyorerun import PhaseRerun
 from utils import forward_integration, post_computations
+from distal_femur_view import log_distal_femur_view
 
 model = create_knee_model()
 
@@ -28,7 +29,7 @@ tuple_of_Qdot = [
 Qdot = NaturalVelocities.from_qdoti(tuple(tuple_of_Qdot))
 
 # actual simulation
-t_final = 0.2  # seconds
+t_final = 1.0  # seconds
 time_steps, all_states, dynamics = forward_integration(
     model=model,
     Q_init=Q,
@@ -49,6 +50,9 @@ prr = PhaseRerun(t_span=time_steps)
 vizmodel = BioncModelNoMesh(model)
 prr.add_animated_model(vizmodel, NaturalCoordinates(all_states[: (12 * model.nb_segments), :]), None)
 prr.rerun()
+
+# distal femur view: condyle spheres, tibial plane slices and ligaments, in the femur frame
+log_distal_femur_view(model, all_states[: (12 * model.nb_segments), ::10], time_steps[::10], femur="THIGH")
 
 # plot results
 import matplotlib.pyplot as plt

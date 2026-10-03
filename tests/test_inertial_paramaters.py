@@ -228,3 +228,35 @@ def test_pseudo_inertia_huygens_formula(bionc_type):
 
     TestUtils.assert_equal(_to_numpy(segment.natural_pseudo_inertia), expected, expand=False)
 
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_generalized_kinetic_energy_equals_rigid_body_kinetic_energy(bionc_type):
+    """Rigid motion of a rotated orthogonal segment: 0.5 Qdot^T G Qdot = 0.5 m |v_C|^2 + 0.5 w^T R I R^T w."""
+    mass, length, c, inertia = _huygens_test_data()
+    segment = _build_orthogonal_segment(bionc_type)
+
+    # non-trivial orientation (Rodrigues rotation around an oblique axis)
+    axis = np.array([1.0, -2.0, 0.5])
+    axis /= np.linalg.norm(axis)
+    angle = 0.7
+    k = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    rotation = np.eye(3) + np.sin(angle) * k + (1 - np.cos(angle)) * k @ k
+
+    u = rotation[:, 0]
+    v = length * rotation[:, 1]  # v = rp - rd
+    w = rotation[:, 2]
+    rp = np.array([0.3, -0.2, 0.9])
+    rd = rp - v
+
+    omega = np.array([0.4, -1.1, 0.8])
+    v_p = np.array([0.5, 0.2, -0.7])
+    qdot = np.concatenate(
+        [np.cross(omega, u), v_p, v_p + np.cross(omega, rd - rp), np.cross(omega, w)]
+    )
+
+    generalized = 0.5 * qdot @ _to_numpy(segment.mass_matrix) @ qdot
+
+    v_c = v_p + np.cross(omega, rotation @ c)
+    rigid = 0.5 * mass * v_c @ v_c + 0.5 * omega @ (rotation @ inertia @ rotation.T) @ omega
+
+    np.testing.assert_allclose(generalized, rigid, rtol=1e-10)

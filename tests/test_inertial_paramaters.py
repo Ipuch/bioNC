@@ -135,9 +135,9 @@ def test_from_cartesian_inertial_parameters(bionc_type):
         obj.natural_pseudo_inertia,
         np.array(
             [
-                [67.37658449, -9.66919423, -16.68507356],
-                [-9.66919423, 45.26679692, -27.5734654],
-                [-16.68507356, -27.5734654, 26.32554364],
+                [4.30428589, 10.03194821, 13.13873817],
+                [10.03194821, 26.95483268, 34.7654673],
+                [13.13873817, 34.7654673, 46.06970138],
             ]
         ),
     )
@@ -162,9 +162,9 @@ def test_from_cartesian_inertial_parameters(bionc_type):
         obj.inertia(transformation_matrix_2),
         np.array(
             [
-                [-3.08559735, -0.16400776, 0.05638617],
-                [-0.16400776, 11.82224066, 0.00336482],
-                [0.05638617, 0.00336482, -3.24142165],
+                [1.10389246, 0.00115498, -0.00039709],
+                [0.00115498, 0.99890769, -0.00002370],
+                [-0.00039709, -0.00002370, 1.10498982],
             ]
         ),
     )
@@ -214,13 +214,17 @@ def _build_orthogonal_segment(bionc_type):
 
 @pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
 def test_pseudo_inertia_huygens_formula(bionc_type):
-    """Orthogonal segment: J = inv(B) (I_C + m ((c.c) E - c c^T)) inv(B)^T with B = diag(1, L, 1)."""
+    """
+    Orthogonal segment, B = diag(1, L, 1): the pseudo-inertia is the second moment of mass,
+    J = inv(B) S inv(B)^T with S = 0.5 tr(I_P) E - I_P and I_P = I_C + m ((c.c) E - c c^T) the inertia at the proximal point.
+    """
     mass, length, c, inertia = _huygens_test_data()
     segment = _build_orthogonal_segment(bionc_type)
 
     inertia_at_proximal_point = inertia + mass * ((c @ c) * np.eye(3) - np.outer(c, c))
     inv_b = np.linalg.inv(np.diag([1.0, length, 1.0]))
-    expected = inv_b @ inertia_at_proximal_point @ inv_b.T
+    second_moment = 0.5 * np.trace(inertia_at_proximal_point) * np.eye(3) - inertia_at_proximal_point
+    expected = inv_b @ second_moment @ inv_b.T
 
     TestUtils.assert_equal(_to_numpy(segment.natural_pseudo_inertia), expected, expand=False)
 

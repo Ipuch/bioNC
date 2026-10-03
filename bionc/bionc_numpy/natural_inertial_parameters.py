@@ -238,9 +238,12 @@ class NaturalInertialParameters:
         """
         B = transformation_mat
         c = np.asarray(cartesian_center_of_mass).reshape(3)
-        middle_block = B @ (pseudo_inertia @ B.T)
+        # second moment of mass at the proximal point, in the segment coordinate system
+        second_moment = B @ (pseudo_inertia @ B.T)
+        # inertia tensor at the proximal point
+        inertia_at_proximal_point = np.trace(second_moment) * np.eye(3) - second_moment
         # Huygens: from the proximal point back to the center of mass
-        inertia = middle_block - mass * (np.dot(c, c) * np.eye(3) - np.outer(c, c))
+        inertia = inertia_at_proximal_point - mass * (np.dot(c, c) * np.eye(3) - np.outer(c, c))
         return inertia
 
     def center_of_mass(self, transformation_matrix: np.ndarray = None) -> np.ndarray:
@@ -375,7 +378,9 @@ class NaturalInertialParameters:
         inertia = cartesian_inertia
 
         # Huygens: from the center of mass to the proximal point
-        middle_block = inertia + mass * (np.dot(c, c) * eye(3) - np.outer(c, c))
+        inertia_at_proximal_point = inertia + mass * (np.dot(c, c) * eye(3) - np.outer(c, c))
+        # the pseudo-inertia is the second moment of mass int(n n^T dm), not the inertia tensor
+        middle_block = 0.5 * np.trace(inertia_at_proximal_point) * eye(3) - inertia_at_proximal_point
 
         Binv = inv(transformation_mat) if transformation_matrix_inverse is None else transformation_matrix_inverse
         Binv_transpose = np.transpose(Binv)

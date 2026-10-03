@@ -331,10 +331,10 @@ def test_inverse_dynamics_segment(bionc_type):
     )
 
     TestUtils.assert_equal(gf[0], np.array([-0.11, -0.13, 19.47]), expand=False)
-    TestUtils.assert_equal(gf[1], np.array([-0.0016495, 0.014925, -0.015065]), expand=False)
+    TestUtils.assert_equal(gf[1], np.array([0.0103315, 0.044915, -0.045055]), expand=False)
     TestUtils.assert_equal(
         gf[2],
-        np.array([2.50000000e-03, -7.00000000e-02, -2.50200200e-02, -4.86482486e03, -8.01350851e00, -6.75425425e-03]),
+        np.array([0.0075, -7.00000000e-02, -0.07506006, -4864.82485986, -20.03652152, -0.01826076]),
         expand=False,
         decimal=5,
     )

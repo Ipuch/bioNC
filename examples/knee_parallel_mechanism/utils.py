@@ -215,3 +215,77 @@ def knee_pose_at_flexion(
             q_tibia = q_tibia - np.linalg.lstsq(jacobian(q_tibia), residual, rcond=None)[0]
 
     return q_tibia
+
+
+def joint_lambda_slices(model: BiomechanicalModel) -> dict:
+    """
+    Position of each joint in the vector of Lagrange multipliers, which follows the holonomic constraints:
+    for each segment, the constraints of the joints of which it is the child, then its 6 rigid body constraints.
+    """
+    slices, start = {}, 0
+    for i, segment in enumerate(model.segments_no_ground.values()):
+        for joint in model.joints_from_child_index(i, remove_free_joints=True):
+            slices[joint.name] = slice(start, start + joint.nb_constraints)
+            start += joint.nb_constraints
+        start += 6
+    return slices
+
+
+def knee_joint_loads(
+    model: BiomechanicalModel, Q: NaturalCoordinates, lambdas: np.ndarray, femur: str = "THIGH", tibia: str = "SHANK"
+) -> dict:
+    """
+    Physical loads of the joints between the femur and the tibia, from the Lagrange multipliers.
+    With G Qddot + K^T lambda = f, the constraint forces are -K^T lambda:
+    - SphereOnPlane, phi = (P - A).n - r [m], lambda [N]: the femur pushes the tibia with lambda n at the contact,
+      the contact force is -lambda, positive in compression (a negative value would mean the sphere pulls the plane).
+    - ConstantLength, phi = |P_f - P_t|^2 - L^2 [m^2], lambda [N/m]: the ligament pulls the tibia with
+      2 lambda (P_f - P_t), its tension is 2 lambda L, positive in tension (a negative value would mean it pushes).
+
+    Returns
+    -------
+    dict
+        joint name -> dict(kind, load [N], force_on_tibia [3], point [3]), force and point in the global frame
+    """
+    from bionc.bionc_numpy.joints import Joint
+
+    femur_segment, tibia_segment = model.segments[femur], model.segments[tibia]
+    Q_femur, Q_tibia = Q.vector(femur_segment.index), Q.vector(tibia_segment.index)
+    lambdas = np.asarray(lambdas).reshape(-1)
+    slices = joint_lambda_slices(model)
+    loads = {}
+    for name, joint in model.joints.items():
+        if joint.parent is not femur_segment or joint.child is not tibia_segment:
+            continue
+        lam = float(lambdas[slices[name]][0])
+        if isinstance(joint, Joint.SphereOnPlane):
+            center = joint.sphere_center.position_in_global(Q_femur).reshape(3)
+            normal = np.asarray(joint.plane_normal.position_in_global(Q_tibia)).reshape(3)
+            normal = normal / np.linalg.norm(normal)
+            loads[name] = dict(
+                kind="contact",
+                load=-lam,
+                force_on_tibia=lam * normal,
+                point=center - joint.sphere_radius * normal,
+            )
+        elif isinstance(joint, Joint.ConstantLength):
+            femoral = joint.parent_point.position_in_global(Q_femur).reshape(3)
+            tibial = joint.child_point.position_in_global(Q_tibia).reshape(3)
+            loads[name] = dict(
+                kind="ligament",
+                load=2 * lam * joint.length,
+                force_on_tibia=2 * lam * (femoral - tibial),
+                point=tibial,
+            )
+    return loads
+
+
+def knee_translation(model: BiomechanicalModel, Q: NaturalCoordinates, femur: str = "THIGH", tibia: str = "SHANK"):
+    """
+    Position of the tibia origin (rp of the tibia) relative to the femur knee centre (rd of the femur),
+    in the femur segment coordinate system (X anterior, Y proximal, Z lateral) [m]
+    """
+    femur_segment, tibia_segment = model.segments[femur], model.segments[tibia]
+    Q_femur, Q_tibia = Q.vector(femur_segment.index), Q.vector(tibia_segment.index)
+    R = femur_segment.segment_coordinates_system(Q_femur).rot
+    return R.T @ (np.asarray(Q_tibia.rp).reshape(3) - np.asarray(Q_femur.rd).reshape(3))

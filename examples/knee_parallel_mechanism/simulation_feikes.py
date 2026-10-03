@@ -11,7 +11,14 @@ from bionc import NaturalCoordinates, SegmentNaturalCoordinates, SegmentNaturalV
 from bionc.vizualization.pyorerun_interface import BioncModelNoMesh
 from knee_feikes import create_knee_model
 from pyorerun import PhaseRerun
-from utils import forward_integration, post_computations, knee_angles, knee_pose_at_flexion
+from utils import (
+    forward_integration,
+    post_computations,
+    knee_angles,
+    knee_pose_at_flexion,
+    knee_translation,
+    knee_joint_loads,
+)
 from distal_femur_view import log_distal_femur_view
 
 # right-handed frames, global X lateral, Y anterior, Z up: thigh horizontal pointing anterior, u up, w lateral
@@ -67,9 +74,10 @@ log_distal_femur_view(model, all_states[: (12 * model.nb_segments), ::10], time_
 # plot results
 import matplotlib.pyplot as plt
 
-angles = np.array(
-    [knee_angles(model, NaturalCoordinates(all_states[: (12 * model.nb_segments), i])) for i in range(len(time_steps))]
-)
+nb_Q = 12 * model.nb_segments
+all_Q = [NaturalCoordinates(all_states[:nb_Q, i]) for i in range(len(time_steps))]
+angles = np.array([knee_angles(model, Q_i) for Q_i in all_Q])
+
 plt.figure()
 for i, label in enumerate(("flexion", "abduction", "axial rotation")):
     plt.plot(time_steps, angles[:, i], label=label)
@@ -78,21 +86,64 @@ plt.ylabel("[deg]")
 plt.title("Knee angles, tibia relative to femur (ZXY)")
 plt.legend()
 
+# knee rhythm: coupled rotations and translations of the tibia as a function of flexion, along the whole kinematic
+# path of the mechanism (femur fixed), and the part covered by the pendulum
+path_flexion = np.arange(0, 146, 1.0)
+path_Q, Q_shank_i = [], Q_shank_extended
+for flexion in path_flexion:
+    Q_shank_i = knee_pose_at_flexion(model, Q_thigh, Q_shank_i, flexion=flexion)
+    path_Q.append(
+        NaturalCoordinates.from_qi((SegmentNaturalCoordinates(Q_thigh), SegmentNaturalCoordinates(Q_shank_i)))
+    )
+path_angles = np.array([knee_angles(model, Q_i) for Q_i in path_Q])
+path_translations = np.array([knee_translation(model, Q_i) for Q_i in path_Q]) * 1000
+translations = np.array([knee_translation(model, Q_i) for Q_i in all_Q]) * 1000
+
+fig, (ax_rotation, ax_translation) = plt.subplots(1, 2, figsize=(11, 4))
+for i, label in ((1, "abduction"), (2, "axial rotation")):
+    (line,) = ax_rotation.plot(path_angles[:, 0], path_angles[:, i], label=label)
+    ax_rotation.plot(angles[:, 0], angles[:, i], ".", markersize=2, color=line.get_color())
+ax_rotation.set_xlabel("flexion [deg]")
+ax_rotation.set_ylabel("[deg]")
+ax_rotation.set_title("Coupled rotations")
+ax_rotation.legend()
+for i, label in enumerate(("antero-posterior (X)", "proximo-distal (Y)", "medio-lateral (Z)")):
+    (line,) = ax_translation.plot(path_angles[:, 0], path_translations[:, i], label=label)
+    ax_translation.plot(angles[:, 0], translations[:, i], ".", markersize=2, color=line.get_color())
+ax_translation.set_xlabel("flexion [deg]")
+ax_translation.set_ylabel("[mm]")
+ax_translation.set_title("Tibia origin in the femur frame")
+ax_translation.legend()
+fig.suptitle("Knee rhythm: kinematic path (lines), pendulum (dots)")
+fig.tight_layout()
+
+# joint loads from the Lagrange multipliers (see knee_joint_loads): contact forces, positive in compression,
+# and ligament tensions, positive in tension. Negative values are not physically admissible: the bilateral
+# constraints of the model then pull (contacts) or push (ligaments).
+loads = [knee_joint_loads(model, Q_i, all_lambdas[:, i]) for i, Q_i in enumerate(all_Q)]
+fig, (ax_contact, ax_ligament) = plt.subplots(2, 1, sharex=True)
+for ax, kind, title in (
+    (ax_contact, "contact", "Contact forces [N], > 0 in compression"),
+    (ax_ligament, "ligament", "Ligament tensions [N], > 0 in tension"),
+):
+    for name in [name for name, load in loads[0].items() if load["kind"] == kind]:
+        ax.plot(time_steps, [load[name]["load"] for load in loads], label=name)
+    ax.axhline(0, color="k", linewidth=0.8)
+    ax.axhspan(min(ax.get_ylim()[0], 0), 0, color="red", alpha=0.08)
+    ax.set_title(title)
+    ax.legend()
+ax_ligament.set_xlabel("time [s]")
+fig.tight_layout()
+
 plt.figure()
 for i in range(0, model.nb_rigid_body_constraints):
-    plt.plot(time_steps, defects[i, :], marker="o", label=f"defects {i}")
+    plt.plot(time_steps, defects[i, :], label=f"defects {i}")
 plt.title("Rigid body constraints")
 plt.legend()
 
 plt.figure()
 for i in range(0, model.nb_joint_constraints):
-    plt.plot(time_steps, joint_defects[i, :], marker="o", label=f"joint_defects {i}")
+    plt.plot(time_steps, joint_defects[i, :], label=f"joint_defects {i}")
 plt.title("Joint constraints")
-plt.legend()
-
-plt.figure()
-for i in range(0, model.nb_joint_constraints):
-    plt.plot(time_steps, all_lambdas[i, :], marker="o", label=f"lambda {i}")
-plt.title("lagrange multipliers")
 plt.legend()
 plt.show()

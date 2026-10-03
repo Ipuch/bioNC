@@ -618,3 +618,73 @@ def test_inverse_dynamics_static_chain_forces(bionc_type):
     expected_forces = np.zeros((3, nb_segments))
     expected_forces[2, :] = [9.81 * sum(masses[i:]) for i in range(nb_segments)]
     TestUtils.assert_equal(forces, expected_forces, expand=False)
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_inverse_dynamics_static_chain_moments(bionc_type):
+    """
+    Horizontal chain along -y at rest, gravity along -z: the parent balances the weight moment of segment i
+    and everything below it, M_i,x = g * sum_{j>=i} m_j (y_com_j - y_rp_i).
+    """
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import SegmentNaturalCoordinates, NaturalCoordinates, NaturalAccelerations
+    else:
+        from bionc.bionc_numpy import SegmentNaturalCoordinates, NaturalCoordinates, NaturalAccelerations
+
+    nb_segments = 3
+    masses = [1.0, 2.0, 3.0]
+    model = build_n_link_chain(nb_segments, masses)
+    if bionc_type == "casadi":
+        model = model.to_mx()
+
+    Q = NaturalCoordinates.from_qi(
+        tuple(
+            SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, -i, 0], rd=[0, -i - 1, 0], w=[0, 0, 1])
+            for i in range(nb_segments)
+        )
+    )
+    torques, _, _ = model.inverse_dynamics(Q, NaturalAccelerations(np.zeros(12 * nb_segments)))
+
+    expected_torques = np.zeros((3, nb_segments))
+    expected_torques[0, :] = [
+        9.81 * sum(masses[j] * ((-j - 0.5) - (-i)) for j in range(i, nb_segments)) for i in range(nb_segments)
+    ]
+    TestUtils.assert_equal(torques, expected_torques, expand=False)
+
+
+def test_inverse_dynamics_passive_forward_dynamics_round_trip():
+    """
+    A passive chain released from a non-equilibrium pose: the accelerations given by the forward dynamics
+    must be explained by the inverse dynamics with zero moment about the hinge axes (global x),
+    and the root force must equal sum(m_i * (a_com_i - g)).
+    """
+    from bionc.bionc_numpy import SegmentNaturalCoordinates, NaturalCoordinates, NaturalVelocities
+
+    nb_segments = 3
+    masses = [1.0, 2.0, 3.0]
+    model = build_n_link_chain(nb_segments, masses)
+
+    angles = [0.3, 1.1, -0.7]  # absolute orientation of each segment about x
+    tuple_of_Q = []
+    rp = np.zeros(3)
+    for angle in angles:
+        v = np.array([0, np.cos(angle), np.sin(angle)])  # rp - rd, unit length
+        w = np.cross([1, 0, 0], v)
+        tuple_of_Q.append(SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=rp, rd=rp - v, w=w))
+        rp = rp - v
+    Q = NaturalCoordinates.from_qi(tuple(tuple_of_Q))
+    TestUtils.assert_equal(model.holonomic_constraints(Q), np.zeros(model.nb_holonomic_constraints), expand=False)
+
+    Qdot = NaturalVelocities(np.zeros(12 * nb_segments))
+    Qddot, _ = model.forward_dynamics(Q, Qdot)
+
+    torques, forces, _ = model.inverse_dynamics(Q, Qddot)
+
+    TestUtils.assert_equal(torques[0, :], np.zeros(nb_segments), expand=False)
+
+    g = np.array([0, 0, -9.81])
+    expected_root_force = np.zeros(3)
+    for i, segment in enumerate(model.segments_no_ground.values()):
+        com_acceleration = segment.natural_center_of_mass.interpolate() @ Qddot.vector(i)
+        expected_root_force += masses[i] * (np.array(com_acceleration).squeeze() - g)
+    TestUtils.assert_equal(forces[:, 0], expected_root_force, expand=False)

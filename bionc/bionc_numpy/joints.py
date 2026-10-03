@@ -678,22 +678,24 @@ class Joint:
             Q_parent: SegmentNaturalCoordinates,
             Q_child: SegmentNaturalCoordinates,
         ) -> np.ndarray:
-            parent_point_location = self.sphere_center.interpolation_matrix.to_array() @ Q_parent
-            child_point_location = self.plane_point.interpolation_matrix.to_array() @ Q_child
-
+            # d/dQ_parent of (P - A)^T n - r, only the sphere center P depends on Q_parent
             K_k_parent = (
-                -(self.plane_normal.interpolation_matrix @ Q_child).T @ self.plane_point.interpolation_matrix
-                + (parent_point_location - child_point_location).T @ self.plane_normal.interpolation_matrix
-            )
+                self.plane_normal.interpolation_matrix @ Q_child
+            ).T @ self.sphere_center.interpolation_matrix.to_array()
 
             return K_k_parent
 
         def child_constraint_jacobian(
             self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates
         ) -> np.ndarray:
+            # d/dQ_child of (P - A)^T n - r, the plane point A and the normal n depend on Q_child
+            parent_point_location = self.sphere_center.interpolation_matrix.to_array() @ Q_parent
+            child_point_location = self.plane_point.interpolation_matrix.to_array() @ Q_child
+
             K_k_child = (
-                self.plane_normal.interpolation_matrix @ Q_child
-            ).T @ self.sphere_center.interpolation_matrix.to_array()
+                -(self.plane_normal.interpolation_matrix @ Q_child).T @ self.plane_point.interpolation_matrix
+                + (parent_point_location - child_point_location).T @ self.plane_normal.interpolation_matrix
+            )
 
             return K_k_child
 

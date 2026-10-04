@@ -170,7 +170,7 @@ scaled from the data.
 | [`muscles/`](examples/muscles) | Pendulum and double pendulum driven by muscles with via points |
 | [`play_with_joints/`](examples/play_with_joints) | Constant-length, point-on-ellipsoid, plane-on-ellipsoid and scapulothoracic joints |
 | [`knee_parallel_mechanism/`](examples/knee_parallel_mechanism) | A parallel knee mechanism (Feikes' model) |
-| [`transformation_matrix/`](examples/transformation_matrix) | Comparing the $\mathbf{B}$ transformation matrix conventions |
+| [`transformation_matrix/`](examples/transformation_matrix) | What $\mathbf{B}$ does: segment ↔ natural ↔ global frames in plain numpy and bioNC, and the $\mathbf{B}$ conventions |
 
 ---
 
@@ -219,6 +219,55 @@ common constraint function $\Phi$:
 \in \mathbf{R}^{6 \times N} \times \mathbf{R}^M.
 \end{align}
 ```
+
+### The transformation matrix $\mathbf{B}$: from the natural frame to an orthonormal frame
+
+The natural vectors $u$, $v = r_p - r_d$ and $w$ are **not orthogonal** in general, they are constrained by angles and length parameters:
+- $\alpha$ is the angle between $v$ and $w$,
+- $\beta$ between $u$ and $w$, 
+- $\gamma$ between $u$ and $v$, 
+- $v$ has the length $L$ of the segment. 
+
+On the other hand, most anatomical data from the literature live in an orthonormal **segment coordinate system** (SCS) $(X, Y, Z)$: centre of mass, inertia, markers, muscle via points...
+
+The transformation matrix $\mathbf{B}$ builds the SCS on the natural frame, with its columns being $u$, $v$, $w$ read in $(X, Y, Z)$, so a direct correspondance exist between the two type of frames: the natural frame and the orthonormal frame, i.e. SCS.
+
+<p align="center">
+<img src="./docs/b_matrix_gram_schmidt.gif" alt="Building the segment coordinate system on the natural frame with B_uv" width="420"/>
+</p>
+
+So we have the relation :
+
+```math
+[u\ v\ w] = \mathbf{R}\,\mathbf{B}
+```
+
+with $\mathbf{R}$ is the rotation of the SCS with the world coordinate system, which is orthonormal like any rotation matrix. $\mathbf{B}$ is triangular and carries the shape of the segment ($L$, $\alpha$, $\beta$, $\gamma$). 
+
+We have three frames, consequently we have three relations for any point given in any of theses frames.
+
+| From → to | Relation |
+|---|---|
+| natural → SCS | $p = \mathbf{B}\, n \quad\Leftrightarrow\quad n = \mathbf{B}^{-1} p$ |
+| natural → global | $r = r_p + n_1 u + n_2 v + n_3 w$ |
+| SCS → global | $r = r_p + \mathbf{R}\, p, \quad \mathbf{R} = [u\ v\ w]\, \mathbf{B}^{-1}$ |
+
+A point given in the SCS is reached by walking $n_1$ along $u$, $n_2$ along $v$ and $n_3$ along $w$, with $n = \mathbf{B}^{-1} p$. Unlike a rotation matrix, $\mathbf{B}$ is not orthonormal, so going back from the SCS to natural coordinates takes its inverse $\mathbf{B}^{-1}$. An orthogonal segment ($\alpha = \beta = \gamma = 90°$) has the simple $\mathbf{B} = \mathrm{diag}(1, L, 1)$.
+
+**Which $\mathbf{B}$?** The Gram–Schmidt order chooses which natural axis the SCS keeps exactly:
+
+<p align="center">
+<img src="./docs/b_matrix_types.gif" alt="The orthonormal frame built by each B on the same moving natural frame" width="820"/>
+</p>
+
+| Type | Kept exactly | In the same plane |
+|---|---|---|
+| `Buv` (default) | $X = u$ | $v$ in $(X, Y)$ |
+| `Bvu` | $Y = v$ | $u$ in $(X, Y)$ |
+| `Bwu` | $Z = w$ | $u$ in $(Z, X)$ |
+| `Buw` | $X = u$ | $w$ in $(X, Z)$ |
+
+To go further, [`examples/transformation_matrix/`](examples/transformation_matrix) does every frame change in plain numpy next to bioNC, compares the $\mathbf{B}$ conventions in 3D, and draws the figures above. [`docs/note_transformation_matrix_inverses.md`](docs/note_transformation_matrix_inverses.md) gives every $\mathbf{B}$, its analytical inverse and the link with Dumas' matrices.
 
 ---
 

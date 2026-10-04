@@ -1,5 +1,5 @@
 import numpy as np
-from casadi import MX, cos, sin, vertcat, horzcat, transpose
+from casadi import MX, cos, sin, vertcat, horzcat, transpose, norm_2
 
 from .interface_biorbd import rotation_matrix_to_euler_angles
 from ..utils.enums import CartesianAxis, EulerSequence
@@ -202,3 +202,11 @@ def euler_angles_from_rotation_matrix(parent_matrix: MX, child_matrix: MX, joint
     euler_angles = rotation_matrix_to_euler_angles(rot, joint_sequence.value)
 
     return euler_angles
+
+
+def euler_axes_matrix(R_0_parent: MX, R_0_child: MX, sequence: EulerSequence) -> MX:
+    """Euler rotation axes in the global frame, as unit columns [3 x 3], see euler_axes_from_rotation_matrices"""
+    if sequence is None:
+        raise ValueError("A projection_basis (Euler sequence) is needed to define the rotation axes of the joint")
+    axes = euler_axes_from_rotation_matrices(R_0_parent, R_0_child, sequence=sequence)
+    return horzcat(*[axis / norm_2(axis) for axis in axes])

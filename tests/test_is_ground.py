@@ -81,7 +81,7 @@ def test_ground_segment(bionc_type):
 
     assert model.markers(Q).shape[0] == 3
     assert model.markers(Q).shape[1] == 2
-    TestUtils.assert_equal(model.potential_energy(Q), 0.34354285714285715, expand=False)
+    TestUtils.assert_equal(model.potential_energy(Q), 3.3701554285714286, expand=False)
     assert model.center_of_mass_position(Q).shape[0:2] == (3, 3)
     assert model.markers_constraints(markers=np.ones((3, 2)), Q=Q).shape[0] == 6
     assert model.markers_constraints_jacobian().shape == (6, 12 * 3)

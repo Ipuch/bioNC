@@ -298,9 +298,9 @@ class GenericBiomechanicalModelJoints(ABC):
         tuple[int, ...]
             The indexes of the joint dof
         """
-        joint = self.joint_from_index(joint_id)
-        joint_dof_inx = [joint.index + i for i in range(joint.nb_joint_dof)]
-        return tuple(joint_dof_inx)
+        # the joint dofs follow the dofs of the joints with a lower index
+        first_dof = sum(self.joint_from_index(i).nb_joint_dof for i in range(joint_id))
+        return tuple(range(first_dof, first_dof + self.joint_from_index(joint_id).nb_joint_dof))
 
     def constraints_index(self, joint_id: int | str) -> slice:
         """

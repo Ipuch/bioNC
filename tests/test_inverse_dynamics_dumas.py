@@ -245,10 +245,6 @@ def test_inverse_dynamics_reproduces_dumas_gait_example():
     assert np.max(np.abs(F_ref[3][1])) > 700
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="NaturalSegment.compute_transformation_matrix returns Buv.T, nC and J are wrong for non-orthogonal segments",
-)
 def test_with_cartesian_inertial_parameters_non_orthogonal_segment():
     """nC = inv(Buv) rCs and J = inv(Buv) (tr(I_P)/2 E - I_P) inv(Buv)^T, on the dataset foot"""
     Q, inertia, _, _ = load_dumas_gait()

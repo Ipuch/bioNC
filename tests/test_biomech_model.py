@@ -5547,8 +5547,8 @@ def test_biomech_model_mass(bionc_type):
     Qdot = NaturalVelocities.from_qdoti((Qdot1, Qdot2))
 
     TestUtils.assert_equal(model.kinetic_energy(Qdot), 37.693125)
-    TestUtils.assert_equal(model.potential_energy(Q), 6.30000001)
-    TestUtils.assert_equal(model.lagrangian(Q, Qdot), 31.393125)
+    TestUtils.assert_equal(model.potential_energy(Q), 61.803000098)
+    TestUtils.assert_equal(model.lagrangian(Q, Qdot), -24.109875098)
 
     G = np.array(
         [

@@ -19,8 +19,7 @@ class ExternalForceInLocal:
     transformation_matrix : MX
          The transformation matrix of the segment, B
     transformation_matrix_inverse : MX
-         The analytical inverse of that same matrix, inv(B). Stored transposed as
-         transformation_matrix_inv, which is what to_natural_force needs.
+         The analytical inverse of that same matrix, inv(B), stored as transformation_matrix_inv
 
     Methods
     -------
@@ -47,12 +46,11 @@ class ExternalForceInLocal:
         self.external_forces = MX(external_forces)
         self.transformation_matrix = MX(transformation_matrix)
 
-        # transformation_matrix_inverse is inv(B), so its transpose is inv(B.T), what is needed here.
-        # See NaturalSegment.compute_transformation_matrix_inverse.
+        # the segment rotation is R = [u v w] inv(B)
         if transformation_matrix_inverse is None:
-            transformation_matrix_inverse = inv(transpose(self.transformation_matrix))
+            transformation_matrix_inverse = inv(self.transformation_matrix)
         else:
-            transformation_matrix_inverse = transpose(MX(transformation_matrix_inverse))
+            transformation_matrix_inverse = MX(transformation_matrix_inverse)
         self.transformation_matrix_inv = to_numeric_MX(transformation_matrix_inverse)
 
     @classmethod

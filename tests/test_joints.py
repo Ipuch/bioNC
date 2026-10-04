@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from numpy.ma.core import squeeze
 
-from bionc import JointType, NaturalAxis, CartesianAxis, TransformationMatrixType
+from bionc import JointType, NaturalAxis, CartesianAxis, TransformationMatrixType, EulerSequence
 from .utils import TestUtils
 
 
@@ -457,7 +457,7 @@ def test_joints(bionc_type, joint_type: JointType):
 
         TestUtils.assert_equal(
             joint_custom_location.constraint(Q1, Q2),
-            np.array([-0.227081, 0.071451, 0.849838]),
+            np.array([-0.2748996001, 0.0394808429, 0.6972928816]),
             decimal=6,
         )
         parent_jacobian, child_jacobian = joint_custom_location.constraint_jacobian(Q1, Q2)
@@ -478,46 +478,46 @@ def test_joints(bionc_type, joint_type: JointType):
             np.array(
                 [
                     [
-                        -0.2,
+                        -0.186182624,
+                        -0.0,
+                        -0.0,
+                        -1.03010614,
+                        -0.0,
+                        -0.0,
+                        0.03010613981,
                         0.0,
                         0.0,
-                        -1.0117535131559996,
-                        0.0,
-                        0.0,
-                        0.01175351315599963,
-                        0.0,
-                        0.0,
-                        -0.0107387974365452,
-                        0.0,
-                        0.0,
+                        -0.05132620029,
+                        -0.0,
+                        -0.0,
                     ],
                     [
+                        -0.0,
+                        -0.186182624,
+                        -0.0,
+                        -0.0,
+                        -1.03010614,
+                        -0.0,
                         0.0,
-                        -0.2,
+                        0.03010613981,
                         0.0,
                         -0.0,
-                        -1.0117535131559996,
-                        0.0,
-                        0.0,
-                        0.01175351315599963,
-                        0.0,
-                        0.0,
-                        -0.0107387974365452,
-                        0.0,
+                        -0.05132620029,
+                        -0.0,
                     ],
                     [
+                        -0.0,
+                        -0.0,
+                        -0.186182624,
+                        -0.0,
+                        -0.0,
+                        -1.03010614,
                         0.0,
                         0.0,
-                        -0.2,
-                        0.0,
-                        0.0,
-                        -1.0117535131559996,
-                        0.0,
-                        0.0,
-                        0.01175351315599963,
-                        0.0,
-                        0.0,
-                        -0.0107387974365452,
+                        0.03010613981,
+                        -0.0,
+                        -0.0,
+                        -0.05132620029,
                     ],
                 ]
             ),
@@ -527,25 +527,25 @@ def test_joints(bionc_type, joint_type: JointType):
     elif joint_type == JointType.CONSTANT_LENGTH:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            -1.471104681468824,
+            -1.68665411,
             decimal=6,
         )
         parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
         parent_jacobian_res = np.array(
             [
                 [
-                    -0.045416,
-                    0.01429,
-                    0.169968,
-                    -0.544993,
-                    0.171483,
-                    2.039611,
-                    0.090832,
-                    -0.028581,
-                    -0.339935,
-                    -0.136248,
-                    0.042871,
-                    0.509903,
+                    -0.05497992001,
+                    0.007896168581,
+                    0.1394585763,
+                    -0.6597590401,
+                    0.09475402297,
+                    1.673502916,
+                    0.10995984,
+                    -0.01579233716,
+                    -0.2789171526,
+                    -0.16493976,
+                    0.02368850574,
+                    0.418375729,
                 ]
             ]
         )
@@ -553,18 +553,18 @@ def test_joints(bionc_type, joint_type: JointType):
         child_jacobian_res = np.array(
             [
                 [
-                    9.083224e-02,
-                    -2.858051e-02,
-                    -3.399352e-01,
-                    4.594992e-01,
-                    -1.445821e-01,
-                    -1.719653e00,
-                    -5.337990e-03,
-                    1.679607e-03,
-                    1.997716e-02,
-                    4.877145e-03,
-                    -1.534601e-03,
-                    -1.825247e-02,
+                    0.1023630577,
+                    -0.01470129386,
+                    -0.2596476367,
+                    0.5663515317,
+                    -0.08133891736,
+                    -1.436571357,
+                    -0.01655233159,
+                    0.002377231553,
+                    0.04198559397,
+                    0.02821910387,
+                    -0.004052803301,
+                    -0.07157878821,
                 ]
             ]
         )
@@ -586,7 +586,7 @@ def test_joints(bionc_type, joint_type: JointType):
         assert bias.shape == (1, 1)
         TestUtils.assert_equal(
             bias,
-            np.array([[1.55779064]]),
+            np.array([[1.12669178]]),
             decimal=6,
             squeeze=False,
         )
@@ -594,7 +594,7 @@ def test_joints(bionc_type, joint_type: JointType):
     elif joint_type == JointType.SPHERE_ON_PLANE:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            2.57731347673652,
+            2.396648252,
             decimal=6,
         )
         parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
@@ -602,18 +602,18 @@ def test_joints(bionc_type, joint_type: JointType):
         parent_jacobian_res = np.array(
             [
                 [
-                    0.141467,
-                    0.204071,
-                    0.326268,
-                    1.697603,
-                    2.44885,
-                    3.915212,
-                    -0.282934,
-                    -0.408142,
-                    -0.652535,
-                    0.424401,
-                    0.612212,
-                    0.978803,
+                    0.1642379048,
+                    0.2192948367,
+                    0.3989081516,
+                    1.970854857,
+                    2.631538041,
+                    4.786897819,
+                    -0.3284758096,
+                    -0.4385896734,
+                    -0.7978163032,
+                    0.4927137144,
+                    0.6578845101,
+                    1.196724455,
                 ]
             ]
         )
@@ -621,18 +621,18 @@ def test_joints(bionc_type, joint_type: JointType):
         child_jacobian_res = np.array(
             [
                 [
-                    -0.499201,
-                    -0.340093,
-                    0.156834,
-                    -1.444006,
-                    -2.060695,
-                    -3.25346,
-                    0.029337,
-                    0.019986,
-                    -0.009217,
-                    -0.026804,
-                    -0.018261,
-                    0.008421,
+                    -0.5495040067,
+                    -0.3732858006,
+                    -0.124489005,
+                    -1.731235054,
+                    -2.253309502,
+                    -4.009211662,
+                    0.08885600654,
+                    0.06036113502,
+                    0.02013014592,
+                    -0.1514854185,
+                    -0.1029061755,
+                    -0.03431871067,
                 ]
             ]
         )
@@ -654,7 +654,7 @@ def test_joints(bionc_type, joint_type: JointType):
         assert bias.shape == (1, 1)
         TestUtils.assert_equal(
             bias,
-            np.array([[5.19462695]]),
+            np.array([[4.833296504]]),
             decimal=6,
             squeeze=False,
         )
@@ -662,7 +662,7 @@ def test_joints(bionc_type, joint_type: JointType):
     elif joint_type == JointType.ELLIPSOID_ON_PLANE:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            3.56502444729687,
+            3.567066368,
             decimal=6,
         )
         parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
@@ -670,36 +670,36 @@ def test_joints(bionc_type, joint_type: JointType):
         parent_jacobian_res = np.array(
             [
                 [
-                    0.150499715,
-                    0.217100884,
-                    0.347100085,
-                    1.690439745,
-                    2.438515998,
-                    3.898690291,
-                    -0.275770200,
-                    -0.397807758,
-                    -0.636013561,
-                    0.477168917,
-                    0.688332159,
-                    1.100502890,
+                    0.1746282296,
+                    0.2331682759,
+                    0.4241446235,
+                    1.962700709,
+                    2.620650404,
+                    4.767092671,
+                    -0.3203216616,
+                    -0.4277020373,
+                    -0.7780111548,
+                    0.5540799447,
+                    0.7398223398,
+                    1.345773419,
                 ]
             ]
         )
         child_jacobian_res = np.array(
             [
                 [
-                    -0.446456138,
-                    -0.252059245,
-                    0.361378359,
-                    -1.440906685,
-                    -2.055521148,
-                    -3.241439403,
-                    0.026237140,
-                    0.014812908,
-                    -0.021237326,
-                    -0.023972010,
-                    -0.013534066,
-                    0.019403845,
+                    -0.5003904747,
+                    -0.2914132553,
+                    0.06596508914,
+                    -1.723293288,
+                    -2.240070531,
+                    -3.978414816,
+                    0.0809142404,
+                    0.04712216437,
+                    -0.01066670001,
+                    -0.137945965,
+                    -0.08033582723,
+                    0.01818503416,
                 ]
             ]
         )
@@ -708,41 +708,41 @@ def test_joints(bionc_type, joint_type: JointType):
         TestUtils.assert_equal(child_jacobian, child_jacobian_res, decimal=6, squeeze=False)
 
     elif joint_type == JointType.POINT_ON_ELLIPSOID:
-        TestUtils.assert_equal(joint.constraint(Q1, Q2), 1.755018926, decimal=6)
+        TestUtils.assert_equal(joint.constraint(Q1, Q2), 0.659393037, decimal=6)
         parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
         parent_jacobian_res = np.array(
             [
                 [
-                    -0.089395866,
-                    0.464891721,
-                    1.734629843,
-                    2.389468016,
-                    4.489308181,
-                    7.858377615,
-                    -0.436031769,
-                    -0.736328260,
-                    -1.168313258,
-                    0.467328151,
-                    1.163243975,
-                    2.451258356,
+                    -0.1140083369,
+                    0.3289019583,
+                    1.192336954,
+                    1.859895003,
+                    3.483221642,
+                    6.12011605,
+                    -0.3460902456,
+                    -0.5753511771,
+                    -0.9284307269,
+                    0.3415086732,
+                    0.8885373581,
+                    1.843202694,
                 ]
             ]
         )
         child_jacobian_res = np.array(
             [
                 [
-                    -0.390687249,
-                    -0.750595984,
-                    -1.338012871,
-                    -1.976395986,
-                    -3.797090620,
-                    -6.768696116,
-                    0.022959739,
-                    0.044110699,
-                    0.078631759,
-                    -0.020977556,
-                    -0.040302491,
-                    -0.071843246,
+                    -0.281844142,
+                    -0.5413949532,
+                    -0.9666015962,
+                    -1.559379576,
+                    -2.995415219,
+                    -5.347986927,
+                    0.04557481769,
+                    0.08754475476,
+                    0.1563016042,
+                    -0.0776978462,
+                    -0.1492499419,
+                    -0.2664694808,
                 ]
             ]
         )
@@ -752,71 +752,71 @@ def test_joints(bionc_type, joint_type: JointType):
     elif joint_type == JointType.TWO_POINTS_ON_ELLIPSOID:
         TestUtils.assert_equal(
             joint.constraint(Q1, Q2),
-            np.array([1.755018926, -0.626439648]),
+            np.array([0.659393037, -0.8768412195]),
             decimal=6,
         )
         parent_jacobian, child_jacobian = joint.constraint_jacobian(Q1, Q2)
         parent_jacobian_res = np.array(
             [
                 [
-                    -0.089395866,
-                    0.464891721,
-                    1.734629843,
-                    2.389468016,
-                    4.489308181,
-                    7.858377615,
-                    -0.436031769,
-                    -0.736328260,
-                    -1.168313258,
-                    0.467328151,
-                    1.163243975,
-                    2.451258356,
+                    -0.1140083369,
+                    0.3289019583,
+                    1.192336954,
+                    1.859895003,
+                    3.483221642,
+                    6.12011605,
+                    -0.3460902456,
+                    -0.5753511771,
+                    -0.9284307269,
+                    0.3415086732,
+                    0.8885373581,
+                    1.843202694,
                 ],
                 [
-                    -0.052095567,
-                    0.090777602,
-                    0.436672470,
-                    0.873306983,
-                    1.629003881,
-                    2.916952896,
-                    -0.162089720,
-                    -0.277457058,
-                    -0.460518387,
-                    0.153088105,
-                    0.383755077,
-                    0.830380469,
+                    -0.03279778403,
+                    0.04889294779,
+                    0.2153563123,
+                    0.4940335588,
+                    0.9122576825,
+                    1.664614759,
+                    -0.09311286774,
+                    -0.1559944412,
+                    -0.2662727741,
+                    0.07875501403,
+                    0.2116504922,
+                    0.4625232375,
                 ],
             ]
         )
         child_jacobian_res = np.array(
             [
                 [
-                    -0.390687249,
-                    -0.750595984,
-                    -1.338012871,
-                    -1.976395986,
-                    -3.797090620,
-                    -6.768696116,
-                    0.022959739,
-                    0.044110699,
-                    0.078631759,
-                    -0.020977556,
-                    -0.040302491,
-                    -0.071843246,
+                    -0.281844142,
+                    -0.5413949532,
+                    -0.9666015962,
+                    -1.559379576,
+                    -2.995415219,
+                    -5.347986927,
+                    0.04557481769,
+                    0.08754475476,
+                    0.1563016042,
+                    -0.0776978462,
+                    -0.1492499419,
+                    -0.2664694808,
                 ],
                 [
-                    -0.071121726,
-                    -0.135154682,
-                    -0.245643451,
-                    -0.610792553,
-                    -1.160706831,
-                    -2.109583083,
-                    -0.100424709,
-                    -0.190839992,
-                    -0.346851426,
-                    -0.084549668,
-                    -0.160672191,
-                    -0.292021488,
+                    -0.03308740597,
+                    -0.06241331377,
+                    -0.1154031457,
+                    -0.3513616376,
+                    -0.6627791902,
+                    -1.225488583,
+                    -0.04955905342,
+                    -0.09348405112,
+                    -0.1728534014,
+                    -0.06173320706,
+                    -0.1164483558,
+                    -0.2153147424,
                 ],
             ]
         )
@@ -1401,3 +1401,256 @@ def test_knee_feikes_forward_dynamics_runs():
         Q = NaturalCoordinates(all_states[: model.nb_Q, k])
         assert np.max(np.abs(model.rigid_body_constraints(Q))) < 1e-6
         assert np.max(np.abs(model.joint_constraints(Q))) < 1e-6
+
+
+def _build_welded_segment(bionc_type, use_Q_ref: bool):
+    """Helper: one orthogonal segment (off-axis center of mass) welded to the ground at a rotated, non axis-aligned
+    pose. Returns the model and the reference natural coordinates."""
+    from bionc import BiomechanicalModel, NaturalSegment, JointType, EulerSequence
+
+    length = 1.3
+    # non axis-aligned rotation matrix
+    angle, axis = 0.7, np.array([1.0, 2.0, -0.5])
+    axis = axis / np.linalg.norm(axis)
+    K = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+    R = np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * K @ K
+    u, v, w = R[:, 0], R[:, 1] * length, R[:, 2]
+    rp = np.array([0.3, -0.2, 0.5])
+    rd = rp - v
+    Q_ref = np.concatenate((u, rp, rd, w))
+
+    model = BiomechanicalModel()
+    model["box"] = NaturalSegment.with_cartesian_inertial_parameters(
+        name="box",
+        alpha=np.pi / 2,
+        beta=np.pi / 2,
+        gamma=np.pi / 2,
+        length=length,
+        mass=1.2,
+        center_of_mass=np.array([0.1, -0.4, 0.2]),
+        inertia=np.diag([0.1, 0.2, 0.3]),
+    )
+    weld = dict(Q_child_ref=Q_ref) if use_Q_ref else dict(rp_child_ref=rp, rd_child_ref=rd)
+    model._add_joint(
+        dict(
+            name="weld",
+            joint_type=JointType.GROUND_WELD,
+            parent="GROUND",
+            child="box",
+            projection_basis=EulerSequence.XYZ,
+            child_basis=TransformationMatrixType.Buv,
+            **weld,
+        )
+    )
+    return (model.to_mx() if bionc_type == "casadi" else model), Q_ref
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_ground_weld_full_rank(bionc_type):
+    from bionc import NaturalCoordinates
+
+    def evaluate(function, Q_ref):
+        value = function(NaturalCoordinates(Q_ref))
+        if bionc_type == "casadi":
+            value = TestUtils.mx_to_array(value, squeeze=False)
+        return np.array(value, dtype=float)
+
+    model, Q_ref = _build_welded_segment(bionc_type, use_Q_ref=True)
+    jacobian = evaluate(model.holonomic_constraints_jacobian, Q_ref)
+    assert jacobian.shape == (12, 12)
+    assert np.linalg.matrix_rank(jacobian) == 12
+    assert np.max(np.abs(evaluate(model.joint_constraints, Q_ref))) < 1e-12
+    assert np.max(np.abs(evaluate(model.rigid_body_constraints, Q_ref))) < 1e-12
+
+    model, Q_ref = _build_welded_segment(bionc_type, use_Q_ref=False)
+    jacobian = evaluate(model.holonomic_constraints_jacobian, Q_ref)
+    assert np.linalg.matrix_rank(jacobian) == 11
+
+
+def test_ground_weld_forward_dynamics_holds():
+    from bionc import NaturalCoordinates, NaturalVelocities
+
+    model, Q_ref = _build_welded_segment("numpy", use_Q_ref=True)
+    Qddot, _ = model.forward_dynamics(NaturalCoordinates(Q_ref), NaturalVelocities(np.zeros(12)))
+    np.testing.assert_allclose(Qddot.to_array(), np.zeros(12), atol=1e-10)
+
+    model, Q_ref = _build_welded_segment("numpy", use_Q_ref=False)
+    with pytest.raises(np.linalg.LinAlgError):
+        model.forward_dynamics(NaturalCoordinates(Q_ref), NaturalVelocities(np.zeros(12)))
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_ground_weld_child_jacobian_matches_finite_differences(bionc_type):
+    """Ground joints have no parent jacobian: only the child one is compared with central finite differences."""
+    model, Q_ref = _build_welded_segment(bionc_type, use_Q_ref=True)
+    joint = model.joints["weld"]
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import SegmentNaturalCoordinates
+    else:
+        from bionc.bionc_numpy import SegmentNaturalCoordinates
+
+    rng = np.random.default_rng(7)
+    q_child = Q_ref + rng.uniform(-0.3, 0.3, 12)
+
+    def constraint(qc):
+        value = joint.constraint(None, SegmentNaturalCoordinates(qc))
+        return np.atleast_1d(np.array(TestUtils.to_array(value), dtype=float)).reshape(-1)
+
+    h = 1e-6
+    fd = np.zeros((6, 12))
+    for i in range(12):
+        dq = np.zeros(12)
+        dq[i] = h
+        fd[:, i] = (constraint(q_child + dq) - constraint(q_child - dq)) / (2 * h)
+
+    value = joint.child_constraint_jacobian(None, SegmentNaturalCoordinates(q_child))
+    analytic = np.array(TestUtils.mx_to_array(value, squeeze=False) if bionc_type == "casadi" else value, dtype=float)
+    assert np.max(np.abs(analytic.reshape(6, 12) - fd)) < 1e-7
+
+
+def _dof_indexes_segment(name):
+    from bionc.bionc_numpy import NaturalSegment
+
+    return NaturalSegment.with_cartesian_inertial_parameters(
+        name=name,
+        length=0.5,
+        mass=2.0,
+        center_of_mass=np.array([0.02, -0.25, 0.03]),
+        inertia=np.diag([0.02, 0.005, 0.03]),
+    )
+
+
+def _dof_indexes_model(with_weld):
+    """
+    Without weld: ground -spherical(3)-> A -revolute(1)-> B -universal(2)-> C.
+    With weld: ground -spherical(3)-> A, ground -weld(0)-> W, A -revolute(1)-> B.
+    """
+    from bionc.bionc_numpy import BiomechanicalModel
+
+    model = BiomechanicalModel()
+    names = ["A", "W", "B"] if with_weld else ["A", "B", "C"]
+    for name in names:
+        model[name] = _dof_indexes_segment(name)
+    model._add_joint(
+        dict(
+            name="j0",
+            joint_type=JointType.GROUND_SPHERICAL,
+            parent="GROUND",
+            child="A",
+            projection_basis=EulerSequence.ZXY,
+        )
+    )
+    if with_weld:
+        model._add_joint(
+            dict(
+                name="j1",
+                joint_type=JointType.GROUND_WELD,
+                parent="GROUND",
+                child="W",
+                projection_basis=EulerSequence.XYZ,
+                child_basis=TransformationMatrixType.Buv,
+                Q_child_ref=np.array([1.0, 0, 0, 0, 0, 0, 0, -0.5, 0, 0, 0, 1.0]),
+            )
+        )
+    revolute_child = "B"
+    model._add_joint(
+        dict(
+            name="j2",
+            joint_type=JointType.REVOLUTE,
+            parent="A",
+            child=revolute_child,
+            parent_axis=[NaturalAxis.U, NaturalAxis.U],
+            child_axis=[NaturalAxis.V, NaturalAxis.W],
+            theta=[np.pi / 2, np.pi / 2],
+        )
+    )
+    if not with_weld:
+        model._add_joint(
+            dict(
+                name="j3",
+                joint_type=JointType.UNIVERSAL,
+                parent="B",
+                child="C",
+                parent_axis=NaturalAxis.U,
+                child_axis=NaturalAxis.V,
+                theta=np.pi / 2,
+            )
+        )
+    return model
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_joint_dof_indexes(bionc_type):
+    model = _dof_indexes_model(with_weld=False)
+    model = model.to_mx() if bionc_type == "casadi" else model
+
+    assert model.nb_joint_dof == 6
+    assert model.joint_dof_indexes(0) == (0, 1, 2)
+    assert model.joint_dof_indexes(1) == (3,)
+    assert model.joint_dof_indexes(2) == (4, 5)
+    all_indexes = sum((model.joint_dof_indexes(i) for i in range(model.nb_joints)), ())
+    assert all_indexes == tuple(range(model.nb_joint_dof))
+
+    # a joint without dof takes no index and does not shift the following ones
+    model = _dof_indexes_model(with_weld=True)
+    model = model.to_mx() if bionc_type == "casadi" else model
+    assert model.nb_joint_dof == 4
+    assert model.joint_dof_indexes(0) == (0, 1, 2)
+    assert model.joint_dof_indexes(1) == ()
+    assert model.joint_dof_indexes(2) == (3,)
+    all_indexes = sum((model.joint_dof_indexes(i) for i in range(model.nb_joints)), ())
+    assert all_indexes == tuple(range(model.nb_joint_dof))
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_joint_dof_indexes_actuation_order(bionc_type):
+    from casadi import Function
+
+    from bionc.bionc_numpy import NaturalCoordinates
+
+    def rot(axis, angle):
+        axis = np.asarray(axis, float) / np.linalg.norm(axis)
+        K = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+        return np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * K @ K
+
+    def pose(R, rp, length=0.5):
+        return np.concatenate((R[:, 0], rp, rp - length * R[:, 1], R[:, 2]))
+
+    model = _dof_indexes_model(with_weld=False)
+    qA = pose(rot([1, 2, 0.3], 0.7), np.zeros(3))
+    qB = pose(rot([1, 0, 0], 0.4) @ rot([0.2, -1, 1], 0.5), qA[6:9])
+    qC = pose(rot([0.3, 1, 0.2], 0.6), qB[6:9])
+    Q_np = np.concatenate((qA, qB, qC))
+
+    def natural_forces(q):
+        if bionc_type == "numpy":
+            from bionc.bionc_numpy.generalized_force import JointGeneralizedForcesList
+
+            forces = JointGeneralizedForcesList.empty_from_nb_joint(model.nb_joints)
+            forces.add_all_joint_generalized_forces(model, q, NaturalCoordinates(Q_np))
+            return np.asarray(forces.to_natural_joint_forces(model, NaturalCoordinates(Q_np))).ravel()
+        from bionc.bionc_casadi import NaturalCoordinates as NaturalCoordinatesMX
+        from bionc.bionc_casadi.generalized_force import JointGeneralizedForcesList as ListMX
+
+        model_mx = model.to_mx()
+        Q_mx = NaturalCoordinatesMX(Q_np)
+        forces = ListMX.empty_from_nb_joint(model_mx.nb_joints)
+        forces.add_all_joint_generalized_forces(model_mx, q, Q_mx)
+        return np.asarray(Function("f", [], [forces.to_natural_joint_forces(model_mx, Q_mx)])()["o0"].toarray()).ravel()
+
+    # only the universal joint (last dofs) is actuated: it acts on its parent B and its child C only
+    forces = natural_forces(np.array([0, 0, 0, 0, 1.3, -0.8]))
+    np.testing.assert_allclose(forces[0:12], 0, atol=1e-12)
+    assert np.max(np.abs(forces[12:24])) > 1e-3
+    assert np.max(np.abs(forces[24:36])) > 1e-3
+
+    # only the revolute joint (dof 3) is actuated: it acts on A and B, not on C
+    forces = natural_forces(np.array([0, 0, 0, 0.9, 0, 0]))
+    assert np.max(np.abs(forces[0:12])) > 1e-3
+    assert np.max(np.abs(forces[12:24])) > 1e-3
+    np.testing.assert_allclose(forces[24:36], 0, atol=1e-12)
+
+    # only the spherical joint (first dofs) is actuated: it acts on A only (the parent is the ground)
+    forces = natural_forces(np.array([0.5, -0.2, 0.7, 0, 0, 0]))
+    assert np.max(np.abs(forces[0:12])) > 1e-3
+    np.testing.assert_allclose(forces[12:36], 0, atol=1e-12)

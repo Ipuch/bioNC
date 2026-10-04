@@ -383,54 +383,54 @@ def test_forward_dynamics_n_pendulum(bionc_type):
     else:
         Qddot_expected = np.array(
             [
-                -8.875152106000000e00,
-                -1.060780657800000e00,
-                7.997378626100000e00,
-                -3.081796260500000e-01,
-                1.090889824600000e-01,
-                -5.107305552000000e-01,
-                3.147498086700000e-01,
-                1.587150331900000e02,
-                -1.636923576000000e02,
-                7.133136723800000e-02,
-                1.465503981000000e01,
-                -1.354616124000000e01,
-                -1.154550842500000e02,
-                -3.526304764500000e00,
-                1.067411857500000e02,
-                3.108998372100000e-01,
-                1.587795241700000e02,
-                -1.637051969700000e02,
-                -5.500120227000000e01,
-                4.388714176600000e01,
-                -1.140079951300000e01,
-                -5.139119375200000e01,
-                -1.099816206700000e00,
-                4.764823776800000e01,
-                -3.110075901500000e01,
-                -7.970060417800000e-01,
-                2.820364389300000e01,
-                -5.581759035900000e01,
-                4.362403574200000e01,
-                -1.137894329800000e01,
-                -2.948286759800000e02,
-                9.373473707800001e00,
-                2.317054767900000e02,
-                -2.528078850000000e02,
-                -8.134806280199999e00,
-                2.427119835200000e02,
-                3.668244035900000e02,
-                6.885679489200000e00,
-                -3.545332385500000e02,
-                -2.957231783000000e02,
-                8.766504957300000e00,
-                2.316034696300000e02,
-                1.171672013100000e01,
-                1.835106089500000e01,
-                -6.637048794600000e01,
-                -5.054327375900000e00,
-                3.686418779700000e-01,
-                3.863359369900000e00,
+                -18.3808909068,
+                -3.39253432323,
+                12.4921084916,
+                0.0134472991046,
+                -0.29285790825,
+                -0.915193659282,
+                0.873025512039,
+                -303.492280914,
+                257.102408922,
+                0.0635932570567,
+                -16.299613799,
+                15.1003228084,
+                -75.1360115939,
+                -1.52747542674,
+                66.7543675552,
+                1.13740963305,
+                -303.4610234,
+                256.835285823,
+                -186.246144912,
+                -106.94776905,
+                235.881685734,
+                -112.799744763,
+                -2.16393382559,
+                107.240230143,
+                68.8690905275,
+                2.12836509583,
+                -65.2074095466,
+                -186.906080587,
+                -106.942952189,
+                235.818165156,
+                -372.498880998,
+                -50.7798885204,
+                354.719053013,
+                -108.038222705,
+                -6.03420415343,
+                106.174324925,
+                402.481493873,
+                7.16256752935,
+                -389.493553967,
+                -373.273154862,
+                -51.0825469999,
+                356.208024028,
+                -386.339470404,
+                -58.7303800416,
+                381.152273913,
+                149.993065939,
+                2.68629129227,
+                -146.908113512,
             ]
         )[:, np.newaxis]
 
@@ -499,3 +499,108 @@ def test_forward_dynamics_n_pendulum(bionc_type):
             squeeze=False,
             expand=False,
         )
+
+
+def test_actuated_3d_pendulum_example_runs(monkeypatch, tmp_path):
+    # the example saves pendulum_3d.nmod in the cwd, so run it from a temporary directory
+    monkeypatch.chdir(tmp_path)
+
+    from bionc.bionc_numpy import NaturalCoordinates, NaturalVelocities
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/actuated_3d_pendulum.py")
+
+    model, time_steps, all_states, dynamics = module.apply_force_and_drop_pendulum(t_final=1)
+    assert not np.isnan(all_states).any()
+
+    # the pendulum is released at rest, pivot at the origin, center of mass at (0, -1, -0.5), gravity along -z:
+    # the torque about the pivot is r_C x (0, 0, -m g) = (m g, 0, 0), so the rotation is about X only,
+    # alpha = m g / I_pivot with I_pivot = I_xx + m (y_C^2 + z_C^2) = 0.01 + 1 * 1.25 = 1.26
+    # and the acceleration of the center of mass is alpha_vec x r_C
+    g, mass = 9.81, 1.0
+    r_C = np.array([0, -1, -0.5])
+    I_pivot = 0.01 + mass * (r_C[1] ** 2 + r_C[2] ** 2)
+    alpha_vec = np.array([mass * g / I_pivot, 0, 0])
+    a_C_expected = np.cross(alpha_vec, r_C)
+
+    Q0 = NaturalCoordinates(all_states[: model.nb_Q, 0])
+    Qdot0 = NaturalVelocities(all_states[model.nb_Q : model.nb_Q + model.nb_Qdot, 0])
+    Qddot0, _ = model.forward_dynamics(Q0, Qdot0)
+    a_C = model.segments["pendulum"].natural_center_of_mass.interpolate() @ np.array(Qddot0).reshape(-1)
+    np.testing.assert_allclose(a_C, a_C_expected, atol=1e-3)
+
+    # the angular motion stays about X: x-coordinates of rp, rd and the center of mass stay at zero
+    # natural coordinates are [u, rp, rd, w]
+    interpolation = model.segments["pendulum"].natural_center_of_mass.interpolate()
+    np.testing.assert_allclose(all_states[3, :], 0, atol=1e-8)  # rp_x
+    np.testing.assert_allclose(all_states[6, :], 0, atol=1e-8)  # rd_x
+    com_x = interpolation[0, :] @ all_states[: model.nb_Q, :]
+    np.testing.assert_allclose(com_x, 0, atol=1e-8)
+
+
+def test_forward_dynamics_zero_joint_generalized_forces(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    from bionc.bionc_numpy import NaturalCoordinates, NaturalVelocities
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/actuated_3d_pendulum.py")
+    model = module.build_3d_pendulum()
+
+    Q = NaturalCoordinates(np.array([1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 1], dtype=float))
+    Qdot = NaturalVelocities(np.zeros(12))
+    qddot_ref, lambdas_ref = model.forward_dynamics(Q, Qdot)
+    qddot, lambdas = model.forward_dynamics(Q, Qdot, joint_generalized_forces=np.zeros(model.nb_joint_dof))
+    np.testing.assert_allclose(np.asarray(qddot), np.asarray(qddot_ref), atol=1e-12)
+    np.testing.assert_allclose(np.asarray(lambdas), np.asarray(lambdas_ref), atol=1e-12)
+
+
+def _euler_angles_deg(model, all_states):
+    from bionc.bionc_numpy import NaturalCoordinates
+
+    return np.degrees(
+        np.array([model.natural_coordinates_to_joint_angles(NaturalCoordinates(q))[:, 0] for q in all_states[:12].T])
+    )
+
+
+def test_actuated_3d_pendulum_hold(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/actuated_3d_pendulum.py")
+
+    model, all_states, time_steps = module.main(mode="hold", show_results=False)
+
+    # the Euler torques from the inverse dynamics hold the tilted pendulum still
+    Q = all_states[: model.nb_Q, :]
+    np.testing.assert_array_less(np.abs(Q - Q[:, :1]).max(), 1e-8)
+
+
+def test_actuated_3d_pendulum_constant_torque(monkeypatch, tmp_path):
+    from scipy.optimize import brentq
+
+    monkeypatch.chdir(tmp_path)
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/actuated_3d_pendulum.py")
+
+    model, all_states, time_steps = module.main(mode="constant_torque", show_results=False)
+
+    segment = model.segments["pendulum"]
+    mass, g = segment.mass, 9.81
+    r_C = np.array([0, -1, -0.5])  # center of mass from the pivot, in the segment frame (= world at start)
+    distance = np.linalg.norm(r_C)
+    torque = 0.5 * mass * g * distance  # constant torque about X, as set by the example
+
+    # passive equilibrium: center of mass right below the pivot (gravity along -z)
+    equilibrium = np.degrees(np.arctan2(-r_C[1], -r_C[2]))
+
+    # turning point from rest: torque * phi = m g d (1 - cos(phi)), nonzero root
+    phi_max = brentq(
+        lambda phi: torque * phi - mass * g * distance * (1 - np.cos(phi)), np.radians(30), np.radians(170)
+    )
+
+    angles = _euler_angles_deg(model, all_states)
+    np.testing.assert_allclose(angles[0, 0], equilibrium, atol=1e-6)
+    np.testing.assert_allclose(angles[:, 0].max(), equilibrium + np.degrees(phi_max), atol=0.1)
+    np.testing.assert_allclose(angles[:, 1:], 0, atol=1e-6)

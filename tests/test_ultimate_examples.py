@@ -368,3 +368,20 @@ def test_forward_dynamics_with_force_double_pendulum():
             ]
         ),
     )
+
+
+def test_natural_vs_segment_coordinates_example():
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/transformation_matrix/natural_vs_segment_coordinates.py")
+
+    results = module.main(show=False)
+
+    # inv(B) p then [u v w] n brings p back exactly, B.T misplaces it by ~126 mm
+    assert results["error"] < 1e-12
+    assert results["error_bionc"] < 1e-12
+    assert results["error_transposed"] > 0.1
+    # the mistake is invisible on an orthogonal segment and grows with the deviation from orthogonality
+    assert results["errors"][0] < 1e-12
+    assert np.all(np.diff(results["errors"]) > 0)
+    # bioNC gives the same frame changes as the plain numpy version written by hand
+    assert results["max_numpy_bionc_difference"] < 1e-12

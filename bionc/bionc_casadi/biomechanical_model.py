@@ -9,6 +9,7 @@ from .biomechanical_model_segments import BiomechanicalModelSegments
 from .cartesian_vector import vector_projection_in_non_orthogonal_basis
 from .external_force import ExternalForceSet
 from .external_force_global_on_proximal import ExternalForceInGlobalOnProximal
+from .generalized_force import JointGeneralizedForcesList
 from .natural_accelerations import NaturalAccelerations
 from .natural_coordinates import NaturalCoordinates
 from .natural_velocities import NaturalVelocities
@@ -355,8 +356,8 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         self,
         Q: NaturalCoordinates,
         Qdot: NaturalCoordinates,
+        joint_generalized_forces: MX = None,
         external_forces: ExternalForceSet = None,
-        # external_forces: ExternalForces
     ):
         """
         This function computes the forward dynamics of the system, i.e. the acceleration of the segments
@@ -367,6 +368,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
             The natural coordinates of the segment [12 * nb_segments, 1]
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
+        joint_generalized_forces : MX
+            One value per joint degree of freedom, joint after joint: forces along the translation axes then
+            torques about the rotation axes of each joint, see joint.dof_axes. None means no
+            actuation.
         external_forces : ExternalForceSet
             The list of external forces applied on the system
 
@@ -391,6 +396,10 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         augmented_mass_matrix = self.augmented_mass_matrix(Q)
 
         forces = self.gravity_forces() + fext
+        if joint_generalized_forces is not None:
+            joint_generalized_forces_list = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_joints)
+            joint_generalized_forces_list.add_all_joint_generalized_forces(self, joint_generalized_forces, Q)
+            forces += joint_generalized_forces_list.to_natural_joint_forces(self, Q)
 
         bias = -self.holonomic_constraints_acceleration_bias(Qdot)
         B = vertcat(forces, bias)

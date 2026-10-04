@@ -188,10 +188,10 @@ class NaturalSegment(AbstractNaturalSegment):
             inertia_matrix=inertia,
             inertial_transformation_matrix=compute_transformation_matrix(
                 inertial_transformation_matrix, length, alpha, beta, gamma
-            ).T,
+            ),
             inertial_transformation_matrix_inverse=compute_transformation_matrix_inverse(
                 inertial_transformation_matrix, length, alpha, beta, gamma
-            ).T,
+            ),
         )
 
         return cls(
@@ -286,7 +286,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return compute_transformation_matrix(
             matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
-        ).T
+        )
 
     def compute_transformation_matrix_inverse(self, matrix_type: str | TransformationMatrixType = None) -> MX:
         """
@@ -305,10 +305,9 @@ class NaturalSegment(AbstractNaturalSegment):
         if matrix_type is None:
             matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
-        # compute_transformation_matrix transposes, and inv(B.T) == inv(B).T
         return compute_transformation_matrix_inverse(
             matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
-        ).T
+        )
 
     def segment_coordinates_system(
         self,
@@ -333,15 +332,12 @@ class NaturalSegment(AbstractNaturalSegment):
         if not isinstance(Q, SegmentNaturalCoordinates):
             Q = SegmentNaturalCoordinates(Q)
 
-        # compute_transformation_matrix_inverse is already inv(B.T), so transposing it back
-        # gives inv(B), the inverse of the non-transposed transformation matrix.
-        transformation_matrix_inverse = transpose(
+        transformation_matrix_inverse = to_numeric_MX(
             self.compute_transformation_matrix_inverse(transformation_matrix_type)
         )
-        transformation_matrix_inverse = to_numeric_MX(transformation_matrix_inverse)
 
         return HomogeneousTransform.from_rt(
-            # rotation=self.compute_transformation_matrix(transformation_matrix_type) @ horzcat(Q.u, Q.v, Q.w),
+            # [u v w] = R B, the columns of B being u, v, w in the segment coordinate system
             rotation=Q.to_uvw_matrix() @ transformation_matrix_inverse,
             translation=Q.rp,
         )
@@ -709,7 +705,8 @@ class NaturalSegment(AbstractNaturalSegment):
         MX
             Potential energy of the segment
         """
-        return (self.mass * self.natural_center_of_mass.interpolate() @ Qi.vector)[2, 0]
+        # V = -m g . r_C, with the same gravity as the dynamics: gravity_force() = N_C^T m g
+        return -transpose(self.gravity_force()) @ Qi.vector
 
     def kinetic_energy(self, Qdoti: SegmentNaturalVelocities) -> float:
         """

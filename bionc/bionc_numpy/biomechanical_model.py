@@ -366,8 +366,9 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         Qdot : NaturalCoordinates
             The natural coordinates time derivative of the segment [12 * nb_segments, 1]
         joint_generalized_forces : np.ndarray
-            The joint generalized forces in joint euler-basis, and forces in parent basis, like in minimal coordinates,
-            one per dof of the system. If None, the joint generalized forces are set to 0
+            One value per joint degree of freedom, joint after joint: forces along the translation axes then
+            torques about the rotation axes of each joint, see joint.dof_axes. None means no
+            actuation.
         external_forces : ExternalForceSet
             The list of external forces applied on the system
         stabilization: dict
@@ -388,29 +389,18 @@ class BiomechanicalModel(GenericBiomechanicalModel):
         external_forces = self.external_force_set() if external_forces is None else external_forces
         fext = external_forces.to_natural_external_forces(Q)
 
-        joint_generalized_forces_object = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_segments)
-        # each segment is actuated from its parent segment (assuming tree-like structure)
-        # if joint_generalized_forces is not None:
-        #     joint_generalized_forces_object.add_all_joint_generalized_forces(
-        #         model=self,
-        #         joint_generalized_forces=joint_generalized_forces,
-        #         Q=Q,
-        #     )
-        # natural_joint_forces = joint_generalized_forces_object.to_natural_joint_forces(
-        #     model=self,
-        #     Q=Q,
-        # )
+        joint_forces = np.zeros((self.nb_Q, 1))
+        if joint_generalized_forces is not None:
+            joint_generalized_forces_list = JointGeneralizedForcesList.empty_from_nb_joint(self.nb_joints)
+            joint_generalized_forces_list.add_all_joint_generalized_forces(self, joint_generalized_forces, Q)
+            joint_forces = joint_generalized_forces_list.to_natural_joint_forces(self, Q)
 
         # augmented system
         # [G, K.T] [Qddot]  = [forces]
         # [K, 0  ] [lambda] = [bias]
         augmented_mass_matrix = self.augmented_mass_matrix(Q)
 
-        forces = (
-            self.gravity_forces()
-            + fext
-            # + natural_joint_forces
-        )
+        forces = self.gravity_forces() + fext + joint_forces
         bias = -self.holonomic_constraints_acceleration_bias(Qdot)
 
         if stabilization is not None:

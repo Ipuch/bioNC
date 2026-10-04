@@ -1,11 +1,12 @@
 import numpy as np
-from casadi import MX, dot, cos, transpose, sumsqr, sqrt
+from casadi import MX, dot, cos, transpose, sumsqr, sqrt, norm_2, horzcat
 
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_marker import NaturalMarker
 from .natural_segment import NaturalSegment
 from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
+from .rotations import euler_axes_matrix
 from ..protocols.joint import JointBaseWithTwoSegments as JointBase
 from ..utils.enums import NaturalAxis, EulerSequence, TransformationMatrixType
 
@@ -88,6 +89,12 @@ class Joint:
                 joint constraints jacobian of the parent and child segment (None for free joint)
             """
             return None
+
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """3 translations along the parent segment axes, then 3 rotations about the projection_basis Euler axes"""
+            R_parent = self.parent.segment_coordinates_system(Q_parent, self.parent_basis).rot
+            R_child = self.child.segment_coordinates_system(Q_child, self.child_basis).rot
+            return R_parent, euler_axes_matrix(R_parent, R_child, self.projection_basis)
 
     class Hinge(JointBase):
         """
@@ -235,6 +242,13 @@ class Joint:
 
             return bias
 
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """1 rotation about the parent axis shared by the two constraints"""
+            if self.parent_axis[0] != self.parent_axis[1]:
+                raise NotImplementedError(f"The hinge {self.name} must use the same parent axis in both constraints")
+            axis = Q_parent.axis(self.parent_axis[0])
+            return None, axis / norm_2(axis)
+
     class Universal(JointBase):
         """
         This class is to define a Universal joint between two segments.
@@ -380,6 +394,11 @@ class Joint:
 
             return bias
 
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """2 rotations, about the parent axis then the child axis"""
+            parent_axis, child_axis = Q_parent.axis(self.parent_axis), Q_child.axis(self.child_axis)
+            return None, horzcat(parent_axis / norm_2(parent_axis), child_axis / norm_2(child_axis))
+
     class Spherical(JointBase):
         def __init__(
             self,
@@ -486,6 +505,12 @@ class Joint:
                 Acceleration bias vector [3, 1]. All zeros for spherical joints.
             """
             return MX.zeros(self.nb_constraints, 1)
+
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """3 rotations about the projection_basis Euler axes"""
+            R_parent = self.parent.segment_coordinates_system(Q_parent, self.parent_basis).rot
+            R_child = self.child.segment_coordinates_system(Q_child, self.child_basis).rot
+            return None, euler_axes_matrix(R_parent, R_child, self.projection_basis)
 
     class SphereOnPlane(JointBase):
         """

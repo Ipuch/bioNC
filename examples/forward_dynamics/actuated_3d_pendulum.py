@@ -6,6 +6,7 @@ from bionc import (
     SegmentNaturalVelocities,
     NaturalCoordinates,
     NaturalVelocities,
+    NaturalAccelerations,
     NaturalSegment,
     JointType,
     EulerSequence,
@@ -46,7 +47,7 @@ def build_3d_pendulum():
     return model
 
 
-def apply_force_and_drop_pendulum(t_final: float = 10, joint_generalized_forces=None):
+def apply_force_and_drop_pendulum(t_final: float = 10, Q_init: np.ndarray = None, joint_generalized_forces=None):
     """
     This function is used to test the external force
 
@@ -54,7 +55,10 @@ def apply_force_and_drop_pendulum(t_final: float = 10, joint_generalized_forces=
     ----------
     t_final: float
         The final time of the simulation
-    joint_generalized_forces:
+    Q_init: np.ndarray
+        The initial natural coordinates [12], hanging along -y by default
+    joint_generalized_forces: np.ndarray
+        Constant joint torques about the XYZ Euler axes of the spherical joint [3], None for a passive pendulum
 
     Returns
     -------
@@ -71,8 +75,9 @@ def apply_force_and_drop_pendulum(t_final: float = 10, joint_generalized_forces=
     """
     model = build_3d_pendulum()
 
-    Qi = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
-    Q = NaturalCoordinates(Qi)
+    if Q_init is None:
+        Q_init = SegmentNaturalCoordinates.from_components(u=[1, 0, 0], rp=[0, 0, 0], rd=[0, -1, 0], w=[0, 0, 1])
+    Q = NaturalCoordinates(np.asarray(Q_init).reshape(12))
     Qdoti = SegmentNaturalVelocities.from_components(udot=[0, 0, 0], rpdot=[0, 0, 0], rddot=[0, 0, 0], wdot=[0, 0, 0])
     Qdot = NaturalVelocities(Qdoti)
 
@@ -92,7 +97,7 @@ def drop_the_pendulum(
     model: BiomechanicalModel,
     Q_init: NaturalCoordinates,
     Qdot_init: NaturalVelocities,
-    joint_generalized_forces=None,
+    joint_generalized_forces: np.ndarray = None,
     t_final: float = 2,
     steps_per_second: int = 50,
 ):
@@ -107,8 +112,8 @@ def drop_the_pendulum(
         The initial natural coordinates of the segment
     Qdot_init : SegmentNaturalVelocities
         The initial natural velocities of the segment
-    joint_generalized_forces : np.ndarray, optional
-        The joint generalized forces, by default None
+    joint_generalized_forces : np.ndarray
+        Constant joint torques, one per degree of freedom of the spherical joint (about its XYZ Euler axes)
     t_final : float, optional
         The final time of the simulation, by default 2
     steps_per_second : int, optional
@@ -127,8 +132,6 @@ def drop_the_pendulum(
 
     print("Evaluate Rigid Body Constraints:")
     print(model.rigid_body_constraints(Q_init))
-    print("Evaluate Rigid Body Constraints Jacobian Derivative:")
-    print(model.rigid_body_constraint_jacobian_derivative(Qdot_init))
 
     if (model.rigid_body_constraints(Q_init) > 1e-6).any():
         print(model.rigid_body_constraints(Q_init))
@@ -166,6 +169,28 @@ def drop_the_pendulum(
     )
 
     return time_steps, all_states, dynamics
+
+
+def rotated_pose(rotation: np.ndarray) -> np.ndarray:
+    """Natural coordinates of the pendulum, rotated about the pivot from the pose hanging along -y"""
+    u, rd, w = rotation @ np.array([1.0, 0, 0]), rotation @ np.array([0, -1.0, 0]), rotation @ np.array([0, 0, 1.0])
+    return np.concatenate((u, np.zeros(3), rd, w))
+
+
+def holding_joint_torques(model: BiomechanicalModel, Q: np.ndarray) -> np.ndarray:
+    """
+    Joint torques that hold the pendulum still at Q, as minimal coordinate generalized forces: one torque per
+    degree of freedom of the spherical joint, about its XYZ Euler axes.
+
+    The inverse dynamics gives the moment M applied by the joint on the pendulum (a spherical joint transmits no
+    reaction moment, so M is the actuator torque). The generalized force of the Euler angle i is its power
+    conjugate, q_i = e_i . M, with e_i the Euler axes of the joint (joint.dof_axes).
+    """
+    Q = NaturalCoordinates(np.asarray(Q).reshape(12))
+    torques, _, _ = model.inverse_dynamics(Q=Q, Qddot=NaturalAccelerations(np.zeros(12)))
+    joint = model.joints["spherical"]
+    _, euler_axes = joint.dof_axes(None, Q.vector(0))
+    return euler_axes.T @ torques[:, 0]
 
 
 def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_states: np.ndarray, dynamics):
@@ -227,38 +252,86 @@ def post_computations(model: BiomechanicalModel, time_steps: np.ndarray, all_sta
     return defects, defects_dot, joint_defects, all_lambdas
 
 
-def main(show_results: bool = True):
-    # as euler sequence is XYZ, we actuate along X axis first
-    joint_generalized_forces = np.array([0.000, 0.0, 0.0])
+def main(mode: str = "constant_torque", show_results: bool = True):
+    """
+    mode
+        "passive": the pendulum falls from its pose hanging along -y
+        "hold": tilted pendulum held still by the joint torques of the inverse dynamics, projected on the Euler axes
+        "constant_torque": from the passive equilibrium (center of mass below the pivot), a constant torque about the
+            X Euler axis makes the pendulum swing about the angle phi* with m g d sin(phi*) = torque
+    """
+    model = build_3d_pendulum()
+    segment = model.segments["pendulum"]
+    center_of_mass = np.asarray(segment.natural_center_of_mass.interpolate().to_array() @ rotated_pose(np.eye(3)))
+    distance = np.linalg.norm(center_of_mass)  # pivot to center of mass
+
+    # passive equilibrium: rotation about x that brings the center of mass right below the pivot
+    equilibrium_angle = np.arctan2(-center_of_mass[1], -center_of_mass[2])
+
+    if mode == "passive":
+        Q_init, joint_generalized_forces = None, None
+    elif mode == "hold":
+        # tilted from the passive equilibrium, keeping the center of mass below the pivot: with constant torques,
+        # the equilibria with the center of mass above the horizontal are unstable
+        Q_init = rotated_pose(rotation_x(np.radians(25)) @ rotation_y(np.radians(15)) @ rotation_x(equilibrium_angle))
+        joint_generalized_forces = holding_joint_torques(model, Q_init)
+        print("holding torques about the XYZ Euler axes [N.m]:", joint_generalized_forces.round(4))
+    elif mode == "constant_torque":
+        Q_init = rotated_pose(rotation_x(equilibrium_angle))
+        torque = 0.5 * segment.mass * 9.81 * distance  # equilibrium at phi* = 30 deg
+        joint_generalized_forces = np.array([torque, 0, 0])
+        # from rest, the work of the torque equals the gain of potential energy at the turning point:
+        # torque * phi = m g d (1 - cos(phi)), solved by Newton from 2 phi*
+        phi_max = np.radians(60)
+        for _ in range(20):
+            residual = torque * phi_max - segment.mass * 9.81 * distance * (1 - np.cos(phi_max))
+            phi_max -= residual / (torque - segment.mass * 9.81 * distance * np.sin(phi_max))
+        print(
+            f"torque about X {torque:.3f} N.m: from {np.degrees(equilibrium_angle):.2f} deg, the Euler angle about X "
+            f"swings about {np.degrees(equilibrium_angle) + 30:.2f} deg, up to {np.degrees(equilibrium_angle + phi_max):.2f} deg"
+        )
+    else:
+        raise ValueError("mode must be 'passive', 'hold' or 'constant_torque'")
 
     model, time_steps, all_states, dynamics = apply_force_and_drop_pendulum(
-        t_final=5, joint_generalized_forces=joint_generalized_forces
+        t_final=5, Q_init=Q_init, joint_generalized_forces=joint_generalized_forces
+    )
+
+    joint_angles = np.degrees(
+        np.array([model.natural_coordinates_to_joint_angles(NaturalCoordinates(q))[:, 0] for q in all_states[:12].T])
+    )
+    print(
+        "joint angles (XYZ) [deg] min / mean / max:",
+        joint_angles.min(axis=0).round(2),
+        joint_angles.mean(axis=0).round(2),
+        joint_angles.max(axis=0).round(2),
     )
 
     if show_results:
-        defects, defects_dot, joint_defects, all_lambdas = post_computations(
-            model=model,
-            time_steps=time_steps,
-            all_states=all_states,
-            dynamics=dynamics,
-        )
+        import matplotlib.pyplot as plt
 
-        from viz import plot_series
-
-        plot_series(time_steps, all_states[:12, :], legend="all_states")
-        # Plot the results
-        # the following graphs have to be near zero the more the simulation is long, the more constraints drift from zero
-        plot_series(time_steps, defects, legend="rigid_constraint")  # Phi_r
-        plot_series(time_steps, defects_dot, legend="rigid_constraint_derivative")  # Phi_r_dot
-        plot_series(time_steps, joint_defects, legend="joint_constraint")  # Phi_j
-        # the lagrange multipliers are the forces applied to maintain the system (rigidbody and joint constraints)
-        plot_series(time_steps, all_lambdas, legend="lagrange_multipliers")  # lambda
+        plt.figure()
+        for i, axis in enumerate("XYZ"):
+            plt.plot(time_steps, joint_angles[:, i], label=f"Euler angle about {axis}")
+        plt.xlabel("time [s]")
+        plt.ylabel("[deg]")
+        plt.title(f"Spherical joint angles, mode {mode!r}")
+        plt.legend()
+        plt.show()
 
     return model, all_states, time_steps
 
 
+def rotation_x(angle: float) -> np.ndarray:
+    return np.array([[1, 0, 0], [0, np.cos(angle), -np.sin(angle)], [0, np.sin(angle), np.cos(angle)]])
+
+
+def rotation_y(angle: float) -> np.ndarray:
+    return np.array([[np.cos(angle), 0, np.sin(angle)], [0, 1, 0], [-np.sin(angle), 0, np.cos(angle)]])
+
+
 if __name__ == "__main__":
-    model, all_states, time_steps = main(show_results=False)
+    model, all_states, time_steps = main(mode="constant_torque", show_results=True)
 
     # animate the motion
     from pyorerun import PhaseRerun
@@ -268,6 +341,3 @@ if __name__ == "__main__":
     model_interface = BioncModelNoMesh(model)
     prr.add_animated_model(model_interface, all_states[:12, :200])
     prr.rerun()
-    # This example stil have an unexpected behaviour, should at least fall in the direction of the gravity force during
-    # the first frames, but it does not.
-    # the pendulum should not rotate around the Z axis

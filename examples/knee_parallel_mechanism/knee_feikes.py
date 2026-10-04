@@ -1,6 +1,6 @@
 import numpy as np
 
-from bionc import JointType
+from bionc import JointType, CartesianAxis, NaturalAxis
 from bionc.bionc_numpy import (
     BiomechanicalModel,
     NaturalSegment,
@@ -8,9 +8,17 @@ from bionc.bionc_numpy import (
 )
 
 
-def create_knee_model() -> BiomechanicalModel:
+def create_knee_model(hip: str = "hinge", thigh_pose: np.ndarray = None) -> BiomechanicalModel:
     """
     This function creates a biomechanical model of a knee with a parallel mechanism.
+
+    Parameters
+    ----------
+    hip: str
+        "hinge": the thigh pivots about the global X axis, kept aligned with its medio-lateral axis w
+        "weld": the thigh is welded to the ground at thigh_pose (e.g. a seated pendulum test)
+    thigh_pose: np.ndarray
+        The natural coordinates of the welded thigh [12], required with hip="weld"
 
     Data from
     ----------
@@ -170,15 +178,27 @@ def create_knee_model() -> BiomechanicalModel:
         normalize=True,
     )
 
-    model._add_joint(
-        dict(
-            name="HIP",
-            joint_type=JointType.GROUND_SPHERICAL,
-            parent="GROUND",
-            child="THIGH",
-            ground_application_point=np.array([0, 0, 0]),
+    if hip == "hinge":
+        # hip hinge about the global X axis, which stays aligned with the femur medio-lateral axis w
+        model._add_joint(
+            dict(
+                name="HIP",
+                joint_type=JointType.GROUND_REVOLUTE,
+                parent="GROUND",
+                child="THIGH",
+                parent_axis=[CartesianAxis.X, CartesianAxis.X],
+                child_axis=[NaturalAxis.U, NaturalAxis.V],
+                theta=[np.pi / 2, np.pi / 2],
+            )
         )
-    )
+    elif hip == "weld":
+        if thigh_pose is None:
+            raise ValueError("thigh_pose must be given with hip='weld'")
+        model._add_joint(
+            dict(name="HIP", joint_type=JointType.GROUND_WELD, parent="GROUND", child="THIGH", Q_child_ref=thigh_pose)
+        )
+    else:
+        raise ValueError(f"hip must be 'hinge' or 'weld', got {hip!r}")
 
     # model._add_joint(
     #     dict(

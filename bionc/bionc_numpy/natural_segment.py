@@ -246,10 +246,10 @@ class NaturalSegment(AbstractNaturalSegment):
             inertia_matrix=inertia,
             inertial_transformation_matrix=compute_transformation_matrix(
                 inertial_transformation_matrix, length, alpha, beta, gamma
-            ).T,
+            ),
             inertial_transformation_matrix_inverse=compute_transformation_matrix_inverse(
                 inertial_transformation_matrix, length, alpha, beta, gamma
-            ).T,
+            ),
         )
 
         return cls(
@@ -372,7 +372,7 @@ class NaturalSegment(AbstractNaturalSegment):
 
         return compute_transformation_matrix(
             matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
-        ).T
+        )
 
     def compute_transformation_matrix_inverse(self, matrix_type: str | TransformationMatrixType = None) -> np.ndarray:
         """
@@ -396,10 +396,9 @@ class NaturalSegment(AbstractNaturalSegment):
         if matrix_type is None:
             matrix_type = TransformationMatrixType.Buv  # NOTE: default value
 
-        # compute_transformation_matrix transposes, and inv(B.T) == inv(B).T
         return compute_transformation_matrix_inverse(
             matrix_type, length=self.length, alpha=self.alpha, beta=self.beta, gamma=self.gamma
-        ).T
+        )
 
     def segment_coordinates_system(
         self, Q: SegmentNaturalCoordinates, transformation_matrix_type: TransformationMatrixType | str = None
@@ -423,11 +422,8 @@ class NaturalSegment(AbstractNaturalSegment):
             Q = SegmentNaturalCoordinates(Q)
 
         return HomogeneousTransform.from_rt(
-            # rotation=self.compute_transformation_matrix(transformation_matrix_type)
-            # @ np.concatenate((Q.u[:, np.newaxis], Q.v[:, np.newaxis], Q.w[:, np.newaxis]), axis=1),
-            # compute_transformation_matrix_inverse is already inv(B.T), so transposing it back
-            # gives inv(B), the inverse of the non-transposed transformation matrix.
-            rotation=Q.to_uvw_matrix() @ self.compute_transformation_matrix_inverse(transformation_matrix_type).T,
+            # [u v w] = R B, the columns of B being u, v, w in the segment coordinate system
+            rotation=Q.to_uvw_matrix() @ self.compute_transformation_matrix_inverse(transformation_matrix_type),
             translation=Q.rp[:, np.newaxis],
         )
 

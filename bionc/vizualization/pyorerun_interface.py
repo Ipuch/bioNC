@@ -198,8 +198,9 @@ class BioncModelNoMesh:
     def meshlines(self) -> list[np.ndarray]:
         meshes = []
         for s in self.segments:
-            p = s.segment.compute_transformation_matrix().T @ NaturalVector.proximal()
-            d = s.segment.compute_transformation_matrix().T @ NaturalVector.distal()
+            # a point of natural coordinates n is at B n in the segment coordinate system
+            p = s.segment.compute_transformation_matrix() @ NaturalVector.proximal()
+            d = s.segment.compute_transformation_matrix() @ NaturalVector.distal()
 
             meshes += [np.array([p, d])]
 

@@ -140,17 +140,18 @@ def test_segment_transformation_matrix(bionc_type):
         inertial_transformation_matrix=TransformationMatrixType.Buv,
     )
 
-    res_Buv = np.array([[1.0, 0.0, 0.0], [0.11209514, 1.4958057, 0.0], [0.20345601, -0.09805782, 0.97416134]])
+    # natural vectors u, v, w are the COLUMNS of B (Dumas), hence the transposes of the lower triangular layout
+    res_Buv = np.array([[1.0, 0.0, 0.0], [0.11209514, 1.4958057, 0.0], [0.20345601, -0.09805782, 0.97416134]]).T
 
     TestUtils.assert_equal(bbox.compute_transformation_matrix(), res_Buv)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Buv), res_Buv)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Buv"), res_Buv)
 
-    res_Bvu = np.array([[0.9972038, 0.07473009, 0.0], [0.0, 1.5, 0.0], [0.21021498, -0.08257935, 0.97416134]])
+    res_Bvu = np.array([[0.9972038, 0.07473009, 0.0], [0.0, 1.5, 0.0], [0.21021498, -0.08257935, 0.97416134]]).T
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bvu), res_Bvu)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bvu"), res_Bvu)
 
-    res_Bwu = np.array([[0.97908409, 0.0, 0.20345601], [0.14023008, 1.48828492, -0.12386902], [0.0, 0.0, 1.0]])
+    res_Bwu = np.array([[0.97908409, 0.0, 0.20345601], [0.14023008, 1.48828492, -0.12386902], [0.0, 0.0, 1.0]]).T
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Bwu), res_Bwu)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Bwu"), res_Bwu)
 
@@ -160,7 +161,7 @@ def test_segment_transformation_matrix(bionc_type):
             [0.11209514, 1.48828492, -0.14980884],
             [0.20345601, 0, 0.97908409],
         ]
-    )
+    ).T
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type=TransformationMatrixType.Buw), res_Buw)
     TestUtils.assert_equal(bbox.compute_transformation_matrix(matrix_type="Buw"), res_Buw)
 
@@ -365,7 +366,7 @@ def test_segment_transformation_matrix_inverse(bionc_type):
         B = TestUtils.to_array(bbox.compute_transformation_matrix(matrix_type=matrix_type))
         B_inv = bbox.compute_transformation_matrix_inverse(matrix_type=matrix_type)
 
-        # the segment level accessors both transpose, so they stay inverse of one another
+        # the segment level accessors return B and inv(B), so they stay inverse of one another
         TestUtils.assert_equal(B_inv, np.linalg.inv(B))
         TestUtils.assert_equal(B @ TestUtils.to_array(B_inv), np.eye(3))
 

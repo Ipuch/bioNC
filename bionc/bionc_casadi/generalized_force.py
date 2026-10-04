@@ -93,7 +93,7 @@ class JointGeneralizedForcesList:
     ):
         """
         Split the generalized forces of the model, one value per joint degree of freedom, joint after joint
-        (ordered by joint index), into the generalized forces of each joint.
+        (see model.joint_dof_indexes), into the generalized forces of each joint.
         """
         is_numeric = not isinstance(joint_generalized_forces, MX)
         if is_numeric:
@@ -104,10 +104,9 @@ class JointGeneralizedForcesList:
                 f"got {joint_generalized_forces.shape[0]}"
             )
 
-        first_dof = 0
-        for joint in sorted(model.joints.values(), key=lambda j: j.index):
-            generalized_forces = joint_generalized_forces[first_dof : first_dof + joint.nb_joint_dof]
-            first_dof += joint.nb_joint_dof
+        for joint in model.joints.values():
+            dof_indexes = model.joint_dof_indexes(joint.index)
+            generalized_forces = joint_generalized_forces[dof_indexes[0] : dof_indexes[-1] + 1] if dof_indexes else []
             if joint.nb_joint_dof == 0 or (is_numeric and not np.any(generalized_forces)):
                 continue
             Q_parent = None if joint.parent is None else Q.vector(joint.parent.index)

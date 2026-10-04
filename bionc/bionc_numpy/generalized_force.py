@@ -135,7 +135,7 @@ class JointGeneralizedForcesList:
         model: BiomechanicalModel
             The model of the system
         joint_generalized_forces: np.ndarray
-            One value per joint degree of freedom, joint after joint (ordered by joint index) [nb_joint_dof]
+            One value per joint degree of freedom, joint after joint, see model.joint_dof_indexes [nb_joint_dof]
         Q: NaturalCoordinates
             The natural coordinates of the model
         """
@@ -146,10 +146,9 @@ class JointGeneralizedForcesList:
                 f"got {joint_generalized_forces.shape[0]}"
             )
 
-        first_dof = 0
-        for joint in sorted(model.joints.values(), key=lambda j: j.index):
-            generalized_forces = joint_generalized_forces[first_dof : first_dof + joint.nb_joint_dof]
-            first_dof += joint.nb_joint_dof
+        for joint in model.joints.values():
+            dof_indexes = model.joint_dof_indexes(joint.index)
+            generalized_forces = joint_generalized_forces[dof_indexes[0] : dof_indexes[-1] + 1] if dof_indexes else []
             if not np.any(generalized_forces):
                 continue
             Q_parent = None if joint.parent is None else Q.vector(joint.parent.index)

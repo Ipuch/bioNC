@@ -5,6 +5,7 @@ from .natural_marker import NaturalMarker
 from .natural_segment import NaturalSegment
 from .natural_vector import NaturalVector
 from .natural_velocities import SegmentNaturalVelocities
+from .rotations import euler_axes_matrix
 from ..protocols.joint import JointBaseWithTwoSegments as JointBase
 from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
 
@@ -112,6 +113,12 @@ class Joint:
                 joint constraints jacobian derivative of the parent and child segment [5, 12] and [5, 12]
             """
             return None
+
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """3 translations along the parent segment axes, then 3 rotations about the projection_basis Euler axes"""
+            R_parent = self.parent.segment_coordinates_system(Q_parent, self.parent_basis).rot
+            R_child = self.child.segment_coordinates_system(Q_child, self.child_basis).rot
+            return R_parent, euler_axes_matrix(R_parent, R_child, self.projection_basis)
 
         def to_mx(self):
             """
@@ -280,6 +287,13 @@ class Joint:
                 bias[i + 3] = 2 * u_p_dot.T @ v_c_dot
 
             return bias
+
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """1 rotation about the parent axis shared by the two constraints"""
+            if self.parent_axis[0] != self.parent_axis[1]:
+                raise NotImplementedError(f"The hinge {self.name} must use the same parent axis in both constraints")
+            axis = np.asarray(Q_parent.axis(self.parent_axis[0])).reshape(3)
+            return None, (axis / np.linalg.norm(axis))[:, np.newaxis]
 
         def to_mx(self):
             """
@@ -452,6 +466,11 @@ class Joint:
 
             return bias
 
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """2 rotations, about the parent axis then the child axis"""
+            axes = [np.asarray(Q_parent.axis(self.parent_axis)), np.asarray(Q_child.axis(self.child_axis))]
+            return None, np.column_stack([axis.reshape(3) / np.linalg.norm(axis) for axis in axes])
+
         def to_mx(self):
             """
             This function returns the joint as a mx joint
@@ -585,6 +604,12 @@ class Joint:
                 Acceleration bias vector [3, 1]. All zeros for spherical joints.
             """
             return np.zeros((self.nb_constraints, 1))
+
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """3 rotations about the projection_basis Euler axes"""
+            R_parent = self.parent.segment_coordinates_system(Q_parent, self.parent_basis).rot
+            R_child = self.child.segment_coordinates_system(Q_child, self.child_basis).rot
+            return None, euler_axes_matrix(R_parent, R_child, self.projection_basis)
 
         def to_mx(self):
             """

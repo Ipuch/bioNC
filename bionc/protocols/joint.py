@@ -133,6 +133,18 @@ class JointBase(ABC):
         """
         return 6 - self.nb_constraints
 
+    def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+        """
+        Global axes of the joint degrees of freedom, in the order of the joint generalized forces:
+        translations first, then rotations.
+
+        Returns
+        -------
+        tuple
+            translation axes [3 x nb_translations] (None if there is none), rotation axes [3 x nb_rotations]
+        """
+        raise NotImplementedError(f"The degree of freedom axes of the joint {self.name} are not defined")
+
 
 class JointBaseWithTwoSegments(JointBase, ABC):
     """

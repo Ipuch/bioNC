@@ -1,9 +1,10 @@
-from casadi import MX, dot, cos, transpose, vertcat
+from casadi import MX, dot, cos, transpose, vertcat, norm_2, horzcat
 import numpy as np
 
 from .natural_segment import NaturalSegment
 from .natural_coordinates import SegmentNaturalCoordinates
 from .natural_velocities import SegmentNaturalVelocities
+from .rotations import euler_axes_matrix
 from ..protocols.joint import JointBase
 from .natural_vector import NaturalVector
 from ..utils.enums import NaturalAxis, CartesianAxis, EulerSequence, TransformationMatrixType
@@ -63,6 +64,11 @@ class GroundJoint:
             self, Qdot_parent: SegmentNaturalVelocities, Qdot_child: SegmentNaturalVelocities
         ) -> MX:
             return None
+
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """3 translations along the global axes, then 3 rotations about the projection_basis Euler axes"""
+            R_child = self.child.segment_coordinates_system(Q_child, self.child_basis).rot
+            return MX.eye(3), euler_axes_matrix(MX.eye(3), R_child, self.projection_basis)
 
     class Hinge(JointBase):
         """
@@ -179,6 +185,12 @@ class GroundJoint:
                 Acceleration bias vector [5, 1]. All zeros.
             """
             return MX.zeros(self.nb_constraints, 1)
+
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """1 rotation about the global axis shared by the two constraints"""
+            if self.parent_axis[0] != self.parent_axis[1]:
+                raise NotImplementedError(f"The hinge {self.name} must use the same parent axis in both constraints")
+            return None, MX(self.parent_vector[0])
 
     class Universal(JointBase):
         """
@@ -302,6 +314,11 @@ class GroundJoint:
 
             return self.child_constraint_jacobian(Q_parent, Q_child)
 
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """2 rotations, about the global axis then the child axis"""
+            child_axis = Q_child.axis(self.child_axis)
+            return None, horzcat(MX(self.parent_vector), child_axis / norm_2(child_axis))
+
     class Spherical(JointBase):
         """
         This joint is defined by 3 constraints to pivot around an axis of the inertial coordinate system
@@ -379,6 +396,11 @@ class GroundJoint:
                 Acceleration bias vector [3, 1]. All zeros.
             """
             return MX.zeros(self.nb_constraints, 1)
+
+        def dof_axes(self, Q_parent: SegmentNaturalCoordinates, Q_child: SegmentNaturalCoordinates):
+            """3 rotations about the projection_basis Euler axes"""
+            R_child = self.child.segment_coordinates_system(Q_child, self.child_basis).rot
+            return None, euler_axes_matrix(MX.eye(3), R_child, self.projection_basis)
 
     class Weld(JointBase):
         """

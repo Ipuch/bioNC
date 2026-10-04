@@ -780,3 +780,63 @@ def test_passive_pendulum_conserves_energy():
     assert drifts[0] < 1e-3 * potential_range[0]
     # RK4 is 4th order: halving the step divides the drift by ~16
     assert drifts[0] / drifts[1] > 8
+
+
+@pytest.mark.parametrize(
+    "bionc_type",
+    ["numpy", "casadi"],
+)
+def test_segment_coordinates_round_trip_non_orthogonal(bionc_type):
+    # A point (direction) given in the orthonormal segment coordinate system (SCS) has natural coordinates
+    # inv(B) p and lies at rp + [u v w] inv(B) p in the global frame (resp. [u v w] inv(B) d = d for a direction)
+    if bionc_type == "casadi":
+        from bionc.bionc_casadi import NaturalSegment, SegmentNaturalCoordinates
+        from bionc.bionc_casadi.muscle import MuscleViaPoint
+    else:
+        from bionc.bionc_numpy import NaturalSegment, SegmentNaturalCoordinates
+        from bionc.bionc_numpy.muscle import MuscleViaPoint
+    from bionc.bionc_numpy.transformation_matrix import compute_transformation_matrix
+
+    alpha, beta, gamma, length = 1.4, 1.7, 1.3, 0.45
+    p = np.array([0.02, -0.2, 0.01])
+    d = np.array([0.3, -0.1, 0.9])
+
+    segment = NaturalSegment.with_cartesian_inertial_parameters(
+        name="oblique",
+        alpha=alpha,
+        beta=beta,
+        gamma=gamma,
+        length=length,
+        mass=1,
+        center_of_mass=p,
+        inertia=0.01 * np.eye(3),
+    )
+    segment.add_natural_marker_from_segment_coordinates(name="marker", location=p)
+    segment.add_natural_vector_from_segment_coordinates(name="vector", direction=d, normalize=False)
+    via_point = MuscleViaPoint.from_cartesian(name="via", parent_segment=segment, location=p)
+
+    # the SCS is the global frame
+    B = compute_transformation_matrix(TransformationMatrixType.Buv, length, alpha, beta, gamma)
+    Q = SegmentNaturalCoordinates.from_components(u=B[:, 0], rp=np.zeros(3), rd=-B[:, 1], w=B[:, 2])
+    TestUtils.assert_equal(segment.segment_coordinates_system(Q).rot, np.eye(3), decimal=12)
+
+    def to_numpy(value):
+        return TestUtils.mx_to_array(value) if bionc_type == "casadi" else np.asarray(value)
+
+    def to_flat(value):
+        return to_numpy(value).reshape(-1)
+
+    rp = np.zeros(3)
+    uvw = B  # [u v w] is B itself here
+    natural_com = to_flat(segment.natural_center_of_mass)
+    natural_marker = to_flat(segment.marker_from_name("marker").position)
+    natural_vector = to_flat(segment.vector_from_name("vector").position)
+    natural_via_point = to_flat(via_point.position)
+
+    np.testing.assert_allclose(rp + uvw @ natural_com, p, atol=1e-12)
+    np.testing.assert_allclose(rp + uvw @ natural_marker, p, atol=1e-12)
+    np.testing.assert_allclose(uvw @ natural_vector, d, atol=1e-12)
+    np.testing.assert_allclose(rp + uvw @ natural_via_point, p, atol=1e-12)
+
+    np.testing.assert_allclose(to_numpy(segment.compute_transformation_matrix()), B, atol=1e-12)
+    np.testing.assert_allclose(to_numpy(segment.compute_transformation_matrix_inverse()) @ B, np.eye(3), atol=1e-12)

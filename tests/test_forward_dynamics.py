@@ -553,3 +553,54 @@ def test_forward_dynamics_zero_joint_generalized_forces(monkeypatch, tmp_path):
     qddot, lambdas = model.forward_dynamics(Q, Qdot, joint_generalized_forces=np.zeros(model.nb_joint_dof))
     np.testing.assert_allclose(np.asarray(qddot), np.asarray(qddot_ref), atol=1e-12)
     np.testing.assert_allclose(np.asarray(lambdas), np.asarray(lambdas_ref), atol=1e-12)
+
+
+def _euler_angles_deg(model, all_states):
+    from bionc.bionc_numpy import NaturalCoordinates
+
+    return np.degrees(
+        np.array([model.natural_coordinates_to_joint_angles(NaturalCoordinates(q))[:, 0] for q in all_states[:12].T])
+    )
+
+
+def test_actuated_3d_pendulum_hold(monkeypatch, tmp_path):
+    monkeypatch.chdir(tmp_path)
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/actuated_3d_pendulum.py")
+
+    model, all_states, time_steps = module.main(mode="hold", show_results=False)
+
+    # the Euler torques from the inverse dynamics hold the tilted pendulum still
+    Q = all_states[: model.nb_Q, :]
+    np.testing.assert_array_less(np.abs(Q - Q[:, :1]).max(), 1e-8)
+
+
+def test_actuated_3d_pendulum_constant_torque(monkeypatch, tmp_path):
+    from scipy.optimize import brentq
+
+    monkeypatch.chdir(tmp_path)
+
+    bionc = TestUtils.bionc_folder()
+    module = TestUtils.load_module(bionc + "/examples/forward_dynamics/actuated_3d_pendulum.py")
+
+    model, all_states, time_steps = module.main(mode="constant_torque", show_results=False)
+
+    segment = model.segments["pendulum"]
+    mass, g = segment.mass, 9.81
+    r_C = np.array([0, -1, -0.5])  # center of mass from the pivot, in the segment frame (= world at start)
+    distance = np.linalg.norm(r_C)
+    torque = 0.5 * mass * g * distance  # constant torque about X, as set by the example
+
+    # passive equilibrium: center of mass right below the pivot (gravity along -z)
+    equilibrium = np.degrees(np.arctan2(-r_C[1], -r_C[2]))
+
+    # turning point from rest: torque * phi = m g d (1 - cos(phi)), nonzero root
+    phi_max = brentq(
+        lambda phi: torque * phi - mass * g * distance * (1 - np.cos(phi)), np.radians(30), np.radians(170)
+    )
+
+    angles = _euler_angles_deg(model, all_states)
+    np.testing.assert_allclose(angles[0, 0], equilibrium, atol=1e-6)
+    np.testing.assert_allclose(angles[:, 0].max(), equilibrium + np.degrees(phi_max), atol=0.1)
+    np.testing.assert_allclose(angles[:, 1:], 0, atol=1e-6)

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from numpy.ma.core import squeeze
 
-from bionc import JointType, NaturalAxis, CartesianAxis, TransformationMatrixType
+from bionc import JointType, NaturalAxis, CartesianAxis, TransformationMatrixType, EulerSequence
 from .utils import TestUtils
 
 
@@ -1506,3 +1506,151 @@ def test_ground_weld_child_jacobian_matches_finite_differences(bionc_type):
     value = joint.child_constraint_jacobian(None, SegmentNaturalCoordinates(q_child))
     analytic = np.array(TestUtils.mx_to_array(value, squeeze=False) if bionc_type == "casadi" else value, dtype=float)
     assert np.max(np.abs(analytic.reshape(6, 12) - fd)) < 1e-7
+
+
+def _dof_indexes_segment(name):
+    from bionc.bionc_numpy import NaturalSegment
+
+    return NaturalSegment.with_cartesian_inertial_parameters(
+        name=name,
+        length=0.5,
+        mass=2.0,
+        center_of_mass=np.array([0.02, -0.25, 0.03]),
+        inertia=np.diag([0.02, 0.005, 0.03]),
+    )
+
+
+def _dof_indexes_model(with_weld):
+    """
+    Without weld: ground -spherical(3)-> A -revolute(1)-> B -universal(2)-> C.
+    With weld: ground -spherical(3)-> A, ground -weld(0)-> W, A -revolute(1)-> B.
+    """
+    from bionc.bionc_numpy import BiomechanicalModel
+
+    model = BiomechanicalModel()
+    names = ["A", "W", "B"] if with_weld else ["A", "B", "C"]
+    for name in names:
+        model[name] = _dof_indexes_segment(name)
+    model._add_joint(
+        dict(
+            name="j0",
+            joint_type=JointType.GROUND_SPHERICAL,
+            parent="GROUND",
+            child="A",
+            projection_basis=EulerSequence.ZXY,
+        )
+    )
+    if with_weld:
+        model._add_joint(
+            dict(
+                name="j1",
+                joint_type=JointType.GROUND_WELD,
+                parent="GROUND",
+                child="W",
+                projection_basis=EulerSequence.XYZ,
+                child_basis=TransformationMatrixType.Buv,
+                Q_child_ref=np.array([1.0, 0, 0, 0, 0, 0, 0, -0.5, 0, 0, 0, 1.0]),
+            )
+        )
+    revolute_child = "B"
+    model._add_joint(
+        dict(
+            name="j2",
+            joint_type=JointType.REVOLUTE,
+            parent="A",
+            child=revolute_child,
+            parent_axis=[NaturalAxis.U, NaturalAxis.U],
+            child_axis=[NaturalAxis.V, NaturalAxis.W],
+            theta=[np.pi / 2, np.pi / 2],
+        )
+    )
+    if not with_weld:
+        model._add_joint(
+            dict(
+                name="j3",
+                joint_type=JointType.UNIVERSAL,
+                parent="B",
+                child="C",
+                parent_axis=NaturalAxis.U,
+                child_axis=NaturalAxis.V,
+                theta=np.pi / 2,
+            )
+        )
+    return model
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_joint_dof_indexes(bionc_type):
+    model = _dof_indexes_model(with_weld=False)
+    model = model.to_mx() if bionc_type == "casadi" else model
+
+    assert model.nb_joint_dof == 6
+    assert model.joint_dof_indexes(0) == (0, 1, 2)
+    assert model.joint_dof_indexes(1) == (3,)
+    assert model.joint_dof_indexes(2) == (4, 5)
+    all_indexes = sum((model.joint_dof_indexes(i) for i in range(model.nb_joints)), ())
+    assert all_indexes == tuple(range(model.nb_joint_dof))
+
+    # a joint without dof takes no index and does not shift the following ones
+    model = _dof_indexes_model(with_weld=True)
+    model = model.to_mx() if bionc_type == "casadi" else model
+    assert model.nb_joint_dof == 4
+    assert model.joint_dof_indexes(0) == (0, 1, 2)
+    assert model.joint_dof_indexes(1) == ()
+    assert model.joint_dof_indexes(2) == (3,)
+    all_indexes = sum((model.joint_dof_indexes(i) for i in range(model.nb_joints)), ())
+    assert all_indexes == tuple(range(model.nb_joint_dof))
+
+
+@pytest.mark.parametrize("bionc_type", ["numpy", "casadi"])
+def test_joint_dof_indexes_actuation_order(bionc_type):
+    from casadi import Function
+
+    from bionc.bionc_numpy import NaturalCoordinates
+
+    def rot(axis, angle):
+        axis = np.asarray(axis, float) / np.linalg.norm(axis)
+        K = np.array([[0, -axis[2], axis[1]], [axis[2], 0, -axis[0]], [-axis[1], axis[0], 0]])
+        return np.eye(3) + np.sin(angle) * K + (1 - np.cos(angle)) * K @ K
+
+    def pose(R, rp, length=0.5):
+        return np.concatenate((R[:, 0], rp, rp - length * R[:, 1], R[:, 2]))
+
+    model = _dof_indexes_model(with_weld=False)
+    qA = pose(rot([1, 2, 0.3], 0.7), np.zeros(3))
+    qB = pose(rot([1, 0, 0], 0.4) @ rot([0.2, -1, 1], 0.5), qA[6:9])
+    qC = pose(rot([0.3, 1, 0.2], 0.6), qB[6:9])
+    Q_np = np.concatenate((qA, qB, qC))
+
+    def natural_forces(q):
+        if bionc_type == "numpy":
+            from bionc.bionc_numpy.generalized_force import JointGeneralizedForcesList
+
+            forces = JointGeneralizedForcesList.empty_from_nb_joint(model.nb_joints)
+            forces.add_all_joint_generalized_forces(model, q, NaturalCoordinates(Q_np))
+            return np.asarray(forces.to_natural_joint_forces(model, NaturalCoordinates(Q_np))).ravel()
+        from bionc.bionc_casadi import NaturalCoordinates as NaturalCoordinatesMX
+        from bionc.bionc_casadi.generalized_force import JointGeneralizedForcesList as ListMX
+
+        model_mx = model.to_mx()
+        Q_mx = NaturalCoordinatesMX(Q_np)
+        forces = ListMX.empty_from_nb_joint(model_mx.nb_joints)
+        forces.add_all_joint_generalized_forces(model_mx, q, Q_mx)
+        return np.asarray(Function("f", [], [forces.to_natural_joint_forces(model_mx, Q_mx)])()["o0"].toarray()).ravel()
+
+    # only the universal joint (last dofs) is actuated: it acts on its parent B and its child C only
+    forces = natural_forces(np.array([0, 0, 0, 0, 1.3, -0.8]))
+    np.testing.assert_allclose(forces[0:12], 0, atol=1e-12)
+    assert np.max(np.abs(forces[12:24])) > 1e-3
+    assert np.max(np.abs(forces[24:36])) > 1e-3
+
+    # only the revolute joint (dof 3) is actuated: it acts on A and B, not on C
+    forces = natural_forces(np.array([0, 0, 0, 0.9, 0, 0]))
+    assert np.max(np.abs(forces[0:12])) > 1e-3
+    assert np.max(np.abs(forces[12:24])) > 1e-3
+    np.testing.assert_allclose(forces[24:36], 0, atol=1e-12)
+
+    # only the spherical joint (first dofs) is actuated: it acts on A only (the parent is the ground)
+    forces = natural_forces(np.array([0.5, -0.2, 0.7, 0, 0, 0]))
+    assert np.max(np.abs(forces[0:12])) > 1e-3
+    np.testing.assert_allclose(forces[12:36], 0, atol=1e-12)

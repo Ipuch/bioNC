@@ -383,3 +383,5 @@ def test_natural_vs_segment_coordinates_example():
     # the mistake is invisible on an orthogonal segment and grows with the deviation from orthogonality
     assert results["errors"][0] < 1e-12
     assert np.all(np.diff(results["errors"]) > 0)
+    # bioNC gives the same frame changes as the plain numpy version written by hand
+    assert results["max_numpy_bionc_difference"] < 1e-12

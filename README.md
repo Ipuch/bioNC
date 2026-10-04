@@ -222,19 +222,29 @@ common constraint function $\Phi$:
 
 ### The transformation matrix $\mathbf{B}$: from the natural frame to an orthonormal frame
 
-The natural vectors $u$, $v = r_p - r_d$ and $w$ are **not orthogonal** in general ($\alpha$ is the angle between $v$ and $w$, $\beta$ between $u$ and $w$, $\gamma$ between $u$ and $v$), and $v$ has the length $L$ of the segment. Anatomical data, on the other hand, live in an orthonormal **segment coordinate system** (SCS) $(X, Y, Z)$: centre of mass, inertia, markers, muscle via points.
+The natural vectors $u$, $v = r_p - r_d$ and $w$ are **not orthogonal** in general, they are constrained by angles and length parameters:
+- $\alpha$ is the angle between $v$ and $w$,
+- $\beta$ between $u$ and $w$, 
+- $\gamma$ between $u$ and $v$, 
+- $v$ has the length $L$ of the segment. 
 
-$\mathbf{B}$ builds the SCS on the natural frame, Gram–Schmidt style, and its columns are $u$, $v$, $w$ read in $(X, Y, Z)$:
+On the other hand, most anatomical data from the literature live in an orthonormal **segment coordinate system** (SCS) $(X, Y, Z)$: centre of mass, inertia, markers, muscle via points...
+
+The transformation matrix $\mathbf{B}$ builds the SCS on the natural frame, with its columns being $u$, $v$, $w$ read in $(X, Y, Z)$, so a direct correspondance exist between the two type of frames: the natural frame and the orthonormal frame, i.e. SCS.
 
 <p align="center">
 <img src="./docs/b_matrix_gram_schmidt.gif" alt="Building the segment coordinate system on the natural frame with B_uv" width="420"/>
 </p>
 
-So $[u\ v\ w] = \mathbf{R}\,\mathbf{B}$ is a QR decomposition of the natural frame. $\mathbf{R}$ is the rotation of the SCS, orthonormal like any rotation matrix. $\mathbf{B}$ is triangular and carries the shape of the segment ($L$, $\alpha$, $\beta$, $\gamma$). Three frames, three relations:
+So we have the relation :
 
-<p align="center">
-<img src="./docs/b_matrix_frames.png" alt="Global frame, segment coordinate system and natural frame of a segment, and a point" width="460"/>
-</p>
+```math
+[u\ v\ w] = \mathbf{R}\,\mathbf{B}
+```
+
+with $\mathbf{R}$ is the rotation of the SCS with the world coordinate system, which is orthonormal like any rotation matrix. $\mathbf{B}$ is triangular and carries the shape of the segment ($L$, $\alpha$, $\beta$, $\gamma$). 
+
+We have three frames, consequently we have three relations for any point given in any of theses frames.
 
 | From → to | Relation |
 |---|---|

@@ -538,7 +538,7 @@ def test_actuated_3d_pendulum_example_runs(monkeypatch, tmp_path):
     np.testing.assert_allclose(com_x, 0, atol=1e-8)
 
 
-def test_forward_dynamics_refuses_joint_generalized_forces(monkeypatch, tmp_path):
+def test_forward_dynamics_zero_joint_generalized_forces(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
 
     from bionc.bionc_numpy import NaturalCoordinates, NaturalVelocities
@@ -549,5 +549,7 @@ def test_forward_dynamics_refuses_joint_generalized_forces(monkeypatch, tmp_path
 
     Q = NaturalCoordinates(np.array([1, 0, 0, 0, 0, 0, 0, -1, 0, 0, 0, 1], dtype=float))
     Qdot = NaturalVelocities(np.zeros(12))
-    with pytest.raises(NotImplementedError):
-        model.forward_dynamics(Q, Qdot, joint_generalized_forces=np.zeros(3))
+    qddot_ref, lambdas_ref = model.forward_dynamics(Q, Qdot)
+    qddot, lambdas = model.forward_dynamics(Q, Qdot, joint_generalized_forces=np.zeros(model.nb_joint_dof))
+    np.testing.assert_allclose(np.asarray(qddot), np.asarray(qddot_ref), atol=1e-12)
+    np.testing.assert_allclose(np.asarray(lambdas), np.asarray(lambdas_ref), atol=1e-12)
